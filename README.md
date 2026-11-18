@@ -52,4 +52,14 @@ Para cambiar el control (gamepad, táctil), basta con otro adaptador que impleme
 2. En Vercel: **Add New → Project** e importar `Axem-FighterX`.
 3. Vercel detecta Vite; `vercel.json` ya fija `npm run build` y `dist`.
 
+## CI y vista previa (GitHub Actions)
+
+Cada push a `main` ejecuta `.github/workflows/ci.yml`:
+
+1. Tests y build.
+2. Captura automática con Playwright: mueve a ambos personajes y guarda video y screenshots en el artefacto `capturas-y-video`.
+3. Publicación jugable en GitHub Pages.
+
+Requiere **Settings → Pages → Source: GitHub Actions**. Para correr la captura en local: `npm run build && npm run preview` y, en otra terminal, `npm run capture`.
+
 

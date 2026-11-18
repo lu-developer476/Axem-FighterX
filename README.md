@@ -51,3 +51,5 @@ Para cambiar el control (gamepad, táctil), basta con otro adaptador que impleme
 1. Subir el repo a GitHub.
 2. En Vercel: **Add New → Project** e importar `Axem-FighterX`.
 3. Vercel detecta Vite; `vercel.json` ya fija `npm run build` y `dist`.
+
+

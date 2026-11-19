@@ -80,24 +80,15 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0, 0)
       .setDepth(-5);
 
-    this.add.text(GAME_WIDTH / 2, 27, 'Axem FighterX', {
-      fontFamily: 'monospace',
-      fontSize: '20px',
-      fontStyle: 'bold',
-      color: '#fff0c9',
-      stroke: '#352044',
-      strokeThickness: 4,
-      shadow: { offsetX: 2, offsetY: 2, color: '#090611', blur: 0, fill: true },
-    }).setOrigin(0.5).setDepth(-1);
-
+    // La marca se representa únicamente con el logo gráfico, sin duplicar el nombre en texto.
     const titleTexture = this.textures.get('title-art').getSourceImage();
-    const titleScale = Math.min(0.55, 230 / titleTexture.width, 34 / titleTexture.height);
-    this.add.image(GAME_WIDTH / 2, 59, 'title-art')
+    const titleScale = Math.min(0.8, 290 / titleTexture.width, 62 / titleTexture.height);
+    this.add.image(GAME_WIDTH / 2, 55, 'title-art')
       .setScale(titleScale)
-      .setAlpha(0.92)
+      .setAlpha(0.98)
       .setDepth(-1);
 
-    this.add.text(GAME_WIDTH / 2, 88, '4 ESCENARIOS  ·  CAMPAÑA DE ENTRENAMIENTO', {
+    this.add.text(GAME_WIDTH / 2, 98, '4 ESCENARIOS  ·  CAMPAÑA DE ENTRENAMIENTO', {
       fontFamily: 'monospace',
       fontSize: '6px',
       color: '#c8b9dc',

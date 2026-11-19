@@ -1,15 +1,13 @@
+import { removeSpriteBackground } from './removeSpriteBackground.js';
+
 /**
- * Convierte una imagen cargada (a veces enorme, como los PNG de art/source de
- * 2617×4096) en una textura del tamaño del juego.
+ * Prepara una imagen cargada como textura de juego y elimina automáticamente
+ * el fondo plano conectado a los bordes de cada cuadro.
  *
- *  - Con `nativeSize`: copia UN píxel por cada celda de la cuadrícula de pixel art
- *    (el del centro del bloque). Es exacto y nítido; el reescalado "vecino más
- *    cercano" del navegador no garantiza caer en el centro de cada bloque.
- *  - Sin `nativeSize` y con cuadros mucho más altos que `targetHeight`: reduce con
- *    suavizado, en pasos, para no perder detalle.
- *  - Si el cuadro ya es de tamaño razonable, no hace nada.
- *
- * La textura original se elimina para liberar memoria de video.
+ * - Con `nativeSize`: toma un píxel central por celda de la cuadrícula pixel art.
+ * - Sin `nativeSize`: reduce imágenes grandes en pasos o conserva su tamaño.
+ * - Procesa cada frame por separado para que las hojas de animación también
+ *   queden con transparencia real antes de registrarse en Phaser.
  *
  * @param {Phaser.Scene} scene
  * @param {object} options
@@ -25,30 +23,45 @@ export function prepareSpriteTexture(scene, { sourceKey, targetKey, frames = 1, 
   const frameWidth = Math.floor(source.width / frames);
   const frameHeight = source.height;
 
-  let width;
-  let height;
+  let width = frameWidth;
+  let height = frameHeight;
   if (nativeSize) {
     ({ width, height } = nativeSize);
   } else if (frameHeight > targetHeight * 1.5) {
     height = targetHeight;
     width = Math.max(1, Math.round((frameWidth * height) / frameHeight));
-  } else {
-    return null;
   }
 
   const texture = scene.textures.createCanvas(targetKey, width * frames, height);
   const ctx = texture.getContext();
 
   for (let i = 0; i < frames; i++) {
+    const frameX = i * frameWidth;
+    const destX = i * width;
+
     if (nativeSize) {
-      sampleGrid(ctx, source, { frameX: i * frameWidth, frameWidth, frameHeight, width, height, destX: i * width });
+      sampleGrid(ctx, source, {
+        frameX,
+        frameWidth,
+        frameHeight,
+        width,
+        height,
+        destX,
+      });
+    } else if (frameWidth === width && frameHeight === height) {
+      ctx.drawImage(source, frameX, 0, frameWidth, frameHeight, destX, 0, width, height);
     } else {
-      const reduced = halveWhileLarge(cropFrame(source, i * frameWidth, frameWidth, frameHeight), width, height);
+      const reduced = halveWhileLarge(cropFrame(source, frameX, frameWidth, frameHeight), width, height);
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(reduced, 0, 0, reduced.width, reduced.height, i * width, 0, width, height);
+      ctx.drawImage(reduced, 0, 0, reduced.width, reduced.height, destX, 0, width, height);
     }
+
+    const frameData = ctx.getImageData(destX, 0, width, height);
+    removeSpriteBackground(frameData);
+    ctx.putImageData(frameData, destX, 0);
   }
+
   texture.refresh();
   scene.textures.remove(sourceKey);
   return { key: targetKey, frameWidth: width, frameHeight: height };

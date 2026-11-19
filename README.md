@@ -110,7 +110,7 @@ se generan por código en `infrastructure/graphics/FxTextureFactory.js`, junto c
 
 ## Arte
 
-- `art/source/`: **los sprites del juego**, sin fondo (transparentes). Vite los importa directamente:
+- `art/source/`: **los sprites del juego**. Vite los importa directamente y, al preparar las texturas base y las hojas de animación, el juego elimina automáticamente el fondo plano o casi uniforme conectado a los bordes y conserva el canal alfa. Así los fondos de las imágenes no se dibujan en el menú, las fichas de selección, las cinemáticas ni el combate. Para mejores resultados, subí PNG con fondo uniforme y el personaje separado de los bordes:
   no hay copias en `public/`. La pose base de cada personaje es `art/source/axem-ranger-<ranger>.png`.
 - Esos PNG miden 2617×4096 pero son pixel art de 53×83 ampliado. Al cargar, el juego toma un píxel por
   celda de esa cuadrícula (`nativeSize` en `characterAnimationData.js`) y los dibuja 1:1.

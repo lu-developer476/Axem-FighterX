@@ -88,13 +88,6 @@ export class MenuScene extends Phaser.Scene {
       .setAlpha(0.98)
       .setDepth(-1);
 
-    this.add.text(GAME_WIDTH / 2, 98, '4 ESCENARIOS  ·  CAMPAÑA DE ENTRENAMIENTO', {
-      fontFamily: 'monospace',
-      fontSize: '6px',
-      color: '#c8b9dc',
-      letterSpacing: 1,
-    }).setOrigin(0.5).setDepth(-1);
-
     this.add.rectangle(GAME_WIDTH / 2, 250, GAME_WIDTH, 40, 0x080611, 0.91)
       .setStrokeStyle(1, 0x55456e, 0.9)
       .setDepth(-1);
@@ -113,7 +106,7 @@ export class MenuScene extends Phaser.Scene {
     this.ui.add(inset);
 
     this.#addText(title, GAME_WIDTH / 2, 122, {
-      fontSize: '10px',
+      fontSize: '12px',
       fontStyle: 'bold',
       color: '#f7cf83',
       letterSpacing: 1,
@@ -134,7 +127,7 @@ export class MenuScene extends Phaser.Scene {
     this.ui.add([veil, panel, inset]);
 
     this.#addText('SELECCIONAR PERSONAJE', GAME_WIDTH / 2, 116, {
-      fontSize: '10px',
+      fontSize: '12px',
       fontStyle: 'bold',
       color: '#f7cf83',
       letterSpacing: 1,
@@ -144,7 +137,7 @@ export class MenuScene extends Phaser.Scene {
   #addText(value, x, y, style = {}) {
     const text = this.add.text(x, y, value, {
       fontFamily: 'monospace',
-      fontSize: '7px',
+      fontSize: '8px',
       color: '#e7def5',
       align: 'center',
       ...style,
@@ -191,14 +184,14 @@ export class MenuScene extends Phaser.Scene {
       .setScale(0.48);
     const label = this.add.text(x + 17, 177, ranger.name.toUpperCase(), {
       fontFamily: 'monospace',
-      fontSize: '6px',
+      fontSize: '7px',
       fontStyle: 'bold',
       color: '#d9cde9',
       align: 'center',
     }).setOrigin(0.5);
     const hint = this.add.text(x + 17, 197, 'ELEGIR', {
       fontFamily: 'monospace',
-      fontSize: '6px',
+      fontSize: '7px',
       color: '#a99cbe',
       align: 'center',
     }).setOrigin(0.5);
@@ -226,14 +219,14 @@ export class MenuScene extends Phaser.Scene {
       '© 2026 Todos los derechos reservados - Diseño y Programación por ',
       {
         fontFamily: 'monospace',
-        fontSize: '5px',
+        fontSize: '6px',
         color: '#aaa0bd',
       },
     ).setOrigin(0, 0.5);
 
     const author = this.add.text(0, 255, 'Lucas Montenegro ®', {
       fontFamily: 'monospace',
-      fontSize: '5px',
+      fontSize: '6px',
       fontStyle: 'bold',
       color: '#f2c77e',
     }).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
@@ -299,12 +292,8 @@ export class MenuScene extends Phaser.Scene {
     this.matchSetup = {};
     this.characterSlot = 0;
     this.#beginPage('INICIO');
-    this.#addText('ELEGÍ CÓMO QUERÉS CONTINUAR', GAME_WIDTH / 2, 139, {
-      fontSize: '6px',
-      color: '#a99cbe',
-    });
     this.#addButton('JUGAR', 160, () => this.#showVersusModes());
-    this.#addButton('CONTROLES', 184, () => this.#showControls());
+    this.#addButton('TUTORIALES', 184, () => this.#showControls());
     this.#addButton('CRÉDITOS', 208, () => this.#showCredits());
     this.#addFooter();
   }
@@ -312,9 +301,9 @@ export class MenuScene extends Phaser.Scene {
   #showVersusModes() {
     this.page = 'versus';
     this.matchSetup = { characters: [] };
-    this.#beginPage('TIPO DE ENFRENTAMIENTO', 330, 168);
-    this.#addText('¿QUIÉNES VAN A COMBATIR?', GAME_WIDTH / 2, 140, {
-      fontSize: '6px',
+    this.#beginPage('JUGAR', 330, 168);
+    this.#addText('COMBATE', GAME_WIDTH / 2, 140, {
+      fontSize: '7px',
       color: '#b7a9cb',
     });
 
@@ -322,20 +311,16 @@ export class MenuScene extends Phaser.Scene {
       this.#addButton(mode.label, 160 + index * 25, () => {
         this.matchSetup.versusMode = mode.id;
         this.#showCombatModes();
-      }, { width: 246, fontSize: '7px' });
+      }, { width: 246, fontSize: '8px' });
     });
 
-    this.#addButton('VOLVER', 238, () => this.#showHome(), { width: 150, fontSize: '7px' });
+    this.#addButton('VOLVER', 238, () => this.#showHome(), { width: 150, fontSize: '8px' });
     this.#addFooter();
   }
 
   #showCombatModes() {
     this.page = 'combat';
-    this.#beginPage('MODO DE COMBATE', 330, 168);
-    this.#addText('ELEGÍ EL FORMATO DE LA PARTIDA', GAME_WIDTH / 2, 140, {
-      fontSize: '6px',
-      color: '#b7a9cb',
-    });
+    this.#beginPage('MODO', 330, 168);
 
     COMBAT_MODES.forEach((mode, index) => {
       this.#addButton(mode.label, 151 + index * 21, () => {
@@ -343,28 +328,22 @@ export class MenuScene extends Phaser.Scene {
         this.matchSetup.characters = [];
         this.characterSlot = 0;
         this.#showCharacterModal();
-      }, { width: 230, fontSize: '7px' });
+      }, { width: 230, fontSize: '8px' });
     });
 
-    this.#addButton('VOLVER', 238, () => this.#showVersusModes(), { width: 150, fontSize: '7px' });
+    this.#addButton('VOLVER', 238, () => this.#showVersusModes(), { width: 150, fontSize: '8px' });
     this.#addFooter();
   }
 
   #showCharacterModal() {
     this.page = 'characters';
-    const mode = getVersusMode(this.matchSetup.versusMode);
-    const slotName = mode.slotLabels[this.characterSlot] ?? 'PARTICIPANTE';
     this.#beginCharacterModal();
-    this.#addText(slotName + ' · ELEGÍ TU PERSONAJE', GAME_WIDTH / 2, 137, {
-      fontSize: '6px',
-      color: '#c8b9dc',
-    });
 
     this.#addCharacterCard(RANGER_ORDER[0], 160, () => this.#selectCharacter(RANGER_ORDER[0]));
     this.#addCharacterCard(RANGER_ORDER[1], 320, () => this.#selectCharacter(RANGER_ORDER[1]));
     this.#addButton('CANCELAR', 239, () => this.#showCombatModes(), {
       width: 132,
-      fontSize: '6px',
+      fontSize: '7px',
     });
   }
 
@@ -390,7 +369,7 @@ export class MenuScene extends Phaser.Scene {
     const combat = getCombatMode(this.matchSetup.combatMode);
     this.#beginPage('ELEGÍ EL ESCENARIO', 330, 158);
     this.#addText(versus.label + ' · ' + combat.label, GAME_WIDTH / 2, 138, {
-      fontSize: '5px',
+      fontSize: '6px',
       color: '#b7a9cb',
     });
 
@@ -403,37 +382,37 @@ export class MenuScene extends Phaser.Scene {
             characters: [...this.matchSetup.characters],
           },
         });
-      }, { width: 230, fontSize: '7px' });
+      }, { width: 230, fontSize: '8px' });
     });
 
     this.#addButton('VOLVER', 238, () => this.#showCharacterModal(), {
       width: 150,
-      fontSize: '7px',
+      fontSize: '8px',
     });
     this.#addFooter();
   }
 
   #showControls() {
     this.page = 'controls';
-    this.#beginPage('CONTROLES', 390, 122);
+    this.#beginPage('TUTORIALES', 390, 122);
     this.#addText('JUGADOR 1 · AXEM VIOLET', GAME_WIDTH / 2, 148, {
-      fontSize: '7px',
+      fontSize: '8px',
       color: '#d9a9ff',
       fontStyle: 'bold',
     });
-    this.#addText('Mover: A / D     Hachazo: F     Teletransporte: G', GAME_WIDTH / 2, 162, {
-      fontSize: '6px',
+    this.#addText('Mover: W / A / S / D     Hachazo: F     Teletransporte: G', GAME_WIDTH / 2, 162, {
+      fontSize: '7px',
     });
     this.#addText('JUGADOR 2 · AXEM ORANGE', GAME_WIDTH / 2, 181, {
-      fontSize: '7px',
+      fontSize: '8px',
       color: '#ffc17e',
       fontStyle: 'bold',
     });
-    this.#addText('Mover: ← / →     Hachazo: L     Teletransporte: K', GAME_WIDTH / 2, 195, {
-      fontSize: '6px',
+    this.#addText('Mover: ↑ / ← / ↓ / →     Hachazo: L     Teletransporte: K', GAME_WIDTH / 2, 195, {
+      fontSize: '7px',
     });
-    this.#addText('Durante el combate, R reinicia la partida y ESC vuelve al menú.', GAME_WIDTH / 2, 209, {
-      fontSize: '5px',
+    this.#addText('R · REINICIAR COMBATE   ESC · VOLVER / SALIR', GAME_WIDTH / 2, 209, {
+      fontSize: '7px',
       color: '#aaa0bd',
     });
     this.#addButton('VOLVER', 224, () => this.#showHome());
@@ -444,13 +423,13 @@ export class MenuScene extends Phaser.Scene {
     this.page = 'credits';
     this.#beginPage('CRÉDITOS');
     this.#addText('Axem FighterX es un juego de pelea retro para dos jugadores.', GAME_WIDTH / 2, 153, {
-      fontSize: '6px',
+      fontSize: '7px',
     });
     this.#addText('Cuatro escenarios, cinemáticas y combates de entrenamiento.', GAME_WIDTH / 2, 169, {
-      fontSize: '6px',
+      fontSize: '7px',
     });
     this.#addText('Diseño y programación: Lucas Montenegro', GAME_WIDTH / 2, 188, {
-      fontSize: '6px',
+      fontSize: '7px',
       color: '#f2c77e',
     });
     this.#addButton('VOLVER', 213, () => this.#showHome());

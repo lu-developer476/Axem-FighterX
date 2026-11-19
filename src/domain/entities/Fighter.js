@@ -9,7 +9,7 @@ const ATTACK_LUNGE = 0.9; // fracción de moveSpeed durante la fase activa
 const MAX_ATTACK_DAMAGE = 5;
 
 /**
- * @typedef {{ x: number, attack?: boolean, teleport?: boolean }} Intent
+ * @typedef {{ x: number, y?: number, attack?: boolean, teleport?: boolean }} Intent
  */
 
 /**
@@ -227,9 +227,10 @@ export class Fighter {
     }
   }
 
-  /** Mantiene al luchador dentro del escenario. */
-  clampTo({ minX, maxX }) {
+  /** Mantiene al luchador dentro de los límites horizontales y de profundidad. */
+  clampTo({ minX, maxX, minY = this.spawn.y, maxY = this.spawn.y }) {
     this.position.x = Math.min(maxX, Math.max(minX, this.position.x));
+    this.position.y = Math.min(maxY, Math.max(minY, this.position.y));
   }
 
   /** Entrega y vacía los eventos pendientes (para efectos visuales y sonido). */
@@ -251,9 +252,16 @@ export class Fighter {
 
   #updateFree(intent, seconds) {
     if (intent.attack && this.startAttack()) return;
-    if (intent.x !== 0) {
-      this.facing = Math.sign(intent.x);
-      this.position.x += intent.x * this.currentMoveSpeed * seconds;
+
+    const moveX = Number.isFinite(intent.x) ? intent.x : 0;
+    const moveY = Number.isFinite(intent.y) ? intent.y : 0;
+    const magnitude = Math.hypot(moveX, moveY) || 1;
+
+    if (moveX !== 0 || moveY !== 0) {
+      if (moveX !== 0) this.facing = Math.sign(moveX);
+      // Normaliza el movimiento diagonal para conservar la misma velocidad.
+      this.position.x += (moveX / magnitude) * this.currentMoveSpeed * seconds;
+      this.position.y += (moveY / magnitude) * this.currentMoveSpeed * seconds;
       this.#setState(FighterState.WALK);
     } else {
       this.#setState(FighterState.IDLE);

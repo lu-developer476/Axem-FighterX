@@ -82,7 +82,7 @@ export class FxDirector {
       }
       const elapsed = (this.dustTimers.get(fighter.id) ?? 0) + deltaMs;
       if (elapsed >= DUST_INTERVAL_MS) {
-        this.#play('dust', fighter.position.x - fighter.facing * 12, ARENA.groundY - 6, {
+        this.#play('dust', fighter.position.x - fighter.facing * 12, fighter.position.y - 6, {
           flipX: fighter.facing === 1,
           depth: FX_DEPTH - 10,
         });
@@ -127,12 +127,12 @@ export class FxDirector {
 
   #teleportOut(event) {
     this.#play('teleOut', event.x, event.y);
-    this.#play('dust', event.x, ARENA.groundY - 6, { scale: 1.3, depth: FX_DEPTH - 10 });
+    this.#play('dust', event.x, event.y + 36, { scale: 1.3, depth: FX_DEPTH - 10 });
   }
 
   #teleportIn(event) {
     this.#play('teleIn', event.x, event.y);
-    this.#play('shockwave', event.x, ARENA.groundY - 6, { scale: 0.7 });
+    this.#play('shockwave', event.x, event.y + 36, { scale: 0.7 });
     this.#play('dust', event.x, ARENA.groundY - 6, { scale: 1.3, depth: FX_DEPTH - 10 });
   }
 

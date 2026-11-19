@@ -40,7 +40,7 @@ export class HudView {
         index === 0 ? BAR.margin : GAME_WIDTH - BAR.margin,
         31,
         '',
-        { fontSize: '6px', color: index === 0 ? '#d9a9ff' : '#ffc17e', align: index === 0 ? 'left' : 'right' },
+        { fontSize: '7px', color: index === 0 ? '#d9a9ff' : '#ffc17e', align: index === 0 ? 'left' : 'right' },
         index === 0 ? 0 : 1,
       ),
     );

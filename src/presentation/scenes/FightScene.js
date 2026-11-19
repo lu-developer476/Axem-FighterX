@@ -60,7 +60,7 @@ export class FightScene extends Phaser.Scene {
     const combat = getCombatMode(this.matchSetup.combatMode);
     this.stageLabel = this.add.text(GAME_WIDTH / 2, 43, this.stageDefinition.name.toUpperCase(), {
       fontFamily: 'monospace',
-      fontSize: '6px',
+      fontSize: '8px',
       fontStyle: 'bold',
       color: '#fff0c9',
       stroke: '#0d0b16',
@@ -68,7 +68,7 @@ export class FightScene extends Phaser.Scene {
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(10003);
     this.modeLabel = this.add.text(GAME_WIDTH / 2, 52, combat.label, {
       fontFamily: 'monospace',
-      fontSize: '5px',
+      fontSize: '7px',
       color: '#d0c4dc',
       stroke: '#0d0b16',
       strokeThickness: 2,

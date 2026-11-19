@@ -19,19 +19,19 @@ export class PauseMenuView {
     this.showingControls = false;
     this.#beginPanel('PAUSA', 170);
     this.#addButton('CONTINUAR', 116, this.onResume);
-    this.#addButton('CONTROLES', 151, () => this.showControls());
+    this.#addButton('TUTORIALES', 151, () => this.showControls());
     this.#addButton('VOLVER AL MENÚ', 186, this.onReturnToMenu);
     this.container.setVisible(true);
   }
 
   showControls() {
     this.showingControls = true;
-    this.#beginPanel('CONTROLES', 196);
-    this.#addText('J1 · MOVER A / D · ATAQUE F · TELETRANSPORTE G', 100, {
+    this.#beginPanel('TUTORIALES', 220);
+    this.#addText('J1 · MOVER W / A / S / D · ATAQUE F · TELETRANSPORTE G', 100, {
       fontSize: '7px',
       color: '#d9a9ff',
     });
-    this.#addText('J2 · MOVER ← / → · ATAQUE L · TELETRANSPORTE K', 127, {
+    this.#addText('J2 · MOVER ↑ / ← / ↓ / → · ATAQUE L · TELETRANSPORTE K', 127, {
       fontSize: '7px',
       color: '#ffc17e',
     });
@@ -39,15 +39,19 @@ export class PauseMenuView {
       fontSize: '7px',
       color: '#e7d6a8',
     });
-    this.#addText('P · ABRIR / CERRAR PAUSA', 178, {
+    this.#addText('P · ABRIR / CERRAR PAUSA', 165, {
       fontSize: '7px',
       color: '#fff0c9',
     });
-    this.#addText('R · REINICIAR · ESC · VOLVER A PAUSA', 194, {
+    this.#addText('R · REINICIAR EL COMBATE', 187, {
       fontSize: '7px',
       color: '#aaa0bd',
     });
-    this.#addButton('VOLVER A PAUSA', 219, () => this.showMenu(), { width: 178 });
+    this.#addText('ESC · MENÚ / PAUSA: REANUDAR / TUTORIALES: VOLVER', 209, {
+      fontSize: '6px',
+      color: '#aaa0bd',
+    });
+    this.#addButton('VOLVER A PAUSA', 233, () => this.showMenu(), { width: 178 });
     this.container.setVisible(true);
   }
 

@@ -3,7 +3,7 @@ import { createFighter } from '../rangers/createFighter.js';
 import { FighterState, TIMINGS } from './FighterState.js';
 
 const make = (id = 'violet', x = 100) => createFighter(id, { x, y: 232 });
-const idle = { x: 0, attack: false, teleport: false };
+const idle = { x: 0, y: 0, attack: false, teleport: false };
 const run = (fighter, intent, totalMs, step = 16) => {
   for (let t = 0; t < totalMs; t += step) fighter.update(intent, step);
 };
@@ -30,6 +30,15 @@ describe('Fighter: movimiento y orientación', () => {
     fighter.update(idle, 16);
     expect(fighter.facing).toBe(-1);
     expect(fighter.state).toBe(FighterState.IDLE);
+  });
+
+  it('se desplaza hacia arriba y abajo sin alterar la orientación', () => {
+    const fighter = make();
+    fighter.update({ ...idle, y: -1 }, 500);
+    expect(fighter.position.y).toBeCloseTo(232 - fighter.stats.moveSpeed / 2);
+    expect(fighter.facing).toBe(1);
+    fighter.update({ ...idle, y: 1 }, 500);
+    expect(fighter.position.y).toBeCloseTo(232);
   });
 
   it('la levitación puede tocar el suelo y elevarse dentro de su amplitud', () => {

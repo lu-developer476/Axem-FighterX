@@ -5,7 +5,7 @@ import { createFighter } from '../rangers/createFighter.js';
 import { ARENA, PICKUP } from '../arena/arena.js';
 import { PICKUP_TYPES } from './PowerUpPickup.js';
 
-const idle = { x: 0, attack: false, teleport: false };
+const idle = { x: 0, y: 0, attack: false, teleport: false };
 const make = ({ ax = 300, bx = 340, rng = () => 0 } = {}) => {
   const a = createFighter('violet', { x: ax, y: ARENA.groundY }, 1);
   const b = createFighter('orange', { x: bx, y: ARENA.groundY }, -1);
@@ -38,6 +38,16 @@ describe('Match: golpes', () => {
     const events = advance(match, [{ ...idle, attack: true }, idle], 600);
     expect(events.some((e) => e.type === 'hit')).toBe(false);
     expect(match.fighters[1].health).toBe(match.fighters[1].maxHealth);
+  });
+
+  it('los ataques respetan la profundidad del escenario', () => {
+    const match = make({ ax: 300, bx: 340 });
+    const [attacker, target] = match.fighters;
+    attacker.position.y = ARENA.minY;
+    target.position.y = ARENA.maxY;
+    const events = advance(match, [{ ...idle, attack: true }, idle], 600);
+    expect(events.some((event) => event.type === 'hit')).toBe(false);
+    expect(target.health).toBe(target.maxHealth);
   });
 
   it('el golpe no entra mientras el rival se teletransporta', () => {
@@ -98,10 +108,19 @@ describe('Match: cuerpos y escenario', () => {
     expect(Math.abs(b.position.x - a.position.x)).toBeLessThanOrEqual(ARENA.maxSeparation + 0.5);
   });
 
-  it('respetan los límites del escenario', () => {
+  it('respetan los límites horizontales del escenario', () => {
     const match = make({ ax: 100, bx: 140 });
     advance(match, [{ ...idle, x: -1 }, idle], 4000);
     expect(match.fighters[0].position.x).toBe(ARENA.minX);
+  });
+
+  it('permite ascender y descender sin salir del plano de combate', () => {
+    const match = make({ ax: 300, bx: 420 });
+    const [fighter] = match.fighters;
+    advance(match, [{ ...idle, y: -1 }, idle], 1800);
+    expect(fighter.position.y).toBe(ARENA.minY);
+    advance(match, [{ ...idle, y: 1 }, idle], 1800);
+    expect(fighter.position.y).toBe(ARENA.maxY);
   });
 });
 

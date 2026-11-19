@@ -44,11 +44,15 @@ export class FighterView {
     );
     if (pose.flash) sprite.setTintFill(0xffffff);
     else sprite.clearTint();
-    sprite.setDepth(FIGHTER_DEPTH + (fighter.state === FighterState.ATTACK ? 2 : 0));
+    const laneDepth = FIGHTER_DEPTH + Math.round(fighter.position.y);
+    sprite.setDepth(laneDepth + (fighter.state === FighterState.ATTACK ? 2 : 0));
 
     const height = FLOAT_HEIGHT + lift;
-    this.shadow.setPosition(Math.round(fighter.position.x), ARENA.groundY);
-    this.shadow.setScale(Math.max(0.5, 1 - height * 0.025), 1);
+    const laneProgress = (fighter.position.y - ARENA.minY) / (ARENA.maxY - ARENA.minY);
+    const shadowScale = 0.72 + laneProgress * 0.28;
+    this.shadow.setPosition(Math.round(fighter.position.x), Math.round(fighter.position.y));
+    this.shadow.setScale(shadowScale, shadowScale);
+    this.shadow.setDepth(laneDepth - 1);
     this.shadow.setAlpha(pose.alpha * 0.4);
   }
 }

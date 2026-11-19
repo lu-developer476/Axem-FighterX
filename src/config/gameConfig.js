@@ -10,6 +10,8 @@ export const createGameConfig = (scenes) => ({
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
   backgroundColor: '#120f26',
+  // Renderiza a doble densidad; pixelArt mantiene el muestreo nearest-neighbor.
+  resolution: 2,
   pixelArt: true,
   antialias: false,
   antialiasGL: false,

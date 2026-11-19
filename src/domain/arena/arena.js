@@ -1,7 +1,10 @@
 /** Dimensiones y reglas del escenario (unidades = píxeles del lienzo interno). */
 export const ARENA = Object.freeze({
   width: 640,
+  /** Profundidad máxima (arriba) y mínima (abajo) del plano de combate. */
+  minY: 170,
   groundY: 232,
+  maxY: 232,
   minX: 40,
   maxX: 600,
   /** Distancia mínima entre centros: evita que los luchadores se atraviesen. */

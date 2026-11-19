@@ -26,9 +26,17 @@ export class StageView {
     this.stageId = STAGE_VISUALS[stageId] ? stageId : STAGE_IDS.RUINS;
     this.textures = getStageTextures(this.stageId);
     this.visuals = STAGE_VISUALS[this.stageId];
+    this.parallaxLayers = [];
 
-    const layer = (key, factor, depth, x = 0, y = 0) =>
-      scene.add.image(x, y, key).setOrigin(0, 0).setScrollFactor(factor).setDepth(depth);
+    // Las posiciones enteras evitan que el desplazamiento interpole píxeles.
+    const layer = (key, factor, depth, x = 0, y = 0) => {
+      const image = scene.add.image(x, y, key)
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDepth(depth);
+      this.parallaxLayers.push({ image, factor, originX: x });
+      return image;
+    };
 
     layer(this.textures.sky, 0, -100);
     layer(this.textures.far, PARALLAX.far, -90);
@@ -40,7 +48,7 @@ export class StageView {
       .setDepth(-75)
       .setAlpha(this.visuals.hazeAlpha);
     layer(this.textures.near, PARALLAX.near, -70);
-    layer(this.textures.floor, 1, -20, 0, ARENA.groundY);
+    layer(this.textures.floor, 1, -20, 0, ARENA.minY);
 
     for (const x of [0, ARENA.width - WALL_WIDTH]) {
       layer(this.textures.wall, 1, -15, x, ARENA.groundY - WALL_HEIGHT);
@@ -68,7 +76,10 @@ export class StageView {
    * @param {number} scrollX posición horizontal de la cámara
    */
   update(timeMs, scrollX) {
-    this.fog.tilePositionX = timeMs * 0.012 + scrollX * 0.4;
+    for (const { image, factor, originX } of this.parallaxLayers) {
+      image.setX(Math.round(originX - scrollX * factor));
+    }
+    this.fog.tilePositionX = Math.round(timeMs * 0.012 + scrollX * 0.4);
     const flicker = this.visuals.barrierBaseAlpha + this.visuals.flicker * (0.5 + 0.5 * Math.sin(timeMs / 90));
     for (const barrier of this.barriers) barrier.setAlpha(flicker);
   }

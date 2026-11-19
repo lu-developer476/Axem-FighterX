@@ -37,7 +37,7 @@ export function createStageTextures(scene) {
   createCanvasTexture(scene, STAGE_TEXTURES.mid, layerWidth(PARALLAX.mid), VIEW.height, drawMid);
   createCanvasTexture(scene, STAGE_TEXTURES.near, layerWidth(PARALLAX.near), VIEW.height, drawNear);
   createCanvasTexture(scene, STAGE_TEXTURES.fog, 128, 40, drawFog);
-  createCanvasTexture(scene, STAGE_TEXTURES.floor, ARENA.width, VIEW.height - ARENA.groundY, drawFloor);
+  createCanvasTexture(scene, STAGE_TEXTURES.floor, ARENA.width, VIEW.height - ARENA.minY, drawFloor);
   createCanvasTexture(scene, STAGE_TEXTURES.wall, WALL_WIDTH, WALL_HEIGHT, drawWall);
   createCanvasTexture(scene, STAGE_TEXTURES.pillar, 24, PILLAR_HEIGHT, drawPillar);
   createCanvasTexture(scene, STAGE_TEXTURES.barrier, 6, 150, drawBarrier);

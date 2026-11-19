@@ -1,4 +1,4 @@
-import { mkdir, stat } from 'node:fs/promises';
+import { mkdir, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -76,26 +76,39 @@ async function generateGif() {
     );
   }
 
-  return { result, sourceMetadata };
+  return result;
 }
 
 async function main() {
   await mkdir(publicDirectory, { recursive: true });
 
-  // Process sequentially to keep peak memory usage low when decoding animated frames.
-  const gif = await generateGif();
+  // Generate the static fallback first so a bad GIF never breaks the app build.
   const png = await generatePng();
 
-  const [gifFile, pngFile] = await Promise.all([stat(gifOutput), stat(pngOutput)]);
+  let gif = null;
+  try {
+    // Process after the PNG to keep memory usage low while decoding animated frames.
+    gif = await generateGif();
+  } catch (error) {
+    // Remove a stale output from a previous build so the browser can fall back to PNG.
+    await rm(gifOutput, { force: true });
+    const reason = error instanceof Error ? error.message : String(error);
+    console.warn(`Animated favicon unavailable; using PNG fallback. ${reason}`);
+  }
+
+  const pngFile = await stat(pngOutput);
+  const gifFile = gif ? await stat(gifOutput) : null;
 
   console.log(
     `Favicons generated at ${iconSize}x${iconSize}: ` +
-    `GIF ${gif.result.pages} frames (${formatBytes(gifFile.size)}) / ` +
-    `PNG (${formatBytes(pngFile.size)}).`,
+    `PNG (${formatBytes(pngFile.size)}) / ` +
+    (gif
+      ? `GIF ${gif.pages} frames (${formatBytes(gifFile.size)}).`
+      : 'GIF unavailable; PNG fallback is ready.'),
   );
 }
 
 main().catch((error) => {
-  console.error('Unable to generate favicons:', error);
+  console.error('Unable to generate the PNG favicon fallback:', error);
   process.exitCode = 1;
 });

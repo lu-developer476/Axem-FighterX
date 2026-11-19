@@ -4,3 +4,7 @@ dist/
 .env*
 .DS_Store
 artifacts/
+
+# Generated from art/source by scripts/prepare-favicons.mjs
+/public/favicon.png
+/public/favicon.gif

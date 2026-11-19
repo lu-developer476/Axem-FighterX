@@ -5,7 +5,9 @@
   "type": "module",
   "description": "Juego de pelea retro con Phaser, desplegable en Vercel",
   "scripts": {
+    "predev": "node scripts/prepare-favicons.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/prepare-favicons.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
@@ -17,6 +19,7 @@
   "devDependencies": {
     "vite": "^6.0.0",
     "vitest": "^3.0.0",
-    "playwright": "^1.50.0"
+    "playwright": "^1.50.0",
+    "sharp": "^0.35.5"
   }
 }

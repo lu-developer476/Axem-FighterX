@@ -19,7 +19,7 @@ Controles:
 | **J1** Axem Violet | `A` / `D` | `F` | `G` |
 | **J2** Axem Orange | `←` / `→` | `L` | `K` |
 
-`R` reinicia la partida. `ESC` vuelve al menú desde el combate. Cada personaje apunta hacia donde se movió por última vez.
+`P` o el botón `[ P ] PAUSA` abre el menú de pausa durante el combate. Desde allí podés continuar, consultar los controles o volver al menú principal. Los controles quedan ocultos mientras jugás. `R` reinicia la partida. `ESC` vuelve al menú desde el combate. Cada personaje apunta hacia donde se movió por última vez.
 
 ## Flujo de selección de partida
 

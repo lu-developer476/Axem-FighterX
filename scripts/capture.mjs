@@ -117,26 +117,39 @@ for (let line = 0; line < 7; line++) {
 await wait(500);
 await shot('12-combate-ruinas');
 
+// La pausa debe detener el combate y mostrar los controles solo cuando se solicitan.
+await tap('p');
+await wait(120);
+await shot('13-menu-pausa');
+await tap('ArrowDown');
+await tap('Enter'); // PAUSA → CONTROLES
+await wait(100);
+await shot('14-controles-dentro-de-pausa');
+await tap('Escape'); // Controles → menú de pausa
+await wait(80);
+await tap('Enter'); // CONTINUAR → combate
+await wait(150);
+
 // Escenario y parallax: J1 camina hacia la derecha, J2 hacia la izquierda.
 await Promise.all([hold('d', 700), hold('ArrowRight', 1500)]);
-await shot('13-parallax-derecha');
+await shot('15-parallax-derecha');
 await hold('ArrowLeft', 2500);
-await shot('14-parallax-izquierda');
+await shot('16-parallax-izquierda');
 
 // Pelea: J1 se acerca y ataca.
 await Promise.all([hold('a', 1800), hold('ArrowRight', 1800)]);
 await hold('d', 900);
 await tap('f');
 await wait(150);
-await shot('15-ataque');
+await shot('17-ataque');
 await wait(120);
-await shot('16-golpe-explosion');
+await shot('18-golpe-explosion');
 await wait(600);
 
 // Teletransporte de J2.
 await tap('k');
 await wait(70);
-await shot('17-teletransporte');
+await shot('19-teletransporte');
 await wait(500);
 
 // J1 se gira hacia el rival y lo vence a hachazos.
@@ -144,16 +157,16 @@ await hold('a', 120);
 for (let i = 0; i < 14; i++) {
   await tap('f');
   await wait(520);
-  if (i === 6) await shot('18-combate');
+  if (i === 6) await shot('20-combate');
 }
 await wait(400);
-await shot('19-ko');
+await shot('21-ko');
 await wait(1500);
 
 // Reinicio.
 await tap('r');
 await wait(600);
-await shot('20-reinicio');
+await shot('22-reinicio');
 
 await context.close();
 await browser.close();

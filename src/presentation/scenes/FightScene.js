@@ -11,6 +11,7 @@ import { FxDirector } from '../views/FxDirector.js';
 import { HudView } from '../views/HudView.js';
 import { PickupView } from '../views/PickupView.js';
 import { StageView } from '../views/StageView.js';
+import { PauseMenuView } from '../views/PauseMenuView.js';
 
 const CAMERA_FOLLOW_SPEED = 8;
 
@@ -41,9 +42,22 @@ export class FightScene extends Phaser.Scene {
     this.pickupView = new PickupView(this);
     this.views = this.match.fighters.map((fighter) => new FighterView(this, fighter));
     this.fx = new FxDirector(this);
-    this.hud = new HudView(this, this.match.fighters);
+    this.paused = false;
+    this.pauseKey = this.input.keyboard.addKey('P');
     this.restartKey = this.input.keyboard.addKey('R');
     this.menuKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+    this.pauseNavigationKeys = this.input.keyboard.addKeys({
+      up: Phaser.Input.Keyboard.KeyCodes.UP,
+      down: Phaser.Input.Keyboard.KeyCodes.DOWN,
+      enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+    });
+    this.hud = new HudView(this, this.match.fighters, {
+      onPause: () => this.#openPause(),
+    });
+    this.pauseMenu = new PauseMenuView(this, {
+      onResume: () => this.#resume(),
+      onReturnToMenu: () => this.scene.start('MenuScene'),
+    });
 
     const versus = getVersusMode(this.matchSetup.versusMode);
     const combat = getCombatMode(this.matchSetup.combatMode);
@@ -73,8 +87,28 @@ export class FightScene extends Phaser.Scene {
   }
 
   update(time, delta) {
+    if (this.paused) {
+      if (Phaser.Input.Keyboard.JustDown(this.pauseKey)) {
+        this.#resume();
+        return;
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.menuKey)) {
+        if (this.pauseMenu.showingControls) this.pauseMenu.showMenu();
+        else this.#resume();
+        return;
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.pauseNavigationKeys.up)) this.pauseMenu.moveSelection(-1);
+      if (Phaser.Input.Keyboard.JustDown(this.pauseNavigationKeys.down)) this.pauseMenu.moveSelection(1);
+      if (Phaser.Input.Keyboard.JustDown(this.pauseNavigationKeys.enter)) this.pauseMenu.activateSelection();
+      return;
+    }
+
     if (Phaser.Input.Keyboard.JustDown(this.menuKey)) {
       this.scene.start('MenuScene');
+      return;
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.pauseKey)) {
+      this.#openPause();
       return;
     }
     if (Phaser.Input.Keyboard.JustDown(this.restartKey)) this.#restart();
@@ -95,6 +129,22 @@ export class FightScene extends Phaser.Scene {
     this.#followFighters(delta);
     this.stage.update(time, this.cameras.main.scrollX);
     this.hud.update(delta);
+  }
+
+  #openPause() {
+    if (this.paused) return;
+    this.paused = true;
+    this.tweens.pauseAll();
+    this.anims.pauseAll();
+    this.pauseMenu.showMenu();
+  }
+
+  #resume() {
+    if (!this.paused) return;
+    this.paused = false;
+    this.pauseMenu.hide();
+    this.tweens.resumeAll();
+    this.anims.resumeAll();
   }
 
   #targetScrollX() {

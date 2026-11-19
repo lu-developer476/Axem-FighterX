@@ -1,4 +1,5 @@
 import { GAME_WIDTH } from '../../config/gameConfig.js';
+import { PICKUP_TYPES } from '../../domain/entities/PowerUpPickup.js';
 
 const BAR = { width: 176, height: 10, y: 16, margin: 12 };
 const COLORS = {
@@ -11,8 +12,13 @@ const COLORS = {
   shine: 0xffffff,
 };
 const FONT = { fontFamily: 'monospace', color: '#f4efd8' };
+const STATUS_LABELS = {
+  [PICKUP_TYPES.FURY]: 'FURIA',
+  [PICKUP_TYPES.HASTE]: 'RAPIDEZ',
+  [PICKUP_TYPES.SHIELD]: 'ESCUDO',
+};
 
-/** Interfaz: barras de vida con estela de daño, nombres, ayuda de controles y resultado. */
+/** Interfaz: vida, potenciadores activos, controles y resultado del combate. */
 export class HudView {
   /**
    * @param {Phaser.Scene} scene
@@ -29,6 +35,22 @@ export class HudView {
     text(BAR.margin, 3, fighters[0].name.toUpperCase(), { fontSize: '8px' });
     text(GAME_WIDTH - BAR.margin, 3, fighters[1].name.toUpperCase(), { fontSize: '8px' }, 1);
     text(GAME_WIDTH / 2, 12, 'VS', { fontSize: '10px', fontStyle: 'bold', color: '#ffc23a' }, 0.5);
+
+    this.statusLabels = fighters.map((fighter, index) =>
+      text(
+        index === 0 ? BAR.margin : GAME_WIDTH - BAR.margin,
+        31,
+        '',
+        { fontSize: '6px', color: index === 0 ? '#d9a9ff' : '#ffc17e', align: index === 0 ? 'left' : 'right' },
+        index === 0 ? 0 : 1,
+      ),
+    );
+
+    text(GAME_WIDTH / 2, 228, 'OBJETOS: VIDA  ·  FURIA  ·  RAPIDEZ  ·  ESCUDO', {
+      fontSize: '6px',
+      color: '#e7d6a8',
+      align: 'center',
+    }, 0.5);
     text(8, 242, 'J1  A/D mover   F hachazo   G teletransporte', { fontSize: '8px', color: '#9a96c0' });
     text(8, 254, 'J2  ←/→ mover   L hachazo   K teletransporte   ·   R reiniciar', {
       fontSize: '8px',
@@ -66,6 +88,10 @@ export class HudView {
       this.trail[i] =
         this.trail[i] > fighter.health ? Math.max(fighter.health, this.trail[i] - trailLoss) : fighter.health;
       this.#drawBar(i, fighter);
+      const active = Object.entries(fighter.powerUps)
+        .filter(([, remainingMs]) => remainingMs > 0)
+        .map(([type, remainingMs]) => `${STATUS_LABELS[type]} ${Math.ceil(remainingMs / 1000)}s`);
+      this.statusLabels[i].setText(active.join('  ')).setVisible(active.length > 0);
     });
   }
 

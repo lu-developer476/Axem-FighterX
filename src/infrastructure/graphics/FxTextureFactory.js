@@ -20,12 +20,15 @@ export const FX = Object.freeze({
 export const fxFrameKey = (name, i) => `fx-${name}-${i}`;
 export const fxAnimKey = (name) => `fx-${name}`;
 
-/** Texturas sueltas (partículas, corazón). */
+/** Texturas sueltas para partículas, objetos y potenciadores. */
 export const FX_PARTICLES = Object.freeze({
   pixel: 'fx-px',
   plus: 'fx-plus',
   diamond: 'fx-diamond',
   heart: 'fx-heart',
+  sword: 'fx-sword',
+  shield: 'fx-shield',
+  boot: 'fx-boot',
 });
 
 export function createFxTextures(scene) {
@@ -49,6 +52,9 @@ export function createFxTextures(scene) {
   createCanvasTexture(scene, FX_PARTICLES.plus, 7, 7, drawPlus);
   createCanvasTexture(scene, FX_PARTICLES.diamond, 5, 5, drawDiamond);
   createCanvasTexture(scene, FX_PARTICLES.heart, 11, 10, drawHeart);
+  createCanvasTexture(scene, FX_PARTICLES.sword, 16, 16, drawSword);
+  createCanvasTexture(scene, FX_PARTICLES.shield, 16, 16, drawShield);
+  createCanvasTexture(scene, FX_PARTICLES.boot, 16, 16, drawBoot);
 }
 
 // ── Explosión (daño y KO) ───────────────────────────────────────────────────
@@ -248,4 +254,31 @@ function drawHeart(ctx) {
       if (colors[char]) rect(ctx, colors[char], x, y);
     });
   });
+}
+
+function drawSword(ctx) {
+  rect(ctx, '#f8f0d7', 7, 1, 2, 9);
+  rect(ctx, '#9aabd8', 6, 3, 1, 6);
+  rect(ctx, '#9aabd8', 9, 3, 1, 6);
+  rect(ctx, '#ffc35b', 4, 10, 8, 2);
+  rect(ctx, '#9b633f', 7, 12, 2, 3);
+}
+
+function drawShield(ctx) {
+  const widths = [6, 10, 12, 12, 10, 8, 4];
+  widths.forEach((width, row) => {
+    const x = Math.round((16 - width) / 2);
+    rect(ctx, '#7180c7', x, row + 2, width, 2);
+    if (width > 6) rect(ctx, '#c5d5ff', x + 2, row + 2, width - 4, 2);
+  });
+  rect(ctx, '#f7e7b0', 7, 4, 2, 7);
+}
+
+function drawBoot(ctx) {
+  rect(ctx, '#7edfff', 5, 2, 6, 2);
+  rect(ctx, '#7edfff', 6, 4, 5, 4);
+  rect(ctx, '#b4efff', 4, 7, 7, 3);
+  rect(ctx, '#b4efff', 3, 9, 10, 3);
+  rect(ctx, '#477cae', 2, 12, 12, 2);
+  rect(ctx, '#ffffff', 8, 3, 2, 2);
 }

@@ -1,14 +1,14 @@
 import { ARENA, PICKUP } from '../arena/arena.js';
 import { overlapCenter, rectsOverlap } from '../geometry/rect.js';
 import { FighterState } from './FighterState.js';
-import { HealthPickup } from './HealthPickup.js';
+import { PICKUP_TYPES, PICKUP_TYPE_LIST, PowerUpPickup } from './PowerUpPickup.js';
 
 const NEUTRAL = Object.freeze({ x: 0, attack: false, teleport: false });
 const MAX_STEP_MS = 50;
 
 /**
  * Un combate 1 contra 1. Orquesta las reglas entre luchadores: choque de
- * cuerpos, golpes, curaciones y fin de partida. Devuelve eventos de dominio
+ * cuerpos, golpes, objetos y fin de partida. Devuelve eventos de dominio
  * en cada paso para que la presentación los convierta en efectos.
  */
 export class Match {
@@ -141,7 +141,7 @@ export class Match {
       if (!box || !rectsOverlap(box, target.hurtbox)) continue;
       const point = overlapCenter(box, target.hurtbox);
       const landed = target.takeHit({
-        damage: attacker.stats.attackDamage,
+        damage: attacker.currentAttackDamage,
         fromDirection: attacker.facing,
       });
       if (!landed) continue;
@@ -150,7 +150,7 @@ export class Match {
         type: 'hit',
         attackerId: attacker.id,
         targetId: target.id,
-        damage: attacker.stats.attackDamage,
+        damage: target.lastDamageTaken,
         x: point.x,
         y: point.y,
         facing: attacker.facing,
@@ -164,21 +164,34 @@ export class Match {
     if (this.pickup) {
       this.pickup.ageMs += dt;
       if (this.pickup.remainingMs <= 0) {
-        events.push({ type: 'pickup-expired', x: this.pickup.x });
+        events.push({ type: 'pickup-expired', x: this.pickup.x, powerUpType: this.pickup.type });
         this.pickup = null;
         return;
       }
       for (const fighter of this.fighters) {
         if (!fighter.isAlive || !rectsOverlap(fighter.hurtbox, this.pickup.box)) continue;
-        const healed = fighter.heal(this.pickup.amount);
-        if (healed <= 0) continue;
-        events.push({
-          type: 'heal',
-          id: fighter.id,
-          amount: healed,
-          x: fighter.position.x,
-          y: fighter.position.y - 42,
-        });
+        if (this.pickup.type === PICKUP_TYPES.HEALTH) {
+          const healed = fighter.heal(this.pickup.amount);
+          if (healed <= 0) continue;
+          events.push({
+            type: 'heal',
+            id: fighter.id,
+            amount: healed,
+            x: fighter.position.x,
+            y: fighter.position.y - 42,
+          });
+        } else {
+          const durationMs = fighter.applyPowerUp(this.pickup.type);
+          if (durationMs <= 0) continue;
+          events.push({
+            type: 'powerup',
+            id: fighter.id,
+            powerUpType: this.pickup.type,
+            durationMs,
+            x: fighter.position.x,
+            y: fighter.position.y - 42,
+          });
+        }
         this.pickup = null;
         break;
       }
@@ -189,10 +202,13 @@ export class Match {
     this.pickupTimerMs -= dt;
     if (this.pickupTimerMs > 0) return;
     const { minX, maxX } = this.arena;
-    const x = minX + 40 + this.rng() * (maxX - minX - 80);
-    this.pickup = new HealthPickup(x);
+    const randomPosition = Math.min(0.999999, Math.max(0, this.rng()));
+    const x = minX + 40 + randomPosition * (maxX - minX - 80);
+    const randomType = Math.min(0.999999, Math.max(0, this.rng()));
+    const type = PICKUP_TYPE_LIST[Math.floor(randomType * PICKUP_TYPE_LIST.length)];
+    this.pickup = new PowerUpPickup(x, type);
     this.pickupTimerMs = PICKUP.intervalMs;
-    events.push({ type: 'pickup-spawn', x });
+    events.push({ type: 'pickup-spawn', x, powerUpType: type });
   }
 
   #checkWinner(events) {

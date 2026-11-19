@@ -1,15 +1,21 @@
 import Phaser from 'phaser';
 import { ARENA } from '../../domain/arena/arena.js';
 import { FighterState, TIMINGS } from '../../domain/entities/FighterState.js';
+import { POWER_UPS, PICKUP_TYPES } from '../../domain/entities/PowerUpPickup.js';
 import { FX_PARTICLES, fxAnimKey, fxFrameKey } from '../../infrastructure/graphics/FxTextureFactory.js';
 
 const FX_DEPTH = 500;
 const DUST_INTERVAL_MS = 190;
 const SPARK_COLORS = [0xfff3b0, 0xffc23a, 0xff7a2b, 0xffffff];
+const POWER_UP_TEXTURES = {
+  [PICKUP_TYPES.FURY]: FX_PARTICLES.sword,
+  [PICKUP_TYPES.HASTE]: FX_PARTICLES.boot,
+  [PICKUP_TYPES.SHIELD]: FX_PARTICLES.shield,
+};
 
 /**
- * Traduce los eventos de dominio (golpe, KO, teletransporte, curación...) a
- * efectos visuales: explosiones, chispas, polvo, ondas, partículas y texto flotante.
+ * Traduce los eventos de dominio a efectos visuales: impactos, KO,
+ * teletransporte, curación y activación de potenciadores.
  */
 export class FxDirector {
   /** @param {Phaser.Scene} scene */
@@ -44,6 +50,15 @@ export class FxDirector {
           break;
         case 'heal':
           this.#heal(event);
+          break;
+        case 'powerup':
+          this.#powerUp(event);
+          break;
+        case 'powerup-expired':
+          this.#powerUpExpired(event);
+          break;
+        case 'shield-block':
+          this.#shieldBlock(event);
           break;
         case 'pickup-spawn':
           this.#play('healRing', event.x, ARENA.groundY - 20);
@@ -143,6 +158,49 @@ export class FxDirector {
       });
     }
     this.#floatText(event.x, event.y - 26, `+${event.amount}`, '#7dff9a');
+  }
+
+  #powerUp(event) {
+    const definition = POWER_UPS[event.powerUpType];
+    const texture = POWER_UP_TEXTURES[event.powerUpType];
+    if (!definition || !texture) return;
+    const color = `#${definition.color.toString(16).padStart(6, '0')}`;
+    this.#play('healRing', event.x, event.y + 8, { scale: 1.45 });
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const particle = this.scene.add
+        .image(event.x, event.y, texture)
+        .setScale(0.9)
+        .setTint(definition.color)
+        .setDepth(FX_DEPTH + 4);
+      this.scene.tweens.add({
+        targets: particle,
+        x: event.x + Math.cos(angle) * 32,
+        y: event.y + Math.sin(angle) * 28 - 12,
+        alpha: 0,
+        duration: 560,
+        ease: 'Cubic.easeOut',
+        onComplete: () => particle.destroy(),
+      });
+    }
+
+    const benefit = event.powerUpType === PICKUP_TYPES.FURY
+      ? '+50% DAÑO'
+      : event.powerUpType === PICKUP_TYPES.HASTE
+        ? '+40% VELOCIDAD'
+        : '50% MENOS DAÑO';
+    this.#floatText(event.x, event.y - 28, `${definition.label} · ${benefit}`, color);
+  }
+
+  #powerUpExpired(event) {
+    const definition = POWER_UPS[event.powerUpType];
+    if (definition) this.#floatText(event.x, event.y - 12, `${definition.label} AGOTADA`, '#c1b8d4');
+  }
+
+  #shieldBlock(event) {
+    this.#play('spark', event.x, event.y, { scale: 1.1 });
+    this.#floatText(event.x, event.y - 20, 'BLOQUEO', '#a9c5ff');
   }
 
   // ── Utilidades ───────────────────────────────────────────────────────────

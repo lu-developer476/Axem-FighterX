@@ -30,18 +30,18 @@ Clean Architecture con la regla de dependencia apuntando hacia adentro:
 src/
 ├── domain/              Reglas puras. Sin Phaser ni DOM.
 │   ├── arena/           Dimensiones y reglas del escenario
-│   ├── entities/        Fighter (estados, vida, hitboxes), Match (golpes, KO, curación)
+│   ├── entities/        Fighter (estados, vida, hitboxes), Match (golpes, KO, objetos)
 │   ├── geometry/        Utilidades de colisión
 │   └── rangers/         Catálogo de personajes (stats) y fábrica
-├── application/         Casos de uso y puertos
+├── application/         Casos de uso
 │   ├── ports/           InputPort (contrato de entrada)
 │   └── useCases/        CreateMatch, UpdateMatch
 ├── infrastructure/      Adaptadores a tecnologías concretas
 │   ├── input/           PhaserKeyboardInput (implementa InputPort)
-│   ├── assets/          Manifiesto de sprites y datos de animación por personaje
-│   └── graphics/        Escenario y efectos pixel art generados por código
+│   ├── assets/          Manifiesto de sprites y datos de animación
+│   └── graphics/        Escenario, efectos e iconos pixel art generados por código
 ├── presentation/        Todo lo que dibuja
-│   ├── animation/       Animador (hoja de sprites o pose por código), registro de animaciones
+│   ├── animation/       Animador y registro de animaciones
 │   ├── scenes/          PreloadScene, FightScene
 │   └── views/           FighterView, StageView, HudView, FxDirector, PickupView
 ├── config/              Resolución y configuración de Phaser
@@ -58,7 +58,8 @@ Para cambiar el control (gamepad, táctil), basta con otro adaptador que impleme
 - **Hachazo:** carga (120 ms), fase activa con hitbox delante del personaje (110 ms) y recuperación (190 ms). Un ataque golpea una sola vez.
 - **Golpe recibido:** daño, aturdimiento, retroceso y breve invulnerabilidad. Con 0 de vida, KO.
 - **Teletransporte:** con el rival cerca reaparece detrás de él; si no, salta hacia adelante. Es invulnerable mientras dura y tiene enfriamiento.
-- **Corazón de curación:** aparece cada tanto en el escenario y cura 25 de vida.
+- **Objetos de combate:** aparecen cada tanto y duran 9 segundos. El corazón recupera 25 puntos de vida; Furia aumenta el daño un 50%; Rapidez aumenta el movimiento un 40%; Escudo reduce el daño recibido un 50%. Los tres potenciadores duran 6,5 segundos y su estado se muestra debajo de cada barra de vida.
+- **Recolección:** ambos jugadores pueden recoger objetos al tocarlos. El corazón no se consume si el luchador ya tiene toda la vida; los potenciadores se pueden renovar al recoger otro del mismo tipo.
 
 ## Animaciones por datos
 
@@ -81,7 +82,7 @@ Mientras no haya hojas de sprites, el juego usa la pose actual con animaciones p
    se ajustan solas a la duración de la acción. Si el servidor de desarrollo está abierto, reinicialo.
 
 Los efectos (explosión, chispa de impacto, polvo, onda de KO, teletransporte, tajo del hacha y curación)
-se generan por código en `infrastructure/graphics/FxTextureFactory.js`.
+se generan por código en `infrastructure/graphics/FxTextureFactory.js`, junto con los iconos de los objetos.
 
 ## Arte
 
@@ -108,5 +109,3 @@ Cada push a `main` ejecuta `.github/workflows/ci.yml`:
 3. Publicación jugable en GitHub Pages.
 
 Requiere **Settings → Pages → Source: GitHub Actions**. Para correr la captura en local: `npm run build && npm run preview` y, en otra terminal, `npm run capture`.
-
-

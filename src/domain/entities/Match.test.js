@@ -3,9 +3,10 @@ import { Match } from './Match.js';
 import { FighterState, TIMINGS } from './FighterState.js';
 import { createFighter } from '../rangers/createFighter.js';
 import { ARENA, PICKUP } from '../arena/arena.js';
+import { PICKUP_TYPES } from './PowerUpPickup.js';
 
 const idle = { x: 0, attack: false, teleport: false };
-const make = ({ ax = 300, bx = 340, rng = () => 0.5 } = {}) => {
+const make = ({ ax = 300, bx = 340, rng = () => 0 } = {}) => {
   const a = createFighter('violet', { x: ax, y: ARENA.groundY }, 1);
   const b = createFighter('orange', { x: bx, y: ARENA.groundY }, -1);
   return new Match({ fighters: [a, b], rng });
@@ -68,13 +69,15 @@ describe('Match: KO', () => {
     expect(a.position.x).toBe(x);
   });
 
-  it('restart devuelve todo al estado inicial', () => {
+  it('reiniciar devuelve todo al estado inicial, incluidos los potenciadores', () => {
     const match = make();
-    match.fighters[1].takeHit({ damage: 999, fromDirection: 1 });
+    const [a] = match.fighters;
+    a.applyPowerUp(PICKUP_TYPES.FURY);
     advance(match, [idle, idle], 50);
     match.restart();
     expect(match.isOver).toBe(false);
     expect(match.fighters.every((f) => f.health === f.maxHealth && f.state === FighterState.IDLE)).toBe(true);
+    expect(a.powerUps[PICKUP_TYPES.FURY]).toBe(0);
   });
 });
 
@@ -117,14 +120,15 @@ describe('Match: teletransporte', () => {
   });
 });
 
-describe('Match: curación', () => {
+describe('Match: objetos', () => {
   it('aparece un corazón y cura a quien lo toma', () => {
-    const match = make({ ax: 150, bx: 500, rng: () => 0.5 });
+    const match = make({ ax: 150, bx: 500, rng: () => 0 });
     const [a] = match.fighters;
     a.health = 40;
     const events = advance(match, [idle, idle], PICKUP.firstSpawnMs + 100);
     expect(events.some((e) => e.type === 'pickup-spawn')).toBe(true);
     expect(match.pickup).not.toBeNull();
+    expect(match.pickup.type).toBe(PICKUP_TYPES.HEALTH);
     a.position.x = match.pickup.x;
     const after = advance(match, [idle, idle], 50);
     expect(after.some((e) => e.type === 'heal')).toBe(true);
@@ -132,8 +136,47 @@ describe('Match: curación', () => {
     expect(match.pickup).toBeNull();
   });
 
-  it('el corazón desaparece si nadie lo toma', () => {
-    const match = make({ ax: 60, bx: 100 });
+  it('la furia aumenta el daño durante un tiempo y luego expira', () => {
+    const match = make({
+      ax: 150,
+      bx: 500,
+      rng: (() => { let calls = 0; return () => (calls++ % 2 === 0 ? 0.5 : 0.3); })(),
+    });
+    const [a] = match.fighters;
+    advance(match, [idle, idle], PICKUP.firstSpawnMs + 100);
+    expect(match.pickup.type).toBe(PICKUP_TYPES.FURY);
+    a.position.x = match.pickup.x;
+    const collected = advance(match, [idle, idle], 50);
+    expect(collected.some((event) => event.type === 'powerup' && event.powerUpType === PICKUP_TYPES.FURY)).toBe(true);
+    expect(a.currentAttackDamage).toBe(Math.round(a.stats.attackDamage * 1.5));
+    advance(match, [idle, idle], 6600);
+    expect(a.powerUps[PICKUP_TYPES.FURY]).toBe(0);
+  });
+
+  it('la rapidez aumenta el desplazamiento y el escudo reduce el daño recibido', () => {
+    const match = make({ ax: 150, bx: 500 });
+    const [a, b] = match.fighters;
+    a.applyPowerUp(PICKUP_TYPES.HASTE);
+    const before = a.position.x;
+    a.update({ ...idle, x: 1 }, 100);
+    expect(a.position.x - before).toBeCloseTo(a.stats.moveSpeed * 1.4 * 0.1);
+    b.applyPowerUp(PICKUP_TYPES.SHIELD);
+    expect(b.takeHit({ damage: 20, fromDirection: 1 })).toBe(true);
+    expect(b.health).toBe(b.maxHealth - 10);
+  });
+
+  it('un corazón no desaparece si el luchador ya tiene la vida completa', () => {
+    const match = make({ ax: 150, bx: 500, rng: () => 0 });
+    advance(match, [idle, idle], PICKUP.firstSpawnMs + 100);
+    const [a] = match.fighters;
+    a.position.x = match.pickup.x;
+    advance(match, [idle, idle], 50);
+    expect(match.pickup).not.toBeNull();
+    expect(a.health).toBe(a.maxHealth);
+  });
+
+  it('un objeto desaparece si nadie lo recoge', () => {
+    const match = make({ ax: 60, bx: 100, rng: () => 0 });
     const events = advance(match, [idle, idle], PICKUP.firstSpawnMs + PICKUP.lifetimeMs + 200);
     expect(events.some((e) => e.type === 'pickup-expired')).toBe(true);
   });

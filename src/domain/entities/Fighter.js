@@ -1,4 +1,5 @@
 import { FighterState, TIMINGS, attackTotalMs } from './FighterState.js';
+import { PICKUP_TYPES, POWER_UPS } from './PowerUpPickup.js';
 
 /** Caja del cuerpo. La posición del luchador son sus pies, centrados. */
 export const BODY = Object.freeze({ width: 36, height: 84 });
@@ -47,6 +48,12 @@ export class Fighter {
     this.teleportCooldownMs = 0;
     this.teleportTarget = null;
     this.teleportMoved = false;
+    this.powerUps = {
+      [PICKUP_TYPES.FURY]: 0,
+      [PICKUP_TYPES.HASTE]: 0,
+      [PICKUP_TYPES.SHIELD]: 0,
+    };
+    this.lastDamageTaken = 0;
     this.events.length = 0;
   }
 
@@ -54,6 +61,17 @@ export class Fighter {
 
   get maxHealth() {
     return this.stats.maxHealth;
+  }
+
+  get currentMoveSpeed() {
+    return this.stats.moveSpeed * (this.powerUps[PICKUP_TYPES.HASTE] > 0 ? POWER_UPS[PICKUP_TYPES.HASTE].speedMultiplier : 1);
+  }
+
+  get currentAttackDamage() {
+    return Math.round(
+      this.stats.attackDamage *
+      (this.powerUps[PICKUP_TYPES.FURY] > 0 ? POWER_UPS[PICKUP_TYPES.FURY].damageMultiplier : 1),
+    );
   }
 
   get isAlive() {
@@ -128,13 +146,28 @@ export class Fighter {
     return true;
   }
 
+  /** Activa o renueva un potenciador y devuelve su duración. */
+  applyPowerUp(type) {
+    const definition = POWER_UPS[type];
+    if (!definition || !this.isAlive) return 0;
+    this.powerUps[type] = definition.durationMs;
+    return definition.durationMs;
+  }
+
   /**
    * @param {{ damage: number, fromDirection: 1 | -1 }} hit
    * @returns {boolean} true si el golpe entró
    */
   takeHit({ damage, fromDirection }) {
     if (this.isInvulnerable) return false;
-    this.health = Math.max(0, this.health - damage);
+    const shieldActive = this.powerUps[PICKUP_TYPES.SHIELD] > 0;
+    this.lastDamageTaken = shieldActive
+      ? Math.max(1, Math.round(damage * POWER_UPS[PICKUP_TYPES.SHIELD].damageMultiplier))
+      : damage;
+    if (shieldActive) {
+      this.#emit('shield-block', { blocked: damage - this.lastDamageTaken });
+    }
+    this.health = Math.max(0, this.health - this.lastDamageTaken);
     this.velocityX = fromDirection * this.stats.knockback;
     this.invulnerableMs = TIMINGS.hitInvulnerabilityMs;
     if (this.health === 0) {
@@ -162,6 +195,7 @@ export class Fighter {
     this.stateTimeMs += deltaMs;
     this.invulnerableMs = Math.max(0, this.invulnerableMs - deltaMs);
     this.teleportCooldownMs = Math.max(0, this.teleportCooldownMs - deltaMs);
+    this.#updatePowerUps(deltaMs);
 
     switch (this.state) {
       case FighterState.IDLE:
@@ -201,11 +235,19 @@ export class Fighter {
 
   // ── Internos ─────────────────────────────────────────────────────────────
 
+  #updatePowerUps(deltaMs) {
+    for (const [type, remainingMs] of Object.entries(this.powerUps)) {
+      if (remainingMs <= 0) continue;
+      this.powerUps[type] = Math.max(0, remainingMs - deltaMs);
+      if (this.powerUps[type] === 0) this.#emit('powerup-expired', { powerUpType: type });
+    }
+  }
+
   #updateFree(intent, seconds) {
     if (intent.attack && this.startAttack()) return;
     if (intent.x !== 0) {
       this.facing = Math.sign(intent.x);
-      this.position.x += intent.x * this.stats.moveSpeed * seconds;
+      this.position.x += intent.x * this.currentMoveSpeed * seconds;
       this.#setState(FighterState.WALK);
     } else {
       this.#setState(FighterState.IDLE);
@@ -219,7 +261,7 @@ export class Fighter {
       return;
     }
     const inActive = this.stateTimeMs >= windupMs && this.stateTimeMs < windupMs + activeMs;
-    if (inActive) this.position.x += this.facing * this.stats.moveSpeed * ATTACK_LUNGE * seconds;
+    if (inActive) this.position.x += this.facing * this.currentMoveSpeed * ATTACK_LUNGE * seconds;
   }
 
   #updateTeleport() {

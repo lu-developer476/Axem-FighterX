@@ -33,6 +33,7 @@ export class FightScene extends Phaser.Scene {
     this.fx = new FxDirector(this);
     this.hud = new HudView(this, this.match.fighters);
     this.restartKey = this.input.keyboard.addKey('R');
+    this.menuKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
 
     this.cameras.main.setBounds(0, 0, ARENA.width, this.scale.height);
     this.hitStopMs = 0;
@@ -40,6 +41,10 @@ export class FightScene extends Phaser.Scene {
   }
 
   update(time, delta) {
+    if (Phaser.Input.Keyboard.JustDown(this.menuKey)) {
+      this.scene.start('MenuScene');
+      return;
+    }
     if (Phaser.Input.Keyboard.JustDown(this.restartKey)) this.#restart();
 
     let events = [];

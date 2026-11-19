@@ -1,5 +1,4 @@
-// Abre el juego compilado en Chromium, juega una partida de prueba (caminar, hachazo,
-// golpe, teletransporte, KO) y guarda capturas y un video en ./artifacts.
+// Abre el juego compilado en Chromium, navega hasta el combate y juega una partida de prueba.
 // Uso: node scripts/capture.mjs [url]
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
@@ -8,12 +7,12 @@ const url = process.argv[2] ?? 'http://localhost:4173/';
 const out = 'artifacts';
 const size = { width: 960, height: 540 };
 
-await mkdir(`${out}/video`, { recursive: true });
+await mkdir(out + '/video', { recursive: true });
 
 const browser = await chromium.launch();
 const context = await browser.newContext({
   viewport: size,
-  recordVideo: { dir: `${out}/video`, size },
+  recordVideo: { dir: out + '/video', size },
 });
 const page = await context.newPage();
 
@@ -21,12 +20,12 @@ const page = await context.newPage();
 const errors = [];
 const record = (message) => {
   errors.push(message);
-  console.log(`::error title=Error en el juego::${message.replaceAll('\n', ' ')}`);
+  console.log('::error title=Error en el juego::' + message.replaceAll('\n', ' '));
 };
 page.on('pageerror', (error) => record(error.message));
 page.on('console', (msg) => msg.type() === 'error' && record(msg.text()));
 
-const shot = (name) => page.screenshot({ path: `${out}/${name}.png` });
+const shot = (name) => page.screenshot({ path: out + '/' + name + '.png' });
 const wait = (ms) => page.waitForTimeout(ms);
 const hold = async (key, ms) => {
   await page.keyboard.down(key);
@@ -43,6 +42,12 @@ await page.goto(url);
 await page.waitForSelector('canvas', { timeout: 15_000 });
 await wait(1500);
 await shot('01-inicio');
+
+// La prueba conserva la pantalla de Inicio como primera captura y luego entra al combate.
+await tap('Enter'); // Inicio → Jugar
+await wait(180);
+await tap('Enter'); // Jugar → Combate local
+await wait(500);
 
 // Escenario y parallax: J1 camina hacia la derecha, J2 hacia la izquierda.
 await Promise.all([hold('d', 700), hold('ArrowRight', 1500)]);
@@ -86,7 +91,7 @@ await context.close();
 await browser.close();
 
 if (errors.length) {
-  console.error(`Errores en la página (${errors.length}):\n${errors.join('\n')}`);
+  console.error('Errores en la página (' + errors.length + '):\n' + errors.join('\n'));
   process.exit(1);
 }
 console.log('Captura completa.');

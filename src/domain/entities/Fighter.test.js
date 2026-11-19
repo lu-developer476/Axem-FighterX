@@ -32,12 +32,30 @@ describe('Fighter: movimiento y orientación', () => {
     expect(fighter.state).toBe(FighterState.IDLE);
   });
 
-  it('la levitación oscila dentro de su amplitud', () => {
+  it('la levitación puede tocar el suelo y elevarse dentro de su amplitud', () => {
     const fighter = make();
+    expect(fighter.hoverOffset).toBeCloseTo(0);
+
+    fighter.elapsedMs = (Math.PI / fighter.stats.hoverSpeed) * 1000;
+    expect(fighter.hoverOffset).toBeCloseTo(fighter.stats.hoverAmplitude);
+
     for (let i = 0; i < 300; i++) {
       fighter.update(idle, 16);
-      expect(Math.abs(fighter.hoverOffset)).toBeLessThanOrEqual(fighter.stats.hoverAmplitude + 1e-9);
+      expect(fighter.hoverOffset).toBeGreaterThanOrEqual(-1e-9);
+      expect(fighter.hoverOffset).toBeLessThanOrEqual(fighter.stats.hoverAmplitude + 1e-9);
     }
+  });
+
+  it('el daño de cada golpe varía entre 1 y 5 y Furia no supera el máximo', () => {
+    const fighter = make();
+    expect(fighter.rollAttackDamage(0)).toBe(1);
+    expect(fighter.rollAttackDamage(0.4)).toBe(3);
+    expect(fighter.rollAttackDamage(0.999)).toBe(5);
+
+    fighter.applyPowerUp('fury');
+    expect(fighter.rollAttackDamage(0)).toBe(2);
+    expect(fighter.rollAttackDamage(0.4)).toBe(5);
+    expect(fighter.rollAttackDamage(0.999)).toBe(5);
   });
 
   it('createFighter rechaza rangers desconocidos', () => {

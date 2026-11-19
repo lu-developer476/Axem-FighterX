@@ -141,7 +141,7 @@ export class Match {
       if (!box || !rectsOverlap(box, target.hurtbox)) continue;
       const point = overlapCenter(box, target.hurtbox);
       const landed = target.takeHit({
-        damage: attacker.currentAttackDamage,
+        damage: attacker.rollAttackDamage(this.rng()),
         fromDirection: attacker.facing,
       });
       if (!landed) continue;

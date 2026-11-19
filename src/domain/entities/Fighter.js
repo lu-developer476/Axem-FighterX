@@ -6,6 +6,7 @@ export const BODY = Object.freeze({ width: 36, height: 84 });
 
 const KNOCKBACK_FRICTION = 700; // px/s²
 const ATTACK_LUNGE = 0.9; // fracción de moveSpeed durante la fase activa
+const MAX_ATTACK_DAMAGE = 5;
 
 /**
  * @typedef {{ x: number, attack?: boolean, teleport?: boolean }} Intent
@@ -67,13 +68,6 @@ export class Fighter {
     return this.stats.moveSpeed * (this.powerUps[PICKUP_TYPES.HASTE] > 0 ? POWER_UPS[PICKUP_TYPES.HASTE].speedMultiplier : 1);
   }
 
-  get currentAttackDamage() {
-    return Math.round(
-      this.stats.attackDamage *
-      (this.powerUps[PICKUP_TYPES.FURY] > 0 ? POWER_UPS[PICKUP_TYPES.FURY].damageMultiplier : 1),
-    );
-  }
-
   get isAlive() {
     return this.state !== FighterState.KO;
   }
@@ -116,10 +110,22 @@ export class Fighter {
     return { x, y: this.position.y - BODY.height + 6, w: reach, h: 56 };
   }
 
-  /** Desplazamiento vertical de levitación, en píxeles. */
+  /** Desplazamiento vertical: parte del suelo y llega hasta hoverAmplitude píxeles. */
   get hoverOffset() {
     const { hoverAmplitude, hoverSpeed } = this.stats;
-    return Math.sin((this.elapsedMs / 1000) * hoverSpeed) * hoverAmplitude;
+    const phase = (this.elapsedMs / 1000) * hoverSpeed - Math.PI / 2;
+    return ((Math.sin(phase) + 1) / 2) * hoverAmplitude;
+  }
+
+  /** Calcula el daño de un impacto con un valor aleatorio entre 1 y 5. */
+  rollAttackDamage(randomValue = 0) {
+    const normalized = Number.isFinite(randomValue)
+      ? Math.min(0.999999, Math.max(0, randomValue))
+      : 0;
+    const baseDamage = 1 + Math.floor(normalized * this.stats.attackDamage);
+    const furyActive = this.powerUps[PICKUP_TYPES.FURY] > 0;
+    const multiplier = furyActive ? POWER_UPS[PICKUP_TYPES.FURY].damageMultiplier : 1;
+    return Math.min(MAX_ATTACK_DAMAGE, Math.max(1, Math.round(baseDamage * multiplier)));
   }
 
   // ── Comandos ─────────────────────────────────────────────────────────────

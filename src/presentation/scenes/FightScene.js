@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH } from '../../config/gameConfig.js';
 import { ARENA } from '../../domain/arena/arena.js';
 import { getStage, STAGE_IDS } from '../../domain/arena/stageCatalog.js';
-import { getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
+import { getCombatMode } from '../../domain/match/matchModes.js';
 import { createDefaultMatch } from '../../application/useCases/CreateMatch.js';
 import { UpdateMatch } from '../../application/useCases/UpdateMatch.js';
 import { KEYMAPS, PhaserKeyboardInput } from '../../infrastructure/input/PhaserKeyboardInput.js';
@@ -51,15 +51,12 @@ export class FightScene extends Phaser.Scene {
       down: Phaser.Input.Keyboard.KeyCodes.DOWN,
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
     });
-    this.hud = new HudView(this, this.match.fighters, {
-      onPause: () => this.#openPause(),
-    });
+    this.hud = new HudView(this, this.match.fighters);
     this.pauseMenu = new PauseMenuView(this, {
       onResume: () => this.#resume(),
       onReturnToMenu: () => this.scene.start('MenuScene'),
     });
 
-    const versus = getVersusMode(this.matchSetup.versusMode);
     const combat = getCombatMode(this.matchSetup.combatMode);
     this.stageLabel = this.add.text(GAME_WIDTH / 2, 43, this.stageDefinition.name.toUpperCase(), {
       fontFamily: 'monospace',
@@ -69,7 +66,7 @@ export class FightScene extends Phaser.Scene {
       stroke: '#0d0b16',
       strokeThickness: 2,
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(10003);
-    this.modeLabel = this.add.text(GAME_WIDTH / 2, 52, versus.label + ' · ' + combat.label, {
+    this.modeLabel = this.add.text(GAME_WIDTH / 2, 52, combat.label, {
       fontFamily: 'monospace',
       fontSize: '5px',
       color: '#d0c4dc',

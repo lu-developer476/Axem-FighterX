@@ -4,8 +4,8 @@ import { characterAnimationData } from '../../infrastructure/assets/characterAni
 import { FighterAnimator } from '../animation/FighterAnimator.js';
 import { shouldFlip } from './orientation.js';
 
-/** Los personajes levitan: los pies quedan a esta altura sobre el suelo. */
-const FLOAT_HEIGHT = 10;
+/** Los pies pueden tocar el suelo; al flotar se elevan según la amplitud del luchador. */
+const FLOAT_HEIGHT = 0;
 const FIGHTER_DEPTH = 100;
 
 /**

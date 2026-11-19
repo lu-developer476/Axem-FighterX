@@ -27,7 +27,9 @@ describe('Match: golpes', () => {
     const later = advance(match, [idle, idle], 400);
     const all = [...events, ...later].filter((e) => e.type === 'hit');
     expect(all).toHaveLength(1);
-    expect(b.health).toBe(b.maxHealth - a.stats.attackDamage);
+    expect(all[0].damage).toBeGreaterThanOrEqual(1);
+    expect(all[0].damage).toBeLessThanOrEqual(5);
+    expect(b.health).toBe(b.maxHealth - all[0].damage);
     expect(b.state === FighterState.HURT || b.state === FighterState.IDLE).toBe(true);
   });
 
@@ -57,7 +59,7 @@ describe('Match: golpes', () => {
 
 describe('Match: KO', () => {
   it('termina la partida con ganador y congela las entradas', () => {
-    const match = make();
+    const match = make({ rng: () => 0.999 });
     const [a, b] = match.fighters;
     b.health = 5;
     const events = advance(match, [{ ...idle, attack: true }, idle], 500);
@@ -143,14 +145,17 @@ describe('Match: objetos', () => {
       rng: (() => { let calls = 0; return () => (calls++ % 2 === 0 ? 0.5 : 0.3); })(),
     });
     const [a] = match.fighters;
+    const normalDamage = a.rollAttackDamage(0.4);
     advance(match, [idle, idle], PICKUP.firstSpawnMs + 100);
     expect(match.pickup.type).toBe(PICKUP_TYPES.FURY);
     a.position.x = match.pickup.x;
     const collected = advance(match, [idle, idle], 50);
     expect(collected.some((event) => event.type === 'powerup' && event.powerUpType === PICKUP_TYPES.FURY)).toBe(true);
-    expect(a.currentAttackDamage).toBe(Math.round(a.stats.attackDamage * 1.5));
+    expect(a.rollAttackDamage(0.4)).toBeGreaterThan(normalDamage);
+    expect(a.rollAttackDamage(0.999)).toBe(5);
     advance(match, [idle, idle], 6600);
     expect(a.powerUps[PICKUP_TYPES.FURY]).toBe(0);
+    expect(a.rollAttackDamage(0.4)).toBe(normalDamage);
   });
 
   it('la rapidez aumenta el desplazamiento y el escudo reduce el daño recibido', () => {

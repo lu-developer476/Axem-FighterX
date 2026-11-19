@@ -18,13 +18,13 @@ const STATUS_LABELS = {
   [PICKUP_TYPES.SHIELD]: 'ESCUDO',
 };
 
-/** Interfaz compacta del combate: vida, potenciadores, pausa y resultado. */
+/** Interfaz compacta del combate: vida, potenciadores y resultado. */
 export class HudView {
   /**
    * @param {Phaser.Scene} scene
    * @param {import('../../domain/entities/Fighter.js').Fighter[]} fighters
    */
-  constructor(scene, fighters, { onPause = () => {} } = {}) {
+  constructor(scene, fighters) {
     this.fighters = fighters;
     this.trail = fighters.map((fighter) => fighter.health);
     this.graphics = scene.add.graphics().setScrollFactor(0).setDepth(10_000);
@@ -34,7 +34,6 @@ export class HudView {
 
     text(BAR.margin, 3, fighters[0].name.toUpperCase(), { fontSize: '8px' });
     text(GAME_WIDTH - BAR.margin, 3, fighters[1].name.toUpperCase(), { fontSize: '8px' }, 1);
-    text(GAME_WIDTH / 2, 12, 'VS', { fontSize: '10px', fontStyle: 'bold', color: '#ffc23a' }, 0.5);
 
     this.statusLabels = fighters.map((fighter, index) =>
       text(
@@ -45,20 +44,6 @@ export class HudView {
         index === 0 ? 0 : 1,
       ),
     );
-
-    text(GAME_WIDTH / 2, 228, 'OBJETOS: VIDA  ·  FURIA  ·  RAPIDEZ  ·  ESCUDO', {
-      fontSize: '6px',
-      color: '#e7d6a8',
-      align: 'center',
-    }, 0.5);
-    this.pauseButton = text(GAME_WIDTH - BAR.margin, 246, '[ P ] PAUSA', {
-      fontSize: '7px',
-      fontStyle: 'bold',
-      color: '#f2c77e',
-    }, 1).setInteractive({ useHandCursor: true });
-    this.pauseButton.on('pointerover', () => this.pauseButton.setColor('#fff0c9'));
-    this.pauseButton.on('pointerout', () => this.pauseButton.setColor('#f2c77e'));
-    this.pauseButton.on('pointerdown', onPause);
 
     const center = (y, value, style) =>
       text(GAME_WIDTH / 2, y, value, style, 0.5).setVisible(false);

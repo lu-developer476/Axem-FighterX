@@ -1,6 +1,6 @@
 /**
- * Elimina el fondo uniforme o casi uniforme, incluidos los fragmentos atrapados en huecos internos del sprite.
- * Trabaja sobre una imagen ya reducida a su resolución de juego, por lo que
+ * Elimina el fondo uniforme o casi uniforme conectado al contorno del sprite.
+ * Conserva los píxeles interiores que comparten accidentalmente el color del fondo.
  * también resulta válido para hojas de animación con varios cuadros.
  *
  * @param {{ data: Uint8ClampedArray, width: number, height: number }} imageData
@@ -89,9 +89,8 @@ export function removeSpriteBackground(imageData, {
     queue[tail++] = pixelIndex;
   };
 
-  // El fondo puede quedar atrapado en huecos cerrados entre extremidades,
-  // cabello y accesorios. También se buscan esos fragmentos interiores del
-  // mismo color dominante, no solo los que llegan hasta el borde del PNG.
+  // Solo se consideran fondo las regiones conectadas al borde del PNG.
+  // Los píxeles interiores aislados se conservan para no perforar la silueta.
   for (let x = 0; x < width; x++) {
     enqueue(x);
     enqueue((height - 1) * width + x);
@@ -100,8 +99,6 @@ export function removeSpriteBackground(imageData, {
     enqueue(y * width);
     enqueue(y * width + width - 1);
   }
-  for (let i = 0; i < total; i++) enqueue(i);
-
   while (head < tail) {
     const pixelIndex = queue[head++];
     const x = pixelIndex % width;
@@ -141,8 +138,9 @@ export function removeSpriteBackground(imageData, {
 
       const distance = Math.sqrt(distanceSquared);
       const coverage = Math.max(0, Math.min(1, (distance - tolerance * 0.55) / (tolerance * 0.9)));
-      const nextAlpha = Math.round(data[offset + 3] * coverage);
-      if (nextAlpha === 0) removedPixels += 1;
+      // El antialias exterior puede atenuarse, pero nunca se vuelve un hueco
+      // totalmente transparente dentro de la silueta del personaje.
+      const nextAlpha = Math.max(96, Math.round(data[offset + 3] * coverage));
       data[offset + 3] = nextAlpha;
     }
   }

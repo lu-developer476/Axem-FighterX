@@ -44,20 +44,14 @@ export class CinematicScene extends Phaser.Scene {
       .setScale(1)
       .setDepth(100);
 
-    this.add.rectangle(GAME_WIDTH / 2, 63, 448, 78, 0x0c0a19, 0.92)
+    // La conversación queda siempre anclada a una franja inferior.
+    this.add.rectangle(GAME_WIDTH / 2, 222, 448, 84, 0x0c0a19, 0.94)
       .setStrokeStyle(1, 0x78658f, 0.95)
       .setScrollFactor(0)
       .setDepth(1000);
-    this.add.rectangle(GAME_WIDTH / 2, 27, 448, 3, 0xe2b978, 0.9)
+    this.add.rectangle(GAME_WIDTH / 2, 180, 448, 3, 0xe2b978, 0.9)
       .setScrollFactor(0)
       .setDepth(1001);
-
-    this.add.text(18, 17, 'REGISTRO DE CAMPO  /  EVALUACIÓN DE EQUIPO', {
-      fontFamily: 'monospace',
-      fontSize: '7px',
-      color: '#e5c58f',
-      letterSpacing: 1,
-    }).setScrollFactor(0).setDepth(1002);
 
     this.stageTitle = this.add.text(GAME_WIDTH / 2, 108, this.stage.name.toUpperCase(), {
       fontFamily: 'monospace',
@@ -82,28 +76,28 @@ export class CinematicScene extends Phaser.Scene {
       align: 'center',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(1002);
 
-    this.speaker = this.add.text(25, 40, '', {
+    this.speaker = this.add.text(32, 191, '', {
       fontFamily: 'monospace',
       fontSize: '8px',
       color: '#d9a9ff',
     }).setScrollFactor(0).setDepth(1002);
 
-    this.dialogue = this.add.text(25, 58, '', {
+    this.dialogue = this.add.text(32, 207, '', {
       fontFamily: 'monospace',
       fontSize: '10px',
       color: '#f1ecdf',
-      lineSpacing: 4,
-      wordWrap: { width: 430, useAdvancedWrap: true },
+      lineSpacing: 3,
+      wordWrap: { width: 405, useAdvancedWrap: true },
       maxLines: 3,
     }).setScrollFactor(0).setDepth(1002);
 
-    this.progress = this.add.text(GAME_WIDTH - 18, 40, '', {
+    this.progress = this.add.text(GAME_WIDTH - 32, 191, '', {
       fontFamily: 'monospace',
       fontSize: '7px',
       color: '#9c91b3',
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(1002);
 
-    this.prompt = this.add.text(GAME_WIDTH / 2, 252, 'ENTER / ESPACIO: CONTINUAR    ·    ESC: OMITIR', {
+    this.prompt = this.add.text(GAME_WIDTH / 2, 259, 'ENTER / ESPACIO: CONTINUAR    ·    ESC: OMITIR', {
       fontFamily: 'monospace',
       fontSize: '7px',
       color: '#fff0c9',

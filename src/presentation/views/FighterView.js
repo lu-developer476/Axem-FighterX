@@ -44,10 +44,11 @@ export class FighterView {
     );
     if (pose.flash) sprite.setTintFill(0xffffff);
     else sprite.clearTint();
-    const laneDepth = FIGHTER_DEPTH + Math.round(fighter.position.y);
+    // La elevación también modifica el orden de dibujo: un luchador en el aire
+    // no queda artificialmente delante de otro que ocupa el mismo carril del suelo.
+    const laneDepth = FIGHTER_DEPTH + Math.round(fighter.position.y - fighter.position.z * 0.35);
     sprite.setDepth(laneDepth + (fighter.state === FighterState.ATTACK ? 2 : 0));
 
-    const height = FLOAT_HEIGHT + lift;
     const laneProgress = (fighter.position.y - ARENA.minY) / (ARENA.maxY - ARENA.minY);
     const shadowScale = 0.72 + laneProgress * 0.28;
     this.shadow.setPosition(Math.round(fighter.position.x), Math.round(fighter.position.y));

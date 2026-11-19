@@ -2,9 +2,10 @@ import Phaser from 'phaser';
 import { GAME_WIDTH } from '../../config/gameConfig.js';
 import { ARENA } from '../../domain/arena/arena.js';
 import { getStage, STAGE_IDS } from '../../domain/arena/stageCatalog.js';
-import { getCombatMode } from '../../domain/match/matchModes.js';
+import { getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { createDefaultMatch } from '../../application/useCases/CreateMatch.js';
 import { UpdateMatch } from '../../application/useCases/UpdateMatch.js';
+import { AIInput } from '../../infrastructure/input/AIInput.js';
 import { KEYMAPS, PhaserKeyboardInput } from '../../infrastructure/input/PhaserKeyboardInput.js';
 import { FighterView } from '../views/FighterView.js';
 import { FxDirector } from '../views/FxDirector.js';
@@ -30,13 +31,34 @@ export class FightScene extends Phaser.Scene {
 
   create() {
     this.match = createDefaultMatch(Math.random, this.matchSetup.characters);
-    this.updateMatch = new UpdateMatch({
-      match: this.match,
-      inputs: [
-        new PhaserKeyboardInput(this, KEYMAPS.PLAYER_1),
-        new PhaserKeyboardInput(this, KEYMAPS.PLAYER_2),
-      ],
+    const [leftFighter, rightFighter] = this.match.fighters;
+    const versus = getVersusMode(this.matchSetup.versusMode);
+    const playerOne = () => new PhaserKeyboardInput(this, KEYMAPS.PLAYER_1);
+    const playerTwo = () => new PhaserKeyboardInput(this, KEYMAPS.PLAYER_2);
+    const aiOne = () => new AIInput(leftFighter, rightFighter, {
+      now: () => this.time.now,
+      phase: 0,
     });
+    const aiTwo = () => new AIInput(rightFighter, leftFighter, {
+      now: () => this.time.now,
+      phase: Math.PI,
+    });
+
+    let inputs;
+    switch (versus.id) {
+      case 'player-vs-ai':
+        inputs = [playerOne(), aiTwo()];
+        break;
+      case 'ai-vs-ai':
+        inputs = [aiOne(), aiTwo()];
+        break;
+      case 'player-vs-player':
+      default:
+        inputs = [playerOne(), playerTwo()];
+        break;
+    }
+
+    this.updateMatch = new UpdateMatch({ match: this.match, inputs });
 
     this.stage = new StageView(this, this.stageDefinition.id);
     this.pickupView = new PickupView(this);
@@ -58,6 +80,7 @@ export class FightScene extends Phaser.Scene {
     });
 
     const combat = getCombatMode(this.matchSetup.combatMode);
+    const versusLabel = getVersusMode(this.matchSetup.versusMode).label;
     this.stageLabel = this.add.text(GAME_WIDTH / 2, 43, this.stageDefinition.name.toUpperCase(), {
       fontFamily: 'monospace',
       fontSize: '8px',
@@ -65,9 +88,9 @@ export class FightScene extends Phaser.Scene {
       stroke: '#0d0b16',
       strokeThickness: 2,
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(10003);
-    this.modeLabel = this.add.text(GAME_WIDTH / 2, 52, combat.label, {
+    this.modeLabel = this.add.text(GAME_WIDTH / 2, 52, `${versusLabel} · ${combat.label}`, {
       fontFamily: 'monospace',
-      fontSize: '7px',
+      fontSize: '6px',
       color: '#d0c4dc',
       stroke: '#0d0b16',
       strokeThickness: 2,

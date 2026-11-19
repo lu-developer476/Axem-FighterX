@@ -5,6 +5,8 @@ export const STAGE_IDS = Object.freeze({
   SANCTUARY: 'sanctuary',
 });
 
+const lines = (...entries) => Object.freeze(entries.map(([speaker, text]) => Object.freeze({ speaker, text })));
+
 export const STAGES = Object.freeze([
   Object.freeze({
     id: STAGE_IDS.RUINS,
@@ -12,15 +14,29 @@ export const STAGES = Object.freeze([
     tagline: 'Murallas antiguas bajo una luna inmóvil',
     location: 'Frontera de Eteria',
     description: 'Un puesto defensivo abandonado, con pasajes estrechos y muros que todavía conservan sus runas.',
-    dialogue: Object.freeze([
-      Object.freeze({ speaker: 'violet', text: 'El registro de la muralla marca una entrada abierta. ¿La viste?' }),
-      Object.freeze({ speaker: 'orange', text: 'Sí. Está despejada, pero el piso cede cerca de los pilares.' }),
-      Object.freeze({ speaker: 'violet', text: 'Entonces revisamos el centro y salimos por donde entramos. No hace falta correr.' }),
-      Object.freeze({ speaker: 'orange', text: 'El informe también pide una evaluación de combate en cada zona.' }),
-      Object.freeze({ speaker: 'violet', text: 'Podrías haberlo mencionado antes de traerme hasta acá.' }),
-      Object.freeze({ speaker: 'orange', text: 'Tenés razón. ¿Hacemos una ronda corta y después revisamos la salida?' }),
-      Object.freeze({ speaker: 'violet', text: 'Una ronda. Y esta vez decidimos el plan entre los dos.' }),
-    ]),
+    dialogue: lines(
+      ['violet', 'La puerta estaba abierta cuando llegamos. Eso no me gusta.'],
+      ['orange', 'A mí tampoco. Mirá el polvo: alguien salió de acá hace muy poco.'],
+      ['violet', '¿Seguimos el rastro o revisamos primero las habitaciones?'],
+      ['orange', 'El rastro va hacia el patio. Pero esas columnas no van a aguantar otro temblor.'],
+      ['violet', 'Entonces no nos quedamos quietos. Yo cruzo por la izquierda.'],
+      ['orange', 'Voy por la derecha. Si escuchás caer una piedra, no intentes atraparla.'],
+      ['violet', 'No prometo nada. Vamos; después discutimos quién tuvo la peor idea.'],
+    ),
+    resultDialogue: Object.freeze({
+      violetWins: lines(
+        ['violet', 'La entrada quedó despejada. Y, por una vez, las ruinas siguen en pie.'],
+        ['orange', 'Me ganaste. La próxima voy a mirar menos las columnas y más tus movimientos.'],
+      ),
+      orangeWins: lines(
+        ['orange', 'La ruta está asegurada. Y no, no pienso cargar con las piedras que rompiste.'],
+        ['violet', 'Está bien, esta ronda es tuya. La próxima no voy a regalarte el patio.'],
+      ),
+      draw: lines(
+        ['violet', 'Ninguno pudo cerrar el combate. Al menos encontramos una salida.'],
+        ['orange', 'Y seguimos enteros. En estas ruinas, eso ya cuenta como una victoria.'],
+      ),
+    }),
   }),
   Object.freeze({
     id: STAGE_IDS.VOLCANO,
@@ -28,15 +44,29 @@ export const STAGES = Object.freeze([
     tagline: 'Una caldera activa sobre placas de basalto',
     location: 'Cordillera Ígnea',
     description: 'Un puente de roca volcánica atraviesa respiraderos y corrientes de lava.',
-    dialogue: Object.freeze([
-      Object.freeze({ speaker: 'violet', text: 'El puente está cediendo. ¿Cuánto tiempo nos queda?' }),
-      Object.freeze({ speaker: 'orange', text: 'Lo suficiente para cruzar, no para volver por el mismo camino.' }),
-      Object.freeze({ speaker: 'violet', text: 'La ruta de la izquierda tiene menos grietas.' }),
-      Object.freeze({ speaker: 'orange', text: 'Pero pasa junto al respiradero. Esperá a que baje la presión.' }),
-      Object.freeze({ speaker: 'violet', text: 'No voy a salir corriendo a la primera señal. Marcá el momento.' }),
-      Object.freeze({ speaker: 'orange', text: 'Cuando se apague el resplandor, avanzamos. Después hacemos la evaluación.' }),
-      Object.freeze({ speaker: 'violet', text: 'Bien. Primero cruzamos; después vemos quién tiene más resistencia.' }),
-    ]),
+    dialogue: lines(
+      ['violet', 'No te acerques al borde. Esa placa acaba de partirse.'],
+      ['orange', 'La vi. El calor está abriendo otra grieta detrás de nosotros.'],
+      ['violet', 'Podemos saltar hasta el arco de basalto.'],
+      ['orange', 'Con esa corriente de aire, el salto puede llevarnos bastante más arriba.'],
+      ['violet', 'Mejor. No pienso esperar a que el puente desaparezca.'],
+      ['orange', 'Tomá impulso cuando baje el vapor. Si te adelantás, no voy a alcanzarte.'],
+      ['violet', 'Contá hasta tres y saltamos juntos. Esta vez, sin improvisar.'],
+    ),
+    resultDialogue: Object.freeze({
+      violetWins: lines(
+        ['violet', 'La corriente me dio el impulso justo. El cráter no iba a decidir por mí.'],
+        ['orange', 'Lo sé. Me apuré al aterrizar y me quedé sin margen. Bien jugado.'],
+      ),
+      orangeWins: lines(
+        ['orange', 'Esperé a que cambiara el viento. En este lugar, el momento lo es todo.'],
+        ['violet', 'Me ganaste por poco. La próxima voy a controlar mejor el descenso.'],
+      ),
+      draw: lines(
+        ['violet', 'La caldera nos obligó a frenar antes de terminar.'],
+        ['orange', 'Y fue lo más sensato que hicimos. No vale la pena ganar cayendo a la lava.'],
+      ),
+    }),
   }),
   Object.freeze({
     id: STAGE_IDS.FOREST,
@@ -44,15 +74,29 @@ export const STAGES = Object.freeze([
     tagline: 'Senderos cubiertos por raíces y luces errantes',
     location: 'Valle de Niebla Verde',
     description: 'Un bosque antiguo donde las ramas confunden las distancias y las luciérnagas marcan caminos falsos.',
-    dialogue: Object.freeze([
-      Object.freeze({ speaker: 'violet', text: '¿Escuchaste eso otra vez?' }),
-      Object.freeze({ speaker: 'orange', text: 'Sí. Viene de la arboleda, pero no parece acercarse.' }),
-      Object.freeze({ speaker: 'violet', text: 'Las huellas terminan acá. No me gusta que el sendero esté tan limpio.' }),
-      Object.freeze({ speaker: 'orange', text: 'Puede que los animales hayan salido por el cambio de viento.' }),
-      Object.freeze({ speaker: 'violet', text: 'Revisemos sin separarnos. Si aparece algo, lo enfrentamos juntos.' }),
-      Object.freeze({ speaker: 'orange', text: 'Y después hacemos el ejercicio. Quiero ver cómo respondemos en este terreno.' }),
-      Object.freeze({ speaker: 'violet', text: 'Trato hecho. Pero nada de perderse entre los árboles.' }),
-    ]),
+    dialogue: lines(
+      ['violet', 'Las huellas terminan acá. No hay marcas de regreso.'],
+      ['orange', 'Las ramas están dobladas hacia arriba. Algo pasó por las copas.'],
+      ['violet', '¿Y las luciérnagas? Hace un momento iluminaban el sendero.'],
+      ['orange', 'Se apagaron cuando nos acercamos. Este bosque está intentando confundirnos.'],
+      ['violet', 'Entonces seguimos hablando. Si la niebla nos separa, nos guiamos por la voz.'],
+      ['orange', 'De acuerdo. Yo voy a la altura de las ramas; vos revisá el claro.'],
+      ['violet', 'Y nada de perseguir sombras. Si encontramos algo, lo enfrentamos juntos.'],
+    ),
+    resultDialogue: Object.freeze({
+      violetWins: lines(
+        ['violet', 'La niebla dejó de moverse cuando terminó el combate. ¿Lo notaste?'],
+        ['orange', 'Sí. Y también noté que me leíste cada amague. Me toca aprender de eso.'],
+      ),
+      orangeWins: lines(
+        ['orange', 'No seguí las luces. Seguí el sonido de tus pasos. Esta vez funcionó.'],
+        ['violet', 'Buena lectura. Me distraje con los ecos y vos aprovechaste el momento.'],
+      ),
+      draw: lines(
+        ['violet', 'Los ecos se apagaron. No sé si eso significa que el camino está libre.'],
+        ['orange', 'Por ahora alcanza. Salgamos antes de que el bosque vuelva a cerrarse.'],
+      ),
+    }),
   }),
   Object.freeze({
     id: STAGE_IDS.SANCTUARY,
@@ -60,15 +104,29 @@ export const STAGES = Object.freeze([
     tagline: 'Columnas doradas alrededor de un sello antiguo',
     location: 'Meseta de Auralis',
     description: 'Un recinto suspendido entre ruinas claras, mecanismos rúnicos y corrientes de energía.',
-    dialogue: Object.freeze([
-      Object.freeze({ speaker: 'violet', text: 'El sello está intacto. ¿Por qué sigue brillando?' }),
-      Object.freeze({ speaker: 'orange', text: 'El mecanismo recibe energía desde abajo. El santuario no está apagado.' }),
-      Object.freeze({ speaker: 'violet', text: 'Entonces tocar esa placa podría activar otra cosa.' }),
-      Object.freeze({ speaker: 'orange', text: 'Por eso no la toques todavía. Primero voy a comprobar los símbolos.' }),
-      Object.freeze({ speaker: 'violet', text: 'Te cubro. Avisame antes de abrir nada.' }),
-      Object.freeze({ speaker: 'orange', text: 'Cuando termine, hacemos el último ejercicio acá. El suelo parece estable.' }),
-      Object.freeze({ speaker: 'violet', text: 'Perfecto. Esta vez prefiero saber dónde piso.' }),
-    ]),
+    dialogue: lines(
+      ['violet', 'El suelo vibra cada vez que el sello se enciende.'],
+      ['orange', 'No es el suelo: la plataforma está suspendida y el núcleo la está empujando.'],
+      ['violet', 'Entonces esas corrientes no son viento.'],
+      ['orange', 'Son descargas de energía. Podemos usarlas para subir, pero hay que medir el impulso.'],
+      ['violet', 'Yo pruebo desde el arco. Avisame si el sello cambia de color.'],
+      ['orange', 'Azul significa estable. Dorado significa que nos vayamos.'],
+      ['violet', 'Perfecto. Si empieza a brillar en dorado, no discutimos: salimos.'],
+    ),
+    resultDialogue: Object.freeze({
+      violetWins: lines(
+        ['violet', 'El sello volvió a estabilizarse. Parece que por fin encontramos el ritmo.'],
+        ['orange', 'Me superaste en el aire. No voy a fingir que no vi cómo corregiste el último giro.'],
+      ),
+      orangeWins: lines(
+        ['orange', 'La corriente cambió justo antes del impacto. Había que aprovecharla.'],
+        ['violet', 'Lo vi tarde. Esta ronda es tuya; la próxima voy a leer mejor el núcleo.'],
+      ),
+      draw: lines(
+        ['violet', 'El núcleo se apagó antes de que hubiera un resultado.'],
+        ['orange', 'Quizá era una advertencia. Mejor dejar el santuario en paz por hoy.'],
+      ),
+    }),
   }),
 ]);
 

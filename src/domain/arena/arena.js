@@ -1,7 +1,7 @@
 /** Dimensiones y reglas del escenario (unidades = píxeles del lienzo interno). */
 export const ARENA = Object.freeze({
   width: 640,
-  /** Profundidad máxima (arriba) y mínima (abajo) del plano de combate. */
+  /** Profundidad del plano del suelo; nunca permite caminar por debajo del piso. */
   minY: 170,
   groundY: 232,
   maxY: 232,
@@ -15,6 +15,13 @@ export const ARENA = Object.freeze({
   spawnRightX: 400,
   teleportDistance: 110,
   teleportRange: 150,
+});
+
+/** Límites de vuelo medidos desde el plano del suelo, no desde la cámara. */
+export const FLIGHT = Object.freeze({
+  maxAltitude: 140,
+  skyMargin: 8,
+  attackDepthTolerance: 18,
 });
 
 export const PICKUP = Object.freeze({

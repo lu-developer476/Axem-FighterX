@@ -40,7 +40,7 @@ export class FighterView {
     sprite.setAlpha(pose.alpha);
     sprite.setPosition(
       Math.round(fighter.position.x + pose.x * facing),
-      Math.round(fighter.position.y - FLOAT_HEIGHT - fighter.position.z + lift + pose.y),
+      Math.round(fighter.position.y - FLOAT_HEIGHT - fighter.position.z - lift + pose.y),
     );
     if (pose.flash) sprite.setTintFill(0xffffff);
     else sprite.clearTint();
@@ -50,10 +50,12 @@ export class FighterView {
     sprite.setDepth(laneDepth + (fighter.state === FighterState.ATTACK ? 2 : 0));
 
     const laneProgress = (fighter.position.y - ARENA.minY) / (ARENA.maxY - ARENA.minY);
+    const altitudeRatio = fighter.maxAltitude > 0 ? fighter.position.z / fighter.maxAltitude : 0;
     const shadowScale = 0.72 + laneProgress * 0.28;
+    const flightScale = 1 - altitudeRatio * 0.3;
     this.shadow.setPosition(Math.round(fighter.position.x), Math.round(fighter.position.y));
-    this.shadow.setScale(shadowScale, shadowScale);
+    this.shadow.setScale(shadowScale * flightScale, shadowScale * flightScale);
     this.shadow.setDepth(laneDepth - 1);
-    this.shadow.setAlpha(pose.alpha * 0.4);
+    this.shadow.setAlpha(pose.alpha * (0.4 - altitudeRatio * 0.2));
   }
 }

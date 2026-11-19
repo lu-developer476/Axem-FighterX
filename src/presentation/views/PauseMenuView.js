@@ -27,7 +27,7 @@ export class PauseMenuView {
   showControls() {
     this.showingControls = true;
     this.#beginPanel('TUTORIALES', 250);
-    this.#addText('J1 · MOVER A/D · PROFUNDIDAD W/S · ALTURA Q SUBE · E BAJA', 76, {
+    this.#addText('J1 · A/D MOVER · W/S SUELO · Q VUELO · E ATERRIZAR', 76, {
       fontSize: '6px',
       color: '#d9a9ff',
     });
@@ -35,7 +35,7 @@ export class PauseMenuView {
       fontSize: '6px',
       color: '#d9a9ff',
     });
-    this.#addText('J2 · MOVER ←/→ · PROFUNDIDAD ↑/↓ · ALTURA I SUBE · O BAJA', 116, {
+    this.#addText('J2 · ←/→ MOVER · ↑/↓ SUELO · I VUELO · O ATERRIZAR', 116, {
       fontSize: '6px',
       color: '#ffc17e',
     });

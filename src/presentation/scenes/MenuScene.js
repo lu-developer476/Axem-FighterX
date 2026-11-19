@@ -376,7 +376,7 @@ export class MenuScene extends Phaser.Scene {
       fontSize: '7px',
       color: '#d9a9ff',
     });
-    this.#addText('Mover A/D · Profundidad W/S · Altura Q sube · E baja', GAME_WIDTH / 2, 157, {
+    this.#addText('Mover A/D · Suelo W/S · VUELO Q asciende · E aterriza', GAME_WIDTH / 2, 157, {
       fontSize: '6px',
     });
     this.#addText('Hachazo F · Teletransporte G', GAME_WIDTH / 2, 168, {
@@ -386,7 +386,7 @@ export class MenuScene extends Phaser.Scene {
       fontSize: '7px',
       color: '#ffc17e',
     });
-    this.#addText('Mover ←/→ · Profundidad ↑/↓ · Altura I sube · O baja', GAME_WIDTH / 2, 197, {
+    this.#addText('Mover ←/→ · Suelo ↑/↓ · VUELO I asciende · O aterriza', GAME_WIDTH / 2, 197, {
       fontSize: '6px',
     });
     this.#addText('Hachazo L · Teletransporte K', GAME_WIDTH / 2, 208, {

@@ -17,6 +17,10 @@ const STATUS_LABELS = {
   [PICKUP_TYPES.HASTE]: 'RAPIDEZ',
   [PICKUP_TYPES.SHIELD]: 'ESCUDO',
 };
+const SPEAKERS = {
+  violet: { name: 'AXEM VIOLET', color: '#d9a9ff' },
+  orange: { name: 'AXEM ORANGE', color: '#ffc17e' },
+};
 
 /** Interfaz compacta del combate: vida, potenciadores y resultado. */
 export class HudView {
@@ -63,6 +67,30 @@ export class HudView {
       stroke: '#0d0b16',
       strokeThickness: 3,
     });
+
+    this.resultPanel = scene.add.rectangle(GAME_WIDTH / 2, 222, 456, 88, 0x0c0a19, 0.97)
+      .setStrokeStyle(1, 0x78658f, 0.95)
+      .setScrollFactor(0)
+      .setDepth(10_002)
+      .setVisible(false);
+    this.resultSpeaker = text(24, 190, '', {
+      fontSize: '8px',
+      color: '#d9a9ff',
+    }).setDepth(10_003).setVisible(false);
+    this.resultDialogue = text(24, 207, '', {
+      fontSize: '9px',
+      color: '#f1ecdf',
+      wordWrap: { width: 430, useAdvancedWrap: true },
+      maxLines: 2,
+    }).setDepth(10_003).setVisible(false);
+    this.resultPrompt = text(GAME_WIDTH / 2, 257, 'ENTER / ESPACIO: SIGUIENTE LÍNEA', {
+      fontSize: '6px',
+      color: '#fff0c9',
+      align: 'center',
+    }, 0.5).setDepth(10_003).setVisible(false);
+    this.resultLines = [];
+    this.resultLineIndex = 0;
+
     this.scene = scene;
   }
 
@@ -81,17 +109,49 @@ export class HudView {
     });
   }
 
-  showResult(winnerName) {
+  showResult(winnerName, dialogueLines = []) {
     this.title.setText(winnerName ? '¡KO!' : 'EMPATE').setVisible(true).setScale(2.4).setAlpha(0);
     this.subtitle.setText(winnerName ? `Gana ${winnerName}` : 'Nadie queda en pie').setVisible(true);
     this.hint.setVisible(true);
+    this.resultLines = [...dialogueLines];
+    this.resultLineIndex = 0;
+    this.resultPanel.setVisible(true);
+    this.resultSpeaker.setVisible(true);
+    this.resultDialogue.setVisible(true);
+    this.resultPrompt.setVisible(true);
+    this.#renderResultLine();
     this.scene.tweens.add({ targets: this.title, scale: 1, alpha: 1, duration: 320, ease: 'Back.easeOut' });
+  }
+
+  advanceResultDialogue() {
+    if (!this.resultPanel.visible || !this.resultLines.length) return;
+    if (this.resultLineIndex < this.resultLines.length - 1) {
+      this.resultLineIndex += 1;
+      this.#renderResultLine();
+      return;
+    }
+    this.resultPrompt.setText('R: REINICIAR COMBATE  ·  ESC: MENÚ');
   }
 
   hideResult() {
     this.title.setVisible(false);
     this.subtitle.setVisible(false);
     this.hint.setVisible(false);
+    this.resultPanel.setVisible(false);
+    this.resultSpeaker.setVisible(false);
+    this.resultDialogue.setVisible(false);
+    this.resultPrompt.setVisible(false);
+    this.resultLines = [];
+    this.resultLineIndex = 0;
+  }
+
+  #renderResultLine() {
+    const line = this.resultLines[this.resultLineIndex];
+    if (!line) return;
+    const speaker = SPEAKERS[line.speaker];
+    this.resultSpeaker.setText(speaker?.name ?? '').setColor(speaker?.color ?? '#f1ecdf');
+    this.resultDialogue.setText(line.text);
+    this.resultPrompt.setText('ENTER / ESPACIO: SIGUIENTE LÍNEA');
   }
 
   #drawBar(index, fighter) {

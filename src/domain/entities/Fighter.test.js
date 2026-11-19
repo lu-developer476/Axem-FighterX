@@ -41,13 +41,27 @@ describe('Fighter: movimiento y orientación', () => {
     expect(fighter.position.y).toBeCloseTo(232);
   });
 
-  it('asciende y desciende hacia el cielo sin abandonar el suelo de referencia', () => {
+  it('asciende por encima del suelo y desciende hasta aterrizar sin atravesarlo', () => {
     const fighter = make();
     fighter.update({ ...idle, z: 1 }, 500);
     expect(fighter.position.z).toBeGreaterThan(0);
     expect(fighter.position.z).toBeCloseTo(fighter.stats.moveSpeed * 0.5);
+
     fighter.update({ ...idle, z: -1 }, 500);
     expect(fighter.position.z).toBeCloseTo(0);
+    fighter.update({ ...idle, z: -1 }, 1000);
+    expect(fighter.position.z).toBe(0);
+  });
+
+  it('limita el vuelo al cielo visible sin cortar la cabeza del personaje', () => {
+    const fighter = make();
+    fighter.update({ ...idle, z: 1 }, 5000);
+    expect(fighter.position.z).toBe(fighter.maxAltitude);
+    expect(fighter.position.z).toBeLessThanOrEqual(232 - 84 - 8 - fighter.stats.hoverAmplitude);
+
+    fighter.position.y = 170;
+    fighter.clampTo({ minX: 40, maxX: 600, minY: 170, maxY: 232 });
+    expect(fighter.position.z).toBeLessThanOrEqual(170 - 84 - 8 - fighter.stats.hoverAmplitude);
   });
 
   it('la levitación puede tocar el suelo y elevarse dentro de su amplitud', () => {

@@ -1,4 +1,4 @@
-import { ARENA, PICKUP } from '../arena/arena.js';
+import { ARENA, FLIGHT, PICKUP } from '../arena/arena.js';
 import { overlapCenter, rectsOverlap } from '../geometry/rect.js';
 import { FighterState } from './FighterState.js';
 import { PICKUP_TYPES, PICKUP_TYPE_LIST, PowerUpPickup } from './PowerUpPickup.js';
@@ -138,7 +138,8 @@ export class Match {
     }));
 
     for (const { attacker, target, box } of strikes) {
-      if (!box || !rectsOverlap(box, target.hurtbox)) continue;
+      const sameDepthLane = Math.abs(attacker.position.y - target.position.y) <= FLIGHT.attackDepthTolerance;
+      if (!box || !sameDepthLane || !rectsOverlap(box, target.hurtbox)) continue;
       const point = overlapCenter(box, target.hurtbox);
       const landed = target.takeHit({
         damage: attacker.rollAttackDamage(this.rng()),

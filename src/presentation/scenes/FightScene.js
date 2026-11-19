@@ -68,6 +68,10 @@ export class FightScene extends Phaser.Scene {
     this.pauseKey = this.input.keyboard.addKey('P');
     this.restartKey = this.input.keyboard.addKey('R');
     this.menuKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+    this.resultKeys = this.input.keyboard.addKeys({
+      enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+      space: Phaser.Input.Keyboard.KeyCodes.SPACE,
+    });
     this.pauseNavigationKeys = this.input.keyboard.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.UP,
       down: Phaser.Input.Keyboard.KeyCodes.DOWN,
@@ -131,6 +135,15 @@ export class FightScene extends Phaser.Scene {
       return;
     }
     if (Phaser.Input.Keyboard.JustDown(this.restartKey)) this.#restart();
+    if (this.match.isOver) {
+      if (
+        Phaser.Input.Keyboard.JustDown(this.resultKeys.enter) ||
+        Phaser.Input.Keyboard.JustDown(this.resultKeys.space)
+      ) {
+        this.hud.advanceResultDialogue();
+      }
+      return;
+    }
 
     let events = [];
     if (this.hitStopMs > 0) this.hitStopMs -= delta;
@@ -184,7 +197,9 @@ export class FightScene extends Phaser.Scene {
 
   #showResult(winnerId) {
     const winner = this.match.fighters.find((fighter) => fighter.id === winnerId);
-    this.hud.showResult(winner ? winner.name : null);
+    const outcome = winnerId ? `${winnerId}Wins` : 'draw';
+    const dialogue = this.stageDefinition.resultDialogue[outcome] ?? this.stageDefinition.resultDialogue.draw;
+    this.hud.showResult(winner ? winner.name : null, dialogue);
   }
 
   #restart() {

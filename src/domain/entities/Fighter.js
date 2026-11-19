@@ -1,3 +1,4 @@
+import { FLIGHT } from '../arena/arena.js';
 import { FighterState, TIMINGS, attackTotalMs } from './FighterState.js';
 import { PICKUP_TYPES, POWER_UPS } from './PowerUpPickup.js';
 
@@ -7,7 +8,6 @@ export const BODY = Object.freeze({ width: 36, height: 84 });
 const KNOCKBACK_FRICTION = 700; // px/s²
 const ATTACK_LUNGE = 0.9; // fracción de moveSpeed durante la fase activa
 const MAX_ATTACK_DAMAGE = 5;
-const MAX_ALTITUDE = 118;
 
 /**
  * @typedef {{ x: number, y?: number, z?: number, attack?: boolean, teleport?: boolean }} Intent
@@ -39,6 +39,7 @@ export class Fighter {
 
   reset() {
     this.position = { ...this.spawn, z: this.spawn.z ?? 0 };
+    this.#clampAltitude();
     this.facing = this.spawnFacing;
     this.health = this.stats.maxHealth;
     this.state = FighterState.IDLE;
@@ -67,6 +68,14 @@ export class Fighter {
 
   get currentMoveSpeed() {
     return this.stats.moveSpeed * (this.powerUps[PICKUP_TYPES.HASTE] > 0 ? POWER_UPS[PICKUP_TYPES.HASTE].speedMultiplier : 1);
+  }
+
+  /** Altura máxima que conserva el cuerpo completo dentro del cielo visible. */
+  get maxAltitude() {
+    return Math.min(
+      FLIGHT.maxAltitude,
+      Math.max(0, this.position.y - BODY.height - FLIGHT.skyMargin - this.stats.hoverAmplitude),
+    );
   }
 
   get isAlive() {
@@ -231,8 +240,9 @@ export class Fighter {
   /** Mantiene al luchador dentro de los límites horizontales y de profundidad. */
   clampTo({ minX, maxX, minY = this.spawn.y, maxY = this.spawn.y }) {
     this.position.x = Math.min(maxX, Math.max(minX, this.position.x));
+    // position.y es el carril apoyado en el suelo: jamás puede sobrepasar maxY.
     this.position.y = Math.min(maxY, Math.max(minY, this.position.y));
-    this.position.z = Math.min(MAX_ALTITUDE, Math.max(0, this.position.z ?? 0));
+    this.#clampAltitude();
   }
 
   /** Entrega y vacía los eventos pendientes (para efectos visuales y sonido). */
@@ -243,6 +253,12 @@ export class Fighter {
   }
 
   // ── Internos ─────────────────────────────────────────────────────────────
+
+  #clampAltitude() {
+    // z=0 es el suelo. El techo se adapta a la profundidad para que la cabeza
+    // del sprite permanezca dentro del lienzo incluso en el carril más lejano.
+    this.position.z = Math.max(0, Math.min(this.maxAltitude, this.position.z ?? 0));
+  }
 
   #updatePowerUps(deltaMs) {
     for (const [type, remainingMs] of Object.entries(this.powerUps)) {
@@ -265,9 +281,8 @@ export class Fighter {
       // Normaliza los tres ejes para mantener una velocidad constante en diagonal.
       this.position.x += (moveX / magnitude) * this.currentMoveSpeed * seconds;
       this.position.y += (moveY / magnitude) * this.currentMoveSpeed * seconds;
-      this.position.z = Math.min(MAX_ALTITUDE, Math.max(0,
-        this.position.z + (moveZ / magnitude) * this.currentMoveSpeed * seconds,
-      ));
+      this.position.z += (moveZ / magnitude) * this.currentMoveSpeed * seconds;
+      this.#clampAltitude();
       this.#setState(FighterState.WALK);
     } else {
       this.#setState(FighterState.IDLE);

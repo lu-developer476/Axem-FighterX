@@ -40,12 +40,15 @@ describe('Match: golpes', () => {
     expect(match.fighters[1].health).toBe(match.fighters[1].maxHealth);
   });
 
-  it('los ataques respetan la profundidad del escenario', () => {
+  it('los ataques respetan la profundidad aunque la altura haga coincidir los rectángulos en pantalla', () => {
     const match = make({ ax: 300, bx: 340 });
     const [attacker, target] = match.fighters;
-    attacker.position.y = ARENA.minY;
-    target.position.y = ARENA.maxY;
+    attacker.position.y = 180;
+    target.position.y = 210;
+    target.position.z = 30;
+
     const events = advance(match, [{ ...idle, attack: true }, idle], 600);
+
     expect(events.some((event) => event.type === 'hit')).toBe(false);
     expect(target.health).toBe(target.maxHealth);
   });
@@ -123,13 +126,18 @@ describe('Match: cuerpos y escenario', () => {
     expect(match.fighters[0].position.x).toBe(ARENA.minX);
   });
 
-  it('permite ascender y descender sin salir del plano de combate', () => {
+  it('permite volar sobre el suelo sin que el descenso atraviese el piso', () => {
     const match = make({ ax: 300, bx: 420 });
     const [fighter] = match.fighters;
-    advance(match, [{ ...idle, y: -1 }, idle], 1800);
-    expect(fighter.position.y).toBe(ARENA.minY);
+
+    advance(match, [{ ...idle, z: 1 }, idle], 2200);
+    expect(fighter.position.z).toBeGreaterThan(0);
+
+    advance(match, [{ ...idle, z: -1 }, idle], 3000);
+    expect(fighter.position.z).toBe(0);
+
     advance(match, [{ ...idle, y: 1 }, idle], 1800);
-    expect(fighter.position.y).toBe(ARENA.maxY);
+    expect(fighter.position.y).toBe(ARENA.groundY);
   });
 });
 

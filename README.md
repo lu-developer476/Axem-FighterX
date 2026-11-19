@@ -19,7 +19,24 @@ Controles:
 | **J1** Axem Violet | `A` / `D` | `F` | `G` |
 | **J2** Axem Orange | `←` / `→` | `L` | `K` |
 
-`R` reinicia la partida. Cada personaje apunta hacia donde se movió por última vez.
+`R` reinicia la partida. `ESC` vuelve al menú desde el combate. Cada personaje apunta hacia donde se movió por última vez.
+
+## Escenarios y cinemáticas
+
+El menú permite elegir entre cuatro escenarios. Antes de cada combate se reproduce una cinemática breve con una conversación contextual entre Axem Violet y Axem Orange. Los diálogos presentan la zona y la relación de trabajo entre ambos; se avanza con `ENTER` o `ESPACIO`, y se puede omitir con `ESC`.
+
+| Escenario | Entorno |
+|---|---|
+| **Ruinas de medianoche** | Murallas antiguas bajo una luna inmóvil |
+| **Cráter del exilio** | Puente de basalto, respiraderos y lava |
+| **Bosque de los ecos** | Árboles gigantes, raíces y luces errantes |
+| **Santuario celeste** | Columnas doradas, sellos y arquitectura suspendida |
+
+Los cuatro fondos, relieves, suelos, límites y detalles ambientales se generan como texturas pixel art por código. No requieren imágenes externas adicionales.
+
+## Nitidez y renderizado
+
+El lienzo lógico se mantiene en **480×270** para conservar la identidad pixel art. Phaser utiliza filtrado de vecino más cercano, posiciones redondeadas y zoom entero máximo para evitar escalados fraccionarios que suavizan los píxeles. El CSS del lienzo también fuerza el renderizado pixelado.
 
 ## Arquitectura
 
@@ -29,7 +46,7 @@ Clean Architecture con la regla de dependencia apuntando hacia adentro:
 ```
 src/
 ├── domain/              Reglas puras. Sin Phaser ni DOM.
-│   ├── arena/           Dimensiones y reglas del escenario
+│   ├── arena/           Dimensiones, escenarios y reglas del escenario
 │   ├── entities/        Fighter (estados, vida, hitboxes), Match (golpes, KO, objetos)
 │   ├── geometry/        Utilidades de colisión
 │   └── rangers/         Catálogo de personajes (stats) y fábrica
@@ -39,10 +56,10 @@ src/
 ├── infrastructure/      Adaptadores a tecnologías concretas
 │   ├── input/           PhaserKeyboardInput (implementa InputPort)
 │   ├── assets/          Manifiesto de sprites y datos de animación
-│   └── graphics/        Escenario, efectos e iconos pixel art generados por código
+│   └── graphics/        Escenarios, efectos e iconos pixel art generados por código
 ├── presentation/        Todo lo que dibuja
 │   ├── animation/       Animador y registro de animaciones
-│   ├── scenes/          PreloadScene, FightScene
+│   ├── scenes/          PreloadScene, MenuScene, CinematicScene, FightScene
 │   └── views/           FighterView, StageView, HudView, FxDirector, PickupView
 ├── config/              Resolución y configuración de Phaser
 └── main.js              Composición: arma el juego
@@ -81,7 +98,7 @@ Mientras no haya hojas de sprites, el juego usa la pose actual con animaciones p
 3. Listo: el archivo se detecta al compilar (reiniciá el servidor de desarrollo si estaba abierto). Las animaciones de ataque, golpe, teletransporte y KO
    se ajustan solas a la duración de la acción. Si el servidor de desarrollo está abierto, reinicialo.
 
-Los efectos (explosión, chispa de impacto, polvo, onda de KO, teletransporte, tajo del hacha y curación)
+Los efectos (explosión, chispa de impacto, polvo, onda de KO, teletransporte, tajo del hacha, curación)
 se generan por código en `infrastructure/graphics/FxTextureFactory.js`, junto con los iconos de los objetos.
 
 ## Arte
@@ -89,10 +106,9 @@ se generan por código en `infrastructure/graphics/FxTextureFactory.js`, junto c
 - `art/source/`: **los sprites del juego**, sin fondo (transparentes). Vite los importa directamente:
   no hay copias en `public/`. La pose base de cada personaje es `art/source/axem-ranger-<ranger>.png`.
 - Esos PNG miden 2617×4096 pero son pixel art de 53×83 ampliado. Al cargar, el juego toma un píxel por
-  celda de esa cuadrícula (`nativeSize` en `characterAnimationData.js`) y los dibuja 1:1, con la misma
-  densidad de píxeles que el escenario.
-- El escenario "Ruinas de medianoche" (cielo, montañas, castillo, pinos, suelo, pilares) está
-  dibujado por código en `infrastructure/graphics/StageTextureFactory.js`, con paleta limitada y tramado.
+  celda de esa cuadrícula (`nativeSize` en `characterAnimationData.js`) y los dibuja 1:1.
+- Los escenarios se dibujan por código en `infrastructure/graphics/StageTextureFactory.js` y
+  `StageThemeFactory.js`, con paletas limitadas y texturas sin suavizado.
 
 ## Despliegue en Vercel
 
@@ -105,7 +121,7 @@ se generan por código en `infrastructure/graphics/FxTextureFactory.js`, junto c
 Cada push a `main` ejecuta `.github/workflows/ci.yml`:
 
 1. Tests y build.
-2. Captura automática con Playwright: mueve a ambos personajes y guarda video y screenshots en el artefacto `capturas-y-video`.
+2. Captura automática con Playwright: menú, cinemática, combate, movimiento, golpes, teletransporte y reinicio; guarda video y screenshots en el artefacto `capturas-y-video`.
 3. Publicación jugable en GitHub Pages.
 
 Requiere **Settings → Pages → Source: GitHub Actions**. Para correr la captura en local: `npm run build && npm run preview` y, en otra terminal, `npm run capture`.

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from '../../config/gameConfig.js';
 import { ARENA } from '../../domain/arena/arena.js';
+import { getStage, STAGE_IDS } from '../../domain/arena/stageCatalog.js';
 import { createDefaultMatch } from '../../application/useCases/CreateMatch.js';
 import { UpdateMatch } from '../../application/useCases/UpdateMatch.js';
 import { KEYMAPS, PhaserKeyboardInput } from '../../infrastructure/input/PhaserKeyboardInput.js';
@@ -17,6 +18,10 @@ export class FightScene extends Phaser.Scene {
     super('FightScene');
   }
 
+  init(data = {}) {
+    this.stageDefinition = getStage(data.stageId ?? STAGE_IDS.RUINS);
+  }
+
   create() {
     this.match = createDefaultMatch();
     this.updateMatch = new UpdateMatch({
@@ -27,7 +32,7 @@ export class FightScene extends Phaser.Scene {
       ],
     });
 
-    this.stage = new StageView(this);
+    this.stage = new StageView(this, this.stageDefinition.id);
     this.pickupView = new PickupView(this);
     this.views = this.match.fighters.map((fighter) => new FighterView(this, fighter));
     this.fx = new FxDirector(this);
@@ -35,9 +40,22 @@ export class FightScene extends Phaser.Scene {
     this.restartKey = this.input.keyboard.addKey('R');
     this.menuKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
 
+    this.stageLabel = this.add.text(GAME_WIDTH / 2, 43, this.stageDefinition.name.toUpperCase(), {
+      fontFamily: 'monospace',
+      fontSize: '6px',
+      fontStyle: 'bold',
+      color: '#fff0c9',
+      stroke: '#0d0b16',
+      strokeThickness: 2,
+    }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(10003);
+
     this.cameras.main.setBounds(0, 0, ARENA.width, this.scale.height);
     this.hitStopMs = 0;
     this.#snapCamera();
+    this.cameras.main.flash(160, 255, 255, 255);
+    this.time.delayedCall(2600, () => {
+      this.tweens.add({ targets: this.stageLabel, alpha: 0, duration: 380 });
+    });
   }
 
   update(time, delta) {

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from '../../config/gameConfig.js';
+import { STAGES } from '../../domain/arena/stageCatalog.js';
 
 const PORTFOLIO_URL = 'https://lu-dev-portfolio.vercel.app/';
 
@@ -41,25 +42,24 @@ export class MenuScene extends Phaser.Scene {
 
     this.add.image(0, 0, 'stage-far')
       .setOrigin(0, 0)
-      .setDisplaySize(GAME_WIDTH, 270)
       .setAlpha(0.82)
       .setDepth(-90);
 
     this.add.image(0, 36, 'stage-mid')
       .setOrigin(0, 0)
-      .setDisplaySize(GAME_WIDTH, 234)
       .setAlpha(0.9)
       .setDepth(-80);
 
     this.add.image(78, 231, 'ranger-violet')
       .setOrigin(0.5, 1)
-      .setScale(0.78)
+      .setScale(1)
+      .setFlipX(true)
       .setAlpha(0.9)
       .setDepth(-20);
 
     this.add.image(GAME_WIDTH - 78, 231, 'ranger-orange')
       .setOrigin(0.5, 1)
-      .setScale(0.78)
+      .setScale(1)
       .setAlpha(0.9)
       .setDepth(-20);
 
@@ -88,7 +88,7 @@ export class MenuScene extends Phaser.Scene {
       .setAlpha(0.92)
       .setDepth(-1);
 
-    this.add.text(GAME_WIDTH / 2, 88, 'RUINAS DE MEDIANOCHE  ·  BATALLA LOCAL', {
+    this.add.text(GAME_WIDTH / 2, 88, '4 ESCENARIOS  ·  CAMPAÑA DE ENTRENAMIENTO', {
       fontFamily: 'monospace',
       fontSize: '6px',
       color: '#c8b9dc',
@@ -132,17 +132,17 @@ export class MenuScene extends Phaser.Scene {
     return text;
   }
 
-  #addButton(title, y, action) {
-    const box = this.add.rectangle(GAME_WIDTH / 2, y, 210, 18, 0x241b3c, 0.98)
+  #addButton(title, y, action, { width = 210, fontSize = '8px' } = {}) {
+    const box = this.add.rectangle(GAME_WIDTH / 2, y, width, 18, 0x241b3c, 0.98)
       .setStrokeStyle(1, 0x62527e, 1);
     const label = this.add.text(GAME_WIDTH / 2, y, title, {
       fontFamily: 'monospace',
-      fontSize: '8px',
+      fontSize,
       fontStyle: 'bold',
       color: '#d9cde9',
       align: 'center',
     }).setOrigin(0.5);
-    const hitArea = this.add.rectangle(GAME_WIDTH / 2, y, 210, 18, 0xffffff, 0)
+    const hitArea = this.add.rectangle(GAME_WIDTH / 2, y, width, 18, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
 
     const index = this.buttons.length;
@@ -219,21 +219,30 @@ export class MenuScene extends Phaser.Scene {
       fontSize: '6px',
       color: '#a99cbe',
     });
-    this.#addButton('JUGAR', 160, () => this.#showPlay());
+    this.#addButton('JUGAR', 160, () => this.#showStages());
     this.#addButton('CONTROLES', 184, () => this.#showControls());
     this.#addButton('CRÉDITOS', 208, () => this.#showCredits());
     this.#addFooter();
   }
 
-  #showPlay() {
-    this.page = 'play';
-    this.#beginPage('MODO DE JUEGO');
-    this.#addText('DOS JUGADORES · UN MISMO TECLADO', GAME_WIDTH / 2, 141, {
-      fontSize: '6px',
+  #showStages() {
+    this.page = 'stages';
+    this.#beginPage('ELEGÍ EL ESCENARIO', 330, 158);
+    this.#addText('CADA ZONA TIENE SU PROPIA INTRODUCCIÓN', GAME_WIDTH / 2, 138, {
+      fontSize: '5px',
       color: '#b7a9cb',
     });
-    this.#addButton('COMBATE LOCAL', 169, () => this.scene.start('FightScene'));
-    this.#addButton('VOLVER AL INICIO', 194, () => this.#showHome());
+
+    STAGES.forEach((stage, index) => {
+      this.#addButton(stage.name.toUpperCase(), 153 + index * 21, () => {
+        this.scene.start('CinematicScene', { stageId: stage.id });
+      }, { width: 230, fontSize: '7px' });
+    });
+
+    this.#addButton('VOLVER AL INICIO', 238, () => this.#showHome(), {
+      width: 180,
+      fontSize: '7px',
+    });
     this.#addFooter();
   }
 
@@ -270,7 +279,7 @@ export class MenuScene extends Phaser.Scene {
     this.#addText('Axem FighterX es un juego de pelea retro para dos jugadores.', GAME_WIDTH / 2, 153, {
       fontSize: '6px',
     });
-    this.#addText('Combate local, estética pixel art y escenarios de fantasía.', GAME_WIDTH / 2, 169, {
+    this.#addText('Cuatro escenarios, cinemáticas y combates de entrenamiento.', GAME_WIDTH / 2, 169, {
       fontSize: '6px',
     });
     this.#addText('Diseño y programación: Lucas Montenegro', GAME_WIDTH / 2, 188, {

@@ -1,4 +1,4 @@
-// Abre el juego compilado en Chromium, navega hasta el combate y juega una partida de prueba.
+// Abre el juego compilado en Chromium, recorre los cuatro escenarios y juega una partida de prueba.
 // Uso: node scripts/capture.mjs [url]
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
@@ -16,7 +16,6 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 
-// Los errores se muestran como anotaciones de GitHub para verlos sin abrir los logs.
 const errors = [];
 const record = (message) => {
   errors.push(message);
@@ -43,32 +42,63 @@ await page.waitForSelector('canvas', { timeout: 15_000 });
 await wait(1500);
 await shot('01-inicio');
 
-// La prueba conserva la pantalla de Inicio como primera captura y luego entra al combate.
-await tap('Enter'); // Inicio → Jugar
-await wait(180);
-await tap('Enter'); // Jugar → Combate local
+// Recorre la introducción de cada escenario y vuelve al menú.
+const stageShots = [
+  '02-cinematica-ruinas',
+  '03-cinematica-volcan',
+  '04-cinematica-bosque',
+  '05-cinematica-santuario',
+];
+
+for (let index = 0; index < stageShots.length; index++) {
+  await tap('Enter'); // Inicio → selección de escenarios
+  await wait(100);
+  for (let down = 0; down < index; down++) await tap('ArrowDown');
+  await tap('Enter'); // Escenario → cinemática
+  await wait(450);
+  await shot(stageShots[index]);
+  for (let line = 0; line < 7; line++) {
+    await tap('Enter'); // Avanzar una línea del diálogo
+    await wait(210);
+  }
+  await wait(180);
+  await tap('Escape'); // Combate → menú
+  await wait(180);
+}
+
+// Inicia una partida completa en Ruinas de medianoche.
+await tap('Enter');
+await wait(120);
+await tap('Enter');
+await wait(450);
+await shot('06-cinematica-dialogo');
+for (let line = 0; line < 7; line++) {
+  await tap('Enter');
+  await wait(70);
+}
 await wait(500);
+await shot('07-combate-ruinas');
 
 // Escenario y parallax: J1 camina hacia la derecha, J2 hacia la izquierda.
 await Promise.all([hold('d', 700), hold('ArrowRight', 1500)]);
-await shot('02-parallax-derecha');
+await shot('08-parallax-derecha');
 await hold('ArrowLeft', 2500);
-await shot('03-parallax-izquierda');
+await shot('09-parallax-izquierda');
 
 // Pelea: J1 se acerca y ataca.
 await Promise.all([hold('a', 1800), hold('ArrowRight', 1800)]);
 await hold('d', 900);
 await tap('f');
 await wait(150);
-await shot('04-ataque');
+await shot('10-ataque');
 await wait(120);
-await shot('05-golpe-explosion');
+await shot('11-golpe-explosion');
 await wait(600);
 
 // Teletransporte de J2.
 await tap('k');
 await wait(70);
-await shot('06-teletransporte');
+await shot('12-teletransporte');
 await wait(500);
 
 // J1 se gira hacia el rival y lo vence a hachazos.
@@ -76,16 +106,16 @@ await hold('a', 120);
 for (let i = 0; i < 14; i++) {
   await tap('f');
   await wait(520);
-  if (i === 6) await shot('07-combate');
+  if (i === 6) await shot('13-combate');
 }
 await wait(400);
-await shot('08-ko');
+await shot('14-ko');
 await wait(1500);
 
 // Reinicio.
 await tap('r');
 await wait(600);
-await shot('09-reinicio');
+await shot('15-reinicio');
 
 await context.close();
 await browser.close();

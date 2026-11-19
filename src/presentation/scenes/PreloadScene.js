@@ -6,6 +6,7 @@ import { listAvailableSheets } from '../../infrastructure/assets/sheetCatalog.js
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { prepareSpriteTexture } from '../../infrastructure/graphics/prepareSpriteTexture.js';
 import { createStageTextures } from '../../infrastructure/graphics/StageTextureFactory.js';
+import { createAdditionalStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';
 import { registerCharacterAnimations } from '../animation/registerCharacterAnimations.js';
 import { registerFxAnimations } from '../animation/registerFxAnimations.js';
 import titleArtUrl from '../../../art/source/title.png?url';
@@ -69,13 +70,13 @@ export class PreloadScene extends Phaser.Scene {
     for (const [rangerId, url] of Object.entries(spriteManifest)) {
       this.load.image(sourceKeyFor(rangerId), url);
     }
-    // Solo se cargan las hojas de sprites que existen en el proyecto.
     for (const sheet of listAvailableSheets()) this.load.image(sheet.key, sheet.url);
     this.load.image('title-art', titleArtUrl);
   }
 
   create() {
     createStageTextures(this);
+    createAdditionalStageTextures(this);
     createFxTextures(this);
     this.#prepareBasePoses();
     registerFxAnimations(this);
@@ -93,7 +94,6 @@ export class PreloadScene extends Phaser.Scene {
         targetHeight: data.displayHeight,
       });
       if (prepared) continue;
-      // El PNG ya tiene tamaño de juego: se usa tal cual.
       const source = this.textures.get(sourceKeyFor(rangerId)).getSourceImage();
       this.textures.addImage(spriteKeyFor(rangerId), source);
       this.textures.remove(sourceKeyFor(rangerId));

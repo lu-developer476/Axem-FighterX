@@ -1,5 +1,6 @@
-// Abre el juego compilado en Chromium, mueve a los dos personajes y guarda
-// capturas y un video en ./artifacts. Uso: node scripts/capture.mjs [url]
+// Abre el juego compilado en Chromium, juega una partida de prueba (caminar, hachazo,
+// golpe, teletransporte, KO) y guarda capturas y un video en ./artifacts.
+// Uso: node scripts/capture.mjs [url]
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 
@@ -16,37 +17,76 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 
+// Los errores se muestran como anotaciones de GitHub para verlos sin abrir los logs.
 const errors = [];
-page.on('pageerror', (e) => errors.push(e.message));
-page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+const record = (message) => {
+  errors.push(message);
+  console.log(`::error title=Error en el juego::${message.replaceAll('\n', ' ')}`);
+};
+page.on('pageerror', (error) => record(error.message));
+page.on('console', (msg) => msg.type() === 'error' && record(msg.text()));
 
-await page.goto(url);
-await page.waitForSelector('canvas', { timeout: 15_000 });
-await page.waitForTimeout(1500);
-await page.screenshot({ path: `${out}/01-inicio.png` });
-
+const shot = (name) => page.screenshot({ path: `${out}/${name}.png` });
+const wait = (ms) => page.waitForTimeout(ms);
 const hold = async (key, ms) => {
   await page.keyboard.down(key);
-  await page.waitForTimeout(ms);
+  await wait(ms);
+  await page.keyboard.up(key);
+};
+const tap = async (key) => {
+  await page.keyboard.down(key);
+  await wait(40);
   await page.keyboard.up(key);
 };
 
-// J1 (WASD) y J2 (flechas) se mueven a la vez.
-await Promise.all([hold('d', 1200), hold('ArrowLeft', 1200)]);
-await page.screenshot({ path: `${out}/02-acercamiento.png` });
+await page.goto(url);
+await page.waitForSelector('canvas', { timeout: 15_000 });
+await wait(1500);
+await shot('01-inicio');
 
-await Promise.all([hold('w', 700), hold('ArrowUp', 700)]);
-await page.screenshot({ path: `${out}/03-arriba.png` });
+// Escenario y parallax: J1 camina hacia la derecha, J2 hacia la izquierda.
+await Promise.all([hold('d', 700), hold('ArrowRight', 1500)]);
+await shot('02-parallax-derecha');
+await hold('ArrowLeft', 2500);
+await shot('03-parallax-izquierda');
 
-await Promise.all([hold('a', 1500), hold('ArrowRight', 1500)]);
-await page.screenshot({ path: `${out}/04-separados.png` });
+// Pelea: J1 se acerca y ataca.
+await Promise.all([hold('a', 1800), hold('ArrowRight', 1800)]);
+await hold('d', 900);
+await tap('f');
+await wait(150);
+await shot('04-ataque');
+await wait(120);
+await shot('05-golpe-explosion');
+await wait(600);
 
-await page.waitForTimeout(800); // levitación en reposo
+// Teletransporte de J2.
+await tap('k');
+await wait(70);
+await shot('06-teletransporte');
+await wait(500);
+
+// J1 se gira hacia el rival y lo vence a hachazos.
+await hold('a', 120);
+for (let i = 0; i < 14; i++) {
+  await tap('f');
+  await wait(520);
+  if (i === 6) await shot('07-combate');
+}
+await wait(400);
+await shot('08-ko');
+await wait(1500);
+
+// Reinicio.
+await tap('r');
+await wait(600);
+await shot('09-reinicio');
+
 await context.close();
 await browser.close();
 
 if (errors.length) {
-  console.error('Errores en la página:\n' + errors.join('\n'));
+  console.error(`Errores en la página (${errors.length}):\n${errors.join('\n')}`);
   process.exit(1);
 }
 console.log('Captura completa.');

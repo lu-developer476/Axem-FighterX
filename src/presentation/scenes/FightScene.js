@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH } from '../../config/gameConfig.js';
 import { ARENA } from '../../domain/arena/arena.js';
 import { getStage, STAGE_IDS } from '../../domain/arena/stageCatalog.js';
+import { getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { createDefaultMatch } from '../../application/useCases/CreateMatch.js';
 import { UpdateMatch } from '../../application/useCases/UpdateMatch.js';
 import { KEYMAPS, PhaserKeyboardInput } from '../../infrastructure/input/PhaserKeyboardInput.js';
@@ -20,10 +21,14 @@ export class FightScene extends Phaser.Scene {
 
   init(data = {}) {
     this.stageDefinition = getStage(data.stageId ?? STAGE_IDS.RUINS);
+    this.matchSetup = {
+      ...(data.matchSetup ?? {}),
+      characters: [...(data.matchSetup?.characters ?? [])],
+    };
   }
 
   create() {
-    this.match = createDefaultMatch();
+    this.match = createDefaultMatch(Math.random, this.matchSetup.characters);
     this.updateMatch = new UpdateMatch({
       match: this.match,
       inputs: [
@@ -40,11 +45,20 @@ export class FightScene extends Phaser.Scene {
     this.restartKey = this.input.keyboard.addKey('R');
     this.menuKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
 
+    const versus = getVersusMode(this.matchSetup.versusMode);
+    const combat = getCombatMode(this.matchSetup.combatMode);
     this.stageLabel = this.add.text(GAME_WIDTH / 2, 43, this.stageDefinition.name.toUpperCase(), {
       fontFamily: 'monospace',
       fontSize: '6px',
       fontStyle: 'bold',
       color: '#fff0c9',
+      stroke: '#0d0b16',
+      strokeThickness: 2,
+    }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(10003);
+    this.modeLabel = this.add.text(GAME_WIDTH / 2, 52, versus.label + ' · ' + combat.label, {
+      fontFamily: 'monospace',
+      fontSize: '5px',
+      color: '#d0c4dc',
       stroke: '#0d0b16',
       strokeThickness: 2,
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(10003);
@@ -54,7 +68,7 @@ export class FightScene extends Phaser.Scene {
     this.#snapCamera();
     this.cameras.main.flash(160, 255, 255, 255);
     this.time.delayedCall(2600, () => {
-      this.tweens.add({ targets: this.stageLabel, alpha: 0, duration: 380 });
+      this.tweens.add({ targets: [this.stageLabel, this.modeLabel], alpha: 0, duration: 380 });
     });
   }
 

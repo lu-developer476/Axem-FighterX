@@ -1,0 +1,30 @@
+import { describe, expect, it } from 'vitest';
+import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from './matchModes.js';
+
+describe('Opciones de configuración del combate', () => {
+  it('ofrece los tres tipos de enfrentamiento solicitados', () => {
+    expect(VERSUS_MODES.map((mode) => mode.label)).toEqual([
+      'JUGADOR VS IA',
+      'JUGADOR VS JUGADOR',
+      'IA VS IA',
+    ]);
+  });
+
+  it('ofrece los cuatro formatos de combate solicitados', () => {
+    expect(COMBAT_MODES.map((mode) => mode.label)).toEqual([
+      'DEFINITIVO',
+      '2 RONDAS',
+      '5 RONDAS',
+      'ENTRENAMIENTO',
+    ]);
+  });
+
+  it('solicita un personaje para jugador vs IA y dos para los demás enfrentamientos', () => {
+    expect(VERSUS_MODES.map((mode) => mode.characterSlots)).toEqual([1, 2, 2]);
+  });
+
+  it('usa opciones seguras si recibe identificadores desconocidos', () => {
+    expect(getVersusMode('desconocido').id).toBe('player-vs-ai');
+    expect(getCombatMode('desconocido').id).toBe('definitive');
+  });
+});

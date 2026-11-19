@@ -1,4 +1,4 @@
-// Abre el juego compilado en Chromium, recorre los cuatro escenarios y juega una partida de prueba.
+// Abre el juego compilado en Chromium, valida los selectores y recorre los escenarios.
 // Uso: node scripts/capture.mjs [url]
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
@@ -42,23 +42,59 @@ await page.waitForSelector('canvas', { timeout: 15_000 });
 await wait(1500);
 await shot('01-inicio');
 
-// Recorre la introducción de cada escenario y vuelve al menú.
+// Comprueba el modal de selección doble para Jugador vs Jugador.
+await tap('Enter'); // Inicio → tipo de enfrentamiento
+await tap('ArrowDown'); // Jugador vs Jugador
+await tap('Enter');
+await tap('Enter'); // Definitivo → primer selector
+await shot('02-modal-seleccion-personaje');
+await tap('Enter'); // Axem Violet → segundo selector
+await wait(120);
+await shot('03-modal-segundo-personaje');
+await tap('ArrowDown');
+await tap('Enter'); // Axem Orange → selección de escenario
+await tap('Escape'); // Escenario → selector del segundo personaje
+await tap('Escape'); // Personajes → formatos
+await tap('Escape'); // Formatos → tipo de enfrentamiento
+await tap('Escape'); // Tipo de enfrentamiento → inicio
+
+// Comprueba también el modal de dos participantes para IA vs IA.
+await tap('Enter');
+await tap('ArrowDown');
+await tap('ArrowDown');
+await tap('Enter'); // IA vs IA
+await tap('Enter'); // Definitivo → primer selector
+await shot('04-modal-ia-uno');
+await tap('Enter'); // Primer personaje → segundo selector
+await shot('05-modal-ia-dos');
+await tap('ArrowDown');
+await tap('Enter'); // Segundo personaje → escenarios
+await tap('Escape');
+await tap('Escape');
+await tap('Escape');
+await tap('Escape');
+
+// Recorre los cuatro escenarios con diferentes formatos de combate.
 const stageShots = [
-  '02-cinematica-ruinas',
-  '03-cinematica-volcan',
-  '04-cinematica-bosque',
-  '05-cinematica-santuario',
+  '06-cinematica-ruinas',
+  '07-cinematica-volcan',
+  '08-cinematica-bosque',
+  '09-cinematica-santuario',
 ];
 
 for (let index = 0; index < stageShots.length; index++) {
-  await tap('Enter'); // Inicio → selección de escenarios
-  await wait(100);
+  await tap('Enter'); // Inicio → tipo de enfrentamiento
+  await tap('Enter'); // Jugador vs IA
+  for (let down = 0; down < index; down++) await tap('ArrowDown');
+  await tap('Enter'); // Formato → modal de personajes
+  if (index === 0) await shot('10-modal-jugador-vs-ia');
+  await tap('Enter'); // Elegir personaje; el rival recibe el otro ranger
   for (let down = 0; down < index; down++) await tap('ArrowDown');
   await tap('Enter'); // Escenario → cinemática
   await wait(450);
   await shot(stageShots[index]);
   for (let line = 0; line < 7; line++) {
-    await tap('Enter'); // Avanzar una línea del diálogo
+    await tap('Enter'); // Avanzar diálogo hasta entrar al combate
     await wait(210);
   }
   await wait(180);
@@ -68,37 +104,39 @@ for (let index = 0; index < stageShots.length; index++) {
 
 // Inicia una partida completa en Ruinas de medianoche.
 await tap('Enter');
-await wait(120);
+await tap('Enter');
+await tap('Enter');
+await tap('Enter');
 await tap('Enter');
 await wait(450);
-await shot('06-cinematica-dialogo');
+await shot('11-cinematica-dialogo');
 for (let line = 0; line < 7; line++) {
   await tap('Enter');
   await wait(70);
 }
 await wait(500);
-await shot('07-combate-ruinas');
+await shot('12-combate-ruinas');
 
 // Escenario y parallax: J1 camina hacia la derecha, J2 hacia la izquierda.
 await Promise.all([hold('d', 700), hold('ArrowRight', 1500)]);
-await shot('08-parallax-derecha');
+await shot('13-parallax-derecha');
 await hold('ArrowLeft', 2500);
-await shot('09-parallax-izquierda');
+await shot('14-parallax-izquierda');
 
 // Pelea: J1 se acerca y ataca.
 await Promise.all([hold('a', 1800), hold('ArrowRight', 1800)]);
 await hold('d', 900);
 await tap('f');
 await wait(150);
-await shot('10-ataque');
+await shot('15-ataque');
 await wait(120);
-await shot('11-golpe-explosion');
+await shot('16-golpe-explosion');
 await wait(600);
 
 // Teletransporte de J2.
 await tap('k');
 await wait(70);
-await shot('12-teletransporte');
+await shot('17-teletransporte');
 await wait(500);
 
 // J1 se gira hacia el rival y lo vence a hachazos.
@@ -106,16 +144,16 @@ await hold('a', 120);
 for (let i = 0; i < 14; i++) {
   await tap('f');
   await wait(520);
-  if (i === 6) await shot('13-combate');
+  if (i === 6) await shot('18-combate');
 }
 await wait(400);
-await shot('14-ko');
+await shot('19-ko');
 await wait(1500);
 
 // Reinicio.
 await tap('r');
 await wait(600);
-await shot('15-reinicio');
+await shot('20-reinicio');
 
 await context.close();
 await browser.close();

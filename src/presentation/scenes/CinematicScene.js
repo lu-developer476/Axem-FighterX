@@ -14,11 +14,16 @@ export class CinematicScene extends Phaser.Scene {
     super('CinematicScene');
     this.lineIndex = 0;
     this.transitioning = false;
+    this.matchSetup = {};
   }
 
   init(data = {}) {
     this.stageId = data.stageId ?? STAGE_IDS.RUINS;
     this.stage = getStage(this.stageId);
+    this.matchSetup = {
+      ...(data.matchSetup ?? {}),
+      characters: [...(data.matchSetup?.characters ?? [])],
+    };
     this.lineIndex = 0;
     this.transitioning = false;
   }
@@ -140,7 +145,7 @@ export class CinematicScene extends Phaser.Scene {
     const speaker = SPEAKERS[line.speaker];
     this.speaker.setText(speaker.name).setColor(speaker.color);
     this.dialogue.setText(line.text).setAlpha(0);
-    this.progress.setText(`${String(this.lineIndex + 1).padStart(2, '0')} / ${this.stage.dialogue.length}`);
+    this.progress.setText(String(this.lineIndex + 1).padStart(2, '0') + ' / ' + this.stage.dialogue.length);
     this.violet.setAlpha(line.speaker === 'violet' ? 1 : 0.62);
     this.orange.setAlpha(line.speaker === 'orange' ? 1 : 0.62);
 
@@ -165,6 +170,9 @@ export class CinematicScene extends Phaser.Scene {
   #startMatch() {
     if (this.transitioning) return;
     this.transitioning = true;
-    this.scene.start('FightScene', { stageId: this.stage.id });
+    this.scene.start('FightScene', {
+      stageId: this.stage.id,
+      matchSetup: this.matchSetup,
+    });
   }
 }

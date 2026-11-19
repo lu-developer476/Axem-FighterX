@@ -1,8 +1,15 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from '../../config/gameConfig.js';
 import { STAGES } from '../../domain/arena/stageCatalog.js';
+import { RANGER_IDS, rangerCatalog } from '../../domain/rangers/rangerCatalog.js';
+import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 
 const PORTFOLIO_URL = 'https://lu-dev-portfolio.vercel.app/';
+const RANGER_ORDER = [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE];
+const RANGER_TEXTURES = {
+  [RANGER_IDS.VIOLET]: 'ranger-violet',
+  [RANGER_IDS.ORANGE]: 'ranger-orange',
+};
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -10,6 +17,8 @@ export class MenuScene extends Phaser.Scene {
     this.page = 'home';
     this.buttons = [];
     this.selectedIndex = 0;
+    this.matchSetup = {};
+    this.characterSlot = 0;
   }
 
   create() {
@@ -31,7 +40,7 @@ export class MenuScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) this.#activateSelection();
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.escape) && this.page !== 'home') {
-      this.#showHome();
+      this.#goBack();
     }
   }
 
@@ -120,6 +129,27 @@ export class MenuScene extends Phaser.Scene {
     });
   }
 
+  #beginCharacterModal() {
+    this.ui.removeAll(true);
+    this.buttons = [];
+    this.selectedIndex = 0;
+
+    const veil = this.add.rectangle(GAME_WIDTH / 2, 135, GAME_WIDTH, 270, 0x05030c, 0.82)
+      .setInteractive();
+    const panel = this.add.rectangle(GAME_WIDTH / 2, 177, 354, 156, 0x100b24, 0.99)
+      .setStrokeStyle(2, 0xd3a66d, 1);
+    const inset = this.add.rectangle(GAME_WIDTH / 2, 177, 346, 148, 0x100b24, 0)
+      .setStrokeStyle(1, 0x59466e, 1);
+    this.ui.add([veil, panel, inset]);
+
+    this.#addText('SELECCIONAR PERSONAJE', GAME_WIDTH / 2, 116, {
+      fontSize: '10px',
+      fontStyle: 'bold',
+      color: '#f7cf83',
+      letterSpacing: 1,
+    });
+  }
+
   #addText(value, x, y, style = {}) {
     const text = this.add.text(x, y, value, {
       fontFamily: 'monospace',
@@ -132,17 +162,17 @@ export class MenuScene extends Phaser.Scene {
     return text;
   }
 
-  #addButton(title, y, action, { width = 210, fontSize = '8px' } = {}) {
-    const box = this.add.rectangle(GAME_WIDTH / 2, y, width, 18, 0x241b3c, 0.98)
+  #addButton(title, y, action, { width = 210, fontSize = '8px', x = GAME_WIDTH / 2 } = {}) {
+    const box = this.add.rectangle(x, y, width, 18, 0x241b3c, 0.98)
       .setStrokeStyle(1, 0x62527e, 1);
-    const label = this.add.text(GAME_WIDTH / 2, y, title, {
+    const label = this.add.text(x, y, title, {
       fontFamily: 'monospace',
       fontSize,
       fontStyle: 'bold',
       color: '#d9cde9',
       align: 'center',
     }).setOrigin(0.5);
-    const hitArea = this.add.rectangle(GAME_WIDTH / 2, y, width, 18, 0xffffff, 0)
+    const hitArea = this.add.rectangle(x, y, width, 18, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
 
     const index = this.buttons.length;
@@ -158,6 +188,45 @@ export class MenuScene extends Phaser.Scene {
     });
 
     this.ui.add([box, label, hitArea]);
+    this.#refreshButtons();
+  }
+
+  #addCharacterCard(rangerId, x, action) {
+    const ranger = rangerCatalog[rangerId];
+    const card = this.add.rectangle(x, 187, 144, 82, 0x241b3c, 0.98)
+      .setStrokeStyle(1, 0x62527e, 1);
+    const portrait = this.add.image(x - 42, 182, RANGER_TEXTURES[rangerId])
+      .setOrigin(0.5)
+      .setScale(0.48);
+    const label = this.add.text(x + 17, 177, ranger.name.toUpperCase(), {
+      fontFamily: 'monospace',
+      fontSize: '6px',
+      fontStyle: 'bold',
+      color: '#d9cde9',
+      align: 'center',
+    }).setOrigin(0.5);
+    const hint = this.add.text(x + 17, 197, 'ELEGIR', {
+      fontFamily: 'monospace',
+      fontSize: '6px',
+      color: '#a99cbe',
+      align: 'center',
+    }).setOrigin(0.5);
+
+    const hitArea = this.add.rectangle(x, 187, 144, 82, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true });
+    const index = this.buttons.length;
+    this.buttons.push({ title: ranger.name.toUpperCase(), box: card, label, action });
+    hitArea.on('pointerover', () => {
+      this.selectedIndex = index;
+      this.#refreshButtons();
+    });
+    hitArea.on('pointerdown', () => {
+      this.selectedIndex = index;
+      this.#refreshButtons();
+      this.#activateSelection();
+    });
+
+    this.ui.add([card, portrait, label, hint, hitArea]);
     this.#refreshButtons();
   }
 
@@ -212,35 +281,142 @@ export class MenuScene extends Phaser.Scene {
     if (selected) selected.action();
   }
 
+  #goBack() {
+    if (this.page === 'versus') {
+      this.#showHome();
+      return;
+    }
+    if (this.page === 'combat') {
+      this.#showVersusModes();
+      return;
+    }
+    if (this.page === 'characters') {
+      this.#showCombatModes();
+      return;
+    }
+    if (this.page === 'stages') {
+      const mode = getVersusMode(this.matchSetup.versusMode);
+      this.characterSlot = Math.max(0, mode.characterSlots - 1);
+      this.#showCharacterModal();
+      return;
+    }
+    this.#showHome();
+  }
+
   #showHome() {
     this.page = 'home';
+    this.matchSetup = {};
+    this.characterSlot = 0;
     this.#beginPage('INICIO');
     this.#addText('ELEGÍ CÓMO QUERÉS CONTINUAR', GAME_WIDTH / 2, 139, {
       fontSize: '6px',
       color: '#a99cbe',
     });
-    this.#addButton('JUGAR', 160, () => this.#showStages());
+    this.#addButton('JUGAR', 160, () => this.#showVersusModes());
     this.#addButton('CONTROLES', 184, () => this.#showControls());
     this.#addButton('CRÉDITOS', 208, () => this.#showCredits());
     this.#addFooter();
   }
 
+  #showVersusModes() {
+    this.page = 'versus';
+    this.matchSetup = { characters: [] };
+    this.#beginPage('TIPO DE ENFRENTAMIENTO', 330, 168);
+    this.#addText('¿QUIÉNES VAN A COMBATIR?', GAME_WIDTH / 2, 140, {
+      fontSize: '6px',
+      color: '#b7a9cb',
+    });
+
+    VERSUS_MODES.forEach((mode, index) => {
+      this.#addButton(mode.label, 160 + index * 25, () => {
+        this.matchSetup.versusMode = mode.id;
+        this.#showCombatModes();
+      }, { width: 246, fontSize: '7px' });
+    });
+
+    this.#addButton('VOLVER', 238, () => this.#showHome(), { width: 150, fontSize: '7px' });
+    this.#addFooter();
+  }
+
+  #showCombatModes() {
+    this.page = 'combat';
+    this.#beginPage('MODO DE COMBATE', 330, 168);
+    this.#addText('ELEGÍ EL FORMATO DE LA PARTIDA', GAME_WIDTH / 2, 140, {
+      fontSize: '6px',
+      color: '#b7a9cb',
+    });
+
+    COMBAT_MODES.forEach((mode, index) => {
+      this.#addButton(mode.label, 151 + index * 21, () => {
+        this.matchSetup.combatMode = mode.id;
+        this.matchSetup.characters = [];
+        this.characterSlot = 0;
+        this.#showCharacterModal();
+      }, { width: 230, fontSize: '7px' });
+    });
+
+    this.#addButton('VOLVER', 238, () => this.#showVersusModes(), { width: 150, fontSize: '7px' });
+    this.#addFooter();
+  }
+
+  #showCharacterModal() {
+    this.page = 'characters';
+    const mode = getVersusMode(this.matchSetup.versusMode);
+    const slotName = mode.slotLabels[this.characterSlot] ?? 'PARTICIPANTE';
+    this.#beginCharacterModal();
+    this.#addText(slotName + ' · ELEGÍ TU PERSONAJE', GAME_WIDTH / 2, 137, {
+      fontSize: '6px',
+      color: '#c8b9dc',
+    });
+
+    this.#addCharacterCard(RANGER_ORDER[0], 160, () => this.#selectCharacter(RANGER_ORDER[0]));
+    this.#addCharacterCard(RANGER_ORDER[1], 320, () => this.#selectCharacter(RANGER_ORDER[1]));
+    this.#addButton('CANCELAR', 239, () => this.#showCombatModes(), {
+      width: 132,
+      fontSize: '6px',
+    });
+  }
+
+  #selectCharacter(rangerId) {
+    const mode = getVersusMode(this.matchSetup.versusMode);
+    this.matchSetup.characters[this.characterSlot] = rangerId;
+
+    if (this.characterSlot + 1 < mode.characterSlots) {
+      this.characterSlot += 1;
+      this.#showCharacterModal();
+      return;
+    }
+
+    if (mode.characterSlots === 1) {
+      this.matchSetup.characters[1] = RANGER_ORDER.find((id) => id !== rangerId);
+    }
+    this.#showStages();
+  }
+
   #showStages() {
     this.page = 'stages';
+    const versus = getVersusMode(this.matchSetup.versusMode);
+    const combat = getCombatMode(this.matchSetup.combatMode);
     this.#beginPage('ELEGÍ EL ESCENARIO', 330, 158);
-    this.#addText('CADA ZONA TIENE SU PROPIA INTRODUCCIÓN', GAME_WIDTH / 2, 138, {
+    this.#addText(versus.label + ' · ' + combat.label, GAME_WIDTH / 2, 138, {
       fontSize: '5px',
       color: '#b7a9cb',
     });
 
     STAGES.forEach((stage, index) => {
       this.#addButton(stage.name.toUpperCase(), 153 + index * 21, () => {
-        this.scene.start('CinematicScene', { stageId: stage.id });
+        this.scene.start('CinematicScene', {
+          stageId: stage.id,
+          matchSetup: {
+            ...this.matchSetup,
+            characters: [...this.matchSetup.characters],
+          },
+        });
       }, { width: 230, fontSize: '7px' });
     });
 
-    this.#addButton('VOLVER AL INICIO', 238, () => this.#showHome(), {
-      width: 180,
+    this.#addButton('VOLVER', 238, () => this.#showCharacterModal(), {
+      width: 150,
       fontSize: '7px',
     });
     this.#addFooter();

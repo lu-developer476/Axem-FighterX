@@ -21,6 +21,12 @@ Controles:
 
 `R` reinicia la partida. `ESC` vuelve al menú desde el combate. Cada personaje apunta hacia donde se movió por última vez.
 
+## Flujo de selección de partida
+
+Desde **JUGAR** se elige el tipo de enfrentamiento (**Jugador vs IA**, **Jugador vs Jugador** o **IA vs IA**) y luego el formato (**Definitivo**, **2 rondas**, **5 rondas** o **Entrenamiento**). Después aparece el modal de selección de personaje. Los enfrentamientos de dos participantes solicitan una selección para cada lado; en **Jugador vs IA**, el rival recibe automáticamente el personaje restante.
+
+Una vez elegidos los personajes, se habilita la selección de escenario y la cinemática correspondiente.
+
 ## Escenarios y cinemáticas
 
 El menú permite elegir entre cuatro escenarios. Antes de cada combate se reproduce una cinemática breve con una conversación contextual entre Axem Violet y Axem Orange. Los diálogos presentan la zona y la relación de trabajo entre ambos; se avanza con `ENTER` o `ESPACIO`, y se puede omitir con `ESC`.
@@ -49,6 +55,7 @@ src/
 │   ├── arena/           Dimensiones, escenarios y reglas del escenario
 │   ├── entities/        Fighter (estados, vida, hitboxes), Match (golpes, KO, objetos)
 │   ├── geometry/        Utilidades de colisión
+│   ├── match/           Opciones de enfrentamiento y formato de combate
 │   └── rangers/         Catálogo de personajes (stats) y fábrica
 ├── application/         Casos de uso
 │   ├── ports/           InputPort (contrato de entrada)

@@ -376,20 +376,20 @@ export class MenuScene extends Phaser.Scene {
       fontSize: '7px',
       color: '#d9a9ff',
     });
-    this.#addText('Mover A/D · Suelo W/S · VUELO Q asciende · E aterriza', GAME_WIDTH / 2, 157, {
+    this.#addText('Movimiento A/D · Vuelo Q asciende · E desciende', GAME_WIDTH / 2, 157, {
       fontSize: '6px',
     });
-    this.#addText('Hachazo F · Teletransporte G', GAME_WIDTH / 2, 168, {
+    this.#addText('Ataque F · Teletransporte G', GAME_WIDTH / 2, 168, {
       fontSize: '6px',
     });
     this.#addText('JUGADOR 2 · AXEM ORANGE', GAME_WIDTH / 2, 183, {
       fontSize: '7px',
       color: '#ffc17e',
     });
-    this.#addText('Mover ←/→ · Suelo ↑/↓ · VUELO I asciende · O aterriza', GAME_WIDTH / 2, 197, {
+    this.#addText('Movimiento ←/→ · Vuelo ↑ asciende · ↓ desciende', GAME_WIDTH / 2, 197, {
       fontSize: '6px',
     });
-    this.#addText('Hachazo L · Teletransporte K', GAME_WIDTH / 2, 208, {
+    this.#addText('Ataque L · Teletransporte K', GAME_WIDTH / 2, 208, {
       fontSize: '6px',
     });
     this.#addText('R · REINICIAR COMBATE   ESC · VOLVER / SALIR', GAME_WIDTH / 2, 223, {

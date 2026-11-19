@@ -27,19 +27,19 @@ export class PauseMenuView {
   showControls() {
     this.showingControls = true;
     this.#beginPanel('TUTORIALES', 250);
-    this.#addText('J1 · A/D MOVER · W/S SUELO · Q VUELO · E ATERRIZAR', 76, {
+    this.#addText('J1 · A/D MOVER · Q ASCENDER · E DESCENDER', 76, {
       fontSize: '6px',
       color: '#d9a9ff',
     });
-    this.#addText('J1 · HACHAZO F · TELETRANSPORTE G', 96, {
+    this.#addText('J1 · ATAQUE F · TELETRANSPORTE G', 96, {
       fontSize: '6px',
       color: '#d9a9ff',
     });
-    this.#addText('J2 · ←/→ MOVER · ↑/↓ SUELO · I VUELO · O ATERRIZAR', 116, {
+    this.#addText('J2 · ←/→ MOVER · ↑ ASCENDER · ↓ DESCENDER', 116, {
       fontSize: '6px',
       color: '#ffc17e',
     });
-    this.#addText('J2 · HACHAZO L · TELETRANSPORTE K', 136, {
+    this.#addText('J2 · ATAQUE L · TELETRANSPORTE K', 136, {
       fontSize: '6px',
       color: '#ffc17e',
     });

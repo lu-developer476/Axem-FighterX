@@ -10,6 +10,18 @@ const RANGER_TEXTURES = {
   [RANGER_IDS.VIOLET]: 'ranger-violet',
   [RANGER_IDS.ORANGE]: 'ranger-orange',
 };
+const TRAINING_COLORS = Object.freeze([
+  { label: 'NEGRO', color: '#111111' },
+  { label: 'GRIS', color: '#555555' },
+  { label: 'BLANCO', color: '#f5f5f5' },
+  { label: 'ROJO', color: '#a83232' },
+  { label: 'NARANJA', color: '#e87524' },
+  { label: 'AMARILLO', color: '#d6b83f' },
+  { label: 'VERDE', color: '#28734b' },
+  { label: 'TURQUESA', color: '#238b8b' },
+  { label: 'AZUL', color: '#2457a6' },
+  { label: 'VIOLETA', color: '#663399' },
+]);
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -19,6 +31,7 @@ export class MenuScene extends Phaser.Scene {
     this.selectedIndex = 0;
     this.matchSetup = {};
     this.characterSlot = 0;
+    this.panelWidth = 282;
   }
 
   create() {
@@ -45,7 +58,6 @@ export class MenuScene extends Phaser.Scene {
   }
 
   #createBackdrop() {
-    // El menú y todos sus submenús parten de un lienzo completamente negro.
     this.add.rectangle(0, 0, GAME_WIDTH, 270, 0x000000, 1)
       .setOrigin(0, 0)
       .setDepth(-100);
@@ -79,13 +91,13 @@ export class MenuScene extends Phaser.Scene {
     this.ui.removeAll(true);
     this.buttons = [];
     this.selectedIndex = 0;
+    this.panelWidth = width;
+
     const panel = this.add.rectangle(GAME_WIDTH / 2, 171, width, height, 0x000000, 0.98)
       .setStrokeStyle(2, 0x7b699b, 0.95);
-    this.ui.add(panel);
-
     const inset = this.add.rectangle(GAME_WIDTH / 2, 171, width - 8, height - 8, 0x000000, 0)
       .setStrokeStyle(1, 0x3e315e, 0.9);
-    this.ui.add(inset);
+    this.ui.add([panel, inset]);
 
     this.#addText(title, GAME_WIDTH / 2, 122, {
       fontSize: '12px',
@@ -98,12 +110,13 @@ export class MenuScene extends Phaser.Scene {
     this.ui.removeAll(true);
     this.buttons = [];
     this.selectedIndex = 0;
+    this.panelWidth = 354;
 
     const veil = this.add.rectangle(GAME_WIDTH / 2, 135, GAME_WIDTH, 270, 0x000000, 0.92)
       .setInteractive();
-    const panel = this.add.rectangle(GAME_WIDTH / 2, 177, 354, 156, 0x000000, 0.99)
+    const panel = this.add.rectangle(GAME_WIDTH / 2, 177, this.panelWidth, 156, 0x000000, 0.99)
       .setStrokeStyle(2, 0xd3a66d, 1);
-    const inset = this.add.rectangle(GAME_WIDTH / 2, 177, 346, 148, 0x000000, 0)
+    const inset = this.add.rectangle(GAME_WIDTH / 2, 177, this.panelWidth - 8, 148, 0x000000, 0)
       .setStrokeStyle(1, 0x59466e, 1);
     this.ui.add([veil, panel, inset]);
 
@@ -111,6 +124,11 @@ export class MenuScene extends Phaser.Scene {
       fontSize: '12px',
       color: '#f7cf83',
       letterSpacing: 1,
+    });
+    const mode = getVersusMode(this.matchSetup.versusMode);
+    this.#addText(mode.slotLabels[this.characterSlot] ?? 'PERSONAJE', GAME_WIDTH / 2, 139, {
+      fontSize: '7px',
+      color: '#b7a9cb',
     });
   }
 
@@ -120,6 +138,7 @@ export class MenuScene extends Phaser.Scene {
       fontSize: '8px',
       color: '#e7def5',
       align: 'center',
+      wordWrap: { width: Math.max(100, this.panelWidth - 28), useAdvancedWrap: true },
       ...style,
     }).setOrigin(0.5);
     this.ui.add(text);
@@ -127,15 +146,17 @@ export class MenuScene extends Phaser.Scene {
   }
 
   #addButton(title, y, action, { width = 210, fontSize = '8px', x = GAME_WIDTH / 2 } = {}) {
-    const box = this.add.rectangle(x, y, width, 18, 0x241b3c, 0.98)
+    const buttonWidth = Math.min(width, Math.max(112, this.panelWidth - 36));
+    const box = this.add.rectangle(x, y, buttonWidth, 20, 0x241b3c, 0.98)
       .setStrokeStyle(1, 0x62527e, 1);
     const label = this.add.text(x, y, title, {
       fontFamily: 'monospace',
       fontSize,
       color: '#d9cde9',
       align: 'center',
+      wordWrap: { width: buttonWidth - 14, useAdvancedWrap: true },
     }).setOrigin(0.5);
-    const hitArea = this.add.rectangle(x, y, width, 18, 0xffffff, 0)
+    const hitArea = this.add.rectangle(x, y, buttonWidth, 20, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
 
     const index = this.buttons.length;
@@ -154,6 +175,40 @@ export class MenuScene extends Phaser.Scene {
     this.#refreshButtons();
   }
 
+  #addColorOption(title, color, x, y) {
+    const width = 62;
+    const height = 28;
+    const box = this.add.rectangle(x, y, width, height, 0x241b3c, 0.98)
+      .setStrokeStyle(1, 0x62527e, 1);
+    const swatch = this.add.rectangle(x, y - 5, width - 10, 8, 0x111111, 1)
+      .setStrokeStyle(1, 0x80758f, 0.8);
+    const label = this.add.text(x, y + 8, title, {
+      fontFamily: 'monospace',
+      fontSize: '6px',
+      color: '#d9cde9',
+      align: 'center',
+    }).setOrigin(0.5);
+    const hitArea = this.add.rectangle(x, y, width, height, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true });
+    const action = () => {
+      this.matchSetup.trainingBackgroundColor = color;
+      this.#showTrainingColors();
+    };
+    const index = this.buttons.length;
+    this.buttons.push({ title, box, label, action, color, swatch });
+    hitArea.on('pointerover', () => {
+      this.selectedIndex = index;
+      this.#refreshButtons();
+    });
+    hitArea.on('pointerdown', () => {
+      this.selectedIndex = index;
+      this.#refreshButtons();
+      this.#activateSelection();
+    });
+    this.ui.add([box, swatch, label, hitArea]);
+    this.#refreshButtons();
+  }
+
   #addCharacterCard(rangerId, x, action) {
     const ranger = rangerCatalog[rangerId];
     const card = this.add.rectangle(x, 187, 144, 82, 0x241b3c, 0.98)
@@ -161,13 +216,13 @@ export class MenuScene extends Phaser.Scene {
     const portrait = this.add.image(x - 42, 182, RANGER_TEXTURES[rangerId])
       .setOrigin(0.5)
       .setScale(0.48);
-    const label = this.add.text(x + 17, 177, ranger.name.toUpperCase(), {
+    const label = this.add.text(x + 22, 177, ranger.name.toUpperCase(), {
       fontFamily: 'monospace',
       fontSize: '7px',
       color: '#d9cde9',
       align: 'center',
     }).setOrigin(0.5);
-    const hint = this.add.text(x + 17, 197, 'ELEGIR', {
+    const hint = this.add.text(x + 22, 197, 'ELEGIR', {
       fontFamily: 'monospace',
       fontSize: '7px',
       color: '#a99cbe',
@@ -224,10 +279,19 @@ export class MenuScene extends Phaser.Scene {
   #refreshButtons() {
     this.buttons.forEach((button, index) => {
       const selected = index === this.selectedIndex;
-      button.box.setFillStyle(selected ? 0x60405a : 0x241b3c, 0.98);
       button.box.setStrokeStyle(selected ? 1.5 : 1, selected ? 0xf0bd72 : 0x62527e, 1);
+
+      if (button.color) {
+        button.box.setFillStyle(0x241b3c, 0.98);
+        button.swatch.setFillStyle(Phaser.Display.Color.HexStringToColor(button.color).color, 1);
+        button.label.setColor(selected ? '#fff0c9' : '#d9cde9');
+        button.label.setText((selected ? '✓ ' : '') + button.title);
+        return;
+      }
+
+      button.box.setFillStyle(selected ? 0x60405a : 0x241b3c, 0.98);
       button.label.setColor(selected ? '#fff0c9' : '#d9cde9');
-      button.label.setText((selected ? '›  ' : '   ') + button.title);
+      button.label.setText(button.title);
     });
   }
 
@@ -242,6 +306,29 @@ export class MenuScene extends Phaser.Scene {
     if (selected) selected.action();
   }
 
+  #getMatchSetup() {
+    const matchSetup = {
+      ...this.matchSetup,
+      characters: [...(this.matchSetup.characters ?? [])],
+    };
+    if (matchSetup.versusMode === 'player-vs-ai' && matchSetup.playerSide === 'J2') {
+      matchSetup.characters.reverse();
+    }
+    return matchSetup;
+  }
+
+  #startSelectedFight(stageId, cinematic = true) {
+    this.scene.start(cinematic ? 'CinematicScene' : 'FightScene', {
+      stageId,
+      matchSetup: this.#getMatchSetup(),
+    });
+  }
+
+  #moveSelectionBackToCharacters() {
+    this.characterSlot = 0;
+    this.#showCharacterModal();
+  }
+
   #goBack() {
     if (this.page === 'versus') {
       this.#showHome();
@@ -253,6 +340,15 @@ export class MenuScene extends Phaser.Scene {
     }
     if (this.page === 'characters') {
       this.#showCombatModes();
+      return;
+    }
+    if (this.page === 'player-side') {
+      this.#moveSelectionBackToCharacters();
+      return;
+    }
+    if (this.page === 'training-colors') {
+      if (this.matchSetup.versusMode === 'player-vs-ai') this.#showPlayerSide();
+      else this.#moveSelectionBackToCharacters();
       return;
     }
     if (this.page === 'stages') {
@@ -277,7 +373,7 @@ export class MenuScene extends Phaser.Scene {
 
   #showVersusModes() {
     this.page = 'versus';
-    this.matchSetup = { characters: [] };
+    this.matchSetup = { characters: [], playerSide: 'J1' };
     this.#beginPage('JUGAR', 330, 168);
     this.#addText('COMBATE', GAME_WIDTH / 2, 140, {
       fontSize: '7px',
@@ -336,8 +432,115 @@ export class MenuScene extends Phaser.Scene {
 
     if (mode.characterSlots === 1) {
       this.matchSetup.characters[1] = RANGER_ORDER.find((id) => id !== rangerId);
+      this.matchSetup.playerCharacter = rangerId;
+      this.matchSetup.playerSide = 'J1';
+      this.#showPlayerSide();
+      return;
+    }
+
+    this.#showNextConfiguration();
+  }
+
+  #showPlayerSide() {
+    this.page = 'player-side';
+    this.#beginPage('ELEGÍ TU LADO', 390, 176);
+    const side = this.matchSetup.playerSide ?? 'J1';
+    this.#addText(
+      'LADO ACTUAL: ' + side + ' · ' + (side === 'J1' ? 'IZQUIERDA' : 'DERECHA'),
+      GAME_WIDTH / 2,
+      145,
+      { fontSize: '7px', color: '#f7cf83' },
+    );
+    this.#addButton('J1 · IZQUIERDA', 174, () => {
+      this.matchSetup.playerSide = 'J1';
+      this.#showPlayerSide();
+    }, { width: 142, x: 160, fontSize: '7px' });
+    this.#addButton('J2 · DERECHA', 174, () => {
+      this.matchSetup.playerSide = 'J2';
+      this.#showPlayerSide();
+    }, { width: 142, x: 320, fontSize: '7px' });
+    this.#addText('J1: A / D · F · G     J2: FLECHAS · L · K', GAME_WIDTH / 2, 198, {
+      fontSize: '6px',
+      color: '#b7a9cb',
+    });
+    this.#addButton('CONTINUAR', 222, () => this.#showNextConfiguration(), {
+      width: 174,
+      fontSize: '7px',
+    });
+    this.#addButton('VOLVER', 247, () => this.#moveSelectionBackToCharacters(), {
+      width: 120,
+      fontSize: '7px',
+    });
+  }
+
+  #showNextConfiguration() {
+    if (getCombatMode(this.matchSetup.combatMode).id === 'training') {
+      this.#showTrainingColors();
+      return;
     }
     this.#showStages();
+  }
+
+  #showTrainingColors() {
+    this.page = 'training-colors';
+    this.matchSetup.trainingBackgroundColor ??= '#111111';
+    this.#beginPage('FONDO DE ENTRENAMIENTO', 430, 198);
+    this.#addText('COLOR SELECCIONADO: ' + this.matchSetup.trainingBackgroundColor.toUpperCase(), GAME_WIDTH / 2, 141, {
+      fontSize: '6px',
+      color: '#b7a9cb',
+    });
+
+    this.selectedIndex = TRAINING_COLORS.findIndex((item) => item.color === this.matchSetup.trainingBackgroundColor);
+    if (this.selectedIndex < 0) this.selectedIndex = TRAINING_COLORS.length;
+    const centers = [92, 166, 240, 314, 388];
+    TRAINING_COLORS.forEach(({ label, color }, index) => {
+      const row = index < 5 ? 0 : 1;
+      const column = index % 5;
+      this.#addColorOption(label, color, centers[column], 165 + row * 29);
+    });
+
+    this.#addButton('ELEGIR OTRO COLOR', 224, () => this.#openNativeColorPicker(), {
+      width: 170,
+      fontSize: '7px',
+    });
+    this.#addButton('VOLVER', 250, () => {
+      if (this.matchSetup.versusMode === 'player-vs-ai') this.#showPlayerSide();
+      else this.#moveSelectionBackToCharacters();
+    }, { width: 112, x: 150, fontSize: '7px' });
+    this.#addButton('COMENZAR', 250, () => this.#startSelectedFight(STAGES[0].id, false), {
+      width: 150,
+      x: 320,
+      fontSize: '7px',
+    });
+  }
+
+  #openNativeColorPicker() {
+    if (typeof document === 'undefined') return;
+
+    const input = document.createElement('input');
+    input.type = 'color';
+    input.value = this.matchSetup.trainingBackgroundColor ?? '#111111';
+    input.setAttribute('aria-label', 'Elegir color del fondo de entrenamiento');
+    input.style.cssText = [
+      'position:fixed',
+      'left:50%',
+      'top:50%',
+      'width:2px',
+      'height:2px',
+      'opacity:0',
+      'z-index:100000',
+    ].join(';');
+    document.body.appendChild(input);
+
+    const cleanup = () => input.remove();
+    input.addEventListener('change', () => {
+      this.matchSetup.trainingBackgroundColor = input.value.toLowerCase();
+      cleanup();
+      if (this.scene.isActive()) this.#showTrainingColors();
+    }, { once: true });
+    input.addEventListener('cancel', cleanup, { once: true });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanup);
+    input.click();
   }
 
   #showStages() {
@@ -352,20 +555,14 @@ export class MenuScene extends Phaser.Scene {
 
     STAGES.forEach((stage, index) => {
       this.#addButton(stage.name.toUpperCase(), 153 + index * 21, () => {
-        this.scene.start('CinematicScene', {
-          stageId: stage.id,
-          matchSetup: {
-            ...this.matchSetup,
-            characters: [...this.matchSetup.characters],
-          },
-        });
-      }, { width: 230, fontSize: '8px' });
+        this.#startSelectedFight(stage.id, true);
+      }, { width: 260, fontSize: '7px' });
     });
 
-    this.#addButton('VOLVER', 238, () => this.#showCharacterModal(), {
-      width: 150,
-      fontSize: '8px',
-    });
+    this.#addButton('VOLVER', 238, () => {
+      if (this.matchSetup.versusMode === 'player-vs-ai') this.#showPlayerSide();
+      else this.#moveSelectionBackToCharacters();
+    }, { width: 150, fontSize: '8px' });
     this.#addFooter();
   }
 

@@ -10,12 +10,12 @@ describe('Opciones de configuración del combate', () => {
     ]);
   });
 
-  it('ofrece los cuatro formatos de combate solicitados', () => {
-    expect(COMBAT_MODES.map((mode) => mode.label)).toEqual([
-      'DEFINITIVO',
-      '2 RONDAS',
-      '5 RONDAS',
-      'ENTRENAMIENTO',
+  it('ofrece los cuatro formatos con su cantidad literal de rondas', () => {
+    expect(COMBAT_MODES.map(({ label, rounds }) => [label, rounds])).toEqual([
+      ['DEFINITIVO', 1],
+      ['2 RONDAS', 2],
+      ['5 RONDAS', 5],
+      ['ENTRENAMIENTO', null],
     ]);
   });
 

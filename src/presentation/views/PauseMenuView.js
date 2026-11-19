@@ -1,6 +1,6 @@
 import { GAME_WIDTH } from '../../config/gameConfig.js';
 
-/** Menú superpuesto que oculta los controles hasta que el jugador los solicita. */
+/** Menú superpuesto con paneles y botones de ancho coherente. */
 export class PauseMenuView {
   constructor(scene, { onResume, onReturnToMenu }) {
     this.scene = scene;
@@ -9,6 +9,7 @@ export class PauseMenuView {
     this.buttons = [];
     this.selectedIndex = 0;
     this.showingControls = false;
+    this.panelWidth = 320;
     this.container = scene.add.container(0, 0)
       .setScrollFactor(0)
       .setDepth(20_000)
@@ -85,15 +86,16 @@ export class PauseMenuView {
 
     const shade = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, GAME_WIDTH, 270, 0x000000, 1)
       .setInteractive();
-    const panel = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, 270, height, 0x000000, 1)
+    const panel = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth, height, 0x000000, 1)
       .setStrokeStyle(2, 0xd3a66d, 1);
-    const inset = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, 262, height - 8, 0x000000, 0)
+    const inset = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth - 8, height - 8, 0x000000, 0)
       .setStrokeStyle(1, 0x59466e, 1);
     const heading = this.scene.add.text(GAME_WIDTH / 2, panelY - height / 2 + 23, title, {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: '#f7cf83',
       letterSpacing: 1,
+      align: 'center',
     }).setOrigin(0.5);
 
     this.container.add([shade, panel, inset, heading]);
@@ -105,22 +107,25 @@ export class PauseMenuView {
       fontSize: '7px',
       color: '#e7def5',
       align: 'center',
+      wordWrap: { width: this.panelWidth - 28, useAdvancedWrap: true },
       ...style,
     }).setOrigin(0.5);
     this.container.add(label);
     return label;
   }
 
-  #addButton(title, y, action, { width = 194 } = {}) {
-    const box = this.scene.add.rectangle(GAME_WIDTH / 2, y, width, 23, 0x241b3c, 0.98)
+  #addButton(title, y, action, { width = this.panelWidth - 48 } = {}) {
+    const buttonWidth = Math.min(width, this.panelWidth - 48);
+    const box = this.scene.add.rectangle(GAME_WIDTH / 2, y, buttonWidth, 23, 0x241b3c, 0.98)
       .setStrokeStyle(1, 0x62527e, 1);
     const label = this.scene.add.text(GAME_WIDTH / 2, y, title, {
       fontFamily: 'monospace',
       fontSize: '8px',
       color: '#d9cde9',
       align: 'center',
+      wordWrap: { width: buttonWidth - 14, useAdvancedWrap: true },
     }).setOrigin(0.5);
-    const hitArea = this.scene.add.rectangle(GAME_WIDTH / 2, y, width, 23, 0xffffff, 0)
+    const hitArea = this.scene.add.rectangle(GAME_WIDTH / 2, y, buttonWidth, 23, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
 
     const index = this.buttons.length;
@@ -145,7 +150,7 @@ export class PauseMenuView {
       button.box.setFillStyle(selected ? 0x60405a : 0x241b3c, 0.98);
       button.box.setStrokeStyle(selected ? 1.5 : 1, selected ? 0xf0bd72 : 0x62527e, 1);
       button.label.setColor(selected ? '#fff0c9' : '#d9cde9');
-      button.label.setText((selected ? '›  ' : '   ') + button.title);
+      button.label.setText(button.title);
     });
   }
 }

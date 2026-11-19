@@ -19,17 +19,19 @@ Controles:
 | **J1** Axem Violet | `A` / `D` | `F` | `G` |
 | **J2** Axem Orange | `←` / `→` | `L` | `K` |
 
-`P` o el botón `[ P ] PAUSA` abre el menú de pausa durante el combate. Desde allí podés continuar, consultar los controles o volver al menú principal. Los controles quedan ocultos mientras jugás. `R` reinicia la partida. `ESC` vuelve al menú desde el combate. Cada personaje apunta hacia donde se movió por última vez.
+`P` o el botón `[ P ] PAUSA` abre el menú de pausa durante el combate. Desde allí podés continuar, consultar los controles o volver al menú principal. Los controles quedan ocultos mientras jugás. `R` reinicia la serie completa. `ESC` vuelve al menú desde el combate. Cada personaje apunta hacia donde se movió por última vez.
 
 ## Flujo de selección de partida
 
-Desde **JUGAR** se elige el tipo de enfrentamiento (**Jugador vs IA**, **Jugador vs Jugador** o **IA vs IA**) y luego el formato (**Definitivo**, **2 rondas**, **5 rondas** o **Entrenamiento**). Después aparece el modal de selección de personaje. Los enfrentamientos de dos participantes solicitan una selección para cada lado; en **Jugador vs IA**, el rival recibe automáticamente el personaje restante.
+Desde **JUGAR** se elige el tipo de enfrentamiento (**Jugador vs IA**, **Jugador vs Jugador** o **IA vs IA**) y luego el formato (**Definitivo**, **2 rondas**, **5 rondas** o **Entrenamiento**). En **Jugador vs IA**, después de elegir personaje se puede jugar como **J1 desde el lado izquierdo** o **J2 desde el lado derecho**; el rival controlado por IA ocupa el lado contrario y se usan las teclas correspondientes al jugador elegido.
 
-Una vez elegidos los personajes, se habilita la selección de escenario y la cinemática correspondiente.
+Los formatos respetan la cantidad total indicada: **Definitivo** disputa una ronda, **2 Rondas** disputa exactamente dos y **5 Rondas** disputa exactamente cinco. Entre rondas se muestra el marcador y se espera que el jugador pulse `ENTER` o `ESPACIO` para continuar. Al finalizar la cantidad prevista, gana quien haya obtenido más rondas; un empate en el marcador termina en empate. `ENTRENAMIENTO` permite elegir un fondo completamente sólido, con colores predefinidos o un selector de color personalizado.
+
+En los enfrentamientos de dos participantes se solicitan dos selecciones de personaje; en **Jugador vs IA**, el rival recibe automáticamente el personaje restante.
 
 ## Escenarios y cinemáticas
 
-El menú permite elegir entre cuatro escenarios. Antes de cada combate se reproduce una cinemática breve con una conversación contextual entre Axem Violet y Axem Orange. Los diálogos presentan la zona y la relación de trabajo entre ambos; se avanza con `ENTER` o `ESPACIO`, y se puede omitir con `ESC`.
+En los formatos normales, el menú permite elegir entre cuatro escenarios. Antes de cada combate se reproduce una cinemática breve con una conversación contextual entre Axem Violet y Axem Orange. Los diálogos presentan la zona y la relación de trabajo entre ambos; se avanza con `ENTER` o `ESPACIO`, y se puede omitir con `ESC`.
 
 | Escenario | Entorno |
 |---|---|
@@ -38,7 +40,7 @@ El menú permite elegir entre cuatro escenarios. Antes de cada combate se reprod
 | **Bosque de los ecos** | Árboles gigantes, raíces y luces errantes |
 | **Santuario celeste** | Columnas doradas, sellos y arquitectura suspendida |
 
-Los cuatro fondos, relieves, suelos, límites y detalles ambientales se generan como texturas pixel art por código. No requieren imágenes externas adicionales.
+Los cuatro fondos, relieves, suelos, límites y detalles ambientales se generan como texturas pixel art por código. No requieren imágenes externas adicionales. El fondo de entrenamiento se dibuja como un único color plano y no carga capas ambientales.
 
 ## Nitidez y renderizado
 
@@ -55,7 +57,7 @@ src/
 │   ├── arena/           Dimensiones, escenarios y reglas del escenario
 │   ├── entities/        Fighter (estados, vida, hitboxes), Match (golpes, KO, objetos)
 │   ├── geometry/        Utilidades de colisión
-│   ├── match/           Opciones de enfrentamiento y formato de combate
+│   ├── match/           Formatos de combate y marcador de rondas
 │   └── rangers/         Catálogo de personajes (stats) y fábrica
 ├── application/         Casos de uso
 │   ├── ports/           InputPort (contrato de entrada)

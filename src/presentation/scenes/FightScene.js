@@ -3,6 +3,7 @@ import { GAME_WIDTH } from '../../config/gameConfig.js';
 import { ARENA } from '../../domain/arena/arena.js';
 import { getStage, STAGE_IDS } from '../../domain/arena/stageCatalog.js';
 import { getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
+import { RoundSeries } from '../../domain/match/RoundSeries.js';
 import { createDefaultMatch } from '../../application/useCases/CreateMatch.js';
 import { UpdateMatch } from '../../application/useCases/UpdateMatch.js';
 import { AIInput } from '../../infrastructure/input/AIInput.js';
@@ -34,6 +35,10 @@ export class FightScene extends Phaser.Scene {
     this.match = createDefaultMatch(Math.random, this.matchSetup.characters);
     const [leftFighter, rightFighter] = this.match.fighters;
     const versus = getVersusMode(this.matchSetup.versusMode);
+    const combat = getCombatMode(this.matchSetup.combatMode);
+    this.roundSeries = combat.rounds > 1 ? new RoundSeries(combat.rounds) : null;
+    this.pendingNextRound = false;
+
     const playerOne = () => new PhaserKeyboardInput(this, KEYMAPS.PLAYER_1);
     const playerTwo = () => new PhaserKeyboardInput(this, KEYMAPS.PLAYER_2);
     const aiOne = () => new AIInput(leftFighter, rightFighter, {
@@ -48,7 +53,9 @@ export class FightScene extends Phaser.Scene {
     let inputs;
     switch (versus.id) {
       case 'player-vs-ai':
-        inputs = [playerOne(), aiTwo()];
+        inputs = this.matchSetup.playerSide === 'J2'
+          ? [aiOne(), playerTwo()]
+          : [playerOne(), aiTwo()];
         break;
       case 'ai-vs-ai':
         inputs = [aiOne(), aiTwo()];
@@ -61,7 +68,9 @@ export class FightScene extends Phaser.Scene {
 
     this.updateMatch = new UpdateMatch({ match: this.match, inputs });
 
-    this.stage = new StageView(this, this.stageDefinition.id);
+    this.stage = new StageView(this, this.stageDefinition.id, {
+      backgroundColor: this.matchSetup.trainingBackgroundColor ?? null,
+    });
     this.pickupView = new PickupView(this);
     this.views = this.match.fighters.map((fighter) => new FighterView(this, fighter));
     this.fx = new FxDirector(this);
@@ -79,21 +88,23 @@ export class FightScene extends Phaser.Scene {
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
     });
     this.hud = new HudView(this, this.match.fighters);
+    if (this.roundSeries) this.hud.setRoundScore(0, this.roundSeries.totalRounds, [0, 0]);
     this.pauseMenu = new PauseMenuView(this, {
       onResume: () => this.#resume(),
       onReturnToMenu: () => this.scene.start('MenuScene'),
     });
 
-    const combat = getCombatMode(this.matchSetup.combatMode);
-    const versusLabel = getVersusMode(this.matchSetup.versusMode).label;
-    this.stageLabel = this.add.text(GAME_WIDTH / 2, 43, this.stageDefinition.name.toUpperCase(), {
+    const stageTitle = this.matchSetup.trainingBackgroundColor
+      ? 'ENTRENAMIENTO'
+      : this.stageDefinition.name.toUpperCase();
+    this.stageLabel = this.add.text(GAME_WIDTH / 2, 43, stageTitle, {
       fontFamily: 'monospace',
       fontSize: '8px',
       color: '#fff0c9',
       stroke: '#0d0b16',
       strokeThickness: 2,
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(10003);
-    this.modeLabel = this.add.text(GAME_WIDTH / 2, 52, `${versusLabel} · ${combat.label}`, {
+    this.modeLabel = this.add.text(GAME_WIDTH / 2, 52, versus.label + ' · ' + combat.label, {
       fontFamily: 'monospace',
       fontSize: '6px',
       color: '#d0c4dc',
@@ -141,7 +152,8 @@ export class FightScene extends Phaser.Scene {
         Phaser.Input.Keyboard.JustDown(this.resultKeys.enter) ||
         Phaser.Input.Keyboard.JustDown(this.resultKeys.space)
       ) {
-        this.hud.advanceResultDialogue();
+        if (this.pendingNextRound) this.#startNextRound();
+        else this.hud.advanceResultDialogue();
       }
       return;
     }
@@ -153,7 +165,7 @@ export class FightScene extends Phaser.Scene {
     const { hitStopMs } = this.fx.handle(events);
     this.hitStopMs = Math.max(this.hitStopMs, hitStopMs);
     for (const event of events) {
-      if (event.type === 'match-over') this.#showResult(event.winnerId);
+      if (event.type === 'match-over') this.#handleRoundOver(event.winnerId);
     }
 
     this.fx.update(this.match.fighters, delta);
@@ -196,15 +208,54 @@ export class FightScene extends Phaser.Scene {
     this.cameras.main.scrollX = Math.round(this.#targetScrollX());
   }
 
+  #handleRoundOver(winnerId) {
+    if (!this.roundSeries) {
+      this.#showResult(winnerId);
+      return;
+    }
+
+    const winnerIndex = this.match.fighters.findIndex((fighter) => fighter.id === winnerId);
+    const result = this.roundSeries.completeRound(winnerIndex < 0 ? null : winnerIndex);
+    this.hud.setRoundScore(result.completedRounds, result.totalRounds, result.wins);
+
+    if (result.isComplete) {
+      const championId = result.winnerIndex === null
+        ? null
+        : this.match.fighters[result.winnerIndex].id;
+      this.#showResult(championId);
+      return;
+    }
+
+    this.pendingNextRound = true;
+    const roundWinner = winnerIndex < 0 ? null : this.match.fighters[winnerIndex].name;
+    this.hud.showRoundResult(result.completedRounds, result.totalRounds, roundWinner, result.wins);
+  }
+
+  #startNextRound() {
+    if (!this.pendingNextRound) return;
+    this.pendingNextRound = false;
+    this.match.restart();
+    this.hud.hideResult();
+    this.hud.setRoundScore(
+      this.roundSeries.completedRounds,
+      this.roundSeries.totalRounds,
+      this.roundSeries.wins,
+    );
+    this.#snapCamera();
+  }
+
   #showResult(winnerId) {
     const winner = this.match.fighters.find((fighter) => fighter.id === winnerId);
-    const outcome = winnerId ? `${winnerId}Wins` : 'draw';
+    const outcome = winnerId ? winnerId + 'Wins' : 'draw';
     const dialogue = this.stageDefinition.resultDialogue[outcome] ?? this.stageDefinition.resultDialogue.draw;
     this.hud.showResult(winner ? winner.name : null, dialogue);
   }
 
   #restart() {
     this.match.restart();
+    this.roundSeries?.reset();
+    this.pendingNextRound = false;
+    if (this.roundSeries) this.hud.setRoundScore(0, this.roundSeries.totalRounds, [0, 0]);
     this.hud.hideResult();
     this.hitStopMs = 0;
     this.#snapCamera();

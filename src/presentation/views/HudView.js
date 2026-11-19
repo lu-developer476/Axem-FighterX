@@ -22,12 +22,8 @@ const SPEAKERS = {
   orange: { name: 'AXEM ORANGE', color: '#ffc17e' },
 };
 
-/** Interfaz compacta del combate: vida, potenciadores y resultado. */
+/** Interfaz compacta del combate: vida, marcador, potenciadores y resultado. */
 export class HudView {
-  /**
-   * @param {Phaser.Scene} scene
-   * @param {import('../../domain/entities/Fighter.js').Fighter[]} fighters
-   */
   constructor(scene, fighters) {
     this.fighters = fighters;
     this.trail = fighters.map((fighter) => fighter.health);
@@ -38,6 +34,11 @@ export class HudView {
 
     text(BAR.margin, 3, fighters[0].name.toUpperCase(), { fontSize: '8px' });
     text(GAME_WIDTH - BAR.margin, 3, fighters[1].name.toUpperCase(), { fontSize: '8px' }, 1);
+    this.roundScore = text(GAME_WIDTH / 2, 3, '', {
+      fontSize: '6px',
+      color: '#fff0c9',
+      align: 'center',
+    }, 0.5).setVisible(false);
 
     this.statusLabels = fighters.map((fighter, index) =>
       text(
@@ -50,7 +51,7 @@ export class HudView {
     );
 
     const center = (y, value, style) =>
-      text(GAME_WIDTH / 2, y, value, style, 0.5).setVisible(false);
+      text(GAME_WIDTH / 2, y, value, { align: 'center', ...style }, 0.5).setVisible(false);
     this.title = center(82, '¡KO!', {
       fontSize: '40px',
       color: '#ffc23a',
@@ -73,16 +74,18 @@ export class HudView {
       .setScrollFactor(0)
       .setDepth(10_002)
       .setVisible(false);
-    this.resultSpeaker = text(24, 190, '', {
+    this.resultSpeaker = text(GAME_WIDTH / 2, 190, '', {
       fontSize: '8px',
       color: '#d9a9ff',
-    }).setDepth(10_003).setVisible(false);
-    this.resultDialogue = text(24, 207, '', {
+      align: 'center',
+    }, 0.5).setDepth(10_003).setVisible(false);
+    this.resultDialogue = text(GAME_WIDTH / 2, 207, '', {
       fontSize: '9px',
       color: '#f1ecdf',
+      align: 'center',
       wordWrap: { width: 430, useAdvancedWrap: true },
       maxLines: 2,
-    }).setDepth(10_003).setVisible(false);
+    }, 0.5).setDepth(10_003).setVisible(false);
     this.resultPrompt = text(GAME_WIDTH / 2, 257, 'ENTER / ESPACIO: SIGUIENTE LÍNEA', {
       fontSize: '6px',
       color: '#fff0c9',
@@ -92,6 +95,12 @@ export class HudView {
     this.resultLineIndex = 0;
 
     this.scene = scene;
+  }
+
+  setRoundScore(completedRounds, totalRounds, wins) {
+    const visibleRound = Math.min(completedRounds + 1, totalRounds);
+    const score = 'RONDA ' + visibleRound + '/' + totalRounds + '  ·  J1 ' + wins[0] + ' : ' + wins[1] + ' J2';
+    this.roundScore.setText(score).setVisible(true);
   }
 
   update(deltaMs) {
@@ -104,15 +113,26 @@ export class HudView {
       this.#drawBar(i, fighter);
       const active = Object.entries(fighter.powerUps)
         .filter(([, remainingMs]) => remainingMs > 0)
-        .map(([type, remainingMs]) => `${STATUS_LABELS[type]} ${Math.ceil(remainingMs / 1000)}s`);
+        .map(([type, remainingMs]) => STATUS_LABELS[type] + ' ' + Math.ceil(remainingMs / 1000) + 's');
       this.statusLabels[i].setText(active.join('  ')).setVisible(active.length > 0);
     });
   }
 
+  showRoundResult(roundNumber, totalRounds, winnerName, wins) {
+    this.resultPanel.setVisible(false);
+    this.resultSpeaker.setVisible(false);
+    this.resultDialogue.setVisible(false);
+    this.resultPrompt.setVisible(false);
+    this.title.setText('RONDA ' + roundNumber + '/' + totalRounds).setVisible(true).setScale(1).setAlpha(1);
+    this.subtitle.setText(winnerName ? 'Gana ' + winnerName : 'EMPATE').setVisible(true);
+    this.hint.setText('ENTER / ESPACIO: SIGUIENTE RONDA').setVisible(true);
+    this.roundScore.setText('RONDA ' + roundNumber + '/' + totalRounds + '  ·  J1 ' + wins[0] + ' : ' + wins[1] + ' J2').setVisible(true);
+  }
+
   showResult(winnerName, dialogueLines = []) {
     this.title.setText(winnerName ? '¡KO!' : 'EMPATE').setVisible(true).setScale(2.4).setAlpha(0);
-    this.subtitle.setText(winnerName ? `Gana ${winnerName}` : 'Nadie queda en pie').setVisible(true);
-    this.hint.setVisible(true);
+    this.subtitle.setText(winnerName ? 'Gana ' + winnerName : 'Nadie queda en pie').setVisible(true);
+    this.hint.setText('Presioná R para reiniciar').setVisible(true);
     this.resultLines = [...dialogueLines];
     this.resultLineIndex = 0;
     this.resultPanel.setVisible(true);

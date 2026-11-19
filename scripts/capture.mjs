@@ -85,10 +85,18 @@ const stageShots = [
 for (let index = 0; index < stageShots.length; index++) {
   await tap('Enter'); // Inicio → tipo de enfrentamiento
   await tap('Enter'); // Jugador vs IA
-  for (let down = 0; down < index; down++) await tap('ArrowDown');
+  const combatModeIndex = index === 3 ? 0 : index;
+  for (let down = 0; down < combatModeIndex; down++) await tap('ArrowDown');
   await tap('Enter'); // Formato → modal de personajes
   if (index === 0) await shot('10-modal-jugador-vs-ia');
   await tap('Enter'); // Elegir personaje; el rival recibe el otro ranger
+  if (index === 0) {
+    await tap('ArrowDown');
+    await tap('Enter'); // Probar que J2 puede elegir el lado derecho
+  }
+  await tap('ArrowDown');
+  await tap('ArrowDown');
+  await tap('Enter'); // Confirmar el lado elegido y abrir la selección de escenario
   for (let down = 0; down < index; down++) await tap('ArrowDown');
   await tap('Enter'); // Escenario → cinemática
   await wait(450);
@@ -102,29 +110,51 @@ for (let index = 0; index < stageShots.length; index++) {
   await wait(180);
 }
 
+// Comprueba el modo de entrenamiento y el fondo sólido predeterminado.
+await tap('Enter'); // Inicio → tipo de enfrentamiento
+await tap('Enter'); // Jugador vs IA
+await tap('ArrowDown');
+await tap('ArrowDown');
+await tap('ArrowDown');
+await tap('Enter'); // Entrenamiento → selección de personaje
+await tap('Enter'); // Elegir personaje → elección de lado
+await tap('ArrowDown');
+await tap('ArrowDown');
+await tap('Enter'); // Continuar → paleta de entrenamiento
+await shot('10-entrenamiento-colores');
+for (let down = 0; down < 12; down++) await tap('ArrowDown');
+await tap('Enter'); // COMENZAR con el color sólido seleccionado
+await wait(450);
+await shot('11-entrenamiento-fondo');
+await tap('Escape'); // Entrenamiento → menú
+await wait(180);
+
 // Inicia una partida completa en Ruinas de medianoche.
 await tap('Enter');
 await tap('Enter');
 await tap('Enter');
 await tap('Enter');
+await tap('ArrowDown'); // J1 predeterminado: continuar desde la elección de lado
+await tap('ArrowDown');
+await tap('Enter');
 await tap('Enter');
 await wait(450);
-await shot('11-cinematica-dialogo');
+await shot('12-cinematica-dialogo');
 for (let line = 0; line < 7; line++) {
   await tap('Enter');
   await wait(70);
 }
 await wait(500);
-await shot('12-combate-ruinas');
+await shot('13-combate-ruinas');
 
 // La pausa debe detener el combate y mostrar los controles solo cuando se solicitan.
 await tap('p');
 await wait(120);
-await shot('13-menu-pausa');
+await shot('14-menu-pausa');
 await tap('ArrowDown');
 await tap('Enter'); // PAUSA → CONTROLES
 await wait(100);
-await shot('14-controles-dentro-de-pausa');
+await shot('15-controles-dentro-de-pausa');
 await tap('Escape'); // Controles → menú de pausa
 await wait(80);
 await tap('Enter'); // CONTINUAR → combate
@@ -132,24 +162,24 @@ await wait(150);
 
 // Escenario y parallax: J1 camina hacia la derecha, J2 hacia la izquierda.
 await Promise.all([hold('d', 700), hold('ArrowRight', 1500)]);
-await shot('15-parallax-derecha');
+await shot('16-parallax-derecha');
 await hold('ArrowLeft', 2500);
-await shot('16-parallax-izquierda');
+await shot('17-parallax-izquierda');
 
 // Pelea: J1 se acerca y ataca.
 await Promise.all([hold('a', 1800), hold('ArrowRight', 1800)]);
 await hold('d', 900);
 await tap('f');
 await wait(150);
-await shot('17-ataque');
+await shot('18-ataque');
 await wait(120);
-await shot('18-golpe-explosion');
+await shot('19-golpe-explosion');
 await wait(600);
 
 // Teletransporte de J2.
 await tap('k');
 await wait(70);
-await shot('19-teletransporte');
+await shot('20-teletransporte');
 await wait(500);
 
 // J1 se gira hacia el rival y lo vence a hachazos.
@@ -157,16 +187,16 @@ await hold('a', 120);
 for (let i = 0; i < 14; i++) {
   await tap('f');
   await wait(520);
-  if (i === 6) await shot('20-combate');
+  if (i === 6) await shot('21-combate');
 }
 await wait(400);
-await shot('21-ko');
+await shot('22-ko');
 await wait(1500);
 
 // Reinicio.
 await tap('r');
 await wait(600);
-await shot('22-reinicio');
+await shot('23-reinicio');
 
 await context.close();
 await browser.close();

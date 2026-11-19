@@ -1,24 +1,10 @@
 export const VERSUS_MODES = Object.freeze([
-  Object.freeze({
-    id: 'player-vs-ai',
-    label: 'JUGADOR VS IA',
-    characterSlots: 1,
-    slotLabels: Object.freeze(['JUGADOR']),
-  }),
-  Object.freeze({
-    id: 'player-vs-player',
-    label: 'JUGADOR VS JUGADOR',
-    characterSlots: 2,
-    slotLabels: Object.freeze(['JUGADOR 1', 'JUGADOR 2']),
-  }),
-  Object.freeze({
-    id: 'ai-vs-ai',
-    label: 'IA VS IA',
-    characterSlots: 2,
-    slotLabels: Object.freeze(['IA 1', 'IA 2']),
-  }),
+  Object.freeze({ id: 'player-vs-ai', label: 'JUGADOR VS IA', characterSlots: 1, slotLabels: Object.freeze(['JUGADOR']) }),
+  Object.freeze({ id: 'player-vs-player', label: 'JUGADOR VS JUGADOR', characterSlots: 2, slotLabels: Object.freeze(['JUGADOR 1', 'JUGADOR 2']) }),
+  Object.freeze({ id: 'ai-vs-ai', label: 'IA VS IA', characterSlots: 2, slotLabels: Object.freeze(['IA 1', 'IA 2']) }),
 ]);
 
+/** rounds es la cantidad TOTAL de rondas que se disputan. */
 export const COMBAT_MODES = Object.freeze([
   Object.freeze({ id: 'definitive', label: 'DEFINITIVO', rounds: 1 }),
   Object.freeze({ id: 'two-rounds', label: '2 RONDAS', rounds: 2 }),

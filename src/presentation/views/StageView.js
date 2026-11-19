@@ -19,16 +19,28 @@ const STAGE_VISUALS = {
   [STAGE_IDS.SANCTUARY]: { hazeAlpha: 0.05, barrierBaseAlpha: 0.62, flicker: 0.16 },
 };
 
-/** Construye las capas, límites y detalles del escenario seleccionado. */
+/** Construye el escenario seleccionado o un fondo plano para el entrenamiento. */
 export class StageView {
-  /** @param {Phaser.Scene} scene @param {string} [stageId] */
-  constructor(scene, stageId = STAGE_IDS.RUINS) {
+  /** @param {Phaser.Scene} scene @param {string} [stageId] @param {{ backgroundColor?: string | null }} [options] */
+  constructor(scene, stageId = STAGE_IDS.RUINS, { backgroundColor = null } = {}) {
+    this.solidBackground = typeof backgroundColor === 'string' && /^#[\da-f]{6}$/i.test(backgroundColor)
+      ? backgroundColor
+      : null;
+    this.parallaxLayers = [];
+
+    if (this.solidBackground) {
+      const color = Number.parseInt(this.solidBackground.slice(1), 16);
+      scene.add.rectangle(0, 0, VIEW.width, VIEW.height, color, 1)
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDepth(-100);
+      return;
+    }
+
     this.stageId = STAGE_VISUALS[stageId] ? stageId : STAGE_IDS.RUINS;
     this.textures = getStageTextures(this.stageId);
     this.visuals = STAGE_VISUALS[this.stageId];
-    this.parallaxLayers = [];
 
-    // Las posiciones enteras evitan que el desplazamiento interpole píxeles.
     const layer = (key, factor, depth, x = 0, y = 0) => {
       const image = scene.add.image(x, y, key)
         .setOrigin(0, 0)
@@ -71,11 +83,9 @@ export class StageView {
     }
   }
 
-  /**
-   * @param {number} timeMs tiempo total de la escena
-   * @param {number} scrollX posición horizontal de la cámara
-   */
   update(timeMs, scrollX) {
+    if (this.solidBackground) return;
+
     for (const { image, factor, originX } of this.parallaxLayers) {
       image.setX(Math.round(originX - scrollX * factor));
     }

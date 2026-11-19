@@ -2,6 +2,7 @@ import { ARENA } from '../../domain/arena/arena.js';
 import { FighterState } from '../../domain/entities/FighterState.js';
 import { characterAnimationData } from '../../infrastructure/assets/characterAnimationData.js';
 import { FighterAnimator } from '../animation/FighterAnimator.js';
+import { shouldFlip } from './orientation.js';
 
 /** Los personajes levitan: los pies quedan a esta altura sobre el suelo. */
 const FLOAT_HEIGHT = 10;
@@ -34,7 +35,7 @@ export class FighterView {
 
     const baseScale = data.displayHeight / sprite.frame.realHeight;
     sprite.setScale(baseScale * pose.scaleX, baseScale * pose.scaleY);
-    sprite.setFlipX(facing !== data.spriteFacing);
+    sprite.setFlipX(shouldFlip(facing, data.spriteFacing));
     sprite.setAngle(pose.angle * facing);
     sprite.setAlpha(pose.alpha);
     sprite.setPosition(

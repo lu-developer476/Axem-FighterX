@@ -73,7 +73,8 @@ Mientras no haya hojas de sprites, el juego usa la pose actual con animaciones p
 1. Subí una tira horizontal por estado a `art/source/<ranger>/<estado>.png`,
    por ejemplo `art/source/violet/walk.png`.
    Todos los cuadros del mismo tamaño, en una sola fila, con fondo transparente, los pies tocando
-   el borde inferior y el personaje mirando hacia la derecha.
+   el borde inferior y el personaje mirando hacia el mismo lado que la pose base (hoy, la izquierda;
+   si tus tiras miran al otro lado, cambiá `spriteFacing` en `characterAnimationData.js`).
 2. En `characterAnimationData.js`, ajustá `frames` a la cantidad real de cuadros de esa tira
    (y `frameRate` en `idle` y `walk`).
 3. Listo: el archivo se detecta al compilar (reiniciá el servidor de desarrollo si estaba abierto). Las animaciones de ataque, golpe, teletransporte y KO

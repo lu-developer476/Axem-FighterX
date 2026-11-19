@@ -70,13 +70,13 @@ Mientras no haya hojas de sprites, el juego usa la pose actual con animaciones p
 
 **Para sumar sprites reales:**
 
-1. Subí una tira horizontal por estado a `public/assets/sprites/rangers/<ranger>/<estado>.png`,
-   por ejemplo `public/assets/sprites/rangers/violet/walk.png`.
-   Todos los cuadros del mismo tamaño, en una sola fila, con los pies tocando el borde inferior
-   y el personaje mirando hacia la derecha.
+1. Subí una tira horizontal por estado a `art/source/<ranger>/<estado>.png`,
+   por ejemplo `art/source/violet/walk.png`.
+   Todos los cuadros del mismo tamaño, en una sola fila, con fondo transparente, los pies tocando
+   el borde inferior y el personaje mirando hacia la derecha.
 2. En `characterAnimationData.js`, ajustá `frames` a la cantidad real de cuadros de esa tira
    (y `frameRate` en `idle` y `walk`).
-3. Listo: el archivo se detecta al compilar. Las animaciones de ataque, golpe, teletransporte y KO
+3. Listo: el archivo se detecta al compilar (reiniciá el servidor de desarrollo si estaba abierto). Las animaciones de ataque, golpe, teletransporte y KO
    se ajustan solas a la duración de la acción. Si el servidor de desarrollo está abierto, reinicialo.
 
 Los efectos (explosión, chispa de impacto, polvo, onda de KO, teletransporte, tajo del hacha y curación)
@@ -84,8 +84,11 @@ se generan por código en `infrastructure/graphics/FxTextureFactory.js`.
 
 ## Arte
 
-- `art/source/`: PNG originales con fondo, sin modificar.
-- `public/assets/sprites/rangers/`: sprites con fondo transparente que usa el juego.
+- `art/source/`: **los sprites del juego**, sin fondo (transparentes). Vite los importa directamente:
+  no hay copias en `public/`. La pose base de cada personaje es `art/source/axem-ranger-<ranger>.png`.
+- Esos PNG miden 2617×4096 pero son pixel art de 53×83 ampliado. Al cargar, el juego toma un píxel por
+  celda de esa cuadrícula (`nativeSize` en `characterAnimationData.js`) y los dibuja 1:1, con la misma
+  densidad de píxeles que el escenario.
 - El escenario "Ruinas de medianoche" (cielo, montañas, castillo, pinos, suelo, pilares) está
   dibujado por código en `infrastructure/graphics/StageTextureFactory.js`, con paleta limitada y tramado.
 

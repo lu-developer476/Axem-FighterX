@@ -29,17 +29,14 @@ const FLASH_MS = 90;
 /**
  * @param {string} state estado del luchador
  * @param {number} timeMs tiempo dentro del estado
- * @param {number} elapsedMs tiempo total (para los loops)
+ * @param {number} elapsedMs tiempo total (se conserva para compatibilidad con la vista)
  * @returns {Pose}
  */
 export function poseFor(state, timeMs, elapsedMs) {
   switch (state) {
     case 'walk':
-      return {
-        ...NEUTRAL_POSE,
-        angle: 7 + 2 * Math.sin(elapsedMs / 70),
-        scaleY: 1 + 0.03 * Math.sin(elapsedMs / 80),
-      };
+      // Mantiene una leve inclinación de avance, sin deformaciones ni bamboleo.
+      return { ...NEUTRAL_POSE, angle: 7 };
     case 'attack':
       return attackPose(timeMs);
     case 'hurt':
@@ -50,12 +47,8 @@ export function poseFor(state, timeMs, elapsedMs) {
       return koPose(timeMs);
     case 'idle':
     default:
-      return {
-        ...NEUTRAL_POSE,
-        angle: 1.2 * Math.sin(elapsedMs / 520),
-        scaleX: 1 - 0.012 * Math.sin(elapsedMs / 260),
-        scaleY: 1 + 0.025 * Math.sin(elapsedMs / 260),
-      };
+      // La levitación se aplica por separado desde FighterView mediante hoverOffset.
+      return NEUTRAL_POSE;
   }
 }
 

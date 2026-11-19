@@ -61,7 +61,6 @@ export class FightScene extends Phaser.Scene {
     this.stageLabel = this.add.text(GAME_WIDTH / 2, 43, this.stageDefinition.name.toUpperCase(), {
       fontFamily: 'monospace',
       fontSize: '8px',
-      fontStyle: 'bold',
       color: '#fff0c9',
       stroke: '#0d0b16',
       strokeThickness: 2,

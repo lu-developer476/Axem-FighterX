@@ -26,32 +26,40 @@ export class PauseMenuView {
 
   showControls() {
     this.showingControls = true;
-    this.#beginPanel('TUTORIALES', 220);
-    this.#addText('J1 · MOVER W / A / S / D · ATAQUE F · TELETRANSPORTE G', 100, {
-      fontSize: '7px',
+    this.#beginPanel('TUTORIALES', 250);
+    this.#addText('J1 · MOVER A/D · PROFUNDIDAD W/S · ALTURA Q SUBE · E BAJA', 76, {
+      fontSize: '6px',
       color: '#d9a9ff',
     });
-    this.#addText('J2 · MOVER ↑ / ← / ↓ / → · ATAQUE L · TELETRANSPORTE K', 127, {
-      fontSize: '7px',
+    this.#addText('J1 · HACHAZO F · TELETRANSPORTE G', 96, {
+      fontSize: '6px',
+      color: '#d9a9ff',
+    });
+    this.#addText('J2 · MOVER ←/→ · PROFUNDIDAD ↑/↓ · ALTURA I SUBE · O BAJA', 116, {
+      fontSize: '6px',
       color: '#ffc17e',
     });
-    this.#addText('OBJETOS · VIDA · FURIA · RAPIDEZ · ESCUDO', 154, {
+    this.#addText('J2 · HACHAZO L · TELETRANSPORTE K', 136, {
+      fontSize: '6px',
+      color: '#ffc17e',
+    });
+    this.#addText('OBJETOS · VIDA · FURIA · RAPIDEZ · ESCUDO', 164, {
       fontSize: '7px',
       color: '#e7d6a8',
     });
-    this.#addText('P · ABRIR / CERRAR PAUSA', 165, {
+    this.#addText('P · ABRIR / CERRAR PAUSA', 184, {
       fontSize: '7px',
       color: '#fff0c9',
     });
-    this.#addText('R · REINICIAR EL COMBATE', 187, {
+    this.#addText('R · REINICIAR EL COMBATE', 204, {
       fontSize: '7px',
       color: '#aaa0bd',
     });
-    this.#addText('ESC · MENÚ / PAUSA: REANUDAR / TUTORIALES: VOLVER', 209, {
+    this.#addText('ESC · MENÚ / PAUSA: REANUDAR / TUTORIALES: VOLVER', 222, {
       fontSize: '6px',
       color: '#aaa0bd',
     });
-    this.#addButton('VOLVER A PAUSA', 233, () => this.showMenu(), { width: 178 });
+    this.#addButton('VOLVER A PAUSA', 242, () => this.showMenu(), { width: 178 });
     this.container.setVisible(true);
   }
 
@@ -75,16 +83,15 @@ export class PauseMenuView {
     this.selectedIndex = 0;
     const panelY = 135;
 
-    const shade = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, GAME_WIDTH, 270, 0x05030c, 0.84)
+    const shade = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, GAME_WIDTH, 270, 0x000000, 1)
       .setInteractive();
-    const panel = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, 270, height, 0x100b24, 0.99)
+    const panel = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, 270, height, 0x000000, 1)
       .setStrokeStyle(2, 0xd3a66d, 1);
-    const inset = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, 262, height - 8, 0x100b24, 0)
+    const inset = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, 262, height - 8, 0x000000, 0)
       .setStrokeStyle(1, 0x59466e, 1);
     const heading = this.scene.add.text(GAME_WIDTH / 2, panelY - height / 2 + 23, title, {
       fontFamily: 'monospace',
       fontSize: '12px',
-      fontStyle: 'bold',
       color: '#f7cf83',
       letterSpacing: 1,
     }).setOrigin(0.5);
@@ -110,7 +117,6 @@ export class PauseMenuView {
     const label = this.scene.add.text(GAME_WIDTH / 2, y, title, {
       fontFamily: 'monospace',
       fontSize: '8px',
-      fontStyle: 'bold',
       color: '#d9cde9',
       align: 'center',
     }).setOrigin(0.5);

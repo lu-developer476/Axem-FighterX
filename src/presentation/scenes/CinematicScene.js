@@ -55,7 +55,6 @@ export class CinematicScene extends Phaser.Scene {
     this.add.text(18, 17, 'REGISTRO DE CAMPO  /  EVALUACIÓN DE EQUIPO', {
       fontFamily: 'monospace',
       fontSize: '7px',
-      fontStyle: 'bold',
       color: '#e5c58f',
       letterSpacing: 1,
     }).setScrollFactor(0).setDepth(1002);
@@ -63,7 +62,6 @@ export class CinematicScene extends Phaser.Scene {
     this.stageTitle = this.add.text(GAME_WIDTH / 2, 108, this.stage.name.toUpperCase(), {
       fontFamily: 'monospace',
       fontSize: '13px',
-      fontStyle: 'bold',
       color: '#fff0c9',
       stroke: '#171126',
       strokeThickness: 3,
@@ -87,7 +85,6 @@ export class CinematicScene extends Phaser.Scene {
     this.speaker = this.add.text(25, 40, '', {
       fontFamily: 'monospace',
       fontSize: '8px',
-      fontStyle: 'bold',
       color: '#d9a9ff',
     }).setScrollFactor(0).setDepth(1002);
 

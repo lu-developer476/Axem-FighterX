@@ -5,7 +5,7 @@ import { createFighter } from '../rangers/createFighter.js';
 import { ARENA, PICKUP } from '../arena/arena.js';
 import { PICKUP_TYPES } from './PowerUpPickup.js';
 
-const idle = { x: 0, y: 0, attack: false, teleport: false };
+const idle = { x: 0, y: 0, z: 0, attack: false, teleport: false };
 const make = ({ ax = 300, bx = 340, rng = () => 0 } = {}) => {
   const a = createFighter('violet', { x: ax, y: ARENA.groundY }, 1);
   const b = createFighter('orange', { x: bx, y: ARENA.groundY }, -1);
@@ -45,6 +45,15 @@ describe('Match: golpes', () => {
     const [attacker, target] = match.fighters;
     attacker.position.y = ARENA.minY;
     target.position.y = ARENA.maxY;
+    const events = advance(match, [{ ...idle, attack: true }, idle], 600);
+    expect(events.some((event) => event.type === 'hit')).toBe(false);
+    expect(target.health).toBe(target.maxHealth);
+  });
+
+  it('los ataques respetan la altura: un rival muy por encima no recibe el golpe', () => {
+    const match = make({ ax: 300, bx: 340 });
+    const [attacker, target] = match.fighters;
+    target.position.z = 110;
     const events = advance(match, [{ ...idle, attack: true }, idle], 600);
     expect(events.some((event) => event.type === 'hit')).toBe(false);
     expect(target.health).toBe(target.maxHealth);

@@ -45,19 +45,10 @@ export class MenuScene extends Phaser.Scene {
   }
 
   #createBackdrop() {
-    this.add.image(0, 0, 'stage-sky')
+    // El menú y todos sus submenús parten de un lienzo completamente negro.
+    this.add.rectangle(0, 0, GAME_WIDTH, 270, 0x000000, 1)
       .setOrigin(0, 0)
       .setDepth(-100);
-
-    this.add.image(0, 0, 'stage-far')
-      .setOrigin(0, 0)
-      .setAlpha(0.82)
-      .setDepth(-90);
-
-    this.add.image(0, 36, 'stage-mid')
-      .setOrigin(0, 0)
-      .setAlpha(0.9)
-      .setDepth(-80);
 
     this.add.image(78, 231, 'ranger-violet')
       .setOrigin(0.5, 1)
@@ -72,15 +63,6 @@ export class MenuScene extends Phaser.Scene {
       .setAlpha(0.9)
       .setDepth(-20);
 
-    this.add.tileSprite(0, 226, GAME_WIDTH, 44, 'stage-floor')
-      .setOrigin(0, 0)
-      .setDepth(-10);
-
-    this.add.rectangle(0, 0, GAME_WIDTH, 270, 0x090616, 0.24)
-      .setOrigin(0, 0)
-      .setDepth(-5);
-
-    // La marca se representa únicamente con el logo gráfico, sin duplicar el nombre en texto.
     const titleTexture = this.textures.get('title-art').getSourceImage();
     const titleScale = Math.min(0.8, 290 / titleTexture.width, 62 / titleTexture.height);
     this.add.image(GAME_WIDTH / 2, 55, 'title-art')
@@ -88,7 +70,7 @@ export class MenuScene extends Phaser.Scene {
       .setAlpha(0.98)
       .setDepth(-1);
 
-    this.add.rectangle(GAME_WIDTH / 2, 250, GAME_WIDTH, 40, 0x080611, 0.91)
+    this.add.rectangle(GAME_WIDTH / 2, 250, GAME_WIDTH, 40, 0x000000, 0.94)
       .setStrokeStyle(1, 0x55456e, 0.9)
       .setDepth(-1);
   }
@@ -97,17 +79,16 @@ export class MenuScene extends Phaser.Scene {
     this.ui.removeAll(true);
     this.buttons = [];
     this.selectedIndex = 0;
-    const panel = this.add.rectangle(GAME_WIDTH / 2, 171, width, height, 0x100b24, 0.94)
+    const panel = this.add.rectangle(GAME_WIDTH / 2, 171, width, height, 0x000000, 0.98)
       .setStrokeStyle(2, 0x7b699b, 0.95);
     this.ui.add(panel);
 
-    const inset = this.add.rectangle(GAME_WIDTH / 2, 171, width - 8, height - 8, 0x100b24, 0)
+    const inset = this.add.rectangle(GAME_WIDTH / 2, 171, width - 8, height - 8, 0x000000, 0)
       .setStrokeStyle(1, 0x3e315e, 0.9);
     this.ui.add(inset);
 
     this.#addText(title, GAME_WIDTH / 2, 122, {
       fontSize: '12px',
-      fontStyle: 'bold',
       color: '#f7cf83',
       letterSpacing: 1,
     });
@@ -118,17 +99,16 @@ export class MenuScene extends Phaser.Scene {
     this.buttons = [];
     this.selectedIndex = 0;
 
-    const veil = this.add.rectangle(GAME_WIDTH / 2, 135, GAME_WIDTH, 270, 0x05030c, 0.82)
+    const veil = this.add.rectangle(GAME_WIDTH / 2, 135, GAME_WIDTH, 270, 0x000000, 0.92)
       .setInteractive();
-    const panel = this.add.rectangle(GAME_WIDTH / 2, 177, 354, 156, 0x100b24, 0.99)
+    const panel = this.add.rectangle(GAME_WIDTH / 2, 177, 354, 156, 0x000000, 0.99)
       .setStrokeStyle(2, 0xd3a66d, 1);
-    const inset = this.add.rectangle(GAME_WIDTH / 2, 177, 346, 148, 0x100b24, 0)
+    const inset = this.add.rectangle(GAME_WIDTH / 2, 177, 346, 148, 0x000000, 0)
       .setStrokeStyle(1, 0x59466e, 1);
     this.ui.add([veil, panel, inset]);
 
     this.#addText('SELECCIONAR PERSONAJE', GAME_WIDTH / 2, 116, {
       fontSize: '12px',
-      fontStyle: 'bold',
       color: '#f7cf83',
       letterSpacing: 1,
     });
@@ -152,7 +132,6 @@ export class MenuScene extends Phaser.Scene {
     const label = this.add.text(x, y, title, {
       fontFamily: 'monospace',
       fontSize,
-      fontStyle: 'bold',
       color: '#d9cde9',
       align: 'center',
     }).setOrigin(0.5);
@@ -185,7 +164,6 @@ export class MenuScene extends Phaser.Scene {
     const label = this.add.text(x + 17, 177, ranger.name.toUpperCase(), {
       fontFamily: 'monospace',
       fontSize: '7px',
-      fontStyle: 'bold',
       color: '#d9cde9',
       align: 'center',
     }).setOrigin(0.5);
@@ -227,7 +205,6 @@ export class MenuScene extends Phaser.Scene {
     const author = this.add.text(0, 255, 'Lucas Montenegro ®', {
       fontFamily: 'monospace',
       fontSize: '6px',
-      fontStyle: 'bold',
       color: '#f2c77e',
     }).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
 
@@ -394,28 +371,32 @@ export class MenuScene extends Phaser.Scene {
 
   #showControls() {
     this.page = 'controls';
-    this.#beginPage('TUTORIALES', 390, 122);
-    this.#addText('JUGADOR 1 · AXEM VIOLET', GAME_WIDTH / 2, 148, {
-      fontSize: '8px',
+    this.#beginPage('TUTORIALES', 390, 154);
+    this.#addText('JUGADOR 1 · AXEM VIOLET', GAME_WIDTH / 2, 143, {
+      fontSize: '7px',
       color: '#d9a9ff',
-      fontStyle: 'bold',
     });
-    this.#addText('Mover: W / A / S / D     Hachazo: F     Teletransporte: G', GAME_WIDTH / 2, 162, {
+    this.#addText('Mover A/D · Profundidad W/S · Altura Q sube · E baja', GAME_WIDTH / 2, 157, {
+      fontSize: '6px',
+    });
+    this.#addText('Hachazo F · Teletransporte G', GAME_WIDTH / 2, 168, {
+      fontSize: '6px',
+    });
+    this.#addText('JUGADOR 2 · AXEM ORANGE', GAME_WIDTH / 2, 183, {
       fontSize: '7px',
-    });
-    this.#addText('JUGADOR 2 · AXEM ORANGE', GAME_WIDTH / 2, 181, {
-      fontSize: '8px',
       color: '#ffc17e',
-      fontStyle: 'bold',
     });
-    this.#addText('Mover: ↑ / ← / ↓ / →     Hachazo: L     Teletransporte: K', GAME_WIDTH / 2, 195, {
-      fontSize: '7px',
+    this.#addText('Mover ←/→ · Profundidad ↑/↓ · Altura I sube · O baja', GAME_WIDTH / 2, 197, {
+      fontSize: '6px',
     });
-    this.#addText('R · REINICIAR COMBATE   ESC · VOLVER / SALIR', GAME_WIDTH / 2, 209, {
-      fontSize: '7px',
+    this.#addText('Hachazo L · Teletransporte K', GAME_WIDTH / 2, 208, {
+      fontSize: '6px',
+    });
+    this.#addText('R · REINICIAR COMBATE   ESC · VOLVER / SALIR', GAME_WIDTH / 2, 223, {
+      fontSize: '6px',
       color: '#aaa0bd',
     });
-    this.#addButton('VOLVER', 224, () => this.#showHome());
+    this.#addButton('VOLVER', 239, () => this.#showHome());
     this.#addFooter();
   }
 

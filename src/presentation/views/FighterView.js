@@ -40,7 +40,7 @@ export class FighterView {
     sprite.setAlpha(pose.alpha);
     sprite.setPosition(
       Math.round(fighter.position.x + pose.x * facing),
-      Math.round(fighter.position.y - FLOAT_HEIGHT + lift + pose.y),
+      Math.round(fighter.position.y - FLOAT_HEIGHT - fighter.position.z + lift + pose.y),
     );
     if (pose.flash) sprite.setTintFill(0xffffff);
     else sprite.clearTint();

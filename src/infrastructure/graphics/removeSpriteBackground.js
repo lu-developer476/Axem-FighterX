@@ -1,5 +1,5 @@
 /**
- * Elimina el fondo uniforme o casi uniforme conectado a los bordes de un sprite.
+ * Elimina el fondo uniforme o casi uniforme, incluidos los fragmentos atrapados en huecos internos del sprite.
  * Trabaja sobre una imagen ya reducida a su resolución de juego, por lo que
  * también resulta válido para hojas de animación con varios cuadros.
  *
@@ -89,8 +89,9 @@ export function removeSpriteBackground(imageData, {
     queue[tail++] = pixelIndex;
   };
 
-  // Solo los píxeles conectados al borde se consideran fondo: no se borran
-  // detalles internos del personaje que compartan accidentalmente el color.
+  // El fondo puede quedar atrapado en huecos cerrados entre extremidades,
+  // cabello y accesorios. También se buscan esos fragmentos interiores del
+  // mismo color dominante, no solo los que llegan hasta el borde del PNG.
   for (let x = 0; x < width; x++) {
     enqueue(x);
     enqueue((height - 1) * width + x);
@@ -99,6 +100,7 @@ export function removeSpriteBackground(imageData, {
     enqueue(y * width);
     enqueue(y * width + width - 1);
   }
+  for (let i = 0; i < total; i++) enqueue(i);
 
   while (head < tail) {
     const pixelIndex = queue[head++];

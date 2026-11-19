@@ -3,7 +3,7 @@ import { overlapCenter, rectsOverlap } from '../geometry/rect.js';
 import { FighterState } from './FighterState.js';
 import { PICKUP_TYPES, PICKUP_TYPE_LIST, PowerUpPickup } from './PowerUpPickup.js';
 
-const NEUTRAL = Object.freeze({ x: 0, attack: false, teleport: false });
+const NEUTRAL = Object.freeze({ x: 0, y: 0, z: 0, attack: false, teleport: false });
 const MAX_STEP_MS = 50;
 
 /**

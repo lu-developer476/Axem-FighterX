@@ -16,15 +16,18 @@ export class PhaserKeyboardInput {
       down: keyNames.down,
       attack: keyNames.attack,
       teleport: keyNames.teleport,
+      ascend: keyNames.ascend,
+      descend: keyNames.descend,
     });
   }
 
   /** @returns {import('../../application/ports/InputPort.js').PlayerIntent} */
   readIntent() {
-    const { left, right, up, down, attack, teleport } = this.keys;
+    const { left, right, up, down, attack, teleport, ascend, descend } = this.keys;
     return {
       x: Number(right.isDown) - Number(left.isDown),
       y: Number(down.isDown) - Number(up.isDown),
+      z: Number(ascend.isDown) - Number(descend.isDown),
       attack: Phaser.Input.Keyboard.JustDown(attack),
       teleport: Phaser.Input.Keyboard.JustDown(teleport),
     };
@@ -32,6 +35,6 @@ export class PhaserKeyboardInput {
 }
 
 export const KEYMAPS = Object.freeze({
-  PLAYER_1: { left: 'A', right: 'D', up: 'W', down: 'S', attack: 'F', teleport: 'G' },
-  PLAYER_2: { left: 'LEFT', right: 'RIGHT', up: 'UP', down: 'DOWN', attack: 'L', teleport: 'K' },
+  PLAYER_1: { left: 'A', right: 'D', up: 'W', down: 'S', ascend: 'Q', descend: 'E', attack: 'F', teleport: 'G' },
+  PLAYER_2: { left: 'LEFT', right: 'RIGHT', up: 'UP', down: 'DOWN', ascend: 'I', descend: 'O', attack: 'L', teleport: 'K' },
 });

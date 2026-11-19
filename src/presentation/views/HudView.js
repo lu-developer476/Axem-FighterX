@@ -49,14 +49,12 @@ export class HudView {
       text(GAME_WIDTH / 2, y, value, style, 0.5).setVisible(false);
     this.title = center(82, '¡KO!', {
       fontSize: '40px',
-      fontStyle: 'bold',
       color: '#ffc23a',
       stroke: '#0d0b16',
       strokeThickness: 6,
     });
     this.subtitle = center(132, '', {
       fontSize: '14px',
-      fontStyle: 'bold',
       stroke: '#0d0b16',
       strokeThickness: 4,
     });

@@ -40,6 +40,20 @@ describe('Eliminación automática del fondo de sprites', () => {
     expect(image.data[(0 * 9 + 4) * 4 + 3]).toBe(0);
   });
 
+  it('elimina restos del fondo atrapados en huecos interiores del personaje', () => {
+    const image = makeImage(11, 11, [245, 245, 245]);
+    for (let y = 1; y <= 9; y++) {
+      for (let x = 1; x <= 9; x++) setPixel(image, x, y, [90, 45, 180]);
+    }
+    // Simula un fragmento del fondo encerrado entre el brazo, el pelo y un accesorio.
+    setPixel(image, 5, 5, [245, 245, 245]);
+
+    removeSpriteBackground(image);
+
+    expect(image.data[(5 * 11 + 5) * 4 + 3]).toBe(0);
+    expect(image.data[(4 * 11 + 4) * 4 + 3]).toBe(255);
+  });
+
   it('no modifica una imagen que ya tiene transparencia en el contorno', () => {
     const image = makeImage(9, 9, [255, 255, 255]);
     for (let x = 0; x < image.width; x++) {

@@ -223,7 +223,6 @@ export class FxDirector {
       .text(Math.round(x), Math.round(y), value, {
         fontFamily: 'monospace',
         fontSize: '12px',
-        fontStyle: 'bold',
         color,
         stroke: '#0d0b16',
         strokeThickness: 3,

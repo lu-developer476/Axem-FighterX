@@ -6,10 +6,10 @@ import { ARENA, PICKUP, getArenaForGroundDepthMode } from '../arena/arena.js';
 import { PICKUP_TYPES } from './PowerUpPickup.js';
 
 const idle = { x: 0, y: 0, z: 0, attack: false, teleport: false };
-const make = ({ ax = 300, bx = 340, rng = () => 0, arena = ARENA } = {}) => {
+const make = ({ ax = 300, bx = 340, rng = () => 0, arena = ARENA, hazards = null } = {}) => {
   const a = createFighter('violet', { x: ax, y: ARENA.groundY }, 1);
   const b = createFighter('orange', { x: bx, y: ARENA.groundY }, -1);
-  return new Match({ fighters: [a, b], rng, arena });
+  return new Match({ fighters: [a, b], rng, arena, hazards });
 };
 const advance = (match, intents, ms, step = 16) => {
   const events = [];
@@ -190,6 +190,65 @@ describe('Match: teletransporte', () => {
     const [a] = match.fighters;
     advance(match, [{ ...idle, teleport: true }, idle], 400);
     expect(a.position.x).toBeCloseTo(100 + ARENA.teleportDistance, 0);
+  });
+});
+
+describe('Match: respiraderos volcánicos', () => {
+  const hazards = {
+    type: 'lava-vents',
+    positions: [300],
+    initialVentIndex: 0,
+    warningMs: 80,
+    activeMs: 160,
+    cooldownMs: 500,
+    damage: 14,
+    radiusX: 34,
+    depthTolerance: 16,
+    safeAltitude: 58,
+  };
+
+  it('avisa antes de entrar en erupción y daña a quien permanece sobre el respiradero', () => {
+    const match = make({ ax: 300, bx: 520, hazards });
+    const fighter = match.fighters[0];
+    const health = fighter.health;
+
+    const warning = advance(match, [idle, idle], 64);
+    expect(warning.some((event) => event.type === 'hazard-warning')).toBe(true);
+    expect(fighter.health).toBe(health);
+
+    const eruption = advance(match, [idle, idle], 64);
+    expect(eruption.some((event) => event.type === 'hazard-erupt')).toBe(true);
+    expect(eruption.some((event) => event.type === 'hit' && event.source === 'lava-vent')).toBe(true);
+    expect(fighter.health).toBeLessThan(health);
+  });
+
+  it('permite evitar la columna saltando por encima de la altura segura', () => {
+    const match = make({ ax: 300, bx: 520, hazards });
+    const fighter = match.fighters[0];
+    fighter.position.z = hazards.safeAltitude + 1;
+
+    advance(match, [idle, idle], hazards.warningMs + 120);
+
+    expect(fighter.health).toBe(fighter.maxHealth);
+  });
+
+  it('permite evitar la zona de impacto cambiando de carril', () => {
+    const match = make({ ax: 300, bx: 520, hazards });
+    const fighter = match.fighters[0];
+    fighter.position.y = ARENA.groundY - hazards.depthTolerance - 2;
+
+    advance(match, [idle, idle], hazards.warningMs + 120);
+
+    expect(fighter.health).toBe(fighter.maxHealth);
+  });
+
+  it('rota al siguiente respiradero después de la pausa', () => {
+    const sequence = { ...hazards, positions: [300, 420] };
+    const match = make({ ax: 300, bx: 520, hazards: sequence });
+
+    const events = advance(match, [idle, idle], sequence.warningMs + sequence.activeMs + sequence.cooldownMs + 32);
+
+    expect(events.some((event) => event.type === 'hazard-warning' && event.x === 420)).toBe(true);
   });
 });
 

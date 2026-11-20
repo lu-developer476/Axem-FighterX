@@ -1,5 +1,5 @@
-import { GAME_WIDTH } from '../../config/gameConfig.js';
-import { contentWidth, insetSize, UI_SPACING } from './uiLayout.js';
+import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
+import { contentWidth, insetSize, mapPanelY, UI_SPACING } from './uiLayout.js';
 
 /** Menú superpuesto con paneles y botones de ancho coherente. */
 export class PauseMenuView {
@@ -79,21 +79,28 @@ export class PauseMenuView {
     this.buttons[this.selectedIndex]?.action();
   }
 
-  #beginPanel(title, height) {
+  #beginPanel(title, requestedHeight) {
     this.container.removeAll(true);
     this.buttons = [];
     this.selectedIndex = 0;
-    const panelY = 135;
 
-    const shade = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, GAME_WIDTH, 270, 0x000000, 0.78)
+    const panelTopLimit = UI_SPACING.modalTopInset;
+    const panelBottomLimit = GAME_HEIGHT - UI_SPACING.modalFooterReserve;
+    const height = Math.min(requestedHeight, panelBottomLimit - panelTopLimit);
+    const panelY = (panelTopLimit + panelBottomLimit) / 2;
+    const panelTop = panelY - height / 2;
+    const panelBottom = panelY + height / 2;
+
+    const shade = this.scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.78)
       .setInteractive();
     const shadow = this.scene.add.rectangle(GAME_WIDTH / 2 + 3, panelY + 3, this.panelWidth, height, 0x06040b, 0.96);
     const panel = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth, height, 0x100d1e, 0.99)
       .setStrokeStyle(1, 0xd3a66d, 0.96);
     const inset = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, insetSize(this.panelWidth), insetSize(height), 0x000000, 0)
       .setStrokeStyle(1, 0x4b385c, 0.92);
-    const heading = this.scene.add.text(GAME_WIDTH / 2, panelY - height / 2 + 24, title, {
+    const heading = this.scene.add.text(GAME_WIDTH / 2, panelTop + UI_SPACING.modalTopInset, title, {
       fontFamily: 'monospace',
+      fontStyle: 'normal',
       fontSize: '12px',
       color: '#f7cf83',
       letterSpacing: 1,
@@ -102,18 +109,32 @@ export class PauseMenuView {
 
     const headerRule = this.scene.add.rectangle(
       GAME_WIDTH / 2,
-      panelY - height / 2 + 44,
+      panelTop + UI_SPACING.modalHeaderRuleInset,
       contentWidth(this.panelWidth),
       1,
       0xd3a66d,
       0.72,
     );
+    this.panelLayout = {
+      sourceTop: 76,
+      sourceBottom: 242,
+      targetTop: panelTop + UI_SPACING.modalHeaderRuleInset + 15,
+      targetBottom: panelBottom - UI_SPACING.modalBottomInset - 12,
+    };
     this.container.add([shade, shadow, panel, inset, heading, headerRule]);
   }
 
+  #mapPanelY(y) {
+    const layout = this.panelLayout;
+    return layout
+      ? mapPanelY(y, layout.sourceTop, layout.sourceBottom, layout.targetTop, layout.targetBottom)
+      : y;
+  }
+
   #addText(value, y, style = {}) {
-    const label = this.scene.add.text(GAME_WIDTH / 2, y, value, {
+    const label = this.scene.add.text(GAME_WIDTH / 2, this.#mapPanelY(y), value, {
       fontFamily: 'monospace',
+      fontStyle: 'normal',
       fontSize: '9px',
       color: '#e7def5',
       align: 'center',
@@ -125,17 +146,19 @@ export class PauseMenuView {
   }
 
   #addButton(title, y, action, { width = contentWidth(this.panelWidth) } = {}) {
+    const buttonY = this.#mapPanelY(y);
     const buttonWidth = Math.min(width, contentWidth(this.panelWidth));
-    const box = this.scene.add.rectangle(GAME_WIDTH / 2, y, buttonWidth, 23, 0x241b3c, 0.98)
+    const box = this.scene.add.rectangle(GAME_WIDTH / 2, buttonY, buttonWidth, 23, 0x241b3c, 0.98)
       .setStrokeStyle(1, 0x62527e, 1);
-    const label = this.scene.add.text(GAME_WIDTH / 2, y, title, {
+    const label = this.scene.add.text(GAME_WIDTH / 2, buttonY, title, {
       fontFamily: 'monospace',
+      fontStyle: 'normal',
       fontSize: '10px',
       color: '#d9cde9',
       align: 'center',
       wordWrap: { width: contentWidth(buttonWidth, UI_SPACING.buttonTextGutter), useAdvancedWrap: true },
     }).setOrigin(0.5);
-    const hitArea = this.scene.add.rectangle(GAME_WIDTH / 2, y, buttonWidth, 23, 0xffffff, 0)
+    const hitArea = this.scene.add.rectangle(GAME_WIDTH / 2, buttonY, buttonWidth, 23, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
 
     const index = this.buttons.length;

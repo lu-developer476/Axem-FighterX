@@ -31,7 +31,7 @@ En cada selección se elige primero el color (**Axem Naranja** o **Axem Violeta*
 
 ## Escenarios y cinemáticas
 
-En los formatos normales, el menú permite elegir entre cuatro escenarios. Antes de cada combate se reproduce una cinemática breve con una conversación contextual entre Axem Violet y Axem Orange. Los diálogos presentan la zona y la relación de trabajo entre ambos; se avanza con `ENTER` o `ESPACIO`, y se puede omitir con `ESC`.
+En los formatos normales, el menú permite elegir entre siete escenarios. Antes de cada combate se reproduce una cinemática breve con una conversación contextual entre Axem Violet y Axem Orange. Los diálogos presentan la zona y la relación de trabajo entre ambos; se avanza con `ENTER` o `ESPACIO`, y se puede omitir con `ESC`.
 
 | Escenario | Entorno |
 |---|---|
@@ -39,8 +39,11 @@ En los formatos normales, el menú permite elegir entre cuatro escenarios. Antes
 | **Cráter del exilio** | Puente de basalto, respiraderos y lava |
 | **Bosque de los ecos** | Árboles gigantes, raíces y luces errantes |
 | **Santuario celeste** | Columnas doradas, sellos y arquitectura suspendida |
+| **Avenida del apagón** | Distrito comercial destruido, vehículos abandonados e hidrantes rotos |
+| **Llanura de la torre rota** | Colinas abiertas, puente, cercas, rocas y torre de vigilancia |
+| **Fauces de obsidiana** | Boca de volcán activa con respiraderos rotativos y columnas de lava que dañan a los luchadores
 
-Los cuatro fondos, relieves, suelos, límites y detalles ambientales se generan como texturas pixel art por código. No requieren imágenes externas adicionales. El fondo de entrenamiento se dibuja como un único color plano y no carga capas ambientales.
+Los siete fondos, relieves, suelos, límites y detalles ambientales se generan como texturas pixel art por código. No requieren imágenes externas adicionales. El fondo de entrenamiento se dibuja como un único color plano y no carga capas ambientales.
 
 ## Nitidez y renderizado
 
@@ -77,6 +80,12 @@ src/
 Para agregar un personaje: sumarlo a `rangerCatalog.js`, registrar su PNG en
 `assetManifest.js` y sus animaciones en `characterAnimationData.js`.
 Para cambiar el control (gamepad, táctil), basta con otro adaptador que implemente `InputPort`.
+
+### Nuevas arenas seleccionables
+
+- **Avenida del apagón:** distrito comercial destruido, persianas dobladas, cables caídos, un patrullero abandonado, hidrante abierto y señalización dañada.
+- **Llanura de la torre rota:** colinas onduladas, puente de tablones sobre un barranco, cercas de madera, rocas, flores y torre de vigilancia.
+- **Fauces de obsidiana:** arena propia dentro de una caldera activa. Tres respiraderos rotativos avisan antes de expulsar una columna de lava y fragmentos incandescentes. El impacto daña a quien permanece en el radio y a baja altura; se puede evitar cambiando de carril o saltando.
 
 ## Combate
 

@@ -2,12 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { getStage, STAGES, STAGE_IDS } from './stageCatalog.js';
 
 describe('Catálogo de escenarios', () => {
-  it('incluye las cuatro zonas seleccionables', () => {
+  it('incluye las siete zonas seleccionables', () => {
     expect(STAGES.map((stage) => stage.id)).toEqual([
       STAGE_IDS.RUINS,
       STAGE_IDS.VOLCANO,
       STAGE_IDS.FOREST,
       STAGE_IDS.SANCTUARY,
+      STAGE_IDS.DOWNTOWN,
+      STAGE_IDS.MEADOW,
+      STAGE_IDS.VOLCANO_MOUTH,
     ]);
   });
 
@@ -17,6 +20,9 @@ describe('Catálogo de escenarios', () => {
       [STAGE_IDS.VOLCANO]: 'restricted',
       [STAGE_IDS.FOREST]: 'free',
       [STAGE_IDS.SANCTUARY]: 'free',
+      [STAGE_IDS.DOWNTOWN]: 'free',
+      [STAGE_IDS.MEADOW]: 'free',
+      [STAGE_IDS.VOLCANO_MOUTH]: 'free',
     });
   });
 
@@ -42,6 +48,9 @@ describe('Catálogo de escenarios', () => {
       [STAGE_IDS.VOLCANO]: ['vapor', 'placa', 'válvula', 'veta'],
       [STAGE_IDS.FOREST]: ['tronco', 'corteza', 'arroyo', 'musgo'],
       [STAGE_IDS.SANCTUARY]: ['anillo', 'sello', 'columna', 'pulsos'],
+      [STAGE_IDS.DOWNTOWN]: ['avenida', 'hidrante', 'persiana', 'patrullero'],
+      [STAGE_IDS.MEADOW]: ['puente', 'torre', 'cerca', 'loma'],
+      [STAGE_IDS.VOLCANO_MOUTH]: ['respiradero', 'lava', 'ceniza', 'cráter'],
     };
 
     for (const stage of STAGES) {
@@ -68,6 +77,16 @@ describe('Catálogo de escenarios', () => {
       }
     }
     expect(new Set(allAftermathLines).size).toBe(allAftermathLines.length);
+  });
+
+  it('configura tres respiraderos activos y evitables en la boca del volcán', () => {
+    const volcano = getStage(STAGE_IDS.VOLCANO_MOUTH);
+    expect(volcano.hazards.type).toBe('lava-vents');
+    expect(volcano.hazards.positions).toHaveLength(3);
+    expect(volcano.hazards.warningMs).toBeGreaterThan(0);
+    expect(volcano.hazards.activeMs).toBeGreaterThan(0);
+    expect(volcano.hazards.damage).toBeGreaterThan(0);
+    expect(volcano.hazards.safeAltitude).toBeGreaterThan(0);
   });
 
   it('usa las ruinas como escenario seguro ante un identificador desconocido', () => {

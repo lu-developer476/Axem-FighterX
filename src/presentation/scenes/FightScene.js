@@ -35,7 +35,12 @@ export class FightScene extends Phaser.Scene {
     const matchArena = this.matchSetup.trainingBackgroundColor
       ? ARENA
       : getArenaForGroundDepthMode(this.stageDefinition.groundDepthMode);
-    this.match = createDefaultMatch(Math.random, this.matchSetup.characters, matchArena);
+    this.match = createDefaultMatch(
+      Math.random,
+      this.matchSetup.characters,
+      matchArena,
+      this.stageDefinition.hazards ?? null,
+    );
     const [leftFighter, rightFighter] = this.match.fighters;
     const versus = getVersusMode(this.matchSetup.versusMode);
     const combat = getCombatMode(this.matchSetup.combatMode);
@@ -179,6 +184,7 @@ export class FightScene extends Phaser.Scene {
     if (this.hitStopMs > 0) this.hitStopMs -= delta;
     else events = this.updateMatch.execute(delta);
 
+    this.stage.handleEvents(events);
     const { hitStopMs } = this.fx.handle(events);
     this.hitStopMs = Math.max(this.hitStopMs, hitStopMs);
     for (const event of events) {

@@ -3,6 +3,9 @@ export const STAGE_IDS = Object.freeze({
   VOLCANO: 'volcano',
   FOREST: 'forest',
   SANCTUARY: 'sanctuary',
+  DOWNTOWN: 'downtown-ruins',
+  MEADOW: 'meadow-outskirts',
+  VOLCANO_MOUTH: 'obsidian-maw',
 });
 
 const lines = (...entries) => Object.freeze(entries.map(([speaker, text]) => Object.freeze({ speaker, text })));
@@ -129,6 +132,111 @@ export const STAGES = Object.freeze([
       draw: lines(
         ['violet', 'El mecanismo se bloqueó con los dos dentro del círculo.'],
         ['orange', 'Dejemos la sala quieta. No pienso probar otra combinación a ciegas.'],
+      ),
+    }),
+  }),
+  Object.freeze({
+    id: STAGE_IDS.DOWNTOWN,
+    name: 'Avenida del apagón',
+    tagline: 'Persianas torcidas, cables caídos y comercios vaciados',
+    location: 'Distrito Sur · Sector 6',
+    description: 'Una calle comercial quedó partida por el derrumbe: marquesinas encendidas a medias, un patrullero volcado, hidrantes abiertos y vidrieras tapiadas.',
+    groundDepthMode: 'free',
+    dialogue: lines(
+      ['orange', 'El semáforo sigue cambiando para una avenida que ya no tiene tránsito.'],
+      ['violet', 'La joyería tiene la persiana arrancada. El marco está doblado hacia afuera.'],
+      ['orange', 'No fue una explosión. Mirá las marcas en el cordón: arrastraron algo pesado.'],
+      ['violet', 'El patrullero bloquea media calle y el hidrante no deja de tirar agua.'],
+      ['orange', 'Entonces no pises los cables. Ese cartel todavía chisporrotea.'],
+      ['violet', 'La entrada del videoclub está tapiada. Alguien dejó herramientas adentro.'],
+      ['orange', 'No vamos a encontrar a nadie siguiendo huellas entre los vidrios. Primero despejemos la calle.'],
+    ),
+    resultDialogue: Object.freeze({
+      violetWins: lines(
+        ['violet', 'El patrullero te dejó sin salida cuando intentaste rodearlo.'],
+        ['orange', 'Me encerré solo. Tendría que haber usado la vereda, no el medio de la avenida.'],
+      ),
+      orangeWins: lines(
+        ['orange', 'El agua del hidrante te hizo perder pie justo al girar.'],
+        ['violet', 'Miré el semáforo roto en vez del charco. No voy a cometer ese error otra vez.'],
+      ),
+      draw: lines(
+        ['violet', 'El transformador volvió a chisporrotear sobre los cables caídos.'],
+        ['orange', 'Cortemos acá. La calle no va a dejar de venirse abajo por una pelea.'],
+      ),
+    }),
+  }),
+  Object.freeze({
+    id: STAGE_IDS.MEADOW,
+    name: 'Llanura de la torre rota',
+    tagline: 'Colinas verdes, cercas de madera y un puente sobre el barranco',
+    location: 'Límite de la meseta',
+    description: 'Una zona campal aislada de la ciudad: lomadas suaves, senderos de tierra, un puente angosto, una torre de vigilancia y rocas dispersas bajo un cielo limpio.',
+    groundDepthMode: 'free',
+    dialogue: lines(
+      ['violet', 'Desde la torre se ve la ciudad, pero el camino termina en el barranco.'],
+      ['orange', 'El puente aguanta. La baranda derecha está floja; no te apoyes ahí.'],
+      ['violet', 'Hay marcas de ruedas en el sendero. El carro tuvo que subir por la loma.'],
+      ['orange', 'Y esas piedras no están puestas al azar. Alguien delimitó un circuito.'],
+      ['violet', 'El viento viene de la llanura. No hay edificios que lo frenen.'],
+      ['orange', 'La cerca está rota junto al árbol. Podemos rodear por el pasto alto.'],
+      ['violet', 'No. Si perdemos de vista la torre, después no vamos a encontrar el puente.'],
+    ),
+    resultDialogue: Object.freeze({
+      violetWins: lines(
+        ['violet', 'Te quedaste junto al puente y no viste que había ganado la loma.'],
+        ['orange', 'La pendiente me tapó el otro lado. Tendría que haber cambiado de carril.'],
+      ),
+      orangeWins: lines(
+        ['orange', 'El sendero se estrecha detrás de la torre. Ahí te quedaste sin espacio.'],
+        ['violet', 'Creí que la cerca seguía entera. No vi el tramo caído junto al árbol.'],
+      ),
+      draw: lines(
+        ['violet', 'El viento ya cubrió las huellas del sendero.'],
+        ['orange', 'Dejemos el puente en paz. Con la baranda floja no aguanta otra embestida.'],
+      ),
+    }),
+  }),
+  Object.freeze({
+    id: STAGE_IDS.VOLCANO_MOUTH,
+    name: 'Fauces de obsidiana',
+    tagline: 'El cráter respira: la roca se abre antes de escupir fuego',
+    location: 'Caldera de Khar-Zul',
+    description: 'Una cornisa negra rodea la boca de un volcán activo. Tres respiraderos se encienden por turnos, la lava rebalsa por grietas y los fragmentos incandescentes caen de vuelta sobre la arena.',
+    groundDepthMode: 'free',
+    hazards: Object.freeze({
+      type: 'lava-vents',
+      positions: Object.freeze([148, 320, 492]),
+      initialVentIndex: 1,
+      warningMs: 1700,
+      activeMs: 900,
+      cooldownMs: 2100,
+      damage: 14,
+      radiusX: 34,
+      depthTolerance: 16,
+      safeAltitude: 58,
+    }),
+    dialogue: lines(
+      ['violet', 'No es humo. La ceniza sale en pulsos, como si el cráter estuviera respirando.'],
+      ['orange', 'Las grietas se iluminaron en ese orden: izquierda, centro, derecha.'],
+      ['violet', 'La roca del borde está hueca. Escuchá cómo retumba cuando cae la grava.'],
+      ['orange', 'No te acerques al respiradero cuando se ponga naranja. Primero avisa, después explota.'],
+      ['violet', 'La lava no corre pareja. Se junta detrás de esa cresta y salta cuando rebalsa.'],
+      ['orange', 'Entonces no alcanza con esquivar al otro. Hay que mirar el suelo todo el tiempo.'],
+      ['violet', 'Cuando la boca se abra, salimos del círculo. No voy a probar cuánto aguanta la armadura.'],
+    ),
+    resultDialogue: Object.freeze({
+      violetWins: lines(
+        ['violet', 'El respiradero central avisó dos veces. Te quedaste mirando la lava en vez de moverte.'],
+        ['orange', 'Pensé que el pulso había terminado. La segunda columna me alcanzó de lleno.'],
+      ),
+      orangeWins: lines(
+        ['orange', 'Te empujé hacia la grieta cuando empezó a brillar. No había margen para salir.'],
+        ['violet', 'Vi el resplandor tarde. Tendría que haber ganado altura antes de atacar.'],
+      ),
+      draw: lines(
+        ['violet', 'La cornisa se abrió en tres partes. Ya no queda suelo firme junto al cráter.'],
+        ['orange', 'Basta. Si vuelve a escupir lava, no va a quedar nadie para contarlo.'],
       ),
     }),
   }),

@@ -80,15 +80,18 @@ const stageShots = [
   '07-cinematica-volcan',
   '08-cinematica-bosque',
   '09-cinematica-santuario',
+  '24-cinematica-avenida-apagon',
+  '25-cinematica-llanura-torre-rota',
+  '26-cinematica-fauces-obsidiana',
 ];
 
 for (let index = 0; index < stageShots.length; index++) {
   await tap('Enter'); // Inicio → tipo de enfrentamiento
   await tap('Enter'); // Jugador vs IA
-  const combatModeIndex = index === 3 ? 0 : index;
+  const combatModeIndex = index % 3;
   for (let down = 0; down < combatModeIndex; down++) await tap('ArrowDown');
   await tap('Enter'); // Formato → modal de personajes
-  if (index === 0) await shot('10-modal-jugador-vs-ia');
+  if (index === 0) await shot('13-modal-jugador-vs-ia');
   await tap('Enter'); // Elegir personaje; el rival recibe el otro ranger
   if (index === 0) {
     await tap('ArrowDown');

@@ -53,6 +53,54 @@ const THEMES = Object.freeze({
     barrier: '#e9d18c',
     haze: '#b7a9a0',
   },
+  [STAGE_IDS.DOWNTOWN]: {
+    sky: ['#101a31', '#28334d', '#5b4854', '#a05d56', '#e6a26a'],
+    far: '#252b3c',
+    farLight: '#4b4653',
+    mid: '#392c36',
+    midLight: '#8f5145',
+    near: '#1b202d',
+    accent: '#ffca70',
+    floor: '#34343a',
+    tile: '#777174',
+    tileLight: '#b4a8a0',
+    wall: '#45333b',
+    pillar: '#66515a',
+    barrier: '#ef9b62',
+    haze: '#aaa0a0',
+  },
+  [STAGE_IDS.MEADOW]: {
+    sky: ['#6ab8ed', '#89d1f4', '#b7e8fb', '#e4f5d4', '#fff0b8'],
+    far: '#4b9c63',
+    farLight: '#87c66d',
+    mid: '#32784c',
+    midLight: '#80b85d',
+    near: '#235b3e',
+    accent: '#ffe78c',
+    floor: '#7c5838',
+    tile: '#4a9b4e',
+    tileLight: '#b0da71',
+    wall: '#76533a',
+    pillar: '#a17b4b',
+    barrier: '#e4c47a',
+    haze: '#d8edc2',
+  },
+  [STAGE_IDS.VOLCANO_MOUTH]: {
+    sky: ['#130d20', '#27152a', '#4e202d', '#8b342c', '#df6736'],
+    far: '#211925',
+    farLight: '#51252b',
+    mid: '#2c1a24',
+    midLight: '#9d3528',
+    near: '#17131d',
+    accent: '#ff6429',
+    floor: '#1e1b22',
+    tile: '#353039',
+    tileLight: '#65505a',
+    wall: '#30212a',
+    pillar: '#5b2828',
+    barrier: '#ff7440',
+    haze: '#d65a37',
+  },
 });
 
 const makeKeys = (id) => ({
@@ -105,12 +153,21 @@ function drawSky(ctx, width, height, palette, stageId) {
     rect(ctx, shade, 0, y, width, 1);
   }
 
+  if (stageId === STAGE_IDS.MEADOW) {
+    drawHalo(ctx, 378, 56, 22, '#fff0a6');
+    for (const [x, y] of [[54, 54], [132, 82], [286, 46], [438, 73]]) {
+      drawPixelCloud(ctx, x, y, '#f7fbec');
+    }
+    return;
+  }
+
   const random = mulberry32(stageId.length * 127);
   for (let i = 0; i < 84; i++) {
     const x = Math.floor(random() * width);
     const y = Math.floor(random() * 145);
-    if (stageId === STAGE_IDS.VOLCANO && random() < 0.4) continue;
-    rect(ctx, stageId === STAGE_IDS.SANCTUARY ? '#f5dba6' : '#d6e6c5', x, y);
+    if ([STAGE_IDS.VOLCANO, STAGE_IDS.VOLCANO_MOUTH].includes(stageId) && random() < 0.55) continue;
+    const starColor = stageId === STAGE_IDS.SANCTUARY ? '#f5dba6' : '#d6e6c5';
+    rect(ctx, starColor, x, y);
     if (i % 13 === 0) rect(ctx, palette.accent, x - 1, y, 3, 1);
   }
 
@@ -118,9 +175,26 @@ function drawSky(ctx, width, height, palette, stageId) {
     drawHalo(ctx, 360, 66, 25, '#e7c78e');
   } else if (stageId === STAGE_IDS.FOREST) {
     drawHalo(ctx, 368, 70, 17, '#a5cda0');
+  } else if (stageId === STAGE_IDS.DOWNTOWN) {
+    drawHalo(ctx, 382, 60, 14, '#e7b88d');
+  } else if (stageId === STAGE_IDS.VOLCANO_MOUTH) {
+    // La boca ilumina la nube de ceniza desde abajo.
+    for (let x = 180; x < 460; x += 8) {
+      const glowY = 30 + Math.round(hash2(x, 12, 22) * 18);
+      rect(ctx, palette.accent, x, glowY, 4, 1);
+    }
+    drawPixelCloud(ctx, 78, 52, '#6a3b44');
+    drawPixelCloud(ctx, 340, 35, '#58313b');
   } else {
     drawHalo(ctx, 370, 66, 12, '#ffb05b');
   }
+}
+
+function drawPixelCloud(ctx, x, y, color) {
+  rect(ctx, color, x + 5, y, 18, 4);
+  rect(ctx, color, x, y + 4, 34, 7);
+  rect(ctx, color, x + 8, y + 11, 20, 3);
+  rect(ctx, '#ffffff', x + 7, y + 3, 8, 1);
 }
 
 function drawHalo(ctx, cx, cy, radius, color) {
@@ -134,6 +208,49 @@ function drawHalo(ctx, cx, cy, radius, color) {
 }
 
 function drawFar(ctx, width, height, palette, stageId) {
+  if (stageId === STAGE_IDS.MEADOW) {
+    drawRollingHill(ctx, width, height, 192, 48, 0.026, palette.far);
+    drawRollingHill(ctx, width, height, 205, 26, 0.041, palette.farLight);
+    return;
+  }
+
+  if (stageId === STAGE_IDS.DOWNTOWN) {
+    for (let x = -12; x < width; x += 52) {
+      const buildingHeight = 58 + Math.round(hash2(x, 8, 34) * 54);
+      const top = 202 - buildingHeight;
+      const buildingWidth = 38 + Math.round(hash2(x, 2, 52) * 18);
+      rect(ctx, palette.far, x, top, buildingWidth, height - top);
+      rect(ctx, palette.farLight, x + 3, top + 4, 2, height - top - 4);
+      for (let wy = top + 12; wy < 194; wy += 13) {
+        for (let wx = x + 8; wx < x + buildingWidth - 6; wx += 12) {
+          rect(ctx, hash2(wx, wy, 17) > 0.62 ? palette.accent : palette.mid, wx, wy, 4, 5);
+        }
+      }
+      if (x % 3 === 0) rect(ctx, palette.mid, x + 8, top - 7, 3, 8);
+    }
+    return;
+  }
+
+  if (stageId === STAGE_IDS.VOLCANO_MOUTH) {
+    const center = width * 0.52;
+    for (let x = 0; x < width; x += 2) {
+      const normalized = Math.abs(x - center) / (width * 0.43);
+      if (normalized > 1) continue;
+      const peak = 52 + Math.round(normalized * 66 + Math.sin(x / 17) * 6);
+      rect(ctx, palette.far, x, peak, 2, height - peak);
+      if (x % 12 === 0) rect(ctx, palette.farLight, x, peak + 7, 2, height - peak - 7);
+    }
+    rect(ctx, palette.accent, center - 28, 49, 56, 3);
+    rect(ctx, '#ffb04b', center - 17, 45, 34, 3);
+    rect(ctx, '#ffd47b', center - 8, 42, 16, 2);
+    for (let x = 40; x < width; x += 92) {
+      const streamY = 142 + Math.round(hash2(x, 9, 47) * 30);
+      rect(ctx, palette.midLight, x, streamY, 5, 32);
+      rect(ctx, palette.accent, x + 1, streamY + 27, 2, 19);
+    }
+    return;
+  }
+
   if (stageId === STAGE_IDS.FOREST) {
     for (let x = -8; x < width; x += 34) {
       const treeHeight = 88 + Math.round(hash2(x, 1, 31) * 46);
@@ -171,6 +288,87 @@ function drawFar(ctx, width, height, palette, stageId) {
 }
 
 function drawMid(ctx, width, height, palette, stageId) {
+  if (stageId === STAGE_IDS.DOWNTOWN) {
+    const stores = [
+      { x: 8, width: 96, color: '#70413f', sign: '#f0c875' },
+      { x: 116, width: 112, color: '#474c5d', sign: '#e79a62' },
+      { x: 242, width: 108, color: '#5b3944', sign: '#e6c17c' },
+      { x: 364, width: 116, color: '#46515a', sign: '#d88a65' },
+      { x: 492, width: 116, color: '#69453e', sign: '#f1c77b' },
+    ];
+    for (const store of stores) {
+      const top = 78 + Math.round(hash2(store.x, 4, 52) * 16);
+      rect(ctx, palette.mid, store.x, top, store.width, ARENA.groundY - top);
+      rect(ctx, palette.midLight, store.x, top, store.width, 4);
+      rect(ctx, store.color, store.x + 5, top + 17, store.width - 10, 34);
+      rect(ctx, store.sign, store.x + 9, top + 7, store.width - 18, 8);
+      rect(ctx, '#171a25', store.x + 14, top + 29, 20, 22);
+      rect(ctx, '#171a25', store.x + 40, top + 29, store.width - 54, 22);
+      rect(ctx, palette.accent, store.x + 15, top + 29, 3, 18);
+      for (let awning = 0; awning < store.width - 12; awning += 12) {
+        rect(ctx, awning % 24 === 0 ? store.sign : palette.midLight, store.x + 6 + awning, top + 54, 11, 5);
+      }
+      rect(ctx, palette.near, store.x + 2, top + 61, store.width - 4, 3);
+    }
+    // Escalera de incendios, cables y una marquesina desprendida.
+    for (let y = 95; y < 190; y += 22) {
+      rect(ctx, palette.near, 270, y, 66, 2);
+      rect(ctx, palette.near, 278, y, 2, 18);
+      rect(ctx, palette.near, 327, y, 2, 18);
+    }
+    for (let x = 10; x < width; x += 2) {
+      const cableY = 45 + Math.round(Math.sin(x / 48) * 4);
+      if (x % 8 === 0) rect(ctx, '#171b29', x, cableY, 2, 1);
+    }
+    rect(ctx, palette.accent, 438, 165, 36, 3);
+    rect(ctx, palette.near, 446, 168, 3, 20);
+    return;
+  }
+
+  if (stageId === STAGE_IDS.MEADOW) {
+    drawRollingHill(ctx, width, height, 176, 34, 0.038, palette.mid);
+    drawRollingHill(ctx, width, height, 191, 20, 0.062, palette.midLight);
+    // Torre de vigilancia sobre una lomada y postes de cerca en perspectiva.
+    rect(ctx, palette.near, 418, 102, 28, 79);
+    rect(ctx, palette.pillar, 410, 98, 44, 7);
+    rect(ctx, palette.accent, 424, 112, 16, 18);
+    rect(ctx, palette.near, 414, 138, 4, 50);
+    rect(ctx, palette.near, 446, 138, 4, 50);
+    for (let x = 40; x < width; x += 46) {
+      rect(ctx, palette.pillar, x, 174 + Math.round(hash2(x, 4, 23) * 10), 3, 34);
+      rect(ctx, palette.pillar, x + 16, 181 + Math.round(hash2(x, 8, 12) * 7), 2, 30);
+    }
+    rect(ctx, palette.pillar, 0, 188, width, 3);
+    rect(ctx, palette.pillar, 0, 202, width, 3);
+    // Puente de tablones que cruza una depresión de tierra.
+    rect(ctx, '#725236', 214, 158, 150, 6);
+    rect(ctx, '#b58a50', 214, 164, 150, 4);
+    for (let x = 220; x < 364; x += 12) rect(ctx, '#4e392a', x, 158, 2, 10);
+    return;
+  }
+
+  if (stageId === STAGE_IDS.VOLCANO_MOUTH) {
+    // Interior de la caldera: paredes negras en arco y dos coladas laterales.
+    for (let x = 0; x < width; x += 4) {
+      const arch = 116 + Math.round(Math.sin(x / 38) * 15 + hash2(x, 17, 49) * 18);
+      rect(ctx, palette.mid, x, arch, 4, height - arch);
+      if (x % 28 === 0) {
+        rect(ctx, palette.midLight, x + 1, arch + 22, 2, 35);
+        rect(ctx, palette.accent, x + 2, arch + 52, 1, 28);
+      }
+    }
+    for (const x of [112, 492]) {
+      rect(ctx, palette.midLight, x, 150, 22, 58);
+      rect(ctx, palette.accent, x + 5, 158, 7, 50);
+      rect(ctx, '#ffbd4d', x + 7, 176, 3, 31);
+    }
+    for (let x = 188; x < 448; x += 54) {
+      rect(ctx, palette.near, x, 130 + Math.round(hash2(x, 1, 31) * 14), 13, 64);
+      rect(ctx, palette.midLight, x - 3, 127, 19, 5);
+    }
+    return;
+  }
+
   if (stageId === STAGE_IDS.FOREST) {
     const trunks = [34, 122, 224, 342, 456, 560];
     for (const x of trunks) {
@@ -221,6 +419,14 @@ function drawMid(ctx, width, height, palette, stageId) {
   }
 }
 
+function drawRollingHill(ctx, width, height, base, amplitude, frequency, color) {
+  for (let x = 0; x < width; x += 2) {
+    const ridge = base - Math.round(Math.sin(x * frequency) * amplitude
+      + Math.sin(x * frequency * 0.43 + 1.7) * amplitude * 0.36);
+    rect(ctx, color, x, ridge, 2, height - ridge);
+  }
+}
+
 function drawCanopy(ctx, cx, cy, radius, color) {
   const points = [
     [-18, -5, 0.66], [0, -16, 0.82], [18, -4, 0.68], [-8, 12, 0.76], [10, 12, 0.7],
@@ -235,6 +441,63 @@ function drawCanopy(ctx, cx, cy, radius, color) {
 }
 
 function drawNear(ctx, width, height, palette, stageId) {
+  if (stageId === STAGE_IDS.DOWNTOWN) {
+    const base = ARENA.groundY - 3;
+    // Auto abandonado: carrocería abollada, ruedas y parabrisas roto.
+    rect(ctx, '#242936', 68, base - 23, 84, 17);
+    rect(ctx, '#48505c', 80, base - 34, 48, 13);
+    rect(ctx, '#7d8a8b', 87, base - 31, 16, 9);
+    rect(ctx, '#283441', 105, base - 31, 16, 9);
+    rect(ctx, '#151822', 78, base - 9, 14, 10);
+    rect(ctx, '#151822', 128, base - 9, 14, 10);
+    rect(ctx, '#d4d0bb', 91, base - 29, 9, 2);
+    rect(ctx, palette.accent, 150, base - 8, 4, 3);
+    // Hidrante abierto y surtidor de agua en abanico.
+    rect(ctx, '#bd443c', 224, base - 18, 9, 15);
+    rect(ctx, '#e98062', 221, base - 22, 15, 5);
+    for (let i = 0; i < 5; i++) rect(ctx, '#9bdcf0', 228 + i * 5, base - 35 - (i % 2) * 4, 2, 13);
+    // Cesto volcado y señal de tránsito doblada.
+    rect(ctx, '#343946', 392, base - 20, 16, 15);
+    rect(ctx, '#7c8587', 388, base - 6, 24, 2);
+    rect(ctx, '#b3a27e', 530, base - 39, 4, 38);
+    rect(ctx, '#e7bd75', 516, base - 48, 29, 17);
+    rect(ctx, '#24232a', 521, base - 43, 20, 2);
+    rect(ctx, '#24232a', 521, base - 36, 15, 2);
+    return;
+  }
+
+  if (stageId === STAGE_IDS.MEADOW) {
+    const base = ARENA.groundY - 4;
+    for (let x = 14; x < width; x += 48) {
+      const rockHeight = 8 + Math.round(hash2(x, 3, 38) * 12);
+      rect(ctx, palette.near, x, base - rockHeight, 18, rockHeight);
+      rect(ctx, palette.midLight, x + 2, base - rockHeight, 10, 2);
+      rect(ctx, palette.accent, x + 8, base - rockHeight - 3, 2, 3);
+    }
+    // Flores silvestres, hierba alta y postes de madera cercanos.
+    for (let x = 8; x < width; x += 34) {
+      const stem = 6 + Math.round(hash2(x, 2, 51) * 7);
+      rect(ctx, palette.near, x + 9, base - stem, 1, stem);
+      rect(ctx, hash2(x, 8, 6) > 0.5 ? '#f6d86e' : '#e5b4ca', x + 7, base - stem - 3, 5, 3);
+    }
+    rect(ctx, palette.pillar, 18, base - 27, 3, 24);
+    rect(ctx, palette.pillar, 18, base - 27, 34, 3);
+    rect(ctx, palette.accent, 22, base - 24, 26, 14);
+    return;
+  }
+
+  if (stageId === STAGE_IDS.VOLCANO_MOUTH) {
+    // Rocas de obsidiana y chorros de lava que se filtran por la cornisa.
+    for (let x = 0; x < width; x += 42) {
+      const peak = 14 + Math.round(hash2(x, 9, 23) * 22);
+      rect(ctx, palette.near, x, ARENA.groundY - peak, 14, peak);
+      rect(ctx, palette.midLight, x + 5, ARENA.groundY - peak - 5, 5, 5);
+      rect(ctx, palette.accent, x + 18, ARENA.groundY - 8, 5, 3);
+      rect(ctx, '#ffb24a', x + 19, ARENA.groundY - 5, 3, 3);
+    }
+    return;
+  }
+
   if (stageId === STAGE_IDS.FOREST) {
     for (let x = -12; x < width; x += 56) {
       const bushY = ARENA.groundY - 18 - Math.round(hash2(x, 2, 84) * 15);
@@ -277,6 +540,42 @@ function drawHaze(ctx, width, height, palette) {
 function drawFloor(ctx, width, height, palette, stageId) {
   rect(ctx, palette.floor, 0, 0, width, height);
   const random = mulberry32(stageId.length * 19);
+
+  if (stageId === STAGE_IDS.DOWNTOWN) {
+    rect(ctx, '#a39a91', 0, 0, width, 4);
+    rect(ctx, '#d2c7b3', 0, 0, width, 1);
+    rect(ctx, '#4a4b50', 0, 4, width, FLOOR_SURFACE_HEIGHT - 4);
+    for (let x = 12; x < width; x += 76) {
+      rect(ctx, '#bcb2a1', x, 6 + Math.round(hash2(x, 3, 5) * 4), 22, 1);
+      rect(ctx, '#292d38', x + 26, 5, 2, 7);
+    }
+    rect(ctx, '#e7d6ad', 18, 12, 34, 1);
+    rect(ctx, '#242730', 72, 8, 14, 2);
+    return;
+  }
+
+  if (stageId === STAGE_IDS.MEADOW) {
+    rect(ctx, '#5c9b49', 0, 0, width, FLOOR_SURFACE_HEIGHT);
+    rect(ctx, '#b8d66d', 0, 0, width, 3);
+    rect(ctx, '#8c633e', 0, 4, width, FLOOR_SURFACE_HEIGHT - 4);
+    for (let x = 0; x < width; x += 12) {
+      rect(ctx, '#d2a15c', x + 2, 7 + Math.round(hash2(x, 7, 5) * 5), 6, 1);
+      if (x % 24 === 0) rect(ctx, '#4e813e', x, 4, 2, 4);
+    }
+    return;
+  }
+
+  if (stageId === STAGE_IDS.VOLCANO_MOUTH) {
+    rect(ctx, '#ff6a22', 0, 0, width, 3);
+    rect(ctx, '#ffc45b', 0, 0, width, 1);
+    rect(ctx, '#18171d', 0, 3, width, FLOOR_SURFACE_HEIGHT - 3);
+    for (let x = 8; x < width; x += 30) {
+      const crack = 4 + Math.round(hash2(x, 8, 44) * 7);
+      rect(ctx, '#e84921', x, 4, 2, crack);
+      rect(ctx, '#ffb13b', x + 1, crack + 4, 2, 3);
+    }
+    return;
+  }
   const tileWidth = stageId === STAGE_IDS.SANCTUARY ? 28 : 20;
   const tileHeight = 8;
 

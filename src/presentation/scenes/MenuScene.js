@@ -4,7 +4,7 @@ import { STAGES } from '../../domain/arena/stageCatalog.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
-import { contentWidth, insetSize, UI_SPACING } from '../views/uiLayout.js';
+import { contentWidth, insetSize, mapPanelY, UI_SPACING } from '../views/uiLayout.js';
 
 const RANGER_ORDER = [RANGER_IDS.ORANGE, RANGER_IDS.VIOLET];
 const readableFontSize = (value = '10px') => {
@@ -103,8 +103,16 @@ export class MenuScene extends Phaser.Scene {
     this.panelWidth = width;
 
     // Todos los paneles reservan una franja inferior libre y se ajustan al alto real.
-    const safeBottom = GAME_HEIGHT - 30;
+    const safeBottom = GAME_HEIGHT - UI_SPACING.modalFooterReserve;
     const panelY = Math.min(171, safeBottom - height / 2);
+    const panelTop = panelY - height / 2;
+    const panelBottom = panelY + height / 2;
+    this.panelLayout = {
+      sourceTop: 122,
+      sourceBottom: 239,
+      targetTop: panelTop + UI_SPACING.modalTopInset,
+      targetBottom: panelBottom - UI_SPACING.modalBottomInset - 9,
+    };
     const shadow = this.add.rectangle(GAME_WIDTH / 2 + 3, panelY + 3, width, height, 0x06040b, 0.92);
     const panel = this.add.rectangle(GAME_WIDTH / 2, panelY, width, height, 0x100d1e, 0.98)
       .setStrokeStyle(1, 0x9277a8, 0.95);
@@ -119,7 +127,7 @@ export class MenuScene extends Phaser.Scene {
       .setStrokeStyle(1, 0x3a2c50, 0.9);
     const accent = this.add.rectangle(
       GAME_WIDTH / 2,
-      panelY - height / 2 + 11,
+      panelTop + UI_SPACING.modalHeaderRuleInset,
       width - 24,
       1,
       0xd3a66d,
@@ -145,7 +153,15 @@ export class MenuScene extends Phaser.Scene {
     const veil = this.add.rectangle(GAME_WIDTH / 2, 135, GAME_WIDTH, 270, 0x000000, 0.84)
       .setInteractive();
     const panelY = 160;
-    const panelHeight = 96;
+    const panelHeight = 112;
+    const panelTop = panelY - panelHeight / 2;
+    const panelBottom = panelY + panelHeight / 2;
+    this.panelLayout = {
+      sourceTop: 130,
+      sourceBottom: 178,
+      targetTop: panelTop + UI_SPACING.modalTopInset,
+      targetBottom: panelBottom - UI_SPACING.modalBottomInset - 9,
+    };
     const shadow = this.add.rectangle(GAME_WIDTH / 2 + 3, panelY + 3, this.panelWidth, panelHeight, 0x06040b, 0.95);
     const panel = this.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth, panelHeight, 0x100d1e, 0.99)
       .setStrokeStyle(1, 0xd3a66d, 0.96);
@@ -157,7 +173,14 @@ export class MenuScene extends Phaser.Scene {
       0x000000,
       0,
     ).setStrokeStyle(1, 0x4b385c, 0.92);
-    const accent = this.add.rectangle(GAME_WIDTH / 2, panelY - panelHeight / 2 + 5, this.panelWidth - 24, 1, 0xd3a66d, 0.82);
+    const accent = this.add.rectangle(
+      GAME_WIDTH / 2,
+      panelTop + UI_SPACING.modalHeaderRuleInset,
+      this.panelWidth - 24,
+      1,
+      0xd3a66d,
+      0.82,
+    );
     this.ui.add([veil, shadow, panel, inset, accent]);
 
     this.#addText(title, GAME_WIDTH / 2, 130, {
@@ -173,7 +196,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   #addText(value, x, y, style = {}) {
-    const text = this.add.text(x, y, value, {
+    const text = this.add.text(x, this.#mapPanelY(y), value, {
       fontFamily: 'monospace',
       fontSize: readableFontSize(style.fontSize ?? '10px'),
       color: '#e7def5',
@@ -189,10 +212,11 @@ export class MenuScene extends Phaser.Scene {
     return text;
   }
 
-  #addButton(title, y, action, { width = 210, fontSize = '8px', x = GAME_WIDTH / 2 } = {}) {
+  #addButton(title, y, action, { width = 210, fontSize = '8px', x = GAME_WIDTH / 2, height = 16 } = {}) {
     // El fondo, la etiqueta y el área interactiva comparten exactamente el mismo ancho y centro.
+    y = this.#mapPanelY(y);
     const buttonWidth = Math.floor(Math.min(width, Math.max(112, contentWidth(this.panelWidth))));
-    const buttonHeight = 20;
+    const buttonHeight = height;
     const labelFontSize = readableFontSize(fontSize);
     const shadow = this.add.rectangle(x, y + 2, buttonWidth, buttonHeight, 0x090612, 0.98);
     const box = this.add.rectangle(x, y, buttonWidth, buttonHeight, 0x211a32, 0.98)
@@ -225,6 +249,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   #addColorOption(title, color, x, y) {
+    y = this.#mapPanelY(y);
     const width = 62;
     const height = 28;
     const box = this.add.rectangle(x, y, width, height, 0x241b3c, 0.98)
@@ -258,6 +283,13 @@ export class MenuScene extends Phaser.Scene {
     this.#refreshButtons();
   }
 
+  #mapPanelY(y) {
+    const layout = this.panelLayout;
+    return layout
+      ? mapPanelY(y, layout.sourceTop, layout.sourceBottom, layout.targetTop, layout.targetBottom)
+      : y;
+  }
+
   #addFooter() {
     // Franja compacta y separada del panel principal para evitar solapamientos.
     if (this.page !== 'home') return;
@@ -265,12 +297,14 @@ export class MenuScene extends Phaser.Scene {
     const footerFontSize = '6px';
     const prefix = this.add.text(0, footerY, '© 2026 Todos los derechos reservados - Diseño y Programación por ', {
       fontFamily: 'monospace',
+      fontStyle: 'normal',
       fontSize: footerFontSize,
       color: '#c4bbd2',
     }).setOrigin(0, 0.5).setDepth(30);
 
     const author = this.add.text(0, footerY, 'Lucas Montenegro ®', {
       fontFamily: 'monospace',
+      fontStyle: 'normal',
       fontSize: footerFontSize,
       color: '#f2c77e',
     }).setOrigin(0, 0.5).setDepth(30).setInteractive({ useHandCursor: true });
@@ -586,23 +620,26 @@ export class MenuScene extends Phaser.Scene {
     this.page = 'stages';
     const versus = getVersusMode(this.matchSetup.versusMode);
     const combat = getCombatMode(this.matchSetup.combatMode);
-    this.#beginPage('ESCENARIO', 330, 140);
+    this.#beginPage('ESCENARIO', 360, 212);
     this.#addText(versus.label + ' · ' + combat.label, GAME_WIDTH / 2, 138, {
       fontSize: '6px',
       color: '#b7a9cb',
     });
 
     STAGES.forEach((stage, index) => {
-      const depthLabel = stage.groundDepthMode === 'restricted' ? 'CARRIL FIJO · VUELO LIBRE' : 'PROFUNDIDAD LIBRE';
-      this.#addButton(stage.name.toUpperCase() + ' · ' + depthLabel, 150 + index * 18, () => {
+      const optionTitle = stage.hazards
+        ? stage.name.toUpperCase() + ' · CALDERA ACTIVA'
+        : stage.name.toUpperCase();
+      this.#addButton(optionTitle, 150 + index * 12.4, () => {
         this.#startSelectedFight(stage.id, true);
       }, {
-        width: 260,
+        width: 300,
         fontSize: '7px',
+        height: 16,
       });
     });
 
-    this.#addButton('VOLVER', 229, () => {
+    this.#addButton('VOLVER', 239, () => {
       if (this.matchSetup.versusMode === 'player-vs-ai') this.#showPlayerSide();
       else this.#moveSelectionBackToCharacters();
     }, { width: 150, fontSize: '8px' });

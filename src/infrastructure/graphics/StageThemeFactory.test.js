@@ -15,18 +15,25 @@ describe('Texturas por escenario', () => {
     expect(getStageTextures(STAGE_IDS.RUINS)).toBe(STAGE_TEXTURES);
   });
 
-  it('mantiene una textura de suelo para cada uno de los cuatro escenarios', () => {
-    expect(STAGES).toHaveLength(4);
+  it('mantiene una textura de suelo para cada uno de los siete escenarios', () => {
+    expect(STAGES).toHaveLength(7);
     const floors = STAGES.map((stage) => getStageTextures(stage.id).floor);
-    expect(floors).toHaveLength(4);
+    expect(floors).toHaveLength(STAGES.length);
     expect(floors.every((floor) => typeof floor === 'string')).toBe(true);
   });
 
   it('asigna claves independientes a los tres escenarios nuevos', () => {
-    const ids = [STAGE_IDS.VOLCANO, STAGE_IDS.FOREST, STAGE_IDS.SANCTUARY];
+    const ids = [
+      STAGE_IDS.VOLCANO,
+      STAGE_IDS.FOREST,
+      STAGE_IDS.SANCTUARY,
+      STAGE_IDS.DOWNTOWN,
+      STAGE_IDS.MEADOW,
+      STAGE_IDS.VOLCANO_MOUTH,
+    ];
     const backgrounds = ids.map((id) => getStageTextures(id));
 
-    expect(new Set(backgrounds.map((textures) => textures.sky)).size).toBe(3);
+    expect(new Set(backgrounds.map((textures) => textures.sky)).size).toBe(ids.length);
     for (const textures of backgrounds) {
       expect(textures.sky).toContain('stage-');
       expect(textures.far).not.toBe(textures.sky);

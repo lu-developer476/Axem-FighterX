@@ -644,14 +644,14 @@ export class MenuScene extends Phaser.Scene {
   #showCredits() {
     this.page = 'credits';
     this.#beginPage('CRÉDITOS');
-    this.#addText('Axem FighterX es un juego de pelea retro para dos jugadores.', GAME_WIDTH / 2, 153, {
-      fontSize: '7px',
+    this.#addText('Videojuego de pelea retro no oficial.', GAME_WIDTH / 2, 153, {
+      fontSize: '5px',
     });
-    this.#addText('Cuatro escenarios, cinemáticas y combates de entrenamiento.', GAME_WIDTH / 2, 169, {
-      fontSize: '7px',
+    this.#addText('Experiencia de usuario garantizada.', GAME_WIDTH / 2, 169, {
+      fontSize: '5px',
     });
     this.#addText('Diseño y programación: Lucas Montenegro', GAME_WIDTH / 2, 188, {
-      fontSize: '7px',
+      fontSize: '5px',
       color: '#f2c77e',
     });
     this.#addButton('VOLVER', 213, () => this.#showHome());

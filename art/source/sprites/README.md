@@ -22,7 +22,7 @@ results/
       spritesheet.png                     hoja de Axem Red, mismas coordenadas que la referencia
       run.png  bike.png  double-axe.png   tiras PNG para el pipeline del juego
       run.gif  bike.gif  double-axe.gif   GIF originales de carrera, bicicleta y doble hacha
-      idle.gif punch-01.gif punch-02.gif punch-03.gif battle-pose.gif
+      pose.gif punch-01.gif punch-02.gif punch-03.gif battle-pose.gif
       run.gif dash.gif jump.gif hit.gif hurt.gif teleport.gif (Violet y Orange)
       sequences/group-01.png … group-14.png + index.json
   female/

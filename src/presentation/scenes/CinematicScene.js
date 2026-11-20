@@ -78,11 +78,11 @@ export class CinematicScene extends Phaser.Scene {
     });
 
     // La conversación queda siempre anclada a una franja inferior.
-    this.add.rectangle(GAME_WIDTH / 2, 222, 448, 84, 0x0c0a19, 0.94)
-      .setStrokeStyle(1, 0x78658f, 0.95)
+    this.add.rectangle(GAME_WIDTH / 2, 222, 440, 84, 0x100d1e, 0.97)
+      .setStrokeStyle(1, 0x9277a8, 0.96)
       .setScrollFactor(0)
       .setDepth(1000);
-    this.add.rectangle(GAME_WIDTH / 2, 180, 448, 3, 0xe2b978, 0.9)
+    this.add.rectangle(GAME_WIDTH / 2, 180, 440, 2, 0xe2b978, 0.92)
       .setScrollFactor(0)
       .setDepth(1001);
 
@@ -109,28 +109,28 @@ export class CinematicScene extends Phaser.Scene {
       align: 'center',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(1002);
 
-    this.speaker = this.add.text(32, 191, '', {
+    this.speaker = this.add.text(38, 191, '', {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#d9a9ff',
     }).setScrollFactor(0).setDepth(1002);
 
-    this.dialogue = this.add.text(32, 207, '', {
+    this.dialogue = this.add.text(38, 207, '', {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: '#f1ecdf',
       lineSpacing: 3,
-      wordWrap: { width: 405, useAdvancedWrap: true },
+      wordWrap: { width: 370, useAdvancedWrap: true },
       maxLines: 3,
     }).setScrollFactor(0).setDepth(1002);
 
-    this.progress = this.add.text(GAME_WIDTH - 32, 191, '', {
+    this.progress = this.add.text(GAME_WIDTH - 38, 191, '', {
       fontFamily: 'monospace',
       fontSize: '9px',
       color: '#c1b4d4',
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(1002);
 
-    this.prompt = this.add.text(GAME_WIDTH / 2, 259, 'ENTER / ESPACIO: CONTINUAR    ·    ESC: OMITIR', {
+    this.prompt = this.add.text(GAME_WIDTH / 2, 255, 'ENTER / ESPACIO: CONTINUAR    ·    ESC: OMITIR', {
       fontFamily: 'monospace',
       fontSize: '9px',
       color: '#fff0c9',

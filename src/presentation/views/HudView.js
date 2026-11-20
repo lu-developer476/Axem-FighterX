@@ -67,24 +67,24 @@ export class HudView {
       strokeThickness: 3,
     });
 
-    this.resultPanel = scene.add.rectangle(GAME_WIDTH / 2, 222, 456, 88, 0x0c0a19, 0.97)
-      .setStrokeStyle(1, 0x78658f, 0.95)
+    this.resultPanel = scene.add.rectangle(GAME_WIDTH / 2, 220, 440, 88, 0x100d1e, 0.98)
+      .setStrokeStyle(1, 0x9277a8, 0.96)
       .setScrollFactor(0)
       .setDepth(10_002)
       .setVisible(false);
-    this.resultSpeaker = text(GAME_WIDTH / 2, 190, '', {
+    this.resultSpeaker = text(GAME_WIDTH / 2, 188, '', {
       fontSize: '11px',
       color: '#d9a9ff',
       align: 'center',
     }, 0.5).setDepth(10_003).setVisible(false);
-    this.resultDialogue = text(GAME_WIDTH / 2, 207, '', {
+    this.resultDialogue = text(GAME_WIDTH / 2, 205, '', {
       fontSize: '9px',
       color: '#f1ecdf',
       align: 'center',
-      wordWrap: { width: 430, useAdvancedWrap: true },
+      wordWrap: { width: 400, useAdvancedWrap: true },
       maxLines: 2,
     }, 0.5).setDepth(10_003).setVisible(false);
-    this.resultPrompt = text(GAME_WIDTH / 2, 257, 'ENTER / ESPACIO: SIGUIENTE LÍNEA', {
+    this.resultPrompt = text(GAME_WIDTH / 2, 252, 'ENTER / ESPACIO · CONTINUAR DIÁLOGO', {
       fontSize: '9px',
       color: '#fff0c9',
       align: 'center',

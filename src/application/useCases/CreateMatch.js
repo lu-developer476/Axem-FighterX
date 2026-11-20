@@ -24,6 +24,7 @@ function normalizeSelection(selection, fallbackId) {
 export function createDefaultMatch(
   rng = Math.random,
   characterSelections = [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE],
+  arena = ARENA,
 ) {
   const [leftSelection, rightSelection] = characterSelections ?? [];
   const leftConfig = normalizeSelection(leftSelection, RANGER_IDS.VIOLET);
@@ -40,5 +41,5 @@ export function createDefaultMatch(
     -1,
     rightConfig.gender,
   );
-  return new Match({ fighters: [left, right], rng });
+  return new Match({ fighters: [left, right], rng, arena });
 }

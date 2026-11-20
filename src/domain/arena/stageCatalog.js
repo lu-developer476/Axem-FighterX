@@ -14,6 +14,7 @@ export const STAGES = Object.freeze([
     tagline: 'Murallas antiguas bajo una luna inmóvil',
     location: 'Frontera de Eteria',
     description: 'Un puesto defensivo abandonado, con pasajes estrechos y muros que todavía conservan sus runas.',
+    depthMode: 'restricted',
     dialogue: lines(
       ['violet', 'La puerta estaba abierta cuando llegamos. Eso no me gusta.'],
       ['orange', 'A mí tampoco. Mirá el polvo: alguien salió de acá hace muy poco.'],
@@ -44,6 +45,7 @@ export const STAGES = Object.freeze([
     tagline: 'Una caldera activa sobre placas de basalto',
     location: 'Cordillera Ígnea',
     description: 'Un puente de roca volcánica atraviesa respiraderos y corrientes de lava.',
+    depthMode: 'restricted',
     dialogue: lines(
       ['violet', 'No te acerques al borde. Esa placa acaba de partirse.'],
       ['orange', 'La vi. El calor está abriendo otra grieta detrás de nosotros.'],
@@ -74,6 +76,7 @@ export const STAGES = Object.freeze([
     tagline: 'Senderos cubiertos por raíces y luces errantes',
     location: 'Valle de Niebla Verde',
     description: 'Un bosque antiguo donde las ramas confunden las distancias y las luciérnagas marcan caminos falsos.',
+    depthMode: 'free',
     dialogue: lines(
       ['violet', 'Las huellas terminan acá. No hay marcas de regreso.'],
       ['orange', 'Las ramas están dobladas hacia arriba. Algo pasó por las copas.'],
@@ -104,6 +107,7 @@ export const STAGES = Object.freeze([
     tagline: 'Columnas doradas alrededor de un sello antiguo',
     location: 'Meseta de Auralis',
     description: 'Un recinto suspendido entre ruinas claras, mecanismos rúnicos y corrientes de energía.',
+    depthMode: 'free',
     dialogue: lines(
       ['violet', 'El suelo vibra cada vez que el sello se enciende.'],
       ['orange', 'No es el suelo: la plataforma está suspendida y el núcleo la está empujando.'],

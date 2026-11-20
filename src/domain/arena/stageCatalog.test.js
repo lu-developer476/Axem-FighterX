@@ -11,6 +11,15 @@ describe('Catálogo de escenarios', () => {
     ]);
   });
 
+  it('distingue escenarios lineales de espacios con profundidad libre', () => {
+    expect(Object.fromEntries(STAGES.map((stage) => [stage.id, stage.depthMode]))).toEqual({
+      [STAGE_IDS.RUINS]: 'restricted',
+      [STAGE_IDS.VOLCANO]: 'restricted',
+      [STAGE_IDS.FOREST]: 'free',
+      [STAGE_IDS.SANCTUARY]: 'free',
+    });
+  });
+
   it('cada escenario tiene una conversación propia con ambos personajes', () => {
     const allLines = [];
 

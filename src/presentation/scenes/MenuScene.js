@@ -79,8 +79,8 @@ export class MenuScene extends Phaser.Scene {
       .setAlpha(1)
       .setDepth(2);
 
-    this.add.rectangle(GAME_WIDTH / 2, 250, GAME_WIDTH, 40, 0x000000, 0.94)
-      .setStrokeStyle(1, 0x55456e, 0.9)
+    this.add.rectangle(GAME_WIDTH / 2, 253, GAME_WIDTH, 28, 0x080710, 0.96)
+      .setStrokeStyle(1, 0x55456e, 0.78)
       .setDepth(-1);
   }
 
@@ -110,9 +110,21 @@ export class MenuScene extends Phaser.Scene {
     this.selectedIndex = 0;
     this.panelWidth = width;
 
-    const panel = this.add.rectangle(GAME_WIDTH / 2, 171, width, height, 0x000000, 0.98)
-      .setStrokeStyle(1, 0x7b699b, 0.85);
-    this.ui.add(panel);
+    const panelY = 171;
+    const shadow = this.add.rectangle(GAME_WIDTH / 2 + 3, panelY + 3, width, height, 0x06040b, 0.92);
+    const panel = this.add.rectangle(GAME_WIDTH / 2, panelY, width, height, 0x100d1e, 0.98)
+      .setStrokeStyle(1, 0x9277a8, 0.95);
+    const inset = this.add.rectangle(GAME_WIDTH / 2, panelY, width - 8, height - 8, 0x000000, 0)
+      .setStrokeStyle(1, 0x3a2c50, 0.9);
+    const accent = this.add.rectangle(
+      GAME_WIDTH / 2,
+      panelY - height / 2 + 11,
+      width - 24,
+      1,
+      0xd3a66d,
+      0.72,
+    );
+    this.ui.add([shadow, panel, inset, accent]);
 
     if (title) {
       this.#addText(title, GAME_WIDTH / 2, 122, {
@@ -129,19 +141,25 @@ export class MenuScene extends Phaser.Scene {
     this.selectedIndex = 0;
     this.panelWidth = 380;
 
-    const veil = this.add.rectangle(GAME_WIDTH / 2, 135, GAME_WIDTH, 270, 0x000000, 0.92)
+    const veil = this.add.rectangle(GAME_WIDTH / 2, 135, GAME_WIDTH, 270, 0x000000, 0.84)
       .setInteractive();
-    const panel = this.add.rectangle(GAME_WIDTH / 2, 178, this.panelWidth, 180, 0x000000, 0.99)
-      .setStrokeStyle(1, 0xd3a66d, 0.9);
-    this.ui.add([veil, panel]);
+    const panelY = 164;
+    const panelHeight = 190;
+    const shadow = this.add.rectangle(GAME_WIDTH / 2 + 3, panelY + 3, this.panelWidth, panelHeight, 0x06040b, 0.95);
+    const panel = this.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth, panelHeight, 0x100d1e, 0.99)
+      .setStrokeStyle(1, 0xd3a66d, 0.96);
+    const inset = this.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth - 8, panelHeight - 8, 0x000000, 0)
+      .setStrokeStyle(1, 0x4b385c, 0.92);
+    const accent = this.add.rectangle(GAME_WIDTH / 2, panelY - panelHeight / 2 + 12, this.panelWidth - 24, 1, 0xd3a66d, 0.82);
+    this.ui.add([veil, shadow, panel, inset, accent]);
 
-    this.#addText('SELECCIONAR PERSONAJE', GAME_WIDTH / 2, 105, {
+    this.#addText('SELECCIONAR PERSONAJE', GAME_WIDTH / 2, 91, {
       fontSize: '12px',
       color: '#f7cf83',
       letterSpacing: 1,
     });
     const mode = getVersusMode(this.matchSetup.versusMode);
-    this.#addText(mode.slotLabels[this.characterSlot] ?? 'PERSONAJE', GAME_WIDTH / 2, 126, {
+    this.#addText(mode.slotLabels[this.characterSlot] ?? 'PERSONAJE', GAME_WIDTH / 2, 111, {
       fontSize: '7px',
       color: '#b7a9cb',
     });
@@ -153,7 +171,7 @@ export class MenuScene extends Phaser.Scene {
       fontSize: readableFontSize(style.fontSize ?? '10px'),
       color: '#e7def5',
       align: 'center',
-      wordWrap: { width: Math.max(100, this.panelWidth - 28), useAdvancedWrap: true },
+      wordWrap: { width: Math.max(100, this.panelWidth - 40), useAdvancedWrap: true },
       ...style,
     });
     text.setFontSize(readableFontSize(style.fontSize ?? '10px')).setOrigin(0.5);
@@ -166,14 +184,16 @@ export class MenuScene extends Phaser.Scene {
     const buttonWidth = Math.floor(Math.min(width, Math.max(112, this.panelWidth - 36)));
     const buttonHeight = 20;
     const labelFontSize = readableFontSize(fontSize);
-    const box = this.add.rectangle(x, y, buttonWidth, buttonHeight, 0x241b3c, 0.98)
-      .setStrokeStyle(1, 0x62527e, 1);
+    const shadow = this.add.rectangle(x, y + 2, buttonWidth, buttonHeight, 0x090612, 0.98);
+    const box = this.add.rectangle(x, y, buttonWidth, buttonHeight, 0x211a32, 0.98)
+      .setStrokeStyle(1, 0x76618f, 1);
+    const highlight = this.add.rectangle(x, y - 8, buttonWidth - 6, 1, 0xb69acb, 0.3);
     const label = this.add.text(x, y, title, {
       fontFamily: 'monospace',
       fontSize: labelFontSize,
       color: '#d9cde9',
       align: 'center',
-      wordWrap: { width: buttonWidth - 16, useAdvancedWrap: true },
+      wordWrap: { width: buttonWidth - 24, useAdvancedWrap: true },
     }).setOrigin(0.5);
     const hitArea = this.add.rectangle(x, y, buttonWidth, buttonHeight, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
@@ -190,7 +210,7 @@ export class MenuScene extends Phaser.Scene {
       this.#activateSelection();
     });
 
-    this.ui.add([box, label, hitArea]);
+    this.ui.add([shadow, box, highlight, label, hitArea]);
     this.#refreshButtons();
   }
 
@@ -264,25 +284,22 @@ export class MenuScene extends Phaser.Scene {
   }
 
   #addFooter() {
-    // El footer solo aparece en la pantalla principal; nunca queda por encima de un modal.
+    // Franja compacta y separada del panel principal para evitar solapamientos.
     if (this.page !== 'home') return;
-    const prefix = this.add.text(0, 264,
-      '© 2026 Todos los derechos reservados - Diseño y Programación por ',
-      {
-        fontFamily: 'monospace',
-        fontSize: '8px',
-        color: '#aaa0bd',
-      },
-    ).setOrigin(0, 0.5).setDepth(30);
-
-    const author = this.add.text(0, 264, 'Lucas Montenegro ®', {
+    const prefix = this.add.text(0, 253, '© 2026 AXEM FIGHTERX · DISEÑO Y DESARROLLO: ', {
       fontFamily: 'monospace',
-      fontSize: '8px',
+      fontSize: '6px',
+      color: '#aaa0bd',
+    }).setOrigin(0, 0.5).setDepth(30);
+
+    const author = this.add.text(0, 253, 'LUCAS MONTENEGRO ®', {
+      fontFamily: 'monospace',
+      fontSize: '6px',
       color: '#f2c77e',
     }).setOrigin(0, 0.5).setDepth(30).setInteractive({ useHandCursor: true });
 
     const totalWidth = prefix.width + author.width;
-    const startX = (GAME_WIDTH - totalWidth) / 2;
+    const startX = Math.round((GAME_WIDTH - totalWidth) / 2);
     prefix.setX(startX);
     author.setX(startX + prefix.width);
     author.on('pointerover', () => author.setColor('#fff1bc'));
@@ -384,9 +401,9 @@ export class MenuScene extends Phaser.Scene {
     this.characterSlot = 0;
     this.#beginPage('');
     this.#addHomeRangerArt();
-    this.#addButton('JUGAR', 160, () => this.#showVersusModes());
-    this.#addButton('TUTORIAL', 184, () => this.#showControls());
-    this.#addButton('CRÉDITOS', 208, () => this.#showCredits());
+    this.#addButton('JUGAR', 158, () => this.#showVersusModes());
+    this.#addButton('TUTORIAL', 182, () => this.#showControls());
+    this.#addButton('CRÉDITOS', 206, () => this.#showCredits());
     this.#addFooter();
   }
 
@@ -436,8 +453,8 @@ export class MenuScene extends Phaser.Scene {
       this.characterSlot === 0 || variant.id !== firstSelection?.id
     );
     const positions = options.length === 4
-      ? [[150, 163], [330, 163], [150, 211], [330, 211]]
-      : [[150, 187], [330, 187]];
+      ? [[150, 151], [330, 151], [150, 199], [330, 199]]
+      : [[150, 175], [330, 175]];
 
     options.forEach((variant, index) => {
       const [x, y] = positions[index];
@@ -450,7 +467,7 @@ export class MenuScene extends Phaser.Scene {
       );
     });
 
-    this.#addButton('CANCELAR', 250, () => this.#showCombatModes(), {
+    this.#addButton('CANCELAR', 238, () => this.#showCombatModes(), {
       width: 132,
       fontSize: '7px',
     });
@@ -483,7 +500,7 @@ export class MenuScene extends Phaser.Scene {
 
   #showPlayerSide() {
     this.page = 'player-side';
-    this.#beginPage('ELEGÍ TU LADO', 390, 176);
+    this.#beginPage('ELEGÍ TU LADO', 390, 186);
     const side = this.matchSetup.playerSide ?? 'J1';
     this.#addText(
       'LADO ACTUAL: ' + (side === 'J1' ? 'JUGADOR 1 · IZQUIERDA' : 'JUGADOR 2 · DERECHA'),
@@ -524,7 +541,7 @@ export class MenuScene extends Phaser.Scene {
   #showTrainingColors() {
     this.page = 'training-colors';
     this.matchSetup.trainingBackgroundColor ??= '#111111';
-    this.#beginPage('FONDO DE ENTRENAMIENTO', 430, 198);
+    this.#beginPage('FONDO DE ENTRENAMIENTO', 430, 188);
     this.#addText('COLOR SELECCIONADO: ' + this.matchSetup.trainingBackgroundColor.toUpperCase(), GAME_WIDTH / 2, 141, {
       fontSize: '6px',
       color: '#b7a9cb',
@@ -587,16 +604,20 @@ export class MenuScene extends Phaser.Scene {
     this.page = 'stages';
     const versus = getVersusMode(this.matchSetup.versusMode);
     const combat = getCombatMode(this.matchSetup.combatMode);
-    this.#beginPage('ELEGÍ EL ESCENARIO', 330, 158);
+    this.#beginPage('ELEGÍ EL ESCENARIO', 330, 178);
     this.#addText(versus.label + ' · ' + combat.label, GAME_WIDTH / 2, 138, {
       fontSize: '6px',
       color: '#b7a9cb',
     });
 
     STAGES.forEach((stage, index) => {
-      this.#addButton(stage.name.toUpperCase(), 153 + index * 21, () => {
+      const depthLabel = stage.depthMode === 'restricted' ? 'CARRIL FIJO' : 'PROFUNDIDAD LIBRE';
+      this.#addButton(stage.name.toUpperCase() + ' · ' + depthLabel, 153 + index * 21, () => {
         this.#startSelectedFight(stage.id, true);
-      }, { width: 260, fontSize: '7px' });
+      }, {
+        width: 260,
+        fontSize: '7px',
+      });
     });
 
     this.#addButton('VOLVER', 238, () => {
@@ -608,7 +629,7 @@ export class MenuScene extends Phaser.Scene {
 
   #showControls() {
     this.page = 'controls';
-    this.#beginPage('TUTORIAL', 390, 154);
+    this.#beginPage('TUTORIAL', 390, 172);
     this.#addText('JUGADOR 1', GAME_WIDTH / 2, 143, {
       fontSize: '7px',
       color: '#d9a9ff',

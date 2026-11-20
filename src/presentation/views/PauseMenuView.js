@@ -9,7 +9,7 @@ export class PauseMenuView {
     this.buttons = [];
     this.selectedIndex = 0;
     this.showingControls = false;
-    this.panelWidth = 320;
+    this.panelWidth = 344;
     this.container = scene.add.container(0, 0)
       .setScrollFactor(0)
       .setDepth(30_000)
@@ -56,8 +56,8 @@ export class PauseMenuView {
       fontSize: '9px',
       color: '#aaa0bd',
     });
-    this.#addText('ESC · MENÚ / PAUSA: REANUDAR / TUTORIALES: VOLVER', 222, {
-      fontSize: '9px',
+    this.#addText('ESC · VOLVER AL COMBATE / CERRAR TUTORIAL', 222, {
+      fontSize: '8px',
       color: '#aaa0bd',
     });
     this.#addButton('VOLVER A PAUSA', 242, () => this.showMenu(), { width: 178 });
@@ -84,11 +84,14 @@ export class PauseMenuView {
     this.selectedIndex = 0;
     const panelY = 135;
 
-    const shade = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, GAME_WIDTH, 270, 0x000000, 1)
+    const shade = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, GAME_WIDTH, 270, 0x000000, 0.78)
       .setInteractive();
-    const panel = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth, height, 0x000000, 1)
-      .setStrokeStyle(1, 0xd3a66d, 0.9);
-    const heading = this.scene.add.text(GAME_WIDTH / 2, panelY - height / 2 + 23, title, {
+    const shadow = this.scene.add.rectangle(GAME_WIDTH / 2 + 3, panelY + 3, this.panelWidth, height, 0x06040b, 0.96);
+    const panel = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth, height, 0x100d1e, 0.99)
+      .setStrokeStyle(1, 0xd3a66d, 0.96);
+    const inset = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth - 8, height - 8, 0x000000, 0)
+      .setStrokeStyle(1, 0x4b385c, 0.92);
+    const heading = this.scene.add.text(GAME_WIDTH / 2, panelY - height / 2 + 24, title, {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: '#f7cf83',
@@ -96,7 +99,15 @@ export class PauseMenuView {
       align: 'center',
     }).setOrigin(0.5);
 
-    this.container.add([shade, panel, heading]);
+    const headerRule = this.scene.add.rectangle(
+      GAME_WIDTH / 2,
+      panelY - height / 2 + 44,
+      this.panelWidth - 28,
+      1,
+      0xd3a66d,
+      0.72,
+    );
+    this.container.add([shade, shadow, panel, inset, heading, headerRule]);
   }
 
   #addText(value, y, style = {}) {
@@ -105,7 +116,7 @@ export class PauseMenuView {
       fontSize: '9px',
       color: '#e7def5',
       align: 'center',
-      wordWrap: { width: this.panelWidth - 28, useAdvancedWrap: true },
+      wordWrap: { width: this.panelWidth - 40, useAdvancedWrap: true },
       ...style,
     }).setOrigin(0.5);
     this.container.add(label);
@@ -121,7 +132,7 @@ export class PauseMenuView {
       fontSize: '10px',
       color: '#d9cde9',
       align: 'center',
-      wordWrap: { width: buttonWidth - 14, useAdvancedWrap: true },
+      wordWrap: { width: buttonWidth - 24, useAdvancedWrap: true },
     }).setOrigin(0.5);
     const hitArea = this.scene.add.rectangle(GAME_WIDTH / 2, y, buttonWidth, 23, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });

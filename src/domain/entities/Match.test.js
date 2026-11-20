@@ -2,14 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { Match } from './Match.js';
 import { FighterState, TIMINGS } from './FighterState.js';
 import { createFighter } from '../rangers/createFighter.js';
-import { ARENA, PICKUP } from '../arena/arena.js';
+import { ARENA, PICKUP, getArenaForDepthMode } from '../arena/arena.js';
 import { PICKUP_TYPES } from './PowerUpPickup.js';
 
 const idle = { x: 0, y: 0, z: 0, attack: false, teleport: false };
-const make = ({ ax = 300, bx = 340, rng = () => 0 } = {}) => {
+const make = ({ ax = 300, bx = 340, rng = () => 0, arena = ARENA } = {}) => {
   const a = createFighter('violet', { x: ax, y: ARENA.groundY }, 1);
   const b = createFighter('orange', { x: bx, y: ARENA.groundY }, -1);
-  return new Match({ fighters: [a, b], rng });
+  return new Match({ fighters: [a, b], rng, arena });
 };
 const advance = (match, intents, ms, step = 16) => {
   const events = [];
@@ -106,6 +106,25 @@ describe('Match: KO', () => {
 });
 
 describe('Match: cuerpos y escenario', () => {
+  it('bloquea el eje de profundidad en escenarios lineales', () => {
+    const match = make({ arena: getArenaForDepthMode('restricted') });
+    const [fighter] = match.fighters;
+
+    advance(match, [{ ...idle, y: -1 }, idle], 1000);
+
+    expect(fighter.position.y).toBe(ARENA.groundY);
+  });
+
+  it('conserva el desplazamiento de profundidad en escenarios abiertos', () => {
+    const match = make({ arena: getArenaForDepthMode('free') });
+    const [fighter] = match.fighters;
+
+    advance(match, [{ ...idle, y: -1 }, idle], 500);
+
+    expect(fighter.position.y).toBeLessThan(ARENA.groundY);
+    expect(fighter.position.y).toBeGreaterThanOrEqual(ARENA.minY);
+  });
+
   it('los luchadores no se atraviesan al caminar', () => {
     const match = make({ ax: 300, bx: 360 });
     advance(match, [{ ...idle, x: 1 }, idle], 1500);

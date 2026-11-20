@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from '../../config/gameConfig.js';
-import { ARENA } from '../../domain/arena/arena.js';
+import { ARENA, getArenaForDepthMode } from '../../domain/arena/arena.js';
 import { getStage, STAGE_IDS } from '../../domain/arena/stageCatalog.js';
 import { getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { RoundSeries } from '../../domain/match/RoundSeries.js';
@@ -32,7 +32,10 @@ export class FightScene extends Phaser.Scene {
   }
 
   create() {
-    this.match = createDefaultMatch(Math.random, this.matchSetup.characters);
+    const matchArena = this.matchSetup.trainingBackgroundColor
+      ? ARENA
+      : getArenaForDepthMode(this.stageDefinition.depthMode);
+    this.match = createDefaultMatch(Math.random, this.matchSetup.characters, matchArena);
     const [leftFighter, rightFighter] = this.match.fighters;
     const versus = getVersusMode(this.matchSetup.versusMode);
     const combat = getCombatMode(this.matchSetup.combatMode);

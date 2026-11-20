@@ -17,6 +17,16 @@ export const ARENA = Object.freeze({
   teleportRange: 150,
 });
 
+/** Elige los límites transitables según la geometría real del escenario. */
+export function getArenaForDepthMode(depthMode = 'free') {
+  if (depthMode !== 'restricted') return ARENA;
+  return Object.freeze({
+    ...ARENA,
+    minY: ARENA.groundY,
+    maxY: ARENA.groundY,
+  });
+}
+
 /** Límites de vuelo medidos desde el plano del suelo, no desde la cámara. */
 export const FLIGHT = Object.freeze({
   maxAltitude: 140,

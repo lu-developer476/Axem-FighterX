@@ -115,7 +115,10 @@ se generan por código en `infrastructure/graphics/FxTextureFactory.js`, junto c
 - `art/source/`: **los sprites del juego**. Vite los importa directamente y, al preparar las texturas base y las hojas de animación, el juego elimina automáticamente el fondo plano o casi uniforme conectado a los bordes y conserva el canal alfa. Así los fondos de las imágenes no se dibujan en el menú, las fichas de selección, las cinemáticas ni el combate. Para mejores resultados, subí PNG con fondo uniforme y el personaje separado de los bordes:
   no hay copias en `public/`. La pose base de cada personaje es `art/source/axem-ranger-<ranger>.png`.
   Los PNG de `axem-ranger-violet.png` y `axem-ranger-orange.png` ya incluyen **transparencia real
-  (canal alfa) en todo el fondo**; `rangerSprites.test.js` verifica que el contorno siga transparente.
+  (canal alfa) en todo el fondo**, incluido el que quedaba dentro del contorno del personaje
+  (la tela lavanda del violeta y la túnica crema del naranja); solo se conserva el brillo de la bota.
+  `rangerSprites.test.js` verifica que el contorno siga transparente y que no queden píxeles del
+  color de fondo en el interior.
 - Esos PNG miden 2617×4096 pero son pixel art de 53×83 ampliado. Al cargar, el juego toma un píxel por
   celda de esa cuadrícula (`nativeSize` en `characterAnimationData.js`) y los dibuja 1:1.
 - Los escenarios se dibujan por código en `infrastructure/graphics/StageTextureFactory.js` y

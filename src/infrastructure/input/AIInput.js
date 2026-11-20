@@ -1,6 +1,6 @@
 /**
- * Entrada controlada por IA. Persigue al rival horizontalmente, cambia de
- * altura para mantener el combate aéreo y ataca cuando las cajas pueden cruzarse.
+ * Entrada controlada por IA. Persigue al rival en el plano terrestre,
+ * ajusta su altura para mantener el combate aéreo y ataca cuando las cajas pueden cruzarse.
  */
 export class AIInput {
   constructor(fighter, opponent, { now = () => 0, phase = 0 } = {}) {

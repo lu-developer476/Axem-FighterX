@@ -12,7 +12,7 @@ function makeFighter(x, y = 220, z = 0) {
 }
 
 describe('AIInput: combate', () => {
-  it('se acerca horizontalmente y gana altura sin cambiar de carril', () => {
+  it('se acerca en el plano terrestre y gana altura para mantener el combate aéreo', () => {
     let now = 0;
     const fighter = makeFighter(100, 220, 0);
     const opponent = makeFighter(260, 200, 0);
@@ -21,7 +21,7 @@ describe('AIInput: combate', () => {
     const intent = input.readIntent();
 
     expect(intent.x).toBe(1);
-    expect(intent.y).toBe(0);
+    expect(intent.y).toBe(-1);
     expect(intent.z).toBe(1);
     expect(intent.attack).toBe(false);
   });

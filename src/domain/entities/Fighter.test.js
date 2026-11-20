@@ -36,10 +36,12 @@ describe('Fighter: movimiento y orientación', () => {
   it('se desplaza hacia arriba y abajo sin alterar la orientación', () => {
     const fighter = make();
     fighter.position.y = ARENA.groundY + 30;
-    fighter.update({ ...idle, y: -1 }, 500);
+    fighter.update({ ...idle, y: -1 }, 1000);
+    fighter.clampTo(ARENA);
     expect(fighter.position.y).toBeCloseTo(ARENA.minY);
     expect(fighter.facing).toBe(1);
-    fighter.update({ ...idle, y: 1 }, 500);
+    fighter.update({ ...idle, y: 1 }, 1000);
+    fighter.clampTo(ARENA);
     expect(fighter.position.y).toBeCloseTo(ARENA.maxY);
   });
 

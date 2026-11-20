@@ -63,7 +63,7 @@ export class StageView {
         .setAlpha(this.visuals.hazeAlpha);
       layer(this.textures.near, PARALLAX.near, -70);
     }
-    layer(this.textures.floor, 1, -20, 0, ARENA.minY);
+    layer(this.textures.floor, 1, -20, 0, ARENA.groundY);
 
     for (const x of [0, ARENA.width - WALL_WIDTH]) {
       layer(this.textures.wall, 1, -15, x, ARENA.groundY - WALL_HEIGHT);

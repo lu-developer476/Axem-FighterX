@@ -10,6 +10,7 @@ describe('Espaciado compartido de interfaces', () => {
   it('usa un margen de contenido uniforme y permite ajustar el texto de botones', () => {
     expect(contentWidth(330)).toBe(318);
     expect(contentWidth(210, UI_SPACING.buttonTextGutter)).toBe(198);
+    expect(UI_SPACING.footerGutter).toBe(2);
   });
 
   it('nunca devuelve anchos negativos para paneles pequeños', () => {

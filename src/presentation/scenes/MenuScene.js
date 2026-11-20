@@ -1,12 +1,11 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH } from '../../config/gameConfig.js';
+import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { STAGES } from '../../domain/arena/stageCatalog.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
 import { contentWidth, insetSize, UI_SPACING } from '../views/uiLayout.js';
 
-const PORTFOLIO_URL = 'https://lu-dev-portfolio.vercel.app/';
 const RANGER_ORDER = [RANGER_IDS.ORANGE, RANGER_IDS.VIOLET];
 const readableFontSize = (value = '10px') => {
   const size = Number.parseFloat(value);
@@ -103,7 +102,9 @@ export class MenuScene extends Phaser.Scene {
     this.selectedIndex = 0;
     this.panelWidth = width;
 
-    const panelY = 171;
+    // Todos los paneles reservan una franja inferior libre y se ajustan al alto real.
+    const safeBottom = GAME_HEIGHT - 30;
+    const panelY = Math.min(171, safeBottom - height / 2);
     const shadow = this.add.rectangle(GAME_WIDTH / 2 + 3, panelY + 3, width, height, 0x06040b, 0.92);
     const panel = this.add.rectangle(GAME_WIDTH / 2, panelY, width, height, 0x100d1e, 0.98)
       .setStrokeStyle(1, 0x9277a8, 0.95);
@@ -143,8 +144,8 @@ export class MenuScene extends Phaser.Scene {
 
     const veil = this.add.rectangle(GAME_WIDTH / 2, 135, GAME_WIDTH, 270, 0x000000, 0.84)
       .setInteractive();
-    const panelY = 154;
-    const panelHeight = 120;
+    const panelY = 160;
+    const panelHeight = 96;
     const shadow = this.add.rectangle(GAME_WIDTH / 2 + 3, panelY + 3, this.panelWidth, panelHeight, 0x06040b, 0.95);
     const panel = this.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth, panelHeight, 0x100d1e, 0.99)
       .setStrokeStyle(1, 0xd3a66d, 0.96);
@@ -156,16 +157,16 @@ export class MenuScene extends Phaser.Scene {
       0x000000,
       0,
     ).setStrokeStyle(1, 0x4b385c, 0.92);
-    const accent = this.add.rectangle(GAME_WIDTH / 2, panelY - panelHeight / 2 + 8, this.panelWidth - 24, 1, 0xd3a66d, 0.82);
+    const accent = this.add.rectangle(GAME_WIDTH / 2, panelY - panelHeight / 2 + 5, this.panelWidth - 24, 1, 0xd3a66d, 0.82);
     this.ui.add([veil, shadow, panel, inset, accent]);
 
-    this.#addText(title, GAME_WIDTH / 2, 113, {
+    this.#addText(title, GAME_WIDTH / 2, 130, {
       fontSize: '12px',
       color: '#f7cf83',
       letterSpacing: 1,
     });
     const mode = getVersusMode(this.matchSetup.versusMode);
-    this.#addText(mode.slotLabels[this.characterSlot] ?? 'PERSONAJE', GAME_WIDTH / 2, 133, {
+    this.#addText(mode.slotLabels[this.characterSlot] ?? 'PERSONAJE', GAME_WIDTH / 2, 149, {
       fontSize: '7px',
       color: '#b7a9cb',
     });
@@ -260,15 +261,17 @@ export class MenuScene extends Phaser.Scene {
   #addFooter() {
     // Franja compacta y separada del panel principal para evitar solapamientos.
     if (this.page !== 'home') return;
-    const prefix = this.add.text(0, 253, '© 2026 AXEM FIGHTERX · DISEÑO Y DESARROLLO: ', {
+    const footerY = GAME_HEIGHT - 12;
+    const footerFontSize = '6px';
+    const prefix = this.add.text(0, footerY, '© 2026 Todos los derechos reservados - Diseño y Programación por ', {
       fontFamily: 'monospace',
-      fontSize: '8px',
+      fontSize: footerFontSize,
       color: '#c4bbd2',
     }).setOrigin(0, 0.5).setDepth(30);
 
-    const author = this.add.text(0, 253, 'LUCAS MONTENEGRO ®', {
+    const author = this.add.text(0, footerY, 'Lucas Montenegro ®', {
       fontFamily: 'monospace',
-      fontSize: '8px',
+      fontSize: footerFontSize,
       color: '#f2c77e',
     }).setOrigin(0, 0.5).setDepth(30).setInteractive({ useHandCursor: true });
 
@@ -279,7 +282,7 @@ export class MenuScene extends Phaser.Scene {
     author.on('pointerover', () => author.setColor('#fff1bc'));
     author.on('pointerout', () => author.setColor('#f2c77e'));
     author.on('pointerdown', () => {
-      window.open(PORTFOLIO_URL, '_blank', 'noopener,noreferrer');
+      window.open('https://www.linkedin.com/in/l-montenegro/', '_blank', 'noopener,noreferrer');
     });
 
     this.ui.add([prefix, author]);
@@ -393,13 +396,13 @@ export class MenuScene extends Phaser.Scene {
     this.#beginPage('COMBATE', 330, 168);
 
     VERSUS_MODES.forEach((mode, index) => {
-      this.#addButton(mode.label, 160 + index * 25, () => {
+      this.#addButton(mode.label, 151 + index * 22, () => {
         this.matchSetup.versusMode = mode.id;
         this.#showCombatModes();
       }, { width: 246, fontSize: '8px' });
     });
 
-    this.#addButton('VOLVER', 238, () => this.#showHome(), { width: 150, fontSize: '8px' });
+    this.#addButton('VOLVER', 226, () => this.#showHome(), { width: 150, fontSize: '8px' });
     this.#addFooter();
   }
 
@@ -408,7 +411,7 @@ export class MenuScene extends Phaser.Scene {
     this.#beginPage('MODO', 330, 168);
 
     COMBAT_MODES.forEach((mode, index) => {
-      this.#addButton(mode.label, 151 + index * 21, () => {
+      this.#addButton(mode.label, 143 + index * 19, () => {
         this.matchSetup.combatMode = mode.id;
         this.matchSetup.characters = [];
         this.characterSlot = 0;
@@ -416,7 +419,7 @@ export class MenuScene extends Phaser.Scene {
       }, { width: 230, fontSize: '8px' });
     });
 
-    this.#addButton('VOLVER', 238, () => this.#showVersusModes(), { width: 150, fontSize: '8px' });
+    this.#addButton('VOLVER', 226, () => this.#showVersusModes(), { width: 150, fontSize: '8px' });
     this.#addFooter();
   }
 
@@ -427,7 +430,7 @@ export class MenuScene extends Phaser.Scene {
 
     RANGER_ORDER.forEach((rangerId, index) => {
       const title = rangerId === RANGER_IDS.ORANGE ? 'AXEM NARANJA' : 'AXEM VIOLETA';
-      this.#addButton(title, 178, () => {
+      this.#addButton(title, 181, () => {
         this.pendingCharacterId = rangerId;
         this.#showCharacterGender();
       }, {
@@ -446,14 +449,14 @@ export class MenuScene extends Phaser.Scene {
 
     this.page = 'character-gender';
     this.#beginCharacterModal('SELECCIONAR GÉNERO');
-    this.#addButton('MASCULINO', 178, () => {
+    this.#addButton('MASCULINO', 181, () => {
       this.#selectCharacter(this.pendingCharacterId, 'male');
     }, {
       width: 154,
       x: 160,
       fontSize: '7px',
     });
-    this.#addButton('FEMENINO', 178, () => {
+    this.#addButton('FEMENINO', 181, () => {
       this.#selectCharacter(this.pendingCharacterId, 'female');
     }, {
       width: 154,
@@ -490,7 +493,7 @@ export class MenuScene extends Phaser.Scene {
 
   #showPlayerSide() {
     this.page = 'player-side';
-    this.#beginPage('ESQUINA INICIAL', 390, 154);
+    this.#beginPage('ESQUINA INICIAL', 390, 132);
     this.#addButton('JUGADOR 1 · IZQUIERDA', 158, () => {
       this.matchSetup.playerSide = 'J1';
       this.#showPlayerSide();
@@ -532,18 +535,18 @@ export class MenuScene extends Phaser.Scene {
     TRAINING_COLORS.forEach(({ label, color }, index) => {
       const row = index < 5 ? 0 : 1;
       const column = index % 5;
-      this.#addColorOption(label, color, centers[column], 165 + row * 29);
+      this.#addColorOption(label, color, centers[column], 152 + row * 28);
     });
 
-    this.#addButton('ELEGIR OTRO COLOR', 224, () => this.#openNativeColorPicker(), {
+    this.#addButton('ELEGIR OTRO COLOR', 210, () => this.#openNativeColorPicker(), {
       width: 170,
       fontSize: '7px',
     });
-    this.#addButton('VOLVER', 250, () => {
+    this.#addButton('VOLVER', 228, () => {
       if (this.matchSetup.versusMode === 'player-vs-ai') this.#showPlayerSide();
       else this.#moveSelectionBackToCharacters();
     }, { width: 112, x: 150, fontSize: '7px' });
-    this.#addButton('COMENZAR', 250, () => this.#startSelectedFight(STAGES[0].id, false), {
+    this.#addButton('COMENZAR', 228, () => this.#startSelectedFight(STAGES[0].id, false), {
       width: 150,
       x: 320,
       fontSize: '7px',
@@ -583,7 +586,7 @@ export class MenuScene extends Phaser.Scene {
     this.page = 'stages';
     const versus = getVersusMode(this.matchSetup.versusMode);
     const combat = getCombatMode(this.matchSetup.combatMode);
-    this.#beginPage('ESCENARIO', 330, 160);
+    this.#beginPage('ESCENARIO', 330, 140);
     this.#addText(versus.label + ' · ' + combat.label, GAME_WIDTH / 2, 138, {
       fontSize: '6px',
       color: '#b7a9cb',
@@ -591,7 +594,7 @@ export class MenuScene extends Phaser.Scene {
 
     STAGES.forEach((stage, index) => {
       const depthLabel = stage.groundDepthMode === 'restricted' ? 'CARRIL FIJO · VUELO LIBRE' : 'PROFUNDIDAD LIBRE';
-      this.#addButton(stage.name.toUpperCase() + ' · ' + depthLabel, 153 + index * 19, () => {
+      this.#addButton(stage.name.toUpperCase() + ' · ' + depthLabel, 150 + index * 18, () => {
         this.#startSelectedFight(stage.id, true);
       }, {
         width: 260,
@@ -599,7 +602,7 @@ export class MenuScene extends Phaser.Scene {
       });
     });
 
-    this.#addButton('VOLVER', 232, () => {
+    this.#addButton('VOLVER', 229, () => {
       if (this.matchSetup.versusMode === 'player-vs-ai') this.#showPlayerSide();
       else this.#moveSelectionBackToCharacters();
     }, { width: 150, fontSize: '8px' });

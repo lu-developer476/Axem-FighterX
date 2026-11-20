@@ -17,8 +17,8 @@ async function main() {
     .toBuffer({ resolveWithObject: true });
   const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
   const result = removeSpriteBackground({ data: pixels, width: info.width, height: info.height }, {
-    tolerance: 32,
-    minBorderCoverage: 0.08,
+    tolerance: 48,
+    minBorderCoverage: 0.05,
   });
   if (!result.backgroundColor || result.removedPixels < info.width * info.height * 0.05) {
     throw new Error('No se detectó un fondo uniforme conectado al borde de title.png.');

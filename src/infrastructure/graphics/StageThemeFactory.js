@@ -84,7 +84,7 @@ export function createAdditionalStageTextures(scene) {
     createCanvasTexture(scene, keys.mid, midWidth, VIEW.height, (ctx, w, h) => drawMid(ctx, w, h, palette, stageId));
     createCanvasTexture(scene, keys.near, nearWidth, VIEW.height, (ctx, w, h) => drawNear(ctx, w, h, palette, stageId));
     createCanvasTexture(scene, keys.fog, 128, 40, (ctx, w, h) => drawHaze(ctx, w, h, palette));
-    createCanvasTexture(scene, keys.floor, ARENA.width, VIEW.height - ARENA.minY, (ctx, w, h) => drawFloor(ctx, w, h, palette, stageId));
+    createCanvasTexture(scene, keys.floor, ARENA.width, VIEW.height - ARENA.groundY, (ctx, w, h) => drawFloor(ctx, w, h, palette, stageId));
     createCanvasTexture(scene, keys.wall, 28, 140, (ctx, w, h) => drawWall(ctx, w, h, palette, stageId));
     createCanvasTexture(scene, keys.pillar, 24, 104, (ctx, w, h) => drawPillar(ctx, w, h, palette, stageId));
     createCanvasTexture(scene, keys.barrier, 6, 150, (ctx, w, h) => drawBarrier(ctx, w, h, palette));

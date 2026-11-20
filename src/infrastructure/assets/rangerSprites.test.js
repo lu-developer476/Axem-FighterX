@@ -96,7 +96,9 @@ describe('Variantes de Axem Rangers', () => {
           else if (max === green) hue = ((blue - red) / delta + 2) * 60;
           else hue = ((red - green) / delta + 4) * 60;
         }
-        if (hue >= 24 && hue <= 80 && saturation >= 0.2 && lightness >= 0.12) {
+        // Las puntas intencionales son marrón rojizo (H≈25°, L≤0.40);
+        // aquí solo se cuentan restos claros de cabello rubio/dorado.
+        if (hue >= 32 && hue <= 80 && saturation >= 0.2 && lightness >= 0.42) {
           residualBlondePixels += 1;
         }
       }

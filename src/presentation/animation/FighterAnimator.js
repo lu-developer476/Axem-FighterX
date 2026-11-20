@@ -25,9 +25,9 @@ export class FighterAnimator {
     this.usingSheet = false;
   }
 
-  /** Dirección nativa del recurso visual activo (las hojas de acción tienen su propia orientación). */
+  /** La pose base y las hojas GIF usan la misma orientación nativa declarada para cada fuente. */
   get spriteFacing() {
-    return this.usingSheet && this.gender === 'male' ? 1 : spriteFacingFor(this.rangerId, this.gender);
+    return spriteFacingFor(this.rangerId, this.gender);
   }
 
   /** @param {import('../../domain/entities/Fighter.js').Fighter} fighter */

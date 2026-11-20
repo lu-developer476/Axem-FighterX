@@ -11,7 +11,7 @@ export const ANIMATION_STATES = Object.freeze([
  */
 const CHARACTER_DATA = Object.freeze({
   spriteFacing: Object.freeze({
-    // Las referencias masculinas y femeninas miran a la izquierda; se espejan con la misma regla.
+    // Las referencias masculinas de Axem Red y las femeninas de Axem Pink miran a la izquierda.
     male: -1,
     female: -1,
   }),

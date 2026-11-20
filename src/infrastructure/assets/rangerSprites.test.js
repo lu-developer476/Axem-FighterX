@@ -14,6 +14,10 @@ const maleCompositePath = (color) =>
   fileURLToPath(new URL(`../../../art/source/sprites/results/male/axem-ranger-${color}.png`, import.meta.url));
 const maleSpritesheetPath = (color) =>
   fileURLToPath(new URL(`../../../art/source/sprites/results/male/${color}/spritesheet.png`, import.meta.url));
+const maleDefeatedPath = (color) =>
+  fileURLToPath(new URL(`../../../art/source/sprites/results/male/${color}/defeated.png`, import.meta.url));
+const generatedDefeatedPath = (color) =>
+  fileURLToPath(new URL(`../../../public/generated/axem-${color}-defeated.png`, import.meta.url));
 
 describe('Variantes de Axem Rangers', () => {
   for (const gender of GENDERS) {
@@ -107,6 +111,18 @@ describe('Variantes de Axem Rangers', () => {
       expect(darkPixels).toBeGreaterThan(100);
       expect(brownPixels).toBeGreaterThan(50);
       expect(residualBlondePixels).toBeLessThan(80);
+    });
+  }
+
+  for (const color of COLORS) {
+    it(`male/${color} genera la pose de derrota de 150×100 px para combate`, async () => {
+      for (const file of [maleDefeatedPath(color), generatedDefeatedPath(color)]) {
+        const metadata = await sharp(file).metadata();
+        expect(metadata.format).toBe('png');
+        expect(metadata.width).toBe(150);
+        expect(metadata.height).toBe(100);
+        expect(metadata.hasAlpha).toBe(true);
+      }
     });
   }
 

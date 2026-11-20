@@ -103,6 +103,10 @@ export class PreloadScene extends Phaser.Scene {
           frameHeight: 83,
         });
       }
+      this.load.image(
+        maleAnimationKey(rangerId, 'defeated'),
+        maleAnimationUrl(rangerId, 'defeated'),
+      );
     }
     this.load.image('title-art', import.meta.env.BASE_URL + 'generated/title.png');
   }

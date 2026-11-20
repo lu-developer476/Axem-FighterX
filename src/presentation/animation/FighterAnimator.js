@@ -46,6 +46,14 @@ export class FighterAnimator {
 
   #enter(state) {
     this.state = state;
+
+    if (state === 'ko' && this.gender === 'male') {
+      this.sprite.stop();
+      this.sprite.setTexture(maleAnimationKey(this.rangerId, 'defeated'));
+      this.usingSheet = true;
+      return;
+    }
+
     const maleAction = state === 'walk' ? 'run' : state === 'air-attack' ? 'double-axe' : null;
     const key = maleAction && this.gender === 'male'
       ? maleAnimationKey(this.rangerId, maleAction)

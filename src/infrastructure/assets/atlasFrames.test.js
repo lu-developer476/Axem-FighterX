@@ -124,7 +124,7 @@ describe('resultados por género y color', () => {
 
     for (const color of COLORS) {
       for (const [animation, originalFrames] of Object.entries(animations)) {
-        const expectedFrames = color === 'violet' && animation === 'battle-pose.gif'
+        const expectedFrames = animation === 'battle-pose.gif'
           ? originalFrames + 1
           : color === 'violet' && animation === 'teleport.gif'
             ? originalFrames + 3
@@ -156,6 +156,21 @@ describe('resultados por género y color', () => {
     }
 
     const defeated = await sharp(resultsPath('male', 'violet', 'defeated.png')).metadata();
+    expect(defeated.format).toBe('png');
+    expect(defeated.width).toBe(150);
+    expect(defeated.height).toBe(100);
+    expect(defeated.hasAlpha).toBe(true);
+  });
+
+  it('integra la invocación del hacha y la pose de derrota del Axem Naranja', async () => {
+    const battlePose = await sharp(resultsPath('male', 'orange', 'battle-pose.gif'), { animated: true }).metadata();
+    expect(battlePose.format).toBe('gif');
+    expect(battlePose.width).toBe(150);
+    expect(battlePose.pageHeight).toBe(100);
+    expect(battlePose.pages).toBe(21);
+    expect(battlePose.hasAlpha).toBe(true);
+
+    const defeated = await sharp(resultsPath('male', 'orange', 'defeated.png')).metadata();
     expect(defeated.format).toBe('png');
     expect(defeated.width).toBe(150);
     expect(defeated.height).toBe(100);

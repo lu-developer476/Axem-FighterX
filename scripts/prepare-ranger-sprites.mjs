@@ -672,7 +672,7 @@ async function buildMaleActionGifs(color, sequenceIndex) {
  * opacas. Los cuadros conservan sus píxeles originales y se recortan solo por
  * transparencia, sin deformar el personaje ni perder efectos asociados.
  */
-async function extractVioletStripFrames(color, groupId, frameCount) {
+async function extractMaleStripFrames(color, groupId, frameCount) {
   const file = RESULTS('male', color, 'sequences', groupId + '.png');
   const metadata = await sharp(file).metadata();
   if (!metadata.width || !metadata.height || metadata.width % frameCount !== 0) {
@@ -731,7 +731,7 @@ async function extractVioletStripFrames(color, groupId, frameCount) {
   return frames;
 }
 
-async function normalizeVioletActionFrame(input, addAura = false) {
+async function normalizeMaleActionFrame(input, addAura = false) {
   const trimmed = await sharp(input)
     .trim({ background: TRANSPARENT, threshold: 1 })
     .png()
@@ -774,7 +774,7 @@ async function normalizeVioletActionFrame(input, addAura = false) {
     .toBuffer();
 }
 
-async function readVioletGifFrames(color, filename) {
+async function readMaleGifFrames(color, filename) {
   const file = RESULTS('male', color, filename);
   const metadata = await sharp(file, { animated: true }).metadata();
   const count = Math.max(1, metadata.pages || 1);
@@ -797,7 +797,7 @@ async function readVioletGifFrames(color, filename) {
   return { frames, delays };
 }
 
-async function writeVioletActionGif(color, filename, frames, delays) {
+async function writeMaleActionGif(color, filename, frames, delays) {
   if (!frames.length) throw new Error('La animación ' + filename + ' no tiene fotogramas.');
   const gif = await sharp(frames, { join: { animated: true } })
     .gif({
@@ -813,51 +813,69 @@ async function writeVioletActionGif(color, filename, frames, delays) {
 }
 
 /** Completa las secuencias adicionales propias de Axem Violeta. */
-async function buildMaleVioletExtraGifs(color) {
-  const teleportAppend = await extractVioletStripFrames(color, 'group-15', 3);
-  const defeatedAndAxe = await extractVioletStripFrames(color, 'group-16', 2);
-  const chargeFrames = await extractVioletStripFrames(color, 'group-17', 3);
-  const idleFrames = [
-    ...await extractVioletStripFrames(color, 'group-18', 3),
-    ...await extractVioletStripFrames(color, 'group-19', 5),
-  ];
+async function writeMaleDefeatedPose(color, frame) {
+  const defeated = await normalizeMaleActionFrame(frame.input);
+  await writeResult('male', color, 'defeated.png', defeated);
+  const generatedPath = path.join(GENERATED, 'axem-' + color + '-defeated.png');
+  await fs.writeFile(generatedPath, defeated);
+  console.log('Generada pose de derrota ' + path.relative(ROOT, generatedPath));
+}
 
-  if (defeatedAndAxe.length < 2) {
-    throw new Error('group-16.png debe contener la pose de derrota y la invocación del hacha.');
+/** El grupo 16 termina la preparación y deja la pose estática que se usa al caer KO. */
+async function buildMaleGroup16Sequence(color, frames) {
+  if (frames.length !== 2) {
+    throw new Error('group-16.png debe contener exactamente dos fotogramas.');
   }
 
-  const defeated = await normalizeVioletActionFrame(defeatedAndAxe[0].input);
-  await writeResult('male', color, 'defeated.png', defeated);
+  await writeMaleDefeatedPose(color, frames[0]);
 
-  const teleport = await readVioletGifFrames(color, 'teleport.gif');
-  const teleportTail = await Promise.all(
-    teleportAppend.map((frame) => normalizeVioletActionFrame(frame.input)),
+  const battlePose = await readMaleGifFrames(color, 'battle-pose.gif');
+  const axePose = await normalizeMaleActionFrame(frames[1].input);
+  await writeMaleActionGif(
+    color,
+    'battle-pose',
+    [...battlePose.frames, axePose],
+    [...battlePose.delays, 120],
   );
-  await writeVioletActionGif(
+}
+
+async function buildMaleVioletExtraGifs(color) {
+  const teleportAppend = await extractMaleStripFrames(color, 'group-15', 3);
+  const defeatedAndAxe = await extractMaleStripFrames(color, 'group-16', 2);
+  const chargeFrames = await extractMaleStripFrames(color, 'group-17', 3);
+  const idleFrames = [
+    ...await extractMaleStripFrames(color, 'group-18', 3),
+    ...await extractMaleStripFrames(color, 'group-19', 5),
+  ];
+
+  await buildMaleGroup16Sequence(color, defeatedAndAxe);
+
+  const teleport = await readMaleGifFrames(color, 'teleport.gif');
+  const teleportTail = await Promise.all(
+    teleportAppend.map((frame) => normalizeMaleActionFrame(frame.input)),
+  );
+  await writeMaleActionGif(
     color,
     'teleport',
     [...teleport.frames, ...teleportTail],
     [...teleport.delays, ...teleportTail.map(() => 100)],
   );
 
-  const battlePose = await readVioletGifFrames(color, 'battle-pose.gif');
-  const axePose = await normalizeVioletActionFrame(defeatedAndAxe[1].input);
-  await writeVioletActionGif(
-    color,
-    'battle-pose',
-    [...battlePose.frames, axePose],
-    [...battlePose.delays, 120],
-  );
-
   const charged = await Promise.all(
-    chargeFrames.map((frame) => normalizeVioletActionFrame(frame.input, true)),
+    chargeFrames.map((frame) => normalizeMaleActionFrame(frame.input, true)),
   );
-  await writeVioletActionGif(color, 'charge', charged, charged.map(() => 100));
+  await writeMaleActionGif(color, 'charge', charged, charged.map(() => 100));
 
   const idle = await Promise.all(
-    idleFrames.map((frame) => normalizeVioletActionFrame(frame.input)),
+    idleFrames.map((frame) => normalizeMaleActionFrame(frame.input)),
   );
-  await writeVioletActionGif(color, 'idle', idle, idle.map(() => 140));
+  await writeMaleActionGif(color, 'idle', idle, idle.map(() => 140));
+}
+
+/** Completa la secuencia de derrota e invocación del hacha del Axem Naranja. */
+async function buildMaleOrangeExtraGifs(color) {
+  const defeatedAndAxe = await extractMaleStripFrames(color, 'group-16', 2);
+  await buildMaleGroup16Sequence(color, defeatedAndAxe);
 }
 
 /**
@@ -1042,6 +1060,7 @@ async function buildGender(gender) {
       await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop);
       await buildMaleActionGifs(color, sequenceIndex);
       if (color === 'violet') await buildMaleVioletExtraGifs(color);
+      else await buildMaleOrangeExtraGifs(color);
       baseSource = run.frames[0];
     } else {
       const pinkReference = SOURCE('sprites', 'references', 'axem-pink');

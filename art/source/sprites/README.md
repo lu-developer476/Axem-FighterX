@@ -47,6 +47,10 @@ Estrategia de filas: proyección de píxeles → tiras → cuadros. Los grupos s
 
 La clasificación de las secuencias para el masculino naranja es: `group-01` + `group-02` (`idle`); `group-03`, `group-04` y `group-05` (`punch-01`, `punch-02` y `punch-03`, cada uno independiente); `group-09` → `group-08` → `group-07` → `group-06` (`battle-pose`); `group-10` (`run`); `group-11` (`dash`); `group-12` (`jump`); `group-13` (fotogramas 1–2 para `hit` y 4–6 para `hurt`); y `group-14` (`teleport`).
 
+### Grupo 16 — derrota e invocación del hacha
+
+La secuencia complementaria `group-16.png` contiene dos cuadros alineados: el primero se exporta como `defeated.png` y se pre-carga para mostrar la pose de derrota cuando un Ranger masculino entra en KO; el segundo se añade al final de `battle-pose.gif`, cerrando la animación con el hacha invocada y el personaje listo para combatir. El generador produce ambos resultados para Orange y Violet.
+
 ### group-01 — `idle`
 
 Región `[3, 4, 226, 45]` · 7 cuadros

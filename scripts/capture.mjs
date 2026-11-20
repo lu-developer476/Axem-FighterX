@@ -76,7 +76,7 @@ await tap('Escape');
 
 // Recorre los cuatro escenarios con diferentes formatos de combate.
 const stageShots = [
-  '06-cinematica-ruinas',
+  '06-cinematica-ruinas-masculino',
   '07-cinematica-volcan',
   '08-cinematica-bosque',
   '09-cinematica-santuario',
@@ -91,11 +91,10 @@ for (let index = 0; index < stageShots.length; index++) {
   const combatModeIndex = index % 3;
   for (let down = 0; down < combatModeIndex; down++) await tap('ArrowDown');
   await tap('Enter'); // Formato → modal de personajes
-  if (index === 0) await shot('13-modal-jugador-vs-ia');
+  if (index === 0) await shot('27-modal-jugador-vs-ia');
   await tap('Enter'); // Elegir personaje; el rival recibe el otro ranger
   if (index === 0) {
-    await tap('ArrowDown');
-    await tap('Enter'); // Probar que J2 puede elegir el lado derecho
+    await tap('Enter'); // MASCULINO: primera opción del selector de género
   }
   await tap('ArrowDown');
   await tap('ArrowDown');
@@ -148,7 +147,7 @@ for (let line = 0; line < 7; line++) {
   await wait(70);
 }
 await wait(500);
-await shot('13-combate-ruinas');
+await shot('28-combate-ruinas');
 
 // La pausa debe detener el combate y mostrar los controles solo cuando se solicitan.
 await tap('p');

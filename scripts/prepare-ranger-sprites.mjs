@@ -315,10 +315,11 @@ async function harmonizeFemalePalette(inputBuffer) {
   }
 
   // Algunas fuentes tienen motas rosadas de baja fidelidad dibujadas sobre el sprite.
-  // Tras recolorear el traje, se sustituyen solo esos píxeles residuales por el color
-  // dominante de sus vecinos inmediatos para no dejar marcas rosas sobre la nueva paleta.
+  // Se identifican como pequeños componentes y se rellenan con el color dominante
+  // del borde, evitando agujeros transparentes y conservando el pixel-art.
   const original = new Uint8ClampedArray(pixels);
-  const isResidualPink = (offset) => {
+  const isResidualPink = (index) => {
+    const offset = index * 4;
     if (original[offset + 3] < 16) return false;
     const [hue, saturation, lightness] = rgbToHsl(
       original[offset],
@@ -329,36 +330,76 @@ async function harmonizeFemalePalette(inputBuffer) {
       ((hue >= 300 && hue <= 360) || hue <= 8);
   };
 
-  for (let y = 0; y < info.height; y += 1) {
-    for (let x = 0; x < info.width; x += 1) {
-      const offset = (y * info.width + x) * 4;
-      if (!isResidualPink(offset)) continue;
+  const totalPixels = info.width * info.height;
+  const visited = new Uint8Array(totalPixels);
+  const queue = new Uint32Array(totalPixels);
 
-      const neighbors = new Map();
+  for (let startIndex = 0; startIndex < totalPixels; startIndex += 1) {
+    if (visited[startIndex] || !isResidualPink(startIndex)) continue;
+
+    let head = 0;
+    let tail = 0;
+    visited[startIndex] = 1;
+    queue[tail++] = startIndex;
+
+    while (head < tail) {
+      const index = queue[head++];
+      const x = index % info.width;
+      const y = Math.floor(index / info.width);
+
       for (let dy = -1; dy <= 1; dy += 1) {
         for (let dx = -1; dx <= 1; dx += 1) {
           if (dx === 0 && dy === 0) continue;
           const nx = x + dx;
           const ny = y + dy;
           if (nx < 0 || nx >= info.width || ny < 0 || ny >= info.height) continue;
-          const neighborOffset = (ny * info.width + nx) * 4;
-          if (original[neighborOffset + 3] < 16 || isResidualPink(neighborOffset)) continue;
-          const key = (original[neighborOffset] << 16) |
-            (original[neighborOffset + 1] << 8) |
-            original[neighborOffset + 2];
-          neighbors.set(key, (neighbors.get(key) ?? 0) + 1);
+          const next = ny * info.width + nx;
+          if (visited[next] || !isResidualPink(next)) continue;
+          visited[next] = 1;
+          queue[tail++] = next;
         }
       }
+    }
 
-      let replacementColor = null;
-      let highestCount = 0;
-      for (const [key, count] of neighbors) {
-        if (count > highestCount) {
-          highestCount = count;
-          replacementColor = key;
+    // Las áreas grandes son efectos intencionales, no motas sobre el personaje.
+    if (tail > 180) continue;
+
+    const borderColors = new Map();
+    for (let position = 0; position < tail; position += 1) {
+      const index = queue[position];
+      const x = index % info.width;
+      const y = Math.floor(index / info.width);
+
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || nx >= info.width || ny < 0 || ny >= info.height) continue;
+          const neighbor = ny * info.width + nx;
+          if (isResidualPink(neighbor)) continue;
+          const offset = neighbor * 4;
+          if (original[offset + 3] < 16) continue;
+          const key = (original[offset] << 16) |
+            (original[offset + 1] << 8) |
+            original[offset + 2];
+          borderColors.set(key, (borderColors.get(key) ?? 0) + 1);
         }
       }
-      if (replacementColor === null) continue;
+    }
+
+    let replacementColor = null;
+    let highestCount = 0;
+    for (const [key, count] of borderColors) {
+      if (count > highestCount) {
+        highestCount = count;
+        replacementColor = key;
+      }
+    }
+    if (replacementColor === null) continue;
+
+    for (let position = 0; position < tail; position += 1) {
+      const offset = queue[position] * 4;
       pixels[offset] = (replacementColor >> 16) & 255;
       pixels[offset + 1] = (replacementColor >> 8) & 255;
       pixels[offset + 2] = replacementColor & 255;

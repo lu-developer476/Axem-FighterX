@@ -1,5 +1,6 @@
 import { animationKey } from '../../infrastructure/assets/characterAnimationData.js';
 import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
+import { spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
 import { flashOnlyPose, poseFor } from './proceduralPoses.js';
 
 /**
@@ -22,6 +23,11 @@ export class FighterAnimator {
     this.anims = anims;
     this.state = null;
     this.usingSheet = false;
+  }
+
+  /** Dirección nativa del recurso visual activo (las hojas de acción tienen su propia orientación). */
+  get spriteFacing() {
+    return this.usingSheet && this.gender === 'male' ? 1 : spriteFacingFor(this.rangerId, this.gender);
   }
 
   /** @param {import('../../domain/entities/Fighter.js').Fighter} fighter */

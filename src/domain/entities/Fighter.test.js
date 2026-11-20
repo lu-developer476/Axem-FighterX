@@ -41,6 +41,18 @@ describe('Fighter: movimiento y orientación', () => {
     expect(fighter.position.y).toBeCloseTo(232);
   });
 
+  it('caminar por el terreno y volar son movimientos independientes', () => {
+    const fighter = make();
+    const speed = fighter.currentMoveSpeed;
+    fighter.update({ ...idle, x: 1, z: 1 }, 500);
+    expect(fighter.position.x).toBeCloseTo(100 + speed * 0.5);
+    expect(fighter.position.z).toBeCloseTo(speed * 0.5);
+    expect(fighter.state).toBe(FighterState.WALK);
+    fighter.update({ ...idle, z: 1 }, 500);
+    expect(fighter.position.x).toBeCloseTo(100 + speed * 0.5);
+    expect(fighter.position.z).toBeCloseTo(speed);
+    expect(fighter.state).toBe(FighterState.IDLE);
+  });
   it('asciende por encima del suelo y desciende hasta aterrizar sin atravesarlo', () => {
     const fighter = make();
     fighter.update({ ...idle, z: 1 }, 500);

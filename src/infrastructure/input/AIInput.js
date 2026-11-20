@@ -28,7 +28,8 @@ export class AIInput {
     const dz = targetAltitude - (fighter.position.z ?? 0);
 
     const x = distanceX > fighter.stats.attackReach + 12 ? Math.sign(dx) : 0;
-    const y = 0;
+    const dy = opponent.position.y - fighter.position.y;
+    const y = Math.abs(dy) > 8 ? Math.sign(dy) : 0;
     const z = Math.abs(dz) > 9 ? Math.sign(dz) : 0;
     const aligned = distanceX <= fighter.stats.attackReach + 8
       && Math.abs(opponent.position.z - fighter.position.z) <= 42;

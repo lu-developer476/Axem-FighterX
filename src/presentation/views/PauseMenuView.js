@@ -28,7 +28,7 @@ export class PauseMenuView {
   showControls() {
     this.showingControls = true;
     this.#beginPanel('TUTORIAL', 250);
-    this.#addText('JUGADOR 1 · A/D MOVER · Q ASCENDER · E DESCENDER', 76, {
+    this.#addText('JUGADOR 1 · A/D/W/S TERRENO · Q/E VUELO', 76, {
       fontSize: '9px',
       color: '#d9a9ff',
     });
@@ -36,7 +36,7 @@ export class PauseMenuView {
       fontSize: '9px',
       color: '#d9a9ff',
     });
-    this.#addText('JUGADOR 2 · ←/→ MOVER · ↑ ASCENDER · ↓ DESCENDER', 116, {
+    this.#addText('JUGADOR 2 · ←/→/I/O TERRENO · ↑/↓ VUELO', 116, {
       fontSize: '9px',
       color: '#ffc17e',
     });
@@ -87,9 +87,7 @@ export class PauseMenuView {
     const shade = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, GAME_WIDTH, 270, 0x000000, 1)
       .setInteractive();
     const panel = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth, height, 0x000000, 1)
-      .setStrokeStyle(2, 0xd3a66d, 1);
-    const inset = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth - 8, height - 8, 0x000000, 0)
-      .setStrokeStyle(1, 0x59466e, 1);
+      .setStrokeStyle(1, 0xd3a66d, 0.9);
     const heading = this.scene.add.text(GAME_WIDTH / 2, panelY - height / 2 + 23, title, {
       fontFamily: 'monospace',
       fontSize: '12px',
@@ -98,7 +96,7 @@ export class PauseMenuView {
       align: 'center',
     }).setOrigin(0.5);
 
-    this.container.add([shade, panel, inset, heading]);
+    this.container.add([shade, panel, heading]);
   }
 
   #addText(value, y, style = {}) {
@@ -148,7 +146,7 @@ export class PauseMenuView {
     this.buttons.forEach((button, index) => {
       const selected = index === this.selectedIndex;
       button.box.setFillStyle(selected ? 0x60405a : 0x241b3c, 0.98);
-      button.box.setStrokeStyle(selected ? 1.5 : 1, selected ? 0xf0bd72 : 0x62527e, 1);
+      button.box.setStrokeStyle(selected ? 1 : 0.75, selected ? 0xf0bd72 : 0x62527e, 0.9);
       button.label.setColor(selected ? '#fff0c9' : '#d9cde9');
       button.label.setText(button.title);
     });

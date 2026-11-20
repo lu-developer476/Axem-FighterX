@@ -275,19 +275,19 @@ export class Fighter {
     const moveX = Number.isFinite(intent.x) ? intent.x : 0;
     const moveY = Number.isFinite(intent.y) ? intent.y : 0;
     const moveZ = Number.isFinite(intent.z) ? intent.z : 0;
-    const magnitude = Math.hypot(moveX, moveY, moveZ) || 1;
-
-    if (moveX !== 0 || moveY !== 0 || moveZ !== 0) {
-      if (moveX !== 0) this.facing = Math.sign(moveX);
-      // Normaliza los tres ejes para mantener una velocidad constante en diagonal.
-      this.position.x += (moveX / magnitude) * this.currentMoveSpeed * seconds;
-      this.position.y += (moveY / magnitude) * this.currentMoveSpeed * seconds;
-      this.position.z += (moveZ / magnitude) * this.currentMoveSpeed * seconds;
-      this.#clampAltitude();
-      this.#setState(FighterState.WALK);
-    } else {
-      this.#setState(FighterState.IDLE);
+    const groundMagnitude = Math.hypot(moveX, moveY) || 1;
+    const movingOnGround = moveX !== 0 || moveY !== 0;
+    // X/Y pertenecen al plano transitable del escenario; Z solo modifica la altura.
+    if (moveX !== 0) this.facing = Math.sign(moveX);
+    if (movingOnGround) {
+      this.position.x += (moveX / groundMagnitude) * this.currentMoveSpeed * seconds;
+      this.position.y += (moveY / groundMagnitude) * this.currentMoveSpeed * seconds;
     }
+    if (moveZ !== 0) {
+      this.position.z += moveZ * this.currentMoveSpeed * seconds;
+      this.#clampAltitude();
+    }
+    this.#setState(movingOnGround ? FighterState.WALK : FighterState.IDLE);
   }
 
   #updateAttack(seconds) {

@@ -7,7 +7,8 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const sourceDirectory = path.join(projectRoot, 'art', 'source');
 const publicDirectory = path.join(projectRoot, 'public');
 
-const iconSize = 48;
+// 32×32 es el tamaño compacto más compatible para pestañas; el GIF se genera desde el original.
+const iconSize = 32;
 const transparentBackground = { r: 0, g: 0, b: 0, alpha: 0 };
 const resizeOptions = {
   width: iconSize,

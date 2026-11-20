@@ -111,14 +111,12 @@ export class MenuScene extends Phaser.Scene {
     this.panelWidth = width;
 
     const panel = this.add.rectangle(GAME_WIDTH / 2, 171, width, height, 0x000000, 0.98)
-      .setStrokeStyle(2, 0x7b699b, 0.95);
-    const inset = this.add.rectangle(GAME_WIDTH / 2, 171, width - 8, height - 8, 0x000000, 0)
-      .setStrokeStyle(1, 0x3e315e, 0.9);
-    this.ui.add([panel, inset]);
+      .setStrokeStyle(1, 0x7b699b, 0.85);
+    this.ui.add(panel);
 
     if (title) {
       this.#addText(title, GAME_WIDTH / 2, 122, {
-        fontSize: '14px',
+        fontSize: this.page === 'credits' ? '8px' : '12px',
         color: '#f7cf83',
         letterSpacing: 1,
       });
@@ -134,10 +132,8 @@ export class MenuScene extends Phaser.Scene {
     const veil = this.add.rectangle(GAME_WIDTH / 2, 135, GAME_WIDTH, 270, 0x000000, 0.92)
       .setInteractive();
     const panel = this.add.rectangle(GAME_WIDTH / 2, 178, this.panelWidth, 180, 0x000000, 0.99)
-      .setStrokeStyle(2, 0xd3a66d, 1);
-    const inset = this.add.rectangle(GAME_WIDTH / 2, 178, this.panelWidth - 8, 172, 0x000000, 0)
-      .setStrokeStyle(1, 0x59466e, 1);
-    this.ui.add([veil, panel, inset]);
+      .setStrokeStyle(1, 0xd3a66d, 0.9);
+    this.ui.add([veil, panel]);
 
     this.#addText('SELECCIONAR PERSONAJE', GAME_WIDTH / 2, 105, {
       fontSize: '12px',
@@ -301,7 +297,7 @@ export class MenuScene extends Phaser.Scene {
   #refreshButtons() {
     this.buttons.forEach((button, index) => {
       const selected = index === this.selectedIndex;
-      button.box.setStrokeStyle(selected ? 1.5 : 1, selected ? 0xf0bd72 : 0x62527e, 1);
+      button.box.setStrokeStyle(selected ? 1 : 0.75, selected ? 0xf0bd72 : 0x62527e, 0.9);
 
       if (button.color) {
         button.box.setFillStyle(0x241b3c, 0.98);

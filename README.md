@@ -101,17 +101,27 @@ Las referencias masculinas usan los materiales disponibles de Axem Red:
 el generador conserva las imágenes de referencia disponibles y añade todas las páginas de esos GIF,
 sin atribuir a la copia parcial las filas que ya no existen.
 
-Las referencias femeninas usan la spritesheet y las poses de
-`art/source/sprites/references/axem-pink/`. El proceso genera cuatro atlas PNG con fondo transparente:
+Las referencias femeninas usan la spritesheet maestra y las poses de
+`art/source/sprites/references/axem-pink/`. La hoja maestra conserva la distribución original
+completa; las poses individuales se agregan como material complementario. El proceso genera cuatro atlas PNG con fondo transparente:
 `results/male/axem-ranger-violet.png`, `results/male/axem-ranger-orange.png`,
 `results/female/axem-ranger-violet.png` y `results/female/axem-ranger-orange.png`.
 La transformación conserva la luminosidad y saturación de los píxeles y cambia solo la familia
 cromática del traje. Las referencias originales no se sobrescriben.
 
 `npm run prepare:sprites` ejecuta el generador. También se ejecuta automáticamente antes de
-`npm test`, `npm run dev` y `npm run build`. Los cuatro retratos de combate se escriben en
-`public/generated/`; Phaser los carga por la combinación de color y género. Los atlas completos
+`npm test`, `npm run dev` y `npm run build`. Los cuatro retratos de combate y las dos poses masculinas laterales del menú se escriben en
+`public/generated/`; Phaser los carga por color y género. Las poses del menú se extraen primero de
+`art/source/sprites/results/male/preview (1).png`: el generador detecta dos figuras separadas,
+recorta cada pose y aplica la paleta Violet u Orange. Si esa referencia no contiene dos figuras
+recortables, usa las hojas originales de Axem Red como respaldo. Los atlas completos
 quedan en `art/source/sprites/results/` como hojas de referencia.
+
+La dirección original de cada variante se declara por género en
+`characterAnimationData.js`. Combate, cinemática y menú aplican `shouldFlip()` con esa misma
+referencia, de modo que cada personaje mira hacia el lado al que se desplaza. El menú principal
+agrupa a las femeninas sobre el panel INICIO y ubica a los masculinos en los laterales con dos
+poses distintas extraídas de la referencia masculina.
 
 El juego conserva sus estados de combate (reposo, movimiento, ataque, daño, teletransporte y KO)
 con las poses procedurales actuales. Las hojas archivadas reúnen el material de referencia para

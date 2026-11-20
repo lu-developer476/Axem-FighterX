@@ -1,6 +1,6 @@
 import { ARENA } from '../../domain/arena/arena.js';
 import { FighterState } from '../../domain/entities/FighterState.js';
-import { characterAnimationData } from '../../infrastructure/assets/characterAnimationData.js';
+import { characterAnimationData, spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { FighterAnimator } from '../animation/FighterAnimator.js';
 import { shouldFlip } from './orientation.js';
@@ -36,7 +36,7 @@ export class FighterView {
 
     const baseScale = data.displayHeight / sprite.frame.realHeight;
     sprite.setScale(baseScale * pose.scaleX, baseScale * pose.scaleY);
-    sprite.setFlipX(shouldFlip(facing, data.spriteFacing));
+    sprite.setFlipX(shouldFlip(facing, spriteFacingFor(fighter.id, fighter.gender)));
     sprite.setAngle(pose.angle * facing);
     sprite.setAlpha(pose.alpha);
     sprite.setPosition(

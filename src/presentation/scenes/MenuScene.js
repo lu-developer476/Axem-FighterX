@@ -4,9 +4,11 @@ import { STAGES } from '../../domain/arena/stageCatalog.js';
 import { RANGER_IDS, rangerCatalog } from '../../domain/rangers/rangerCatalog.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import {
-  DEFAULT_RANGER_GENDER,
   spriteKeyFor,
+  menuSpriteKeyFor,
 } from '../../infrastructure/assets/assetManifest.js';
+import { spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
+import { shouldFlip } from '../views/orientation.js';
 
 const PORTFOLIO_URL = 'https://lu-dev-portfolio.vercel.app/';
 const RANGER_ORDER = [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE];
@@ -68,22 +70,9 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0, 0)
       .setDepth(-100);
 
-    this.add.image(78, 231, spriteKeyFor(RANGER_IDS.VIOLET, DEFAULT_RANGER_GENDER))
-      .setOrigin(0.5, 1)
-      .setScale(1)
-      .setFlipX(true)
-      .setAlpha(0.9)
-      .setDepth(-20);
-
-    this.add.image(GAME_WIDTH - 78, 231, spriteKeyFor(RANGER_IDS.ORANGE, DEFAULT_RANGER_GENDER))
-      .setOrigin(0.5, 1)
-      .setScale(1)
-      .setAlpha(0.9)
-      .setDepth(-20);
-
     const titleTexture = this.textures.get('title-art').getSourceImage();
-    const titleScale = Math.min(0.8, 290 / titleTexture.width, 62 / titleTexture.height);
-    this.add.image(GAME_WIDTH / 2, 55, 'title-art')
+    const titleScale = Math.min(0.72, 250 / titleTexture.width, 50 / titleTexture.height);
+    this.add.image(GAME_WIDTH / 2, 39, 'title-art')
       .setScale(titleScale)
       .setAlpha(0.98)
       .setDepth(-1);
@@ -91,6 +80,59 @@ export class MenuScene extends Phaser.Scene {
     this.add.rectangle(GAME_WIDTH / 2, 250, GAME_WIDTH, 40, 0x000000, 0.94)
       .setStrokeStyle(1, 0x55456e, 0.9)
       .setDepth(-1);
+  }
+
+
+  /** Cuatro rangers alrededor del panel; todos usan la misma regla de orientación. */
+  #addHomeRangerArt() {
+    const addRanger = ({ texture, rangerId, gender, x, y, scale, facing }) => {
+      const sprite = this.add.image(x, y, texture)
+        .setOrigin(0.5, 1)
+        .setScale(scale)
+        .setFlipX(shouldFlip(facing, spriteFacingFor(rangerId, gender)))
+        .setAlpha(0.98);
+      this.ui.add(sprite);
+    };
+
+    // Las femeninas quedan juntas, centradas sobre el recuadro de INICIO.
+    addRanger({
+      texture: spriteKeyFor(RANGER_IDS.VIOLET, 'female'),
+      rangerId: RANGER_IDS.VIOLET,
+      gender: 'female',
+      x: 226,
+      y: 109,
+      scale: 0.44,
+      facing: 1,
+    });
+    addRanger({
+      texture: spriteKeyFor(RANGER_IDS.ORANGE, 'female'),
+      rangerId: RANGER_IDS.ORANGE,
+      gender: 'female',
+      x: 254,
+      y: 109,
+      scale: 0.44,
+      facing: -1,
+    });
+
+    // Los masculinos ocupan laterales opuestos con poses distintas.
+    addRanger({
+      texture: menuSpriteKeyFor(RANGER_IDS.VIOLET),
+      rangerId: RANGER_IDS.VIOLET,
+      gender: 'male',
+      x: 34,
+      y: 239,
+      scale: 0.72,
+      facing: 1,
+    });
+    addRanger({
+      texture: menuSpriteKeyFor(RANGER_IDS.ORANGE),
+      rangerId: RANGER_IDS.ORANGE,
+      gender: 'male',
+      x: GAME_WIDTH - 34,
+      y: 239,
+      scale: 0.72,
+      facing: -1,
+    });
   }
 
   #beginPage(title, width = 282, height = 120) {
@@ -368,6 +410,7 @@ export class MenuScene extends Phaser.Scene {
     this.matchSetup = {};
     this.characterSlot = 0;
     this.#beginPage('INICIO');
+    this.#addHomeRangerArt();
     this.#addButton('JUGAR', 160, () => this.#showVersusModes());
     this.#addButton('TUTORIALES', 184, () => this.#showControls());
     this.#addButton('CRÉDITOS', 208, () => this.#showCredits());

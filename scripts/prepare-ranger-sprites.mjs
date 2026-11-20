@@ -14,6 +14,12 @@ const PALETTE_SOURCES = Object.freeze({
   female: [[300, 360]],
 });
 const BASE_SIZE = Object.freeze({ width: 53, height: 83 });
+const MENU_SIZE = Object.freeze({ width: 78, height: 112 });
+const MENU_POSE_REFERENCES = Object.freeze([
+  SOURCE('sprites', 'results', 'male', 'preview (1).png'),
+  SOURCE('sprites', 'references', 'axem-red', 'preview (2).png'),
+  SOURCE('sprites', 'references', 'axem-red', 'preview.png'),
+]);
 const TRANSPARENT = Object.freeze({ r: 0, g: 0, b: 0, alpha: 0 });
 
 function hueMatches(hue, ranges) {
@@ -156,6 +162,160 @@ async function makeVerticalAtlas(parts) {
   }).composite(layers).png().toBuffer();
 }
 
+/**
+ * Localiza figuras separadas dentro de una referencia ya procesada.
+ * Descarta motas, efectos y piezas demasiado pequeñas para ser una pose.
+ */
+function findSpriteComponents(data, width, height) {
+  const total = width * height;
+  const visited = new Uint8Array(total);
+  const queue = new Uint32Array(total);
+  const components = [];
+
+  for (let start = 0; start < total; start += 1) {
+    if (visited[start] || data[start * 4 + 3] < 24) continue;
+
+    let head = 0;
+    let tail = 0;
+    let minX = width;
+    let minY = height;
+    let maxX = 0;
+    let maxY = 0;
+    visited[start] = 1;
+    queue[tail++] = start;
+
+    while (head < tail) {
+      const index = queue[head++];
+      const x = index % width;
+      const y = Math.floor(index / width);
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+
+      if (x > 0) {
+        const next = index - 1;
+        if (!visited[next] && data[next * 4 + 3] >= 24) {
+          visited[next] = 1;
+          queue[tail++] = next;
+        }
+      }
+      if (x + 1 < width) {
+        const next = index + 1;
+        if (!visited[next] && data[next * 4 + 3] >= 24) {
+          visited[next] = 1;
+          queue[tail++] = next;
+        }
+      }
+      if (y > 0) {
+        const next = index - width;
+        if (!visited[next] && data[next * 4 + 3] >= 24) {
+          visited[next] = 1;
+          queue[tail++] = next;
+        }
+      }
+      if (y + 1 < height) {
+        const next = index + width;
+        if (!visited[next] && data[next * 4 + 3] >= 24) {
+          visited[next] = 1;
+          queue[tail++] = next;
+        }
+      }
+    }
+
+    const boundsWidth = maxX - minX + 1;
+    const boundsHeight = maxY - minY + 1;
+    const density = tail / (boundsWidth * boundsHeight);
+    if (
+      tail >= 180 &&
+      boundsWidth >= 12 &&
+      boundsHeight >= 28 &&
+      boundsHeight / boundsWidth >= 0.48 &&
+      density >= 0.035
+    ) {
+      components.push({
+        left: minX,
+        top: minY,
+        width: boundsWidth,
+        height: boundsHeight,
+        area: tail,
+      });
+    }
+  }
+
+  components.sort((a, b) => b.area - a.area);
+  const selected = [];
+  for (const component of components) {
+    const overlaps = selected.some((other) =>
+      component.left < other.left + other.width &&
+      component.left + component.width > other.left &&
+      component.top < other.top + other.height &&
+      component.top + component.height > other.top
+    );
+    if (!overlaps) selected.push(component);
+    if (selected.length === 2) break;
+  }
+  return selected;
+}
+
+/** Prioriza las dos poses independientes de la referencia masculina indicada. */
+async function findMenuPoseReference() {
+  for (const file of MENU_POSE_REFERENCES) {
+    try {
+      const { data, info } = await sharp(file)
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
+      removeSpriteBackground({
+        data: pixels,
+        width: info.width,
+        height: info.height,
+      }, {
+        tolerance: 48,
+        minBorderCoverage: 0.025,
+      });
+
+      const poses = findSpriteComponents(pixels, info.width, info.height);
+      if (poses.length >= 2) return { file, poses, width: info.width, height: info.height };
+    } catch (error) {
+      if (file === MENU_POSE_REFERENCES[MENU_POSE_REFERENCES.length - 1]) throw error;
+    }
+  }
+
+  throw new Error(
+    'No se encontraron dos poses masculinas separadas en las referencias de Axem Red.'
+  );
+}
+
+/** Genera dos retratos laterales distintos desde las poses de Axem Red. */
+async function buildMenuMalePoses() {
+  const { file, poses, width: sourceWidth, height: sourceHeight } = await findMenuPoseReference();
+  await fs.mkdir(GENERATED, { recursive: true });
+
+  for (const [index, [color, targetHue]] of Object.entries(COLORS).entries()) {
+    const recolored = await recolorAndKey(file, 'male', targetHue);
+    const bounds = poses[index];
+    const padding = 4;
+    const left = Math.max(0, Math.min(sourceWidth - 1, bounds.left - padding));
+    const top = Math.max(0, Math.min(sourceHeight - 1, bounds.top - padding));
+    const width = Math.max(1, Math.min(sourceWidth - left, bounds.width + padding * 2));
+    const height = Math.max(1, Math.min(sourceHeight - top, bounds.height + padding * 2));
+    const output = await sharp(recolored)
+      .extract({ left, top, width, height })
+      .resize(MENU_SIZE.width, MENU_SIZE.height, {
+        fit: 'contain',
+        kernel: 'nearest',
+        background: TRANSPARENT,
+      })
+      .png()
+      .toBuffer();
+    const outputPath = path.join(GENERATED, 'menu-ranger-male-' + color + '.png');
+    await fs.writeFile(outputPath, output);
+    console.log('Generada pose lateral ' + path.relative(ROOT, outputPath));
+  }
+}
+
 async function buildGender(gender) {
   for (const [color, targetHue] of Object.entries(COLORS)) {
     const parts = [];
@@ -214,6 +374,7 @@ async function main() {
   await fs.mkdir(GENERATED, { recursive: true });
   await buildGender('male');
   await buildGender('female');
+  await buildMenuMalePoses();
 }
 
 main().catch((error) => {

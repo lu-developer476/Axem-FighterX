@@ -10,3 +10,9 @@ export const spriteUrlFor = (rangerId, gender = DEFAULT_RANGER_GENDER) =>
 /** Reservado para futuras hojas de animación registradas por estado. */
 export const sheetTextureKey = (rangerId, state, gender = DEFAULT_RANGER_GENDER) =>
   'motion-' + gender + '-' + rangerId + '-' + state;
+
+/** Texturas laterales del menú: poses masculinas extraídas de Axem Red. */
+export const menuSpriteKeyFor = (rangerId) => 'menu-ranger-male-' + rangerId;
+
+export const menuSpriteUrlFor = (rangerId) =>
+  import.meta.env.BASE_URL + 'generated/menu-ranger-male-' + rangerId + '.png';

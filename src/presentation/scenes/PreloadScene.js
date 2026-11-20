@@ -5,6 +5,8 @@ import {
   RANGER_GENDERS,
   spriteKeyFor,
   spriteUrlFor,
+  menuSpriteKeyFor,
+  menuSpriteUrlFor,
 } from '../../infrastructure/assets/assetManifest.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { createStageTextures } from '../../infrastructure/graphics/StageTextureFactory.js';
@@ -77,6 +79,9 @@ export class PreloadScene extends Phaser.Scene {
           spriteUrlFor(rangerId, gender),
         );
       }
+    }
+    for (const rangerId of [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE]) {
+      this.load.image(menuSpriteKeyFor(rangerId), menuSpriteUrlFor(rangerId));
     }
     this.load.image('title-art', titleArtUrl);
   }

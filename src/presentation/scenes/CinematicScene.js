@@ -7,6 +7,8 @@ import {
   DEFAULT_RANGER_GENDER,
   spriteKeyFor,
 } from '../../infrastructure/assets/assetManifest.js';
+import { spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
+import { shouldFlip } from '../views/orientation.js';
 
 const SPEAKERS = {
   violet: { name: 'AXEM VIOLET', color: '#d9a9ff', tint: 0xe6d4ff },
@@ -56,12 +58,13 @@ export class CinematicScene extends Phaser.Scene {
       .image(106, 232, spriteKeyFor(left.id, left.gender))
       .setOrigin(0.5, 1)
       .setScale(1)
-      .setFlipX(true)
+      .setFlipX(shouldFlip(1, spriteFacingFor(left.id, left.gender)))
       .setDepth(100);
     this.rightSprite = this.add
       .image(374, 232, spriteKeyFor(right.id, right.gender))
       .setOrigin(0.5, 1)
       .setScale(1)
+      .setFlipX(shouldFlip(-1, spriteFacingFor(right.id, right.gender)))
       .setDepth(100);
 
     // La conversación queda siempre anclada a una franja inferior.

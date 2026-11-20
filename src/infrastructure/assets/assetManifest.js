@@ -1,26 +1,11 @@
-import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
+import movesAtlasUrl from '../../../art/source/sprites/axem-rangers-moves-sprites.png?url';
 
-// Vite resuelve estos PNG al compilar y les asigna su URL final.
-// Los sprites del juego viven en art/source (sin fondo): art/source/axem-ranger-<ranger>.png
-const poseFiles = import.meta.glob('/art/source/axem-ranger-*.png', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-});
+/** Única fuente gráfica de movimiento para todos los Axem Rangers X. */
+export const AXEM_MOVES_ATLAS_KEY = 'axem-moves-atlas';
+export const AXEM_MOVES_ATLAS_URL = movesAtlasUrl;
 
-/** Pose base de cada ranger: la imagen que se usa mientras no haya hojas de sprites. */
-export const spriteManifest = Object.freeze(
-  Object.fromEntries(
-    Object.values(RANGER_IDS).map((rangerId) => {
-      const url = poseFiles[`/art/source/axem-ranger-${rangerId}.png`];
-      if (!url) throw new Error(`Falta el sprite art/source/axem-ranger-${rangerId}.png`);
-      return [rangerId, url];
-    }),
-  ),
-);
+/** Textura de pose base generada desde el primer cuadro del atlas compartido. */
+export const spriteKeyFor = (rangerId) => 'ranger-' + rangerId;
 
-/** Textura final (ya reducida a la resolución del juego) de la pose base. */
-export const spriteKeyFor = (rangerId) => `ranger-${rangerId}`;
-
-/** Textura con la imagen original en alta resolución, usada solo durante la carga. */
-export const sourceKeyFor = (rangerId) => `source-ranger-${rangerId}`;
+/** Hoja de cuadros de un estado, coloreada para el personaje indicado. */
+export const sheetTextureKey = (rangerId, state) => 'motion-' + rangerId + '-' + state;

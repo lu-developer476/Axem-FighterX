@@ -1,16 +1,16 @@
 import { ARENA } from '../../domain/arena/arena.js';
 import { FighterState } from '../../domain/entities/FighterState.js';
 import { characterAnimationData } from '../../infrastructure/assets/characterAnimationData.js';
+import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { FighterAnimator } from '../animation/FighterAnimator.js';
 import { shouldFlip } from './orientation.js';
 
-/** Los pies pueden tocar el suelo; al flotar se elevan según la amplitud del luchador. */
 const FLOAT_HEIGHT = 0;
 const FIGHTER_DEPTH = 100;
 
 /**
  * Vista de Phaser de un Fighter: sprite + sombra. Solo dibuja; no decide reglas.
- * La orientación sale del dominio (hacia donde el jugador se movió por última vez).
+ * Ambos personajes reciben la misma definición visual y las mismas animaciones.
  */
 export class FighterView {
   /**
@@ -20,10 +20,11 @@ export class FighterView {
   constructor(scene, fighter) {
     this.fighter = fighter;
     this.data = characterAnimationData[fighter.id];
+    const fallbackTexture = spriteKeyFor(fighter.id);
 
     this.shadow = scene.add.ellipse(0, ARENA.groundY, 44, 8, 0x000000, 0.4).setDepth(FIGHTER_DEPTH - 1);
-    this.sprite = scene.add.sprite(0, 0, this.data.fallbackTexture).setOrigin(0.5, 1);
-    this.animator = new FighterAnimator(this.sprite, fighter.id, this.data.fallbackTexture, scene.anims);
+    this.sprite = scene.add.sprite(0, 0, fallbackTexture).setOrigin(0.5, 1);
+    this.animator = new FighterAnimator(this.sprite, fighter.id, fallbackTexture, scene.anims);
     this.sync();
   }
 
@@ -44,8 +45,6 @@ export class FighterView {
     );
     if (pose.flash) sprite.setTintFill(0xffffff);
     else sprite.clearTint();
-    // La elevación también modifica el orden de dibujo: un luchador en el aire
-    // no queda artificialmente delante de otro que ocupa el mismo carril del suelo.
     const laneDepth = FIGHTER_DEPTH + Math.round(fighter.position.y - fighter.position.z * 0.35);
     sprite.setDepth(laneDepth + (fighter.state === FighterState.ATTACK ? 2 : 0));
 

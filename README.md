@@ -87,40 +87,41 @@ Para cambiar el control (gamepad, táctil), basta con otro adaptador que impleme
 - **Objetos de combate:** aparecen cada tanto y duran 9 segundos. El corazón recupera 25 puntos de vida; Furia aumenta el daño un 50%; Rapidez aumenta el movimiento un 40%; Escudo reduce el daño recibido un 50%. Los tres potenciadores duran 6,5 segundos y su estado se muestra debajo de cada barra de vida.
 - **Recolección:** ambos jugadores pueden recoger objetos al tocarlos. El corazón no se consume si el luchador ya tiene toda la vida; los potenciadores se pueden renovar al recoger otro del mismo tipo.
 
-## Animaciones por datos
+## Animaciones compartidas y paletas automáticas
 
-Cada personaje declara sus estados en `src/infrastructure/assets/characterAnimationData.js`:
-`idle`, `walk`, `attack`, `hurt`, `teleport` y `ko`.
+Violet y Orange utilizan una única fuente de cuadros: `art/source/sprites/axem-rangers-moves-sprites.png`.
+El atlas se recorta en memoria con coordenadas comunes para `idle`, `walk` y `attack`.
+La carga genera una textura por paleta a partir de esos mismos píxeles; no existen dos
+dibujos ni colecciones de animaciones mantenidas manualmente.
 
-Mientras no haya hojas de sprites, el juego usa la pose actual con animaciones por código
-(respiración, inclinación al caminar, hachazo, destello al recibir daño, desvanecimiento al teletransportarse, caída en KO).
+El procesamiento elimina el fondo teal conectado a los bordes y cambia únicamente
+el tono HSL de la familia roja del personaje. La luminosidad, saturación, transparencia
+y el resto de colores se conservan. Violet usa 273° y Orange 22°.
 
-**Para sumar sprites reales:**
+Los estados `hurt`, `teleport` y `ko` aplican las mismas poses procedurales a la
+misma pose base derivada del primer cuadro de `idle`. El ataque usa el mismo orden
+de diez cuadros para ambos personajes y respeta la duración definida por el dominio.
 
-1. Subí una tira horizontal por estado a `art/source/<ranger>/<estado>.png`,
-   por ejemplo `art/source/violet/walk.png`.
-   Todos los cuadros del mismo tamaño, en una sola fila, con fondo transparente, los pies tocando
-   el borde inferior y el personaje mirando hacia el mismo lado que la pose base (hoy, la izquierda;
-   si tus tiras miran al otro lado, cambiá `spriteFacing` en `characterAnimationData.js`).
-2. En `characterAnimationData.js`, ajustá `frames` a la cantidad real de cuadros de esa tira
-   (y `frameRate` en `idle` y `walk`).
-3. Listo: el archivo se detecta al compilar (reiniciá el servidor de desarrollo si estaba abierto). Las animaciones de ataque, golpe, teletransporte y KO
-   se ajustan solas a la duración de la acción. Si el servidor de desarrollo está abierto, reinicialo.
+La distribución irregular del atlas, las coordenadas, grupos auxiliares y exclusiones
+visuales están documentadas en `art/source/sprites/README.md`. Para sumar otra variante
+cromática, agregá solo su paleta en `sharedAxemAtlas.js`.
 
-Los efectos (explosión, chispa de impacto, polvo, onda de KO, teletransporte, tajo del hacha, curación)
-se generan por código en `infrastructure/graphics/FxTextureFactory.js`, junto con los iconos de los objetos.
+Los efectos independientes (explosión, chispa de impacto, polvo, onda de KO,
+teletransporte, tajo del hacha y curación) continúan generándose por código en
+`infrastructure/graphics/FxTextureFactory.js`.
 
 ## Arte
 
-- `art/source/`: **los sprites del juego**. Vite los importa directamente y, al preparar las texturas base y las hojas de animación, el juego elimina automáticamente el fondo plano o casi uniforme conectado a los bordes y conserva el canal alfa. Así los fondos de las imágenes no se dibujan en el menú, las fichas de selección, las cinemáticas ni el combate. Para mejores resultados, subí PNG con fondo uniforme y el personaje separado de los bordes:
-  no hay copias en `public/`. La pose base de cada personaje es `art/source/axem-ranger-<ranger>.png`.
-  Los PNG de `axem-ranger-violet.png` y `axem-ranger-orange.png` ya incluyen **transparencia real
-  (canal alfa) en todo el fondo**, incluido el que quedaba dentro del contorno del personaje
-  (la tela lavanda del violeta y la túnica crema del naranja); solo se conserva el brillo de la bota.
-  `rangerSprites.test.js` verifica que el contorno siga transparente y que no queden píxeles del
-  color de fondo en el interior.
-- Esos PNG miden 2617×4096 pero son pixel art de 53×83 ampliado. Al cargar, el juego toma un píxel por
-  celda de esa cuadrícula (`nativeSize` en `characterAnimationData.js`) y los dibuja 1:1.
+- `art/source/sprites/axem-rangers-moves-sprites.png` es la fuente única de poses y movimientos
+  que se cargan en combate. Se conserva sin cambios; las texturas de Violet y Orange se crean
+  dinámicamente en memoria.
+- `art/source/axem-ranger-violet.png`, `art/source/axem-ranger-orange.png`,
+  `art/source/sprites/axem-rangers-fullview.png` y las demás referencias originales siguen
+  intactas. Las poses individuales ya no se cargan como dibujos de combate independientes.
+- La ficha de selección, el menú y la cinemática usan también la primera pose generada desde el
+  mismo atlas y la paleta correspondiente.
+- `rangerSprites.test.js` sigue verificando que los PNG originales de referencia mantengan
+  su transparencia; no se sobrescriben ni se usan como fuente de animación.
 - Los escenarios se dibujan por código en `infrastructure/graphics/StageTextureFactory.js` y
   `StageThemeFactory.js`, con paletas limitadas y texturas sin suavizado.
 

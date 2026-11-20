@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
-import { sourceKeyFor, spriteKeyFor, spriteManifest } from '../../infrastructure/assets/assetManifest.js';
-import { characterAnimationData } from '../../infrastructure/assets/characterAnimationData.js';
-import { listAvailableSheets } from '../../infrastructure/assets/sheetCatalog.js';
+import {
+  AXEM_MOVES_ATLAS_KEY,
+  AXEM_MOVES_ATLAS_URL,
+} from '../../infrastructure/assets/assetManifest.js';
+import { prepareSharedAxemTextures } from '../../infrastructure/graphics/prepareSharedAxemTextures.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
-import { prepareSpriteTexture } from '../../infrastructure/graphics/prepareSpriteTexture.js';
 import { createStageTextures } from '../../infrastructure/graphics/StageTextureFactory.js';
 import { createAdditionalStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';
 import { registerCharacterAnimations } from '../animation/registerCharacterAnimations.js';
@@ -67,10 +68,8 @@ export class PreloadScene extends Phaser.Scene {
       status.setText('NO SE PUDO CARGAR ' + file.key.toUpperCase());
     });
 
-    for (const [rangerId, url] of Object.entries(spriteManifest)) {
-      this.load.image(sourceKeyFor(rangerId), url);
-    }
-    for (const sheet of listAvailableSheets()) this.load.image(sheet.key, sheet.url);
+    // Un único atlas contiene los cuadros originales de ambos personajes.
+    this.load.image(AXEM_MOVES_ATLAS_KEY, AXEM_MOVES_ATLAS_URL);
     this.load.image('title-art', titleArtUrl);
   }
 
@@ -78,25 +77,9 @@ export class PreloadScene extends Phaser.Scene {
     createStageTextures(this);
     createAdditionalStageTextures(this);
     createFxTextures(this);
-    this.#prepareBasePoses();
+    prepareSharedAxemTextures(this);
     registerFxAnimations(this);
     registerCharacterAnimations(this);
     this.scene.start('MenuScene');
-  }
-
-  /** Reduce los PNG de art/source a la resolución del juego (pixel art nítido). */
-  #prepareBasePoses() {
-    for (const [rangerId, data] of Object.entries(characterAnimationData)) {
-      const prepared = prepareSpriteTexture(this, {
-        sourceKey: sourceKeyFor(rangerId),
-        targetKey: spriteKeyFor(rangerId),
-        nativeSize: data.pose?.nativeSize,
-        targetHeight: data.displayHeight,
-      });
-      if (prepared) continue;
-      const source = this.textures.get(sourceKeyFor(rangerId)).getSourceImage();
-      this.textures.addImage(spriteKeyFor(rangerId), source);
-      this.textures.remove(sourceKeyFor(rangerId));
-    }
   }
 }

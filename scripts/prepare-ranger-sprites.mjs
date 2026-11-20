@@ -342,6 +342,27 @@ async function recolorAndKey(input, gender, targetHue, toleranceOverride) {
       pixels[offset + 1],
       pixels[offset + 2],
     );
+
+    // En el resultado canónico Orange el manto es rojo; la fuente Pink lo trae marrón.
+    // Se cambia solo el marrón medio del manto antes de recolorear la armadura rosa.
+    if (
+      gender === 'female' &&
+      targetHue === COLORS.orange &&
+      hue >= 14 && hue <= 32 &&
+      saturation >= 0.24 && saturation <= 0.62 &&
+      lightness >= 0.30 && lightness <= 0.58
+    ) {
+      const [red, green, blue] = hslToRgb(
+        1,
+        Math.min(0.96, saturation * 1.55),
+        Math.max(0.22, lightness * 0.9),
+      );
+      pixels[offset] = red;
+      pixels[offset + 1] = green;
+      pixels[offset + 2] = blue;
+      continue;
+    }
+
     if (saturation < 0.28 || !hueMatches(hue, PALETTE_SOURCES[gender])) continue;
     const [red, green, blue] = hslToRgb(targetHue, saturation, lightness);
     pixels[offset] = red;

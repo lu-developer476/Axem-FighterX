@@ -135,11 +135,11 @@ function isMaleHairPixel(red, green, blue) {
 }
 
 /**
- * Añade mechas californianas grises únicamente en los extremos del cabello
- * dorado que nace junto a la cabeza. El resto del cabello conserva su paleta
- * original; la distancia geodésica desde la raíz evita teñir el casco o la armadura.
+ * Conserva el cabello negro y aplica mechas californianas marrones solo en las
+ * puntas de los mechones dorados identificados junto a la cabeza. La distancia
+ * geodésica desde la raíz evita teñir casco, armadura, armas o efectos.
  */
-function tintMaleHairTips(pixels, width, height, targetHue) {
+function shadeMaleHairWithBrownTips(pixels, width, height, targetHue) {
   const total = width * height;
   const visited = new Uint8Array(total);
   const nearHead = new Uint8Array(total);
@@ -233,9 +233,10 @@ function tintMaleHairTips(pixels, width, height, targetHue) {
   const hairQueue = new Uint32Array(total);
   const distanceQueue = new Uint32Array(total);
   const distances = new Int16Array(total);
-  let tintedPixels = 0;
+  let blackPixels = 0;
+  let brownPixels = 0;
 
-  // Agrupa mechones completos sin alterar sus píxeles hasta conocer sus raíces y puntas.
+  // Agrupa mechones completos antes de cambiar sus tonos.
   for (let start = 0; start < total; start += 1) {
     const offset = start * 4;
     if (
@@ -271,7 +272,7 @@ function tintMaleHairTips(pixels, width, height, targetHue) {
       }
     }
 
-    // Distancia por píxeles desde la raíz: los valores máximos corresponden a las puntas.
+    // La distancia por píxeles desde la raíz identifica los extremos reales del mechón.
     let distanceHead = 0;
     let distanceTail = 0;
     let maxDistance = 0;
@@ -299,8 +300,10 @@ function tintMaleHairTips(pixels, width, height, targetHue) {
           const next = ny * width + nx;
           if (distances[next] !== -1) continue;
           const nextOffset = next * 4;
-          if (pixels[nextOffset + 3] < 24 ||
-              !isMaleHairPixel(pixels[nextOffset], pixels[nextOffset + 1], pixels[nextOffset + 2])) continue;
+          if (
+            pixels[nextOffset + 3] < 24 ||
+            !isMaleHairPixel(pixels[nextOffset], pixels[nextOffset + 1], pixels[nextOffset + 2])
+          ) continue;
           distances[next] = nextDistance;
           maxDistance = Math.max(maxDistance, nextDistance);
           distanceQueue[distanceTail++] = next;
@@ -310,27 +313,42 @@ function tintMaleHairTips(pixels, width, height, targetHue) {
 
     if (maxDistance === 0) continue;
     const tipStart = Math.max(1, Math.floor(maxDistance * 0.58));
+
     for (let position = 0; position < tail; position += 1) {
       const index = hairQueue[position];
       const distance = distances[index];
-      if (distance < tipStart) continue;
-
       const offset = index * 4;
-      const [, , lightness] = rgbToHsl(pixels[offset], pixels[offset + 1], pixels[offset + 2]);
-      const progress = maxDistance === tipStart
-        ? 1
-        : (distance - tipStart) / (maxDistance - tipStart);
-      const silver = Math.max(105, Math.min(192,
-        Math.round(116 + progress * 62 + (lightness - 0.5) * 22),
-      ));
-      pixels[offset] = silver;
-      pixels[offset + 1] = silver;
-      pixels[offset + 2] = silver;
-      tintedPixels += 1;
+      const [, , lightness] = rgbToHsl(
+        pixels[offset],
+        pixels[offset + 1],
+        pixels[offset + 2],
+      );
+
+      if (distance >= tipStart) {
+        // El marrón se aclara gradualmente hacia el extremo de cada mechón.
+        const progress = maxDistance === tipStart
+          ? 1
+          : (distance - tipStart) / (maxDistance - tipStart);
+        const brownLightness = Math.max(0.20, Math.min(0.40,
+          0.23 + progress * 0.15 + (lightness - 0.5) * 0.06,
+        ));
+        const [red, green, blue] = hslToRgb(25, 0.48, brownLightness);
+        pixels[offset] = red;
+        pixels[offset + 1] = green;
+        pixels[offset + 2] = blue;
+        brownPixels += 1;
+      } else {
+        // Base negra con pequeñas variaciones de luminosidad para conservar el pixel-art.
+        const blackShade = Math.max(5, Math.min(29, Math.round(4 + lightness * 24)));
+        pixels[offset] = blackShade;
+        pixels[offset + 1] = blackShade;
+        pixels[offset + 2] = blackShade;
+        blackPixels += 1;
+      }
     }
   }
 
-  return tintedPixels;
+  return { blackPixels, brownPixels };
 }
 
 /**
@@ -512,8 +530,12 @@ async function recolorAndKey(input, gender, targetHue, toleranceOverride) {
   }
 
   if (gender === 'male') {
-    const hairPixels = tintMaleHairTips(pixels, info.width, info.height, targetHue);
-    if (hairPixels > 0) console.log('Mechas californianas grises: ' + hairPixels + ' píxeles');
+    const hair = shadeMaleHairWithBrownTips(pixels, info.width, info.height, targetHue);
+    console.log(
+      'Cabello negro con mechas marrones: ' +
+      hair.blackPixels + ' píxeles negros, ' +
+      hair.brownPixels + ' píxeles marrones',
+    );
   }
 
   return sharp(Buffer.from(pixels), {

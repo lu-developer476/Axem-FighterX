@@ -8,6 +8,8 @@ const generatedSpritePath = (gender, color) =>
   fileURLToPath(new URL(`../../../public/generated/ranger-${gender}-${color}.png`, import.meta.url));
 const resultAtlasPath = (gender, color) =>
   fileURLToPath(new URL(`../../../art/source/sprites/results/${gender}/axem-ranger-${color}.png`, import.meta.url));
+const maleSpritesheetPath = (color) =>
+  fileURLToPath(new URL(`../../../art/source/sprites/results/male/${color}/spritesheet.png`, import.meta.url));
 
 describe('Variantes de Axem Rangers', () => {
   for (const gender of GENDERS) {
@@ -30,6 +32,37 @@ describe('Variantes de Axem Rangers', () => {
     }
   }
   
+
+  for (const color of COLORS) {
+    it(`male/${color} conserva una base de cabello negra y puntas marrones`, async () => {
+      const { data, info } = await sharp(maleSpritesheetPath(color))
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      let darkPixels = 0;
+      let brownPixels = 0;
+
+      for (let offset = 0; offset < data.length; offset += 4) {
+        if (data[offset + 3] < 24) continue;
+        const red = data[offset];
+        const green = data[offset + 1];
+        const blue = data[offset + 2];
+        if (Math.max(red, green, blue) <= 32) darkPixels += 1;
+        if (
+          red >= 70 && red <= 185 &&
+          green >= 30 && green <= 125 &&
+          blue >= 12 && blue <= 90 &&
+          red > green * 1.28 &&
+          green > blue * 1.18
+        ) brownPixels += 1;
+      }
+
+      expect(info.width).toBeGreaterThan(0);
+      expect(darkPixels).toBeGreaterThan(100);
+      expect(brownPixels).toBeGreaterThan(50);
+    });
+  }
+
   for (const color of COLORS) {
     for (const action of ['run', 'bike', 'double-axe']) {
       it(`male/${color}/${action} conserva celdas de animación uniformes de 53×83 px`, async () => {

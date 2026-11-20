@@ -8,3 +8,6 @@ artifacts/
 # Generated from art/source by scripts/prepare-favicons.mjs
 /public/favicon.png
 /public/favicon.gif
+
+# Generated from art/source by scripts/prepare-ranger-sprites.mjs
+/public/generated/

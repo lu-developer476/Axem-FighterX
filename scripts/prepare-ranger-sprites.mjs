@@ -142,19 +142,26 @@ function isMaleHairPixel(red, green, blue) {
 function shadeMaleHairWithBrownTips(pixels, width, height, targetHue) {
   const total = width * height;
   const visited = new Uint8Array(total);
-  const nearHead = new Uint8Array(total);
   const componentQueue = new Uint32Array(total);
-  const radius = 12;
+  const distanceQueue = new Uint32Array(total);
+  const distances = new Int32Array(total);
+  let blackPixels = 0;
+  let brownPixels = 0;
 
-  // Detecta cada figura visible y localiza la zona superior de su color principal.
+  // El cabello rubio puede quedar separado del casco/cara en algunas poses.
+  // Por eso no se exige proximidad a la máscara de cabeza: se recorren todos
+  // los componentes del tono rubio de la hoja, pose por pose.
   for (let start = 0; start < total; start += 1) {
     const startOffset = start * 4;
-    if (visited[start] || pixels[startOffset + 3] < 24) continue;
+    if (
+      visited[start] ||
+      pixels[startOffset + 3] < 24 ||
+      !isMaleHairPixel(pixels[startOffset], pixels[startOffset + 1], pixels[startOffset + 2])
+    ) continue;
 
     let head = 0;
     let tail = 0;
     let minY = height;
-    let maxY = 0;
     visited[start] = 1;
     componentQueue[tail++] = start;
 
@@ -163,7 +170,6 @@ function shadeMaleHairWithBrownTips(pixels, width, height, targetHue) {
       const x = index % width;
       const y = Math.floor(index / width);
       minY = Math.min(minY, y);
-      maxY = Math.max(maxY, y);
 
       for (let dy = -1; dy <= 1; dy += 1) {
         for (let dx = -1; dx <= 1; dx += 1) {
@@ -173,113 +179,24 @@ function shadeMaleHairWithBrownTips(pixels, width, height, targetHue) {
           if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
           const next = ny * width + nx;
           if (visited[next] || pixels[next * 4 + 3] < 24) continue;
+          const nextOffset = next * 4;
+          if (!isMaleHairPixel(pixels[nextOffset], pixels[nextOffset + 1], pixels[nextOffset + 2])) continue;
           visited[next] = 1;
           componentQueue[tail++] = next;
         }
       }
     }
 
-    if (tail < 6 || maxY - minY < 3) continue;
-
-    let firstBodyY = height;
-    let lastBodyY = -1;
-    for (let position = 0; position < tail; position += 1) {
-      const index = componentQueue[position];
-      const offset = index * 4;
-      const [hue, saturation] = rgbToHsl(
-        pixels[offset],
-        pixels[offset + 1],
-        pixels[offset + 2],
-      );
-      if (saturation < 0.2 || hueDistance(hue, targetHue) > 20) continue;
-      const y = Math.floor(index / width);
-      firstBodyY = Math.min(firstBodyY, y);
-      lastBodyY = Math.max(lastBodyY, y);
-    }
-
-    if (lastBodyY < 0) continue;
-    const headBandEnd = Math.min(
-      maxY,
-      firstBodyY + Math.max(6, Math.round((lastBodyY - firstBodyY) * 0.58)),
-    );
-
-    for (let position = 0; position < tail; position += 1) {
-      const index = componentQueue[position];
-      const x = index % width;
-      const y = Math.floor(index / width);
-      if (y > headBandEnd) continue;
-
-      const offset = index * 4;
-      const [hue, saturation] = rgbToHsl(
-        pixels[offset],
-        pixels[offset + 1],
-        pixels[offset + 2],
-      );
-      if (saturation < 0.2 || hueDistance(hue, targetHue) > 20) continue;
-
-      for (let dy = -radius; dy <= radius; dy += 1) {
-        for (let dx = -radius; dx <= radius; dx += 1) {
-          const nx = x + dx;
-          const ny = y + dy;
-          if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-            nearHead[ny * width + nx] = 1;
-          }
-        }
-      }
-    }
-  }
-
-  const visitedHair = new Uint8Array(total);
-  const hairQueue = new Uint32Array(total);
-  const distanceQueue = new Uint32Array(total);
-  const distances = new Int16Array(total);
-  let blackPixels = 0;
-  let brownPixels = 0;
-
-  // Agrupa mechones completos antes de cambiar sus tonos.
-  for (let start = 0; start < total; start += 1) {
-    const offset = start * 4;
-    if (
-      visitedHair[start] ||
-      nearHead[start] === 0 ||
-      pixels[offset + 3] < 24 ||
-      !isMaleHairPixel(pixels[offset], pixels[offset + 1], pixels[offset + 2])
-    ) continue;
-
-    let head = 0;
-    let tail = 0;
-    visitedHair[start] = 1;
-    hairQueue[tail++] = start;
-
-    while (head < tail) {
-      const index = hairQueue[head++];
-      const x = index % width;
-      const y = Math.floor(index / width);
-
-      for (let dy = -1; dy <= 1; dy += 1) {
-        for (let dx = -1; dx <= 1; dx += 1) {
-          if (dx === 0 && dy === 0) continue;
-          const nx = x + dx;
-          const ny = y + dy;
-          if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
-          const next = ny * width + nx;
-          if (visitedHair[next] || pixels[next * 4 + 3] < 24) continue;
-          const nextOffset = next * 4;
-          if (!isMaleHairPixel(pixels[nextOffset], pixels[nextOffset + 1], pixels[nextOffset + 2])) continue;
-          visitedHair[next] = 1;
-          hairQueue[tail++] = next;
-        }
-      }
-    }
-
-    // La distancia por píxeles desde la raíz identifica los extremos reales del mechón.
+    // La raíz es el extremo superior del mechón. Desde allí se calcula
+    // distancia geodésica para que las puntas, incluso en mechones separados,
+    // reciban el marrón y no quede ningún parche rubio en poses aisladas.
     let distanceHead = 0;
     let distanceTail = 0;
     let maxDistance = 0;
     for (let position = 0; position < tail; position += 1) {
-      const index = hairQueue[position];
+      const index = componentQueue[position];
       distances[index] = -1;
-      if (nearHead[index]) {
+      if (Math.floor(index / width) === minY) {
         distances[index] = 0;
         distanceQueue[distanceTail++] = index;
       }
@@ -311,11 +228,9 @@ function shadeMaleHairWithBrownTips(pixels, width, height, targetHue) {
       }
     }
 
-    if (maxDistance === 0) continue;
     const tipStart = Math.max(1, Math.floor(maxDistance * 0.58));
-
     for (let position = 0; position < tail; position += 1) {
-      const index = hairQueue[position];
+      const index = componentQueue[position];
       const distance = distances[index];
       const offset = index * 4;
       const [, , lightness] = rgbToHsl(
@@ -324,8 +239,7 @@ function shadeMaleHairWithBrownTips(pixels, width, height, targetHue) {
         pixels[offset + 2],
       );
 
-      if (distance >= tipStart) {
-        // El marrón se aclara gradualmente hacia el extremo de cada mechón.
+      if (maxDistance > 0 && distance >= tipStart) {
         const progress = maxDistance === tipStart
           ? 1
           : (distance - tipStart) / (maxDistance - tipStart);
@@ -338,7 +252,6 @@ function shadeMaleHairWithBrownTips(pixels, width, height, targetHue) {
         pixels[offset + 2] = blue;
         brownPixels += 1;
       } else {
-        // Base negra con pequeñas variaciones de luminosidad para conservar el pixel-art.
         const blackShade = Math.max(5, Math.min(29, Math.round(4 + lightness * 24)));
         pixels[offset] = blackShade;
         pixels[offset + 1] = blackShade;

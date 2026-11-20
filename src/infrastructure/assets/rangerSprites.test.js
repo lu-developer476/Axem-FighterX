@@ -78,9 +78,33 @@ describe('Variantes de Axem Rangers', () => {
         ) brownPixels += 1;
       }
 
+      let residualBlondePixels = 0;
+      for (let offset = 0; offset < data.length; offset += 4) {
+        if (data[offset + 3] < 24) continue;
+        const red = data[offset] / 255;
+        const green = data[offset + 1] / 255;
+        const blue = data[offset + 2] / 255;
+        const max = Math.max(red, green, blue);
+        const min = Math.min(red, green, blue);
+        const delta = max - min;
+        const lightness = (max + min) / 2;
+        let hue = 0;
+        let saturation = 0;
+        if (delta !== 0) {
+          saturation = lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+          if (max === red) hue = ((green - blue) / delta + (green < blue ? 6 : 0)) * 60;
+          else if (max === green) hue = ((blue - red) / delta + 2) * 60;
+          else hue = ((red - green) / delta + 4) * 60;
+        }
+        if (hue >= 24 && hue <= 80 && saturation >= 0.2 && lightness >= 0.12) {
+          residualBlondePixels += 1;
+        }
+      }
+
       expect(info.width).toBeGreaterThan(0);
       expect(darkPixels).toBeGreaterThan(100);
       expect(brownPixels).toBeGreaterThan(50);
+      expect(residualBlondePixels).toBeLessThan(80);
     });
   }
 

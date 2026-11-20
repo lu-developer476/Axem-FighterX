@@ -29,7 +29,7 @@ results/
       spritesheet.png  pose.png  battle-pose.png  levitate.png
 ```
 
-Los retratos laterales del menú se generan directamente desde la referencia original `references/axem-red/axem-red-spritesheet.png`; no se necesita una vista previa duplicada en `results/male/`.
+Los retratos laterales del menú se generan directamente desde la referencia original `references/axem-red/axem-red-spritesheet.png`; no se necesita una vista previa duplicada en `results/male/`. El recoloreado del cabello recorre cada componente rubio de todas las poses, incluso cuando está separado del casco o la cara, para evitar que queden mechones originales sin procesar.
 
 Los seis GIF masculinos de acción (`run.gif`, `bike.gif` y `double-axe.gif` de Violet y Orange) usan lienzos de **150 × 100 px**, como las referencias de bicicleta y doble hacha. La fuente de `run.gif` mide 101 × 100 px y se centra sobre transparencia para igualar el tamaño sin estirar ni deformar el personaje.
 

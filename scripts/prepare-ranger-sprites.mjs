@@ -16,6 +16,7 @@ const PALETTE_SOURCES = Object.freeze({
   female: [[300, 360]],
 });
 const BASE_SIZE = Object.freeze({ width: 53, height: 83 });
+const ACTION_GIF_SIZE = Object.freeze({ width: 150, height: 100 });
 const MENU_SIZE = Object.freeze({ width: 78, height: 112 });
 const MENU_POSE_REFERENCES = Object.freeze([
   SOURCE('sprites', 'results', 'male', 'preview (1).png'),
@@ -578,6 +579,7 @@ async function makeHorizontalStrip(frames, width, height) {
  * weapons and effects may extend beyond the body and must not shrink the ranger.
  */
 async function writeMaleAnimation(frames, rangerId, action, frameDelays, loop = 0) {
+  // La tira PNG de combate conserva sus celdas compactas de 53×83 px.
   const normalized = await Promise.all(frames.map((frame) =>
     sharp(frame)
       .resize(BASE_SIZE.width, BASE_SIZE.height, {
@@ -593,11 +595,25 @@ async function writeMaleAnimation(frames, rangerId, action, frameDelays, loop = 
   await fs.writeFile(outputPath, strip);
   console.log('Generada animación ' + path.relative(ROOT, outputPath));
 
+  // Los GIF de referencia usan lienzo 150×100. La corrida original mide 101×100:
+  // se centra sobre transparencia para llegar al mismo tamaño sin deformar el sprite.
+  const gifFrames = await Promise.all(frames.map((frame) =>
+    sharp(frame)
+      .resize(ACTION_GIF_SIZE.width, ACTION_GIF_SIZE.height, {
+        fit: 'contain',
+        position: 'centre',
+        kernel: 'nearest',
+        background: TRANSPARENT,
+      })
+      .png()
+      .toBuffer()
+  ));
+
   // Sharp une los PNG de cada cuadro como una animación real, conservando la transparencia.
-  const delays = Array.isArray(frameDelays) && frameDelays.length === normalized.length
+  const delays = Array.isArray(frameDelays) && frameDelays.length === gifFrames.length
     ? frameDelays
     : 80;
-  const gif = await sharp(normalized, { join: { animated: true } })
+  const gif = await sharp(gifFrames, { join: { animated: true } })
     .gif({
       loop,
       delay: delays,

@@ -32,6 +32,8 @@ results/
 
 `results/male/preview (1).png` es una vista previa anterior que el generador usa como fuente de las poses laterales del menú.
 
+Los seis GIF masculinos de acción (`run.gif`, `bike.gif` y `double-axe.gif` de Violet y Orange) usan lienzos de **150 × 100 px**, como las referencias de bicicleta y doble hacha. La fuente de `run.gif` mide 101 × 100 px y se centra sobre transparencia para igualar el tamaño sin estirar ni deformar el personaje.
+
 ## El atlas no es una cuadrícula
 
 Ninguna hoja tiene filas de cuadros uniformes: cambian la cantidad, el ancho y la separación (por ejemplo, la distancia entre inicios de cuadro de `group-01` va de 27 a 38 px) y ambas traen ruido de compresión en el fondo. Por eso no se usa un paso fijo: cada cuadro tiene su propio rectángulo `[x, y, ancho, alto]`, ajustado a los píxeles del personaje.

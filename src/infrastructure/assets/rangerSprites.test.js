@@ -73,12 +73,12 @@ describe('Variantes de Axem Rangers', () => {
         expect(metadata.width % 53).toBe(0);
         expect(metadata.pages ?? 1).toBe(1);
       });
-      it(`male/${color}/${action} genera un GIF animado con transparencia`, async () => {
+      it(`male/${color}/${action} genera un GIF animado de 150×100 px con transparencia`, async () => {
         const gifPath = fileURLToPath(new URL(`../../../art/source/sprites/results/male/${color}/${action}.gif`, import.meta.url));
         const metadata = await sharp(gifPath, { animated: true }).metadata();
         expect(metadata.format).toBe('gif');
-        expect(metadata.width).toBe(53);
-        expect(metadata.pageHeight).toBe(83);
+        expect(metadata.width).toBe(150);
+        expect(metadata.pageHeight).toBe(100);
         expect(metadata.pages).toBeGreaterThan(1);
         expect(metadata.hasAlpha).toBe(true);
       });

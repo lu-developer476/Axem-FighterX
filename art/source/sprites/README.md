@@ -21,7 +21,8 @@ results/
     axem-ranger-{violet,orange}.png     todas las referencias masculinas apiladas
     {violet,orange}/
       spritesheet.png                     hoja de Axem Red, mismas coordenadas que la referencia
-      run.png  bike.png  double-axe.png   secuencias de los GIF
+      run.png  bike.png  double-axe.png   tiras PNG para el pipeline del juego
+      run.gif  bike.gif  double-axe.gif   GIF animados con mechas grises y fondo transparente
       sequences/group-01.png … group-14.png + index.json
   female/
     axem-ranger-{violet,orange}.png     todas las referencias femeninas apiladas

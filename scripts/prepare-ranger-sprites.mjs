@@ -135,11 +135,11 @@ function isMaleHairPixel(red, green, blue) {
 }
 
 /**
- * Oscurece únicamente las regiones doradas conectadas visualmente con la
- * parte superior de la cabeza. No modifica el resto de los amarillos del traje,
- * armas ni efectos.
+ * Añade mechas californianas grises únicamente en los extremos del cabello
+ * dorado que nace junto a la cabeza. El resto del cabello conserva su paleta
+ * original; la distancia geodésica desde la raíz evita teñir el casco o la armadura.
  */
-function blackenMaleHair(pixels, width, height, targetHue) {
+function tintMaleHairTips(pixels, width, height, targetHue) {
   const total = width * height;
   const visited = new Uint8Array(total);
   const nearHead = new Uint8Array(total);
@@ -229,11 +229,13 @@ function blackenMaleHair(pixels, width, height, targetHue) {
     }
   }
 
-  // Cada grupo dorado que toca esa zona se considera cabello y conserva sus sombras.
   const visitedHair = new Uint8Array(total);
   const hairQueue = new Uint32Array(total);
-  let recoloredPixels = 0;
+  const distanceQueue = new Uint32Array(total);
+  const distances = new Int16Array(total);
+  let tintedPixels = 0;
 
+  // Agrupa mechones completos sin alterar sus píxeles hasta conocer sus raíces y puntas.
   for (let start = 0; start < total; start += 1) {
     const offset = start * 4;
     if (
@@ -250,20 +252,9 @@ function blackenMaleHair(pixels, width, height, targetHue) {
 
     while (head < tail) {
       const index = hairQueue[head++];
-      const pixelOffset = index * 4;
-      const [, , lightness] = rgbToHsl(
-        pixels[pixelOffset],
-        pixels[pixelOffset + 1],
-        pixels[pixelOffset + 2],
-      );
-      const shade = Math.max(6, Math.min(36, Math.round(4 + lightness * 34)));
-      pixels[pixelOffset] = shade;
-      pixels[pixelOffset + 1] = shade;
-      pixels[pixelOffset + 2] = shade;
-      recoloredPixels += 1;
-
       const x = index % width;
       const y = Math.floor(index / width);
+
       for (let dy = -1; dy <= 1; dy += 1) {
         for (let dx = -1; dx <= 1; dx += 1) {
           if (dx === 0 && dy === 0) continue;
@@ -279,11 +270,68 @@ function blackenMaleHair(pixels, width, height, targetHue) {
         }
       }
     }
+
+    // Distancia por píxeles desde la raíz: los valores máximos corresponden a las puntas.
+    let distanceHead = 0;
+    let distanceTail = 0;
+    let maxDistance = 0;
+    for (let position = 0; position < tail; position += 1) {
+      const index = hairQueue[position];
+      distances[index] = -1;
+      if (nearHead[index]) {
+        distances[index] = 0;
+        distanceQueue[distanceTail++] = index;
+      }
+    }
+
+    while (distanceHead < distanceTail) {
+      const index = distanceQueue[distanceHead++];
+      const nextDistance = distances[index] + 1;
+      const x = index % width;
+      const y = Math.floor(index / width);
+
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+          const next = ny * width + nx;
+          if (distances[next] !== -1) continue;
+          const nextOffset = next * 4;
+          if (pixels[nextOffset + 3] < 24 ||
+              !isMaleHairPixel(pixels[nextOffset], pixels[nextOffset + 1], pixels[nextOffset + 2])) continue;
+          distances[next] = nextDistance;
+          maxDistance = Math.max(maxDistance, nextDistance);
+          distanceQueue[distanceTail++] = next;
+        }
+      }
+    }
+
+    if (maxDistance === 0) continue;
+    const tipStart = Math.max(1, Math.floor(maxDistance * 0.58));
+    for (let position = 0; position < tail; position += 1) {
+      const index = hairQueue[position];
+      const distance = distances[index];
+      if (distance < tipStart) continue;
+
+      const offset = index * 4;
+      const [, , lightness] = rgbToHsl(pixels[offset], pixels[offset + 1], pixels[offset + 2]);
+      const progress = maxDistance === tipStart
+        ? 1
+        : (distance - tipStart) / (maxDistance - tipStart);
+      const silver = Math.max(105, Math.min(192,
+        Math.round(116 + progress * 62 + (lightness - 0.5) * 22),
+      ));
+      pixels[offset] = silver;
+      pixels[offset + 1] = silver;
+      pixels[offset + 2] = silver;
+      tintedPixels += 1;
+    }
   }
 
-  return recoloredPixels;
+  return tintedPixels;
 }
-
 
 /**
  * Los resultados femeninos canónicos usan un subtraje azul marino, no el
@@ -464,8 +512,8 @@ async function recolorAndKey(input, gender, targetHue, toleranceOverride) {
   }
 
   if (gender === 'male') {
-    const hairPixels = blackenMaleHair(pixels, info.width, info.height, targetHue);
-    if (hairPixels > 0) console.log('Cabello masculino negro: ' + hairPixels + ' píxeles');
+    const hairPixels = tintMaleHairTips(pixels, info.width, info.height, targetHue);
+    if (hairPixels > 0) console.log('Mechas californianas grises: ' + hairPixels + ' píxeles');
   }
 
   return sharp(Buffer.from(pixels), {
@@ -484,7 +532,7 @@ async function extractGifFrames(file, gender, targetHue) {
     frames.push(await recolorAndKey(frame, gender, targetHue));
   }
 
-  return { frames, width: metadata.width, height: pageHeight };
+  return { frames, width: metadata.width, height: pageHeight, delay: metadata.delay, loop: metadata.loop ?? 0 };
 }
 
 async function makeHorizontalStrip(frames, width, height) {
@@ -507,7 +555,7 @@ async function makeHorizontalStrip(frames, width, height) {
  * Every GIF frame uses one fixed 53×83 cell. Do not trim each frame:
  * weapons and effects may extend beyond the body and must not shrink the ranger.
  */
-async function writeMaleAnimation(frames, rangerId, action) {
+async function writeMaleAnimation(frames, rangerId, action, frameDelays, loop = 0) {
   const normalized = await Promise.all(frames.map((frame) =>
     sharp(frame)
       .resize(BASE_SIZE.width, BASE_SIZE.height, {
@@ -522,6 +570,22 @@ async function writeMaleAnimation(frames, rangerId, action) {
   const outputPath = path.join(GENERATED, 'axem-' + rangerId + '-' + action + '.png');
   await fs.writeFile(outputPath, strip);
   console.log('Generada animación ' + path.relative(ROOT, outputPath));
+
+  // Sharp une los PNG de cada cuadro como una animación real, conservando la transparencia.
+  const delays = Array.isArray(frameDelays) && frameDelays.length === normalized.length
+    ? frameDelays
+    : 80;
+  const gif = await sharp(normalized, { join: { animated: true } })
+    .gif({
+      loop,
+      delay: delays,
+      colours: 256,
+      dither: 0,
+      effort: 10,
+      keepDuplicateFrames: true,
+    })
+    .toBuffer();
+  await writeResult('male', rangerId, action + '.gif', gif);
 }
 async function makeVerticalAtlas(parts) {
   const metadata = await Promise.all(parts.map((input) => sharp(input).metadata()));
@@ -718,9 +782,9 @@ async function buildGender(gender) {
       await writeResult(gender, color, 'double-axe.png', parts[3]);
       const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
       await writeMaleSequences(color, parts[0], manifest.male.groups);
-      await writeMaleAnimation(run.frames, color, 'run');
-      await writeMaleAnimation(bike.frames, color, 'bike');
-      await writeMaleAnimation(doubleAxe.frames, color, 'double-axe');
+      await writeMaleAnimation(run.frames, color, 'run', run.delay, run.loop);
+      await writeMaleAnimation(bike.frames, color, 'bike', bike.delay, bike.loop);
+      await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop);
       baseSource = run.frames[0];
     } else {
       const pinkReference = SOURCE('sprites', 'references', 'axem-pink');

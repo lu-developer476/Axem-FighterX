@@ -157,3 +157,9 @@ Cada push a `main` ejecuta `.github/workflows/ci.yml`:
 3. Publicación jugable en GitHub Pages.
 
 Requiere **Settings → Pages → Source: GitHub Actions**. Para correr la captura en local: `npm run build && npm run preview` y, en otra terminal, `npm run capture`.
+
+## Movimiento y efectos visuales ampliados
+
+- **Dash:** J1 activa el impulso con `C`; J2 con `M`. Dura 180 ms y tiene un enfriamiento de 900 ms. No concede invulnerabilidad ni altera el daño.
+- **Escenarios:** las siete arenas combinan capas con parallax y objetos ambientales animados: espíritus en las ruinas, brasas volcánicas, luciérnagas y hojas en el bosque, sellos del santuario, descargas en la avenida y semillas impulsadas por el viento en la llanura.
+- **Efectos contextuales:** polvo y estela al hacer dash, nube de aterrizaje, chispas eléctricas, ráfagas de impacto, explosiones, humo, escombros y partículas que cambian según el material de cada escenario.

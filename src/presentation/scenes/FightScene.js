@@ -86,7 +86,7 @@ export class FightScene extends Phaser.Scene {
     });
     this.pickupView = new PickupView(this);
     this.views = this.match.fighters.map((fighter) => new FighterView(this, fighter));
-    this.fx = new FxDirector(this);
+    this.fx = new FxDirector(this, this.stageDefinition.id);
     this.paused = false;
     this.pauseKey = this.input.keyboard.addKey('P');
     this.restartKey = this.input.keyboard.addKey('R');

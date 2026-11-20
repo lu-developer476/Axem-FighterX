@@ -1,6 +1,7 @@
 export const FighterState = Object.freeze({
   IDLE: 'idle',
   WALK: 'walk',
+  DASH: 'dash',
   ATTACK: 'attack',
   HURT: 'hurt',
   TELEPORT: 'teleport',
@@ -17,6 +18,9 @@ export const TIMINGS = Object.freeze({
   teleportCooldownMs: 1400,
   koAnimationMs: 700,
 });
+
+/** Impulso breve: no concede invulnerabilidad ni aumenta el daño. */
+export const DASH = Object.freeze({ durationMs: 180, cooldownMs: 900, speedMultiplier: 3.1 });
 
 export const attackTotalMs = () => {
   const { windupMs, activeMs, recoveryMs } = TIMINGS.attack;

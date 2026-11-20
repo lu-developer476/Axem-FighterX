@@ -12,6 +12,7 @@ export const KEYMAPS = Object.freeze({
     descend: 'E',
     attack: 'F',
     teleport: 'G',
+    dash: 'C',
   }),
   PLAYER_2: Object.freeze({
     left: 'LEFT',
@@ -22,5 +23,6 @@ export const KEYMAPS = Object.freeze({
     descend: 'DOWN',
     attack: 'L',
     teleport: 'K',
+    dash: 'M',
   }),
 });

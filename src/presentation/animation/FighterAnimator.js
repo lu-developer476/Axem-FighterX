@@ -32,15 +32,16 @@ export class FighterAnimator {
 
   /** @param {import('../../domain/entities/Fighter.js').Fighter} fighter */
   update(fighter) {
-    const animationState = fighter.state === 'walk' && this.gender === 'male'
+    const visualState = fighter.state === 'dash' ? 'walk' : fighter.state;
+    const animationState = visualState === 'walk' && this.gender === 'male'
       ? 'walk'
-      : fighter.state === 'attack' && this.gender === 'male' && fighter.position.z > 0
+      : visualState === 'attack' && this.gender === 'male' && fighter.position.z > 0
         ? 'air-attack'
-        : fighter.state;
+        : visualState;
     if (animationState !== this.state) this.#enter(animationState);
     return this.usingSheet
       ? flashOnlyPose(fighter.state, fighter.stateTimeMs)
-      : poseFor(fighter.state, fighter.stateTimeMs, fighter.elapsedMs);
+      : poseFor(visualState, fighter.stateTimeMs, fighter.elapsedMs);
   }
 
   #enter(state) {

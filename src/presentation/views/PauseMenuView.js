@@ -33,7 +33,7 @@ export class PauseMenuView {
       fontSize: '9px',
       color: '#d9a9ff',
     });
-    this.#addText('JUGADOR 1 · ATAQUE F · TELETRANSPORTE G', 96, {
+    this.#addText('JUGADOR 1 · ATAQUE F · TELETRANSPORTE G · DASH C', 96, {
       fontSize: '9px',
       color: '#d9a9ff',
     });
@@ -41,7 +41,7 @@ export class PauseMenuView {
       fontSize: '9px',
       color: '#ffc17e',
     });
-    this.#addText('JUGADOR 2 · ATAQUE L · TELETRANSPORTE K', 136, {
+    this.#addText('JUGADOR 2 · ATAQUE L · TELETRANSPORTE K · DASH M', 136, {
       fontSize: '9px',
       color: '#ffc17e',
     });

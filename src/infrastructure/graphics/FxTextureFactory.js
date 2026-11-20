@@ -10,6 +10,11 @@ export const FX = Object.freeze({
   explosion: { frames: 8, size: 48, frameRate: 22 },
   spark: { frames: 5, size: 32, frameRate: 30 },
   dust: { frames: 5, size: 24, frameRate: 14 },
+  dashTrail: { frames: 6, width: 56, height: 32, frameRate: 26 },
+  landing: { frames: 5, width: 48, height: 26, frameRate: 20 },
+  electric: { frames: 6, size: 40, frameRate: 32 },
+  burst: { frames: 7, size: 56, frameRate: 24 },
+  smoke: { frames: 6, size: 40, frameRate: 12 },
   teleOut: { frames: 6, width: 48, height: 72, frameRate: 24 },
   teleIn: { frames: 6, width: 48, height: 72, frameRate: 24 },
   shockwave: { frames: 6, size: 64, frameRate: 20 },
@@ -29,6 +34,10 @@ export const FX_PARTICLES = Object.freeze({
   sword: 'fx-sword',
   shield: 'fx-shield',
   boot: 'fx-boot',
+  ember: 'fx-ember',
+  leaf: 'fx-leaf',
+  rubble: 'fx-rubble',
+  star: 'fx-star',
 });
 
 export function createFxTextures(scene) {
@@ -42,6 +51,11 @@ export function createFxTextures(scene) {
   frames('explosion', FX.explosion.size, FX.explosion.size, drawExplosion);
   frames('spark', FX.spark.size, FX.spark.size, drawSpark);
   frames('dust', FX.dust.size, FX.dust.size, drawDust);
+  frames('dashTrail', FX.dashTrail.width, FX.dashTrail.height, drawDashTrail);
+  frames('landing', FX.landing.width, FX.landing.height, drawLanding);
+  frames('electric', FX.electric.size, FX.electric.size, drawElectric);
+  frames('burst', FX.burst.size, FX.burst.size, drawBurst);
+  frames('smoke', FX.smoke.size, FX.smoke.size, drawSmoke);
   frames('teleOut', FX.teleOut.width, FX.teleOut.height, (ctx, t, i) => drawTeleport(ctx, t, i, true));
   frames('teleIn', FX.teleIn.width, FX.teleIn.height, (ctx, t, i) => drawTeleport(ctx, t, i, false));
   frames('shockwave', FX.shockwave.size, FX.shockwave.size, drawShockwave);
@@ -55,6 +69,10 @@ export function createFxTextures(scene) {
   createCanvasTexture(scene, FX_PARTICLES.sword, 16, 16, drawSword);
   createCanvasTexture(scene, FX_PARTICLES.shield, 16, 16, drawShield);
   createCanvasTexture(scene, FX_PARTICLES.boot, 16, 16, drawBoot);
+  createCanvasTexture(scene, FX_PARTICLES.ember, 5, 6, drawEmberParticle);
+  createCanvasTexture(scene, FX_PARTICLES.leaf, 8, 6, drawLeafParticle);
+  createCanvasTexture(scene, FX_PARTICLES.rubble, 6, 6, drawRubbleParticle);
+  createCanvasTexture(scene, FX_PARTICLES.star, 7, 7, drawStarParticle);
 }
 
 // ── Explosión (daño y KO) ───────────────────────────────────────────────────
@@ -128,6 +146,76 @@ function drawDust(ctx, t, frame) {
       if (!inside) continue;
       if (hash2(gx, gy, 60 + frame) < t * 0.9) continue;
       rect(ctx, gy > 4 ? PAL.dustDark : PAL.dust, gx * cell, gy * cell + 8, cell, cell);
+    }
+  }
+}
+
+function drawDashTrail(ctx, t, frame) {
+  const fade = 1 - t * 0.88;
+  const colors = ['#fff4c7', '#b9eaff', '#65a7ed'];
+  for (let row = 0; row < 5; row++) {
+    const y = 7 + row * 4 + Math.round(Math.sin(frame + row) * 2);
+    const length = Math.max(2, Math.round((12 + row * 5) * fade));
+    rect(ctx, colors[row % colors.length], 3, y, length, row % 2 ? 1 : 2);
+  }
+  rect(ctx, '#ffffff', 34 - Math.round(t * 12), 13, 5, 2);
+  rect(ctx, '#8fd8ff', 38 - Math.round(t * 13), 18, 7, 1);
+}
+function drawLanding(ctx, t, frame) {
+  const cx = 24, radius = 4 + t * 17, fade = 1 - t * 0.82;
+  for (let x = 0; x < 48; x += 2) {
+    const distance = Math.abs(x + 1 - cx);
+    if (Math.abs(distance - radius) < 3 + (frame % 2)) {
+      const height = Math.max(1, Math.round((1 - distance / (radius + 5)) * 7 * fade));
+      rect(ctx, frame % 2 ? '#d2c4a5' : '#f0dfb8', x, 18 - height, 2, height);
+    }
+  }
+  for (let i = 0; i < 8; i++) {
+    const x = 5 + i * 5, y = 14 - Math.round(Math.sin(i * 1.7 + frame) * 4 * fade);
+    if (hash2(i, frame, 231) > t * 0.9) rect(ctx, '#b9a78b', x, y, 2, 2);
+  }
+}
+function drawElectric(ctx, t, frame) {
+  const points = [[19, 3], [14 + frame % 3, 11], [22, 15], [13, 25], [19, 35]];
+  for (let i = 0; i < points.length - 1; i++) {
+    const [x1, y1] = points[i], [x2, y2] = points[i + 1];
+    const steps = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
+    for (let s = 0; s <= steps; s += 3) {
+      const x = Math.round(x1 + ((x2 - x1) * s) / steps);
+      const y = Math.round(y1 + ((y2 - y1) * s) / steps);
+      rect(ctx, '#64cfff', x, y, 3, 3);
+      rect(ctx, '#fff4c8', x + 1, y, 1, 2);
+    }
+  }
+  rect(ctx, '#ffffff', 17, 16, 5, 3);
+  if (t < 0.8) {
+    rect(ctx, '#e9f8ff', 4 + frame % 4, 8, 3, 2);
+    rect(ctx, '#e9f8ff', 30 - frame % 4, 27, 3, 2);
+  }
+}
+function drawBurst(ctx, t, frame) {
+  const center = 28, radius = 4 + t * 23;
+  for (let ray = 0; ray < 12; ray++) {
+    const angle = (ray / 12) * Math.PI * 2 + frame * 0.04;
+    const length = radius * (ray % 2 ? 0.72 : 1);
+    for (let step = 3; step < length; step += 3) {
+      const x = Math.round((center + Math.cos(angle) * step) / 2) * 2;
+      const y = Math.round((center + Math.sin(angle) * step) / 2) * 2;
+      rect(ctx, step < length * 0.45 ? '#fff4c8' : (ray % 3 ? '#ffb04f' : '#6dcfff'), x, y, 2, 2);
+    }
+  }
+  if (t < 0.75) rect(ctx, '#ffffff', center - 3, center - 3, 6, 6);
+}
+function drawSmoke(ctx, t, frame) {
+  const fade = 1 - t, puffs = [[11, 25, 7], [20, 18, 9], [29, 24, 8], [18, 29, 6]];
+  for (let i = 0; i < puffs.length; i++) {
+    const [x, y, r] = puffs[i], radius = r * (0.62 + t * 0.55);
+    for (let py = -radius; py <= radius; py += 2) {
+      for (let px = -radius; px <= radius; px += 2) {
+        if (px * px + py * py <= radius * radius && hash2(px + i, py, frame + 251) < fade + 0.12) {
+          rect(ctx, frame % 2 ? '#89909c' : '#a3a5a8', x + px + t * 3, y + py - t * 5, 2, 2);
+        }
+      }
     }
   }
 }
@@ -281,4 +369,18 @@ function drawBoot(ctx) {
   rect(ctx, '#b4efff', 3, 9, 10, 3);
   rect(ctx, '#477cae', 2, 12, 12, 2);
   rect(ctx, '#ffffff', 8, 3, 2, 2);
+}
+
+function drawEmberParticle(ctx) {
+  rect(ctx, '#9d382b', 1, 3, 3, 3); rect(ctx, '#ff8b36', 2, 1, 2, 4); rect(ctx, '#ffe08a', 2, 0, 1, 2);
+}
+function drawLeafParticle(ctx) {
+  rect(ctx, '#285d3b', 1, 2, 6, 3); rect(ctx, '#75b85a', 2, 1, 4, 3);
+  rect(ctx, '#c6df82', 3, 2, 2, 1); rect(ctx, '#d5b66b', 0, 4, 4, 1);
+}
+function drawRubbleParticle(ctx) {
+  rect(ctx, '#777681', 1, 1, 4, 4); rect(ctx, '#c0b7a9', 1, 1, 3, 1); rect(ctx, '#393d49', 4, 3, 2, 2);
+}
+function drawStarParticle(ctx) {
+  rect(ctx, '#f5d58f', 3, 0, 1, 7); rect(ctx, '#f5d58f', 0, 3, 7, 1); rect(ctx, '#fff5d8', 2, 2, 3, 3);
 }

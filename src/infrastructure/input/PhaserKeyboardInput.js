@@ -20,18 +20,20 @@ export class PhaserKeyboardInput {
       descend: keyNames.descend,
       attack: keyNames.attack,
       teleport: keyNames.teleport,
+      dash: keyNames.dash,
     });
   }
 
   /** @returns {import('../../application/ports/InputPort.js').PlayerIntent} */
   readIntent() {
-    const { left, right, forward, backward, attack, teleport, ascend, descend } = this.keys;
+    const { left, right, forward, backward, attack, teleport, dash, ascend, descend } = this.keys;
     return {
       x: Number(right.isDown) - Number(left.isDown),
       y: Number(backward.isDown) - Number(forward.isDown),
       z: Number(ascend.isDown) - Number(descend.isDown),
       attack: Phaser.Input.Keyboard.JustDown(attack),
       teleport: Phaser.Input.Keyboard.JustDown(teleport),
+      dash: Phaser.Input.Keyboard.JustDown(dash),
     };
   }
 }

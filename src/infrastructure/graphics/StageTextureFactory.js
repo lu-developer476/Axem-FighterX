@@ -6,7 +6,8 @@ import { bayer, createCanvasTexture, rect } from './canvasTexture.js';
 export const VIEW = Object.freeze({ width: 480, height: 270 });
 
 /** Factor de scroll de cada capa: más lejos = se mueve menos que la cámara. */
-export const PARALLAX = Object.freeze({ far: 0.15, mid: 0.35, near: 0.65 });
+export const PARALLAX = Object.freeze({ far: 0.12, mid: 0.34, near: 0.72 });
+export const AMBIENT_FRAMES = 4;
 
 /** Ancho que necesita una capa para cubrir todo el recorrido de la cámara. */
 export const layerWidth = (factor) =>
@@ -23,6 +24,7 @@ export const STAGE_TEXTURES = Object.freeze({
   pillar: 'stage-pillar',
   barrier: 'stage-barrier',
   flame: (i) => `stage-flame-${i}`,
+  ambient: (i) => `stage-ruins-ambient-${i}`,
 });
 
 export const FLAME_FRAMES = 4;
@@ -45,6 +47,9 @@ export function createStageTextures(scene) {
   createCanvasTexture(scene, STAGE_TEXTURES.barrier, 6, 150, drawBarrier);
   for (let i = 0; i < FLAME_FRAMES; i++) {
     createCanvasTexture(scene, STAGE_TEXTURES.flame(i), 14, 18, (ctx) => drawFlame(ctx, i));
+  }
+  for (let i = 0; i < AMBIENT_FRAMES; i++) {
+    createCanvasTexture(scene, STAGE_TEXTURES.ambient(i), 24, 24, (ctx) => drawRuinsAmbient(ctx, i));
   }
 }
 
@@ -301,4 +306,17 @@ function drawFlame(ctx, frame) {
       if (hw > 0) rect(ctx, color, w / 2 + sway - hw, y, hw * 2, 1);
     }
   }
+}
+
+function drawRuinsAmbient(ctx, frame) {
+  const wing = frame % 2 === 0 ? 1 : 0;
+  const glow = frame % 2 === 0 ? '#b9c9ed' : '#e7ddbb';
+  rect(ctx, '#52618a', 10, 10, 4, 5);
+  rect(ctx, glow, 11, 8, 2, 2);
+  rect(ctx, '#8498bc', 5, 8 - wing, 6, 2);
+  rect(ctx, '#8498bc', 13, 8 + wing, 6, 2);
+  rect(ctx, glow, 3, 6 - wing, 4, 2);
+  rect(ctx, glow, 17, 6 + wing, 4, 2);
+  rect(ctx, '#d8e4ef', 9, 13, 2, 3);
+  rect(ctx, '#d8e4ef', 13, 13, 2, 3);
 }

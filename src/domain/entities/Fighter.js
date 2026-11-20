@@ -1,5 +1,5 @@
 import { FLIGHT } from '../arena/arena.js';
-import { FighterState, TIMINGS, attackTotalMs } from './FighterState.js';
+import { DASH, FighterState, TIMINGS, attackTotalMs } from './FighterState.js';
 import { PICKUP_TYPES, POWER_UPS } from './PowerUpPickup.js';
 
 /** Caja del cuerpo. La posición del luchador son sus pies, centrados. */
@@ -50,6 +50,8 @@ export class Fighter {
     this.hasHitThisAttack = false;
     this.invulnerableMs = 0;
     this.teleportCooldownMs = 0;
+    this.dashCooldownMs = 0;
+    this.dashVector = { x: 0, y: 0 };
     this.teleportTarget = null;
     this.teleportMoved = false;
     this.powerUps = {
@@ -89,6 +91,10 @@ export class Fighter {
 
   get canTeleport() {
     return this.canAct && this.teleportCooldownMs <= 0;
+  }
+
+  get canDash() {
+    return this.canAct && this.dashCooldownMs <= 0;
   }
 
   get isInvulnerable() {
@@ -212,12 +218,19 @@ export class Fighter {
     this.stateTimeMs += deltaMs;
     this.invulnerableMs = Math.max(0, this.invulnerableMs - deltaMs);
     this.teleportCooldownMs = Math.max(0, this.teleportCooldownMs - deltaMs);
+    this.dashCooldownMs = Math.max(0, this.dashCooldownMs - deltaMs);
     this.#updatePowerUps(deltaMs);
+
+    if ((this.state === FighterState.IDLE || this.state === FighterState.WALK)
+      && intent.dash && this.canDash && !intent.attack) this.#beginDash(intent.x, intent.y);
 
     switch (this.state) {
       case FighterState.IDLE:
       case FighterState.WALK:
         this.#updateFree(intent, seconds);
+        break;
+      case FighterState.DASH:
+        this.#updateDash(seconds);
         break;
       case FighterState.ATTACK:
         this.#updateAttack(seconds);
@@ -283,11 +296,34 @@ export class Fighter {
       this.position.x += (moveX / groundMagnitude) * this.currentMoveSpeed * seconds;
       this.position.y += (moveY / groundMagnitude) * this.currentMoveSpeed * seconds;
     }
+    const previousAltitude = this.position.z;
     if (moveZ !== 0) {
       this.position.z += moveZ * this.currentMoveSpeed * seconds;
       this.#clampAltitude();
     }
+    if (previousAltitude > 0 && this.position.z === 0) {
+      this.#emit('land', { groundY: this.position.y, impact: previousAltitude });
+    }
     this.#setState(movingOnGround ? FighterState.WALK : FighterState.IDLE);
+  }
+
+  #beginDash(moveX = 0, moveY = 0) {
+    const magnitude = Math.hypot(moveX, moveY);
+    const direction = magnitude > 0 ? { x: moveX / magnitude, y: moveY / magnitude } : { x: this.facing, y: 0 };
+    this.dashVector = direction;
+    this.dashCooldownMs = DASH.cooldownMs;
+    if (direction.x !== 0) this.facing = Math.sign(direction.x);
+    this.#setState(FighterState.DASH);
+    this.#emit('dash-start', { directionX: direction.x, directionY: direction.y, groundY: this.position.y });
+  }
+
+  #updateDash(seconds) {
+    const remainingMs = Math.max(0, DASH.durationMs - this.stateTimeMs);
+    const activeSeconds = Math.min(seconds, remainingMs / 1000);
+    const speed = this.currentMoveSpeed * DASH.speedMultiplier;
+    this.position.x += this.dashVector.x * speed * activeSeconds;
+    this.position.y += this.dashVector.y * speed * activeSeconds;
+    if (this.stateTimeMs >= DASH.durationMs) this.#setState(FighterState.IDLE);
   }
 
   #updateAttack(seconds) {
@@ -322,6 +358,7 @@ export class Fighter {
     if (this.state === next) return;
     this.state = next;
     this.stateTimeMs = 0;
+    if (next !== FighterState.DASH) this.dashVector = { x: 0, y: 0 };
   }
 
   #emit(type, extra = {}) {
@@ -330,6 +367,7 @@ export class Fighter {
       id: this.id,
       x: this.position.x,
       y: this.position.y - BODY.height / 2 - this.position.z,
+      groundY: this.position.y,
       facing: this.facing,
       ...extra,
     });

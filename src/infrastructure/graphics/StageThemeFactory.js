@@ -2,7 +2,7 @@ import { ARENA } from '../../domain/arena/arena.js';
 import { STAGE_IDS } from '../../domain/arena/stageCatalog.js';
 import { hash2, mulberry32 } from './rng.js';
 import { createCanvasTexture, rect } from './canvasTexture.js';
-import { FLOOR_SURFACE_HEIGHT, layerWidth, PARALLAX, STAGE_TEXTURES, VIEW } from './StageTextureFactory.js';
+import { AMBIENT_FRAMES, FLOOR_SURFACE_HEIGHT, layerWidth, PARALLAX, STAGE_TEXTURES, VIEW } from './StageTextureFactory.js';
 
 const THEMES = Object.freeze({
   [STAGE_IDS.VOLCANO]: {
@@ -114,6 +114,7 @@ const makeKeys = (id) => ({
   pillar: `stage-${id}-pillar`,
   barrier: `stage-${id}-barrier`,
   flame: (frame) => `stage-${id}-flame-${frame}`,
+  ambient: (frame) => `stage-${id}-ambient-${frame}`,
 });
 
 export const getStageTextures = (stageId = STAGE_IDS.RUINS) =>
@@ -140,7 +141,50 @@ export function createAdditionalStageTextures(scene) {
     for (let frame = 0; frame < 4; frame++) {
       createCanvasTexture(scene, keys.flame(frame), 14, 18, (ctx) => drawEmber(ctx, frame, palette));
     }
+    for (let frame = 0; frame < AMBIENT_FRAMES; frame++) {
+      createCanvasTexture(scene, keys.ambient(frame), 24, 24, (ctx) => drawStageAmbient(ctx, frame, palette, stageId));
+    }
   }
+}
+
+function drawStageAmbient(ctx, frame, palette, stageId) {
+  const pulse = frame % 2 === 0;
+  if (stageId === STAGE_IDS.FOREST) {
+    rect(ctx, palette.near, 7 + (pulse ? 1 : 0), 9, 10, 3);
+    rect(ctx, palette.farLight, 10, 7 + (pulse ? 1 : 0), 5, 2);
+    rect(ctx, '#d7ff9c', 15 + (pulse ? 1 : 0), 6, 3, 3);
+    rect(ctx, palette.accent, 17, 5, 2, 2);
+    return;
+  }
+  if (stageId === STAGE_IDS.SANCTUARY) {
+    rect(ctx, palette.accent, 11, 3, 2, 5);
+    rect(ctx, palette.accent, 7, 7, 10, 2);
+    rect(ctx, palette.midLight, 5 + (pulse ? 0 : 1), 9, 14, 2);
+    rect(ctx, palette.accent, 8, 11, 8, 2);
+    rect(ctx, '#fff0c7', 11, 8, 3, 5);
+    rect(ctx, palette.midLight, 10, 14, 4, 3);
+    return;
+  }
+  if (stageId === STAGE_IDS.DOWNTOWN) {
+    const offset = frame % 3;
+    rect(ctx, palette.accent, 10, 2, 4, 3);
+    rect(ctx, '#fff2b5', 11 + offset, 5, 2, 4);
+    rect(ctx, palette.accent, 8 + offset, 9, 5, 3);
+    rect(ctx, '#fff2b5', 12, 12, 2, 4);
+    rect(ctx, palette.accent, 7, 15, 5, 2);
+    return;
+  }
+  if (stageId === STAGE_IDS.MEADOW) {
+    rect(ctx, palette.near, 8 + frame, 10 - (frame % 2), 9, 3);
+    rect(ctx, palette.accent, 10 + frame, 7, 5, 3);
+    rect(ctx, palette.midLight, 12 + frame, 12, 2, 4);
+    rect(ctx, '#f8e3a4', 7, 8, 2, 2);
+    return;
+  }
+  rect(ctx, palette.midLight, 8, 13 - frame, 8, 6);
+  rect(ctx, palette.accent, 10, 9 - frame, 5, 7);
+  rect(ctx, '#ffce70', 11, 6 - frame, 3, 5);
+  if (pulse) rect(ctx, '#fff0bd', 12, 5 - frame, 2, 2);
 }
 
 function drawSky(ctx, width, height, palette, stageId) {

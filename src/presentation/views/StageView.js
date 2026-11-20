@@ -8,10 +8,19 @@ import {
   WALL_WIDTH,
 } from '../../infrastructure/graphics/StageTextureFactory.js';
 import { getStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';
-import { flameAnimationKey } from '../animation/registerFxAnimations.js';
+import { ambientAnimationKey, flameAnimationKey } from '../animation/registerFxAnimations.js';
 
 const PILLAR_X = 20;
 const BARRIER_X = 26;
+const AMBIENT_PLACEMENTS = {
+  [STAGE_IDS.RUINS]: [[66,82,.82,.55,.16],[172,124,.62,.4,.34],[318,88,.72,.5,.2],[492,143,.56,.36,.42],[572,76,.7,.45,.18]],
+  [STAGE_IDS.VOLCANO]: [[84,158,.65,.72,.18],[204,106,.72,.65,.28],[332,146,.55,.6,.38],[518,96,.78,.72,.2],[592,164,.52,.55,.44]],
+  [STAGE_IDS.FOREST]: [[52,94,.56,.62,.2],[144,128,.7,.7,.36],[274,76,.58,.64,.24],[388,118,.62,.68,.42],[548,94,.7,.62,.28]],
+  [STAGE_IDS.SANCTUARY]: [[86,108,.72,.64,.18],[218,82,.58,.58,.32],[360,116,.78,.7,.22],[528,84,.64,.62,.38]],
+  [STAGE_IDS.DOWNTOWN]: [[54,94,.65,.56,.18],[164,126,.55,.46,.34],[282,84,.7,.66,.22],[418,112,.62,.54,.38],[568,90,.72,.62,.2]],
+  [STAGE_IDS.MEADOW]: [[76,68,.92,.5,.1],[208,94,.62,.42,.22],[344,72,.84,.5,.14],[520,106,.58,.4,.3]],
+  [STAGE_IDS.VOLCANO_MOUTH]: [[62,126,.72,.72,.2],[152,76,.62,.62,.32],[286,112,.82,.74,.22],[424,80,.68,.66,.36],[572,128,.76,.72,.24]],
+};
 const STAGE_VISUALS = {
   [STAGE_IDS.RUINS]: { hazeAlpha: 0.035, barrierBaseAlpha: 0.55, flicker: 0.08 },
   [STAGE_IDS.VOLCANO]: { hazeAlpha: 0.025, barrierBaseAlpha: 0.7, flicker: 0.1 },
@@ -96,7 +105,23 @@ export class StageView {
           .play(flameAnimationKey(this.stageId));
       }
     }
+    this.ambientObjects = [];
+    this.#createAmbientObjects();
     this.warningMarker = null;
+  }
+
+  #createAmbientObjects() {
+    const animation = ambientAnimationKey(this.stageId);
+    const placements = AMBIENT_PLACEMENTS[this.stageId] ?? [];
+    placements.forEach(([x, y, scale, alpha, factor], index) => {
+      const sprite = this.scene.add.sprite(x, y, this.textures.ambient(0))
+        .setOrigin(0.5).setScale(scale).setAlpha(alpha)
+        .setScrollFactor(0).setDepth(-68 + (index % 2));
+      if (this.scene.anims.exists(animation)) sprite.play(animation);
+      this.ambientObjects.push({ sprite, x, y, scale, alpha, factor, phase: index * 1.71,
+        speed: 0.0007 + (index % 3) * 0.00022, drift: 2 + (index % 3) * 1.5,
+        bob: 2 + (index % 2) * 2 });
+    });
   }
 
   handleEvents(events = []) {
@@ -188,6 +213,12 @@ export class StageView {
       image.setX(Math.round(originX - scrollX * factor));
     }
     if (this.fog) this.fog.tilePositionX = Math.round(timeMs * 0.012 + scrollX * 0.4);
+    for (const object of this.ambientObjects) {
+      const wave = Math.sin(timeMs * object.speed + object.phase);
+      const drift = Math.cos(timeMs * object.speed * 0.62 + object.phase) * object.drift;
+      object.sprite.setPosition(Math.round(object.x - scrollX * object.factor + drift), Math.round(object.y + wave * object.bob));
+      object.sprite.setAlpha(object.alpha * (0.74 + (wave + 1) * 0.13));
+    }
     const flicker = this.visuals.barrierBaseAlpha + this.visuals.flicker * (0.5 + 0.5 * Math.sin(timeMs / 90));
     for (const barrier of this.barriers) barrier.setAlpha(flicker);
   }

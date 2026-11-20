@@ -12,6 +12,7 @@ describe('Controles de teclado', () => {
       descend: 'E',
       attack: 'F',
       teleport: 'G',
+      dash: 'C',
     });
   });
 
@@ -25,6 +26,7 @@ describe('Controles de teclado', () => {
       descend: 'DOWN',
       attack: 'L',
       teleport: 'K',
+      dash: 'M',
     });
   });
 });

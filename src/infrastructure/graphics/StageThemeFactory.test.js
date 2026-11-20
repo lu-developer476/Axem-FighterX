@@ -11,8 +11,10 @@ describe('Texturas por escenario', () => {
     expect(VIEW.height - ARENA.groundY).toBeGreaterThan(FLOOR_SURFACE_HEIGHT + 8);
   });
 
-  it('mantiene las texturas originales de Ruinas de medianoche', () => {
+  it('mantiene Ruinas de medianoche e incluye su ambiente animado', () => {
     expect(getStageTextures(STAGE_IDS.RUINS)).toBe(STAGE_TEXTURES);
+    expect(typeof STAGE_TEXTURES.ambient).toBe('function');
+    expect(STAGE_TEXTURES.ambient(0)).not.toBe(STAGE_TEXTURES.ambient(1));
   });
 
   it('mantiene una textura de suelo para cada uno de los siete escenarios', () => {
@@ -40,6 +42,8 @@ describe('Texturas por escenario', () => {
       expect(textures.mid).not.toBe(textures.far);
       expect(typeof textures.flame).toBe('function');
       expect(textures.flame(0)).not.toBe(textures.flame(1));
+      expect(typeof textures.ambient).toBe('function');
+      expect(textures.ambient(0)).not.toBe(textures.ambient(1));
     }
   });
 });

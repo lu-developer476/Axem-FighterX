@@ -72,7 +72,7 @@ const PROFILES = Object.freeze([
   }),
 ]);
 
-const NEUTRAL = Object.freeze({ x: 0, y: 0, z: 0, attack: false, teleport: false });
+const NEUTRAL = Object.freeze({ x: 0, y: 0, z: 0, attack: false, teleport: false, dash: false });
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const sign = (value) => Math.sign(value) || 0;
 

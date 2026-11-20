@@ -111,6 +111,31 @@ describe('Fighter: movimiento y orientación', () => {
   });
 });
 
+describe('Fighter: dash', () => {
+  it('ejecuta el impulso, emite su evento y respeta el enfriamiento', () => {
+    const fighter = make();
+    const initialX = fighter.position.x;
+    const speed = fighter.currentMoveSpeed;
+    fighter.update({ ...idle, x: 1, dash: true }, 50);
+    expect(fighter.state).toBe(FighterState.DASH);
+    expect(fighter.position.x).toBeCloseTo(initialX + speed * 3.1 * 0.05);
+    expect(fighter.drainEvents().some((event) => event.type === 'dash-start')).toBe(true);
+    run(fighter, idle, 180);
+    expect(fighter.state).toBe(FighterState.IDLE);
+    const afterDash = fighter.position.x;
+    fighter.update({ ...idle, x: 1, dash: true }, 50);
+    expect(fighter.state).toBe(FighterState.WALK);
+    expect(fighter.position.x).toBeCloseTo(afterDash + speed * 0.05);
+  });
+  it('usa la orientación actual si se activa sin dirección', () => {
+    const fighter = make();
+    fighter.facing = -1;
+    const initialX = fighter.position.x;
+    fighter.update({ ...idle, dash: true }, 50);
+    expect(fighter.position.x).toBeLessThan(initialX);
+  });
+});
+
 describe('Fighter: ataque', () => {
   it('la caja de ataque solo existe en la fase activa', () => {
     const fighter = make();

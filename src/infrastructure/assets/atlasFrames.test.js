@@ -101,12 +101,22 @@ describe('resultados por género y color', () => {
 
     for (const [gender, list] of Object.entries(files)) {
       for (const file of list) {
+        // Los dos PNG canónicos de pose femenina tienen máscaras alfa propias.
+        if (gender === 'female' && file === 'pose.png') continue;
         const violet = await alphaOf(resultsPath(gender, 'violet', file));
         const orange = await alphaOf(resultsPath(gender, 'orange', file));
         expect(orange.width).toBe(violet.width);
         expect(orange.height).toBe(violet.height);
         expect(orange.alpha.equals(violet.alpha)).toBe(true);
       }
+    }
+  });
+
+  it('las poses femeninas generadas son copias exactas de los resultados canónicos', async () => {
+    for (const color of COLORS) {
+      const canonical = await readFile(resultsPath('female', 'axem-ranger-' + color + '.png'));
+      const pose = await readFile(resultsPath('female', color, 'pose.png'));
+      expect(pose.equals(canonical)).toBe(true);
     }
   });
 });

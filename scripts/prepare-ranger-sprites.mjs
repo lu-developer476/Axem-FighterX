@@ -284,123 +284,13 @@ function blackenMaleHair(pixels, width, height, targetHue) {
   return recoloredPixels;
 }
 
-function rgbKey(red, green, blue) {
-  return (red << 16) | (green << 8) | blue;
-}
 
 /**
- * Aprende los cambios de paleta comparando la pose original recoloreada con
- * el PNG final canónico. La geometría de ambos debe coincidir.
+ * Los resultados femeninos canónicos usan un subtraje azul marino, no el
+ * turquesa de la hoja fuente. El cambio se limita a esa familia cromática y
+ * conserva el sombreado de cada píxel; los metales y efectos neutros quedan intactos.
  */
-async function buildPaletteTransfer(sourceBuffer, targetBuffer, label) {
-  const [source, target] = await Promise.all([
-    sharp(sourceBuffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
-    sharp(targetBuffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
-  ]);
-
-  if (
-    source.info.width !== target.info.width ||
-    source.info.height !== target.info.height
-  ) {
-    throw new Error(
-      'La referencia canónica ' + label + ' no coincide en dimensiones con la pose base: ' +
-      source.info.width + 'x' + source.info.height + ' vs ' +
-      target.info.width + 'x' + target.info.height
-    );
-  }
-
-  const sourcePixels = new Uint8ClampedArray(
-    source.data.buffer,
-    source.data.byteOffset,
-    source.data.byteLength,
-  );
-  const targetPixels = new Uint8ClampedArray(
-    target.data.buffer,
-    target.data.byteOffset,
-    target.data.byteLength,
-  );
-  const histogram = new Map();
-  let sourceOpaque = 0;
-  let targetOpaque = 0;
-  let overlap = 0;
-
-  for (let offset = 0; offset < sourcePixels.length; offset += 4) {
-    const sourceVisible = sourcePixels[offset + 3] >= 24;
-    const targetVisible = targetPixels[offset + 3] >= 24;
-    if (sourceVisible) sourceOpaque += 1;
-    if (targetVisible) targetOpaque += 1;
-    if (!sourceVisible || !targetVisible) continue;
-
-    overlap += 1;
-    const sourceKey = rgbKey(
-      sourcePixels[offset],
-      sourcePixels[offset + 1],
-      sourcePixels[offset + 2],
-    );
-    const targetKey = rgbKey(
-      targetPixels[offset],
-      targetPixels[offset + 1],
-      targetPixels[offset + 2],
-    );
-    let targets = histogram.get(sourceKey);
-    if (!targets) {
-      targets = new Map();
-      histogram.set(sourceKey, targets);
-    }
-    targets.set(targetKey, (targets.get(targetKey) ?? 0) + 1);
-  }
-
-  const alphaCoverage = overlap / Math.max(1, sourceOpaque);
-  const alphaAgreement = overlap / Math.max(1, Math.max(sourceOpaque, targetOpaque));
-  if (alphaCoverage < 0.7 || alphaAgreement < 0.68) {
-    throw new Error(
-      'La referencia canónica ' + label + ' no está alineada con la pose fuente. ' +
-      'Cobertura alfa: ' + alphaCoverage.toFixed(3) +
-      '; coincidencia: ' + alphaAgreement.toFixed(3)
-    );
-  }
-
-  const transfer = new Map();
-  let mappedSamples = 0;
-  let ambiguousColors = 0;
-
-  for (const [sourceKey, targets] of histogram) {
-    let bestTarget = null;
-    let bestCount = 0;
-    let totalCount = 0;
-    for (const [targetKey, count] of targets) {
-      totalCount += count;
-      if (count > bestCount) {
-        bestTarget = targetKey;
-        bestCount = count;
-      }
-    }
-
-    if (bestCount / Math.max(1, totalCount) >= 0.72) {
-      transfer.set(sourceKey, bestTarget);
-      mappedSamples += totalCount;
-    } else {
-      ambiguousColors += 1;
-    }
-  }
-
-  const paletteCoverage = mappedSamples / Math.max(1, overlap);
-  if (transfer.size === 0 || paletteCoverage < 0.5) {
-    throw new Error(
-      'La transferencia de paleta ' + label + ' no encontró suficientes colores comunes. ' +
-      'Cobertura de paleta: ' + paletteCoverage.toFixed(3)
-    );
-  }
-
-  console.log(
-    'Paleta canónica ' + label + ': ' + transfer.size + ' colores; ' +
-    'cobertura ' + (paletteCoverage * 100).toFixed(1) + '%; ' +
-    ambiguousColors + ' colores ambiguos.'
-  );
-  return transfer;
-}
-
-async function applyPaletteTransfer(inputBuffer, transfer) {
+async function harmonizeFemalePalette(inputBuffer) {
   const { data, info } = await sharp(inputBuffer)
     .ensureAlpha()
     .raw()
@@ -409,15 +299,19 @@ async function applyPaletteTransfer(inputBuffer, transfer) {
 
   for (let offset = 0; offset < pixels.length; offset += 4) {
     if (pixels[offset + 3] < 16) continue;
-    const targetKey = transfer.get(rgbKey(
+    const [hue, saturation, lightness] = rgbToHsl(
       pixels[offset],
       pixels[offset + 1],
       pixels[offset + 2],
-    ));
-    if (targetKey === undefined) continue;
-    pixels[offset] = (targetKey >> 16) & 255;
-    pixels[offset + 1] = (targetKey >> 8) & 255;
-    pixels[offset + 2] = targetKey & 255;
+    );
+
+    // Solo la tela turquesa/cian saturada de Axem Pink: no los grises del arma.
+    if (hue < 158 || hue > 205 || saturation < 0.22 || lightness < 0.12) continue;
+    const navyLightness = Math.max(0.10, Math.min(0.34, lightness * 0.58));
+    const [red, green, blue] = hslToRgb(226, Math.min(0.9, saturation * 1.18), navyLightness);
+    pixels[offset] = red;
+    pixels[offset + 1] = green;
+    pixels[offset + 2] = blue;
   }
 
   return sharp(Buffer.from(pixels), {
@@ -456,7 +350,8 @@ async function recolorAndKey(input, gender, targetHue, toleranceOverride) {
   }
 
   if (gender === 'male') {
-    blackenMaleHair(pixels, info.width, info.height, targetHue);
+    const hairPixels = blackenMaleHair(pixels, info.width, info.height, targetHue);
+    if (hairPixels > 0) console.log('Cabello masculino negro: ' + hairPixels + ' píxeles');
   }
 
   return sharp(Buffer.from(pixels), {
@@ -726,16 +621,6 @@ async function buildGender(gender) {
         'axem-ranger-' + color + '.png',
       );
       const canonicalPose = await fs.readFile(canonicalPosePath);
-      const sourcePose = await recolorAndKey(
-        path.join(pinkReference, 'axem-pink-pose.png'),
-        gender,
-        targetHue,
-      );
-      const paletteTransfer = await buildPaletteTransfer(
-        sourcePose,
-        canonicalPose,
-        gender + '/' + color,
-      );
 
       for (const file of files) {
         const outputName = file.replace(/^axem-pink-/, '');
@@ -749,7 +634,7 @@ async function buildGender(gender) {
             gender,
             targetHue,
           );
-          corrected = await applyPaletteTransfer(recolored, paletteTransfer);
+          corrected = await harmonizeFemalePalette(recolored);
         }
         parts.push(corrected);
         await writeResult(gender, color, outputName, corrected);

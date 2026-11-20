@@ -2,7 +2,7 @@ import { ARENA } from '../../domain/arena/arena.js';
 import { STAGE_IDS } from '../../domain/arena/stageCatalog.js';
 import { hash2, mulberry32 } from './rng.js';
 import { createCanvasTexture, rect } from './canvasTexture.js';
-import { layerWidth, PARALLAX, STAGE_TEXTURES, VIEW } from './StageTextureFactory.js';
+import { FLOOR_SURFACE_HEIGHT, layerWidth, PARALLAX, STAGE_TEXTURES, VIEW } from './StageTextureFactory.js';
 
 const THEMES = Object.freeze({
   [STAGE_IDS.VOLCANO]: {
@@ -280,7 +280,12 @@ function drawFloor(ctx, width, height, palette, stageId) {
   const tileWidth = stageId === STAGE_IDS.SANCTUARY ? 28 : 20;
   const tileHeight = 8;
 
-  for (let y = 4; y < height; y += tileHeight) {
+  // Los cuatro escenarios comparten una superficie superior continua de 14 px.
+  // La mampostería decorativa empieza debajo de ella, no donde pisan los rangers.
+  rect(ctx, palette.tile, 0, 3, width, FLOOR_SURFACE_HEIGHT - 3);
+  rect(ctx, palette.tileLight, 0, 3, width, 1);
+
+  for (let y = FLOOR_SURFACE_HEIGHT; y < height; y += tileHeight) {
     const offset = (y / tileHeight) % 2 ? tileWidth / 2 : 0;
     for (let x = -offset; x < width; x += tileWidth) {
       rect(ctx, palette.tile, x + 1, y + 1, tileWidth - 2, tileHeight - 2);
@@ -295,7 +300,7 @@ function drawFloor(ctx, width, height, palette, stageId) {
     }
   }
   rect(ctx, palette.accent, 0, 0, width, 2);
-  rect(ctx, palette.floor, 0, 2, width, 2);
+  rect(ctx, palette.floor, 0, 2, width, 1);
 }
 
 function drawWall(ctx, width, height, palette, stageId) {

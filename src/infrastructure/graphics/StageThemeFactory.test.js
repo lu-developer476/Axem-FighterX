@@ -1,11 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { STAGE_IDS } from '../../domain/arena/stageCatalog.js';
-import { STAGE_TEXTURES } from './StageTextureFactory.js';
+import { ARENA } from '../../domain/arena/arena.js';
+import { STAGE_IDS, STAGES } from '../../domain/arena/stageCatalog.js';
+import { FLOOR_SURFACE_HEIGHT, STAGE_TEXTURES, VIEW } from './StageTextureFactory.js';
 import { getStageTextures } from './StageThemeFactory.js';
 
 describe('Texturas por escenario', () => {
+  it('reserva una superficie transitable antes de las filas de ladrillos', () => {
+    expect(FLOOR_SURFACE_HEIGHT).toBe(14);
+    expect(FLOOR_SURFACE_HEIGHT).toBeGreaterThan(4);
+    expect(VIEW.height - ARENA.groundY).toBeGreaterThan(FLOOR_SURFACE_HEIGHT + 8);
+  });
+
   it('mantiene las texturas originales de Ruinas de medianoche', () => {
     expect(getStageTextures(STAGE_IDS.RUINS)).toBe(STAGE_TEXTURES);
+  });
+
+  it('mantiene una textura de suelo para cada uno de los cuatro escenarios', () => {
+    expect(STAGES).toHaveLength(4);
+    const floors = STAGES.map((stage) => getStageTextures(stage.id).floor);
+    expect(floors).toHaveLength(4);
+    expect(floors.every((floor) => typeof floor === 'string')).toBe(true);
   });
 
   it('asigna claves independientes a los tres escenarios nuevos', () => {

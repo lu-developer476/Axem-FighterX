@@ -29,6 +29,8 @@ export const FLAME_FRAMES = 4;
 export const PILLAR_HEIGHT = 104;
 export const WALL_HEIGHT = 140;
 export const WALL_WIDTH = 28;
+/** Espesor de la superficie transitable superior, antes de la mampostería frontal. */
+export const FLOOR_SURFACE_HEIGHT = 14;
 
 /** Genera todas las texturas del escenario "Ruinas de medianoche". */
 export function createStageTextures(scene) {
@@ -203,7 +205,11 @@ function drawFloor(ctx, w, h) {
   const rnd = mulberry32(5);
   const brickW = 20;
   const brickH = 8;
-  const top = 4;
+  const top = FLOOR_SURFACE_HEIGHT;
+  // El pie del luchador se apoya en una plataforma continua; los ladrillos
+  // comienzan más abajo y forman el frente del terreno, no su superficie.
+  rect(ctx, PAL.stoneDark, 0, 4, w, FLOOR_SURFACE_HEIGHT - 4);
+  rect(ctx, PAL.stoneLite, 0, 4, w, 1);
   for (let row = 0; top + row * brickH < h; row++) {
     const y = top + row * brickH;
     const offset = row % 2 ? brickW / 2 : 0;

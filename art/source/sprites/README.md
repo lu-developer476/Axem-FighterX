@@ -18,19 +18,18 @@ Las referencias nunca se modifican. Las poses sueltas (`axem-pink-pose.png`, `ax
 ```
 results/
   male/
-    axem-ranger-{violet,orange}.png     todas las referencias masculinas apiladas
     {violet,orange}/
       spritesheet.png                     hoja de Axem Red, mismas coordenadas que la referencia
       run.png  bike.png  double-axe.png   tiras PNG para el pipeline del juego
       run.gif  bike.gif  double-axe.gif   GIF animados con cabello negro, puntas marrones y fondo transparente
       sequences/group-01.png … group-14.png + index.json
   female/
-    axem-ranger-{violet,orange}.png     todas las referencias femeninas apiladas
+    axem-ranger-{violet,orange}.png     referencias femeninas apiladas
     {violet,orange}/
       spritesheet.png  pose.png  battle-pose.png  levitate.png
 ```
 
-`results/male/preview (1).png` es una vista previa anterior que el generador usa como fuente de las poses laterales del menú.
+Los retratos laterales del menú se generan directamente desde la referencia original `references/axem-red/axem-red-spritesheet.png`; no se necesita una vista previa duplicada en `results/male/`.
 
 Los seis GIF masculinos de acción (`run.gif`, `bike.gif` y `double-axe.gif` de Violet y Orange) usan lienzos de **150 × 100 px**, como las referencias de bicicleta y doble hacha. La fuente de `run.gif` mide 101 × 100 px y se centra sobre transparencia para igualar el tamaño sin estirar ni deformar el personaje.
 

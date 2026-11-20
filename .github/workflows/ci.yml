@@ -43,7 +43,7 @@ jobs:
           git add art/source/sprites/results/female art/source/sprites/results/male
           if git diff --cached --quiet; then
             echo "Los sprites generados ya están actualizados."
-          elif [[ "$(git log -1 --pretty=%s)" == "Keep black male hair with brown Californian tips" || "$(git log -1 --pretty=%s)" == "Match male action GIF reference dimensions" ]]; then
+          elif [[ "$(git log -1 --pretty=%s)" == "Keep black male hair with brown Californian tips" || "$(git log -1 --pretty=%s)" == "Match male action GIF reference dimensions" || "$(git log -1 --pretty=%s)" == "Fix male ranger hair and remove duplicate sprite sheets" ]]; then
             # El commit de esta tarea incorpora también los assets generados: se conserva un único commit en main.
             git commit --amend --no-edit
             git push --force-with-lease origin HEAD:main

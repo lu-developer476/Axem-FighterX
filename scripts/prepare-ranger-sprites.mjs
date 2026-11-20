@@ -19,7 +19,6 @@ const BASE_SIZE = Object.freeze({ width: 53, height: 83 });
 const ACTION_GIF_SIZE = Object.freeze({ width: 150, height: 100 });
 const MENU_SIZE = Object.freeze({ width: 78, height: 112 });
 const MENU_POSE_REFERENCES = Object.freeze([
-  SOURCE('sprites', 'results', 'male', 'preview (1).png'),
   SOURCE('sprites', 'references', 'axem-red', 'axem-red-spritesheet.png'),
 ]);
 const TRANSPARENT = Object.freeze({ r: 0, g: 0, b: 0, alpha: 0 });
@@ -132,7 +131,7 @@ function hueDistance(left, right) {
 
 function isMaleHairPixel(red, green, blue) {
   const [hue, saturation, lightness] = rgbToHsl(red, green, blue);
-  return hue >= 28 && hue <= 72 && saturation >= 0.26 && lightness >= 0.16;
+  return hue >= 24 && hue <= 80 && saturation >= 0.20 && lightness >= 0.12;
 }
 
 /**
@@ -145,7 +144,7 @@ function shadeMaleHairWithBrownTips(pixels, width, height, targetHue) {
   const visited = new Uint8Array(total);
   const nearHead = new Uint8Array(total);
   const componentQueue = new Uint32Array(total);
-  const radius = 7;
+  const radius = 12;
 
   // Detecta cada figura visible y localiza la zona superior de su color principal.
   for (let start = 0; start < total; start += 1) {
@@ -180,7 +179,7 @@ function shadeMaleHairWithBrownTips(pixels, width, height, targetHue) {
       }
     }
 
-    if (tail < 12 || maxY - minY < 6) continue;
+    if (tail < 6 || maxY - minY < 3) continue;
 
     let firstBodyY = height;
     let lastBodyY = -1;
@@ -201,7 +200,7 @@ function shadeMaleHairWithBrownTips(pixels, width, height, targetHue) {
     if (lastBodyY < 0) continue;
     const headBandEnd = Math.min(
       maxY,
-      firstBodyY + Math.max(6, Math.round((lastBodyY - firstBodyY) * 0.45)),
+      firstBodyY + Math.max(6, Math.round((lastBodyY - firstBodyY) * 0.58)),
     );
 
     for (let position = 0; position < tail; position += 1) {
@@ -625,24 +624,6 @@ async function writeMaleAnimation(frames, rangerId, action, frameDelays, loop = 
     .toBuffer();
   await writeResult('male', rangerId, action + '.gif', gif);
 }
-async function makeVerticalAtlas(parts) {
-  const metadata = await Promise.all(parts.map((input) => sharp(input).metadata()));
-  const width = Math.max(...metadata.map((item) => item.width));
-  const gap = 12;
-  const height = metadata.reduce((sum, item) => sum + item.height, 0) + gap * (parts.length - 1);
-  const layers = [];
-  let top = 0;
-
-  parts.forEach((input, index) => {
-    layers.push({ input, left: 0, top });
-    top += metadata[index].height + gap;
-  });
-
-  return sharp({
-    create: { width, height, channels: 4, background: TRANSPARENT },
-  }).composite(layers).png().toBuffer();
-}
-
 /**
  * Localiza figuras separadas dentro de una referencia ya procesada.
  * Descarta motas, efectos y piezas demasiado pequeñas para ser una pose.
@@ -858,15 +839,7 @@ async function buildGender(gender) {
       baseSource = canonicalPose;
     }
 
-    let atlasPath = null;
-    if (gender === 'male') {
-      const atlas = await makeVerticalAtlas(parts);
-      const resultsDirectory = RESULTS(gender);
-      await fs.mkdir(resultsDirectory, { recursive: true });
-      atlasPath = path.join(resultsDirectory, 'axem-ranger-' + color + '.png');
-      await fs.writeFile(atlasPath, atlas);
-      console.log('Generado ' + path.relative(ROOT, atlasPath));
-    } else {
+    if (gender === 'female') {
       console.log(
         'Se conserva la imagen canónica femenina: ' +
         path.relative(ROOT, RESULTS(gender, 'axem-ranger-' + color + '.png'))
@@ -885,7 +858,6 @@ async function buildGender(gender) {
       .toBuffer();
     await fs.writeFile(basePath, baseSprite);
 
-    if (atlasPath) console.log('Generado ' + path.relative(ROOT, atlasPath));
     console.log('Generado ' + path.relative(ROOT, basePath));
   }
 }

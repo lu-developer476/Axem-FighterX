@@ -6,8 +6,12 @@ const COLORS = ['violet', 'orange'];
 const GENDERS = ['male', 'female'];
 const generatedSpritePath = (gender, color) =>
   fileURLToPath(new URL(`../../../public/generated/ranger-${gender}-${color}.png`, import.meta.url));
-const resultAtlasPath = (gender, color) =>
-  fileURLToPath(new URL(`../../../art/source/sprites/results/${gender}/axem-ranger-${color}.png`, import.meta.url));
+const femaleReferencePath = (color) =>
+  fileURLToPath(new URL(`../../../art/source/sprites/results/female/axem-ranger-${color}.png`, import.meta.url));
+const maleMenuPosePath = (color) =>
+  fileURLToPath(new URL(`../../../public/generated/menu-ranger-male-${color}.png`, import.meta.url));
+const maleCompositePath = (color) =>
+  fileURLToPath(new URL(`../../../art/source/sprites/results/male/axem-ranger-${color}.png`, import.meta.url));
 const maleSpritesheetPath = (color) =>
   fileURLToPath(new URL(`../../../art/source/sprites/results/male/${color}/spritesheet.png`, import.meta.url));
 
@@ -15,7 +19,8 @@ describe('Variantes de Axem Rangers', () => {
   for (const gender of GENDERS) {
     for (const color of COLORS) {
       it(`${gender}/${color} genera una hoja de referencia PNG con transparencia`, async () => {
-        const metadata = await sharp(resultAtlasPath(gender, color)).metadata();
+        const referencePath = gender === 'male' ? maleSpritesheetPath(color) : femaleReferencePath(color);
+        const metadata = await sharp(referencePath).metadata();
         expect(metadata.format).toBe('png');
         expect(metadata.width).toBeGreaterThan(0);
         expect(metadata.height).toBeGreaterThan(0);
@@ -34,6 +39,22 @@ describe('Variantes de Axem Rangers', () => {
   
 
   for (const color of COLORS) {
+    it(`male/${color} genera la hoja principal sin una copia compuesta redundante`, async () => {
+      await expect(import('node:fs/promises').then(({ access }) => access(maleCompositePath(color))))
+        .rejects.toMatchObject({ code: 'ENOENT' });
+      const metadata = await sharp(maleSpritesheetPath(color)).metadata();
+      expect(metadata.format).toBe('png');
+      expect(metadata.hasAlpha).toBe(true);
+    });
+
+    it(`male/${color} genera el retrato de menú desde la referencia Axem Red`, async () => {
+      const metadata = await sharp(maleMenuPosePath(color)).metadata();
+      expect(metadata.format).toBe('png');
+      expect(metadata.width).toBe(78);
+      expect(metadata.height).toBe(112);
+      expect(metadata.hasAlpha).toBe(true);
+    });
+
     it(`male/${color} conserva una base de cabello negra y puntas marrones`, async () => {
       const { data, info } = await sharp(maleSpritesheetPath(color))
         .ensureAlpha()

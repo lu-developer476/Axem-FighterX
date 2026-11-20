@@ -4,10 +4,10 @@ Hay dos géneros, cada uno con su hoja de referencia. **Violet** y **Orange** so
 
 | Género | Referencia | Hoja | Tamaño | Dirección nativa |
 |---|---|---|---|---|
-| Masculino | Axem Red | `references/axem-red/axem-red-spritesheet.png` | 730 × 804 px, fondo teal `rgb(0,128,128)` | Izquierda |
+| Masculino | Axem Red | `references/axem-red/axem-red-spritesheet.png` | 730 × 804 px, fondo teal `rgb(0,128,128)` | Derecha |
 | Femenino | Axem Pink | `references/axem-pink/axem-pink-spritesheet.png` | 900 × 421 px, fondo blanco | Izquierda |
 
-La orientación nativa se conserva en todas las imágenes de cada fuente: los retratos masculinos y femeninos, incluidas sus secuencias de acción, apuntan a la izquierda. El renderizador espeja cada sprite solo cuando el luchador necesita mirar hacia la derecha.
+La orientación nativa se conserva en todas las imágenes de cada fuente: Axem Red masculino, incluidos el retrato base y los GIF de acción, apunta a la derecha; Axem Pink femenino apunta a la izquierda. El renderizador espeja cada sprite solo cuando el luchador necesita mirar hacia el lado contrario.
 
 Las referencias nunca se modifican. Las poses sueltas (`axem-pink-pose.png`, `axem-pink-battle-pose.png`, `axem-pink-levitate.png`) y los GIF (`axem-ranger-run.gif`, `axem-ranger-bike.gif`, `axem-ranger-double-axe.gif`, de Axem Red) se recolorean con el mismo proceso.
 

@@ -138,55 +138,5 @@
   "cellHeight": 45,
   "anchorX": 17,
   "anchor": "feet"
- },
- {
-  "id": "group-15",
-  "role": "extra",
-  "file": "group-15.png",
-  "frameCount": 3,
-  "cellWidth": 26,
-  "cellHeight": 47,
-  "anchor": "feet",
-  "resizedTo": "150x100"
- },
- {
-  "id": "group-16",
-  "role": "extra",
-  "file": "group-16.png",
-  "frameCount": 2,
-  "cellWidth": 52,
-  "cellHeight": 57,
-  "anchor": "feet",
-  "resizedTo": "150x100"
- },
- {
-  "id": "group-17",
-  "role": "extra",
-  "file": "group-17.png",
-  "frameCount": 3,
-  "cellWidth": 38,
-  "cellHeight": 43,
-  "anchor": "feet",
-  "resizedTo": "150x100"
- },
- {
-  "id": "group-18",
-  "role": "extra",
-  "file": "group-18.png",
-  "frameCount": 3,
-  "cellWidth": 29,
-  "cellHeight": 46,
-  "anchor": "feet",
-  "resizedTo": "150x100"
- },
- {
-  "id": "group-19",
-  "role": "extra",
-  "file": "group-19.png",
-  "frameCount": 5,
-  "cellWidth": 27,
-  "cellHeight": 46,
-  "anchor": "feet",
-  "resizedTo": "150x100"
  }
 ]

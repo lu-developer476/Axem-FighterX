@@ -363,7 +363,8 @@ async function recolorAndKey(input, gender, targetHue, toleranceOverride) {
       continue;
     }
 
-    if (saturation < 0.28 || !hueMatches(hue, PALETTE_SOURCES[gender])) continue;
+    const minPaletteSaturation = gender === 'female' ? 0.14 : 0.28;
+    if (saturation < minPaletteSaturation || !hueMatches(hue, PALETTE_SOURCES[gender])) continue;
     const [red, green, blue] = hslToRgb(targetHue, saturation, lightness);
     pixels[offset] = red;
     pixels[offset + 1] = green;

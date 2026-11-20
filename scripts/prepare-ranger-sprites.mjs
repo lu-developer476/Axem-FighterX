@@ -314,6 +314,57 @@ async function harmonizeFemalePalette(inputBuffer) {
     pixels[offset + 2] = blue;
   }
 
+  // Algunas fuentes tienen motas rosadas de baja fidelidad dibujadas sobre el sprite.
+  // Tras recolorear el traje, se sustituyen solo esos píxeles residuales por el color
+  // dominante de sus vecinos inmediatos para no dejar marcas rosas sobre la nueva paleta.
+  const original = new Uint8ClampedArray(pixels);
+  const isResidualPink = (offset) => {
+    if (original[offset + 3] < 16) return false;
+    const [hue, saturation, lightness] = rgbToHsl(
+      original[offset],
+      original[offset + 1],
+      original[offset + 2],
+    );
+    return saturation >= 0.18 && lightness >= 0.48 &&
+      ((hue >= 300 && hue <= 360) || hue <= 8);
+  };
+
+  for (let y = 0; y < info.height; y += 1) {
+    for (let x = 0; x < info.width; x += 1) {
+      const offset = (y * info.width + x) * 4;
+      if (!isResidualPink(offset)) continue;
+
+      const neighbors = new Map();
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || nx >= info.width || ny < 0 || ny >= info.height) continue;
+          const neighborOffset = (ny * info.width + nx) * 4;
+          if (original[neighborOffset + 3] < 16 || isResidualPink(neighborOffset)) continue;
+          const key = (original[neighborOffset] << 16) |
+            (original[neighborOffset + 1] << 8) |
+            original[neighborOffset + 2];
+          neighbors.set(key, (neighbors.get(key) ?? 0) + 1);
+        }
+      }
+
+      let replacementColor = null;
+      let highestCount = 0;
+      for (const [key, count] of neighbors) {
+        if (count > highestCount) {
+          highestCount = count;
+          replacementColor = key;
+        }
+      }
+      if (replacementColor === null) continue;
+      pixels[offset] = (replacementColor >> 16) & 255;
+      pixels[offset + 1] = (replacementColor >> 8) & 255;
+      pixels[offset + 2] = replacementColor & 255;
+    }
+  }
+
   return sharp(Buffer.from(pixels), {
     raw: { width: info.width, height: info.height, channels: 4 },
   }).png().toBuffer();

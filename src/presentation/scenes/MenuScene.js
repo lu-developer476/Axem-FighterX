@@ -3,13 +3,19 @@ import { GAME_WIDTH } from '../../config/gameConfig.js';
 import { STAGES } from '../../domain/arena/stageCatalog.js';
 import { RANGER_IDS, rangerCatalog } from '../../domain/rangers/rangerCatalog.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
+import {
+  DEFAULT_RANGER_GENDER,
+  spriteKeyFor,
+} from '../../infrastructure/assets/assetManifest.js';
 
 const PORTFOLIO_URL = 'https://lu-dev-portfolio.vercel.app/';
 const RANGER_ORDER = [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE];
-const RANGER_TEXTURES = {
-  [RANGER_IDS.VIOLET]: 'ranger-violet',
-  [RANGER_IDS.ORANGE]: 'ranger-orange',
-};
+const RANGER_VARIANTS = Object.freeze([
+  { id: RANGER_IDS.VIOLET, gender: 'male' },
+  { id: RANGER_IDS.VIOLET, gender: 'female' },
+  { id: RANGER_IDS.ORANGE, gender: 'male' },
+  { id: RANGER_IDS.ORANGE, gender: 'female' },
+]);
 const TRAINING_COLORS = Object.freeze([
   { label: 'NEGRO', color: '#111111' },
   { label: 'GRIS', color: '#555555' },
@@ -62,14 +68,14 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0, 0)
       .setDepth(-100);
 
-    this.add.image(78, 231, 'ranger-violet')
+    this.add.image(78, 231, spriteKeyFor(RANGER_IDS.VIOLET, DEFAULT_RANGER_GENDER))
       .setOrigin(0.5, 1)
       .setScale(1)
       .setFlipX(true)
       .setAlpha(0.9)
       .setDepth(-20);
 
-    this.add.image(GAME_WIDTH - 78, 231, 'ranger-orange')
+    this.add.image(GAME_WIDTH - 78, 231, spriteKeyFor(RANGER_IDS.ORANGE, DEFAULT_RANGER_GENDER))
       .setOrigin(0.5, 1)
       .setScale(1)
       .setAlpha(0.9)
@@ -110,23 +116,23 @@ export class MenuScene extends Phaser.Scene {
     this.ui.removeAll(true);
     this.buttons = [];
     this.selectedIndex = 0;
-    this.panelWidth = 354;
+    this.panelWidth = 380;
 
     const veil = this.add.rectangle(GAME_WIDTH / 2, 135, GAME_WIDTH, 270, 0x000000, 0.92)
       .setInteractive();
-    const panel = this.add.rectangle(GAME_WIDTH / 2, 177, this.panelWidth, 156, 0x000000, 0.99)
+    const panel = this.add.rectangle(GAME_WIDTH / 2, 178, this.panelWidth, 180, 0x000000, 0.99)
       .setStrokeStyle(2, 0xd3a66d, 1);
-    const inset = this.add.rectangle(GAME_WIDTH / 2, 177, this.panelWidth - 8, 148, 0x000000, 0)
+    const inset = this.add.rectangle(GAME_WIDTH / 2, 178, this.panelWidth - 8, 172, 0x000000, 0)
       .setStrokeStyle(1, 0x59466e, 1);
     this.ui.add([veil, panel, inset]);
 
-    this.#addText('SELECCIONAR PERSONAJE', GAME_WIDTH / 2, 116, {
+    this.#addText('SELECCIONAR PERSONAJE', GAME_WIDTH / 2, 105, {
       fontSize: '12px',
       color: '#f7cf83',
       letterSpacing: 1,
     });
     const mode = getVersusMode(this.matchSetup.versusMode);
-    this.#addText(mode.slotLabels[this.characterSlot] ?? 'PERSONAJE', GAME_WIDTH / 2, 139, {
+    this.#addText(mode.slotLabels[this.characterSlot] ?? 'PERSONAJE', GAME_WIDTH / 2, 126, {
       fontSize: '7px',
       color: '#b7a9cb',
     });
@@ -209,30 +215,27 @@ export class MenuScene extends Phaser.Scene {
     this.#refreshButtons();
   }
 
-  #addCharacterCard(rangerId, x, action) {
+  #addCharacterCard(rangerId, gender, x, y, action) {
     const ranger = rangerCatalog[rangerId];
-    const card = this.add.rectangle(x, 187, 144, 82, 0x241b3c, 0.98)
+    const genderLabel = gender === 'male' ? 'MASCULINO' : 'FEMENINO';
+    const title = ranger.name.toUpperCase() + ' · ' + genderLabel;
+    const card = this.add.rectangle(x, y, 154, 42, 0x241b3c, 0.98)
       .setStrokeStyle(1, 0x62527e, 1);
-    const portrait = this.add.image(x - 42, 182, RANGER_TEXTURES[rangerId])
+    const portrait = this.add.image(x - 53, y, spriteKeyFor(rangerId, gender))
       .setOrigin(0.5)
-      .setScale(0.48);
-    const label = this.add.text(x + 22, 177, ranger.name.toUpperCase(), {
+      .setScale(0.34);
+    const label = this.add.text(x + 19, y, title, {
       fontFamily: 'monospace',
-      fontSize: '7px',
+      fontSize: '6px',
       color: '#d9cde9',
       align: 'center',
-    }).setOrigin(0.5);
-    const hint = this.add.text(x + 22, 197, 'ELEGIR', {
-      fontFamily: 'monospace',
-      fontSize: '7px',
-      color: '#a99cbe',
-      align: 'center',
+      wordWrap: { width: 112 },
     }).setOrigin(0.5);
 
-    const hitArea = this.add.rectangle(x, 187, 144, 82, 0xffffff, 0)
+    const hitArea = this.add.rectangle(x, y, 154, 42, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
     const index = this.buttons.length;
-    this.buttons.push({ title: ranger.name.toUpperCase(), box: card, label, action });
+    this.buttons.push({ title, box: card, label, action });
     hitArea.on('pointerover', () => {
       this.selectedIndex = index;
       this.#refreshButtons();
@@ -243,7 +246,7 @@ export class MenuScene extends Phaser.Scene {
       this.#activateSelection();
     });
 
-    this.ui.add([card, portrait, label, hint, hitArea]);
+    this.ui.add([card, portrait, label, hitArea]);
     this.#refreshButtons();
   }
 
@@ -412,17 +415,35 @@ export class MenuScene extends Phaser.Scene {
     this.page = 'characters';
     this.#beginCharacterModal();
 
-    this.#addCharacterCard(RANGER_ORDER[0], 160, () => this.#selectCharacter(RANGER_ORDER[0]));
-    this.#addCharacterCard(RANGER_ORDER[1], 320, () => this.#selectCharacter(RANGER_ORDER[1]));
-    this.#addButton('CANCELAR', 239, () => this.#showCombatModes(), {
+    const firstSelection = this.matchSetup.characters[0];
+    const options = RANGER_VARIANTS.filter((variant) =>
+      this.characterSlot === 0 || variant.id !== firstSelection?.id
+    );
+    const positions = options.length === 4
+      ? [[150, 163], [330, 163], [150, 211], [330, 211]]
+      : [[150, 187], [330, 187]];
+
+    options.forEach((variant, index) => {
+      const [x, y] = positions[index];
+      this.#addCharacterCard(
+        variant.id,
+        variant.gender,
+        x,
+        y,
+        () => this.#selectCharacter(variant.id, variant.gender),
+      );
+    });
+
+    this.#addButton('CANCELAR', 250, () => this.#showCombatModes(), {
       width: 132,
       fontSize: '7px',
     });
   }
 
-  #selectCharacter(rangerId) {
+  #selectCharacter(rangerId, gender) {
     const mode = getVersusMode(this.matchSetup.versusMode);
-    this.matchSetup.characters[this.characterSlot] = rangerId;
+    const selection = { id: rangerId, gender };
+    this.matchSetup.characters[this.characterSlot] = selection;
 
     if (this.characterSlot + 1 < mode.characterSlots) {
       this.characterSlot += 1;
@@ -431,7 +452,10 @@ export class MenuScene extends Phaser.Scene {
     }
 
     if (mode.characterSlots === 1) {
-      this.matchSetup.characters[1] = RANGER_ORDER.find((id) => id !== rangerId);
+      this.matchSetup.characters[1] = {
+        id: RANGER_ORDER.find((id) => id !== rangerId),
+        gender,
+      };
       this.matchSetup.playerCharacter = rangerId;
       this.matchSetup.playerSide = 'J1';
       this.#showPlayerSide();

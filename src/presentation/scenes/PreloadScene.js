@@ -1,10 +1,11 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
+import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import {
-  AXEM_MOVES_ATLAS_KEY,
-  AXEM_MOVES_ATLAS_URL,
+  RANGER_GENDERS,
+  spriteKeyFor,
+  spriteUrlFor,
 } from '../../infrastructure/assets/assetManifest.js';
-import { prepareSharedAxemTextures } from '../../infrastructure/graphics/prepareSharedAxemTextures.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { createStageTextures } from '../../infrastructure/graphics/StageTextureFactory.js';
 import { createAdditionalStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';
@@ -68,8 +69,15 @@ export class PreloadScene extends Phaser.Scene {
       status.setText('NO SE PUDO CARGAR ' + file.key.toUpperCase());
     });
 
-    // Un único atlas contiene los cuadros originales de ambos personajes.
-    this.load.image(AXEM_MOVES_ATLAS_KEY, AXEM_MOVES_ATLAS_URL);
+    // Cada variante (color + género) tiene su retrato generado desde las referencias.
+    for (const gender of RANGER_GENDERS) {
+      for (const rangerId of [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE]) {
+        this.load.image(
+          spriteKeyFor(rangerId, gender),
+          spriteUrlFor(rangerId, gender),
+        );
+      }
+    }
     this.load.image('title-art', titleArtUrl);
   }
 
@@ -77,7 +85,6 @@ export class PreloadScene extends Phaser.Scene {
     createStageTextures(this);
     createAdditionalStageTextures(this);
     createFxTextures(this);
-    prepareSharedAxemTextures(this);
     registerFxAnimations(this);
     registerCharacterAnimations(this);
     this.scene.start('MenuScene');

@@ -87,43 +87,35 @@ Para cambiar el control (gamepad, táctil), basta con otro adaptador que impleme
 - **Objetos de combate:** aparecen cada tanto y duran 9 segundos. El corazón recupera 25 puntos de vida; Furia aumenta el daño un 50%; Rapidez aumenta el movimiento un 40%; Escudo reduce el daño recibido un 50%. Los tres potenciadores duran 6,5 segundos y su estado se muestra debajo de cada barra de vida.
 - **Recolección:** ambos jugadores pueden recoger objetos al tocarlos. El corazón no se consume si el luchador ya tiene toda la vida; los potenciadores se pueden renovar al recoger otro del mismo tipo.
 
-## Animaciones compartidas y paletas automáticas
+## Variantes de género y atlas de sprites
 
-Violet y Orange utilizan una única fuente de cuadros: `art/source/sprites/axem-rangers-moves-sprites.png`.
-El atlas se recorta en memoria con coordenadas comunes para `idle`, `walk` y `attack`.
-La carga genera una textura por paleta a partir de esos mismos píxeles; no existen dos
-dibujos ni colecciones de animaciones mantenidas manualmente.
+Cada color jugable (Violet y Orange) tiene variante masculina y femenina. El menú permite elegir
+las cuatro combinaciones; en Jugador vs IA, la IA recibe automáticamente el color opuesto con el
+mismo género. La identidad de combate sigue siendo Violet/Orange, mientras que el género se
+transporta como configuración visual independiente.
 
-El procesamiento elimina el fondo teal conectado a los bordes y cambia únicamente
-el tono HSL de la familia roja del personaje. La luminosidad, saturación, transparencia
-y el resto de colores se conservan. Violet usa 273° y Orange 22°.
+Las referencias masculinas usan los materiales disponibles de Axem Red:
+`art/source/sprites/references/axem-red/preview.png`,
+`preview (2).png` y los GIF `axem-ranger-run.gif`, `axem-ranger-bike.gif` y
+`axem-ranger-double-axe.gif`. El atlas masculino original completo ya no está en el repositorio;
+el generador conserva las imágenes de referencia disponibles y añade todas las páginas de esos GIF,
+sin atribuir a la copia parcial las filas que ya no existen.
 
-Los estados `hurt`, `teleport` y `ko` aplican las mismas poses procedurales a la
-misma pose base derivada del primer cuadro de `idle`. El ataque usa el mismo orden
-de diez cuadros para ambos personajes y respeta la duración definida por el dominio.
+Las referencias femeninas usan la spritesheet y las poses de
+`art/source/sprites/references/axem-pink/`. El proceso genera cuatro atlas PNG con fondo transparente:
+`results/male/axem-ranger-violet.png`, `results/male/axem-ranger-orange.png`,
+`results/female/axem-ranger-violet.png` y `results/female/axem-ranger-orange.png`.
+La transformación conserva la luminosidad y saturación de los píxeles y cambia solo la familia
+cromática del traje. Las referencias originales no se sobrescriben.
 
-La distribución irregular del atlas, las coordenadas, grupos auxiliares y exclusiones
-visuales están documentadas en `art/source/sprites/README.md`. Para sumar otra variante
-cromática, agregá solo su paleta en `sharedAxemAtlas.js`.
+`npm run prepare:sprites` ejecuta el generador. También se ejecuta automáticamente antes de
+`npm test`, `npm run dev` y `npm run build`. Los cuatro retratos de combate se escriben en
+`public/generated/`; Phaser los carga por la combinación de color y género. Los atlas completos
+quedan en `art/source/sprites/results/` como hojas de referencia.
 
-Los efectos independientes (explosión, chispa de impacto, polvo, onda de KO,
-teletransporte, tajo del hacha y curación) continúan generándose por código en
-`infrastructure/graphics/FxTextureFactory.js`.
-
-## Arte
-
-- `art/source/sprites/axem-rangers-moves-sprites.png` es la fuente única de poses y movimientos
-  que se cargan en combate. Se conserva sin cambios; las texturas de Violet y Orange se crean
-  dinámicamente en memoria.
-- `art/source/axem-ranger-violet.png`, `art/source/axem-ranger-orange.png`,
-  `art/source/sprites/axem-rangers-fullview.png` y las demás referencias originales siguen
-  intactas. Las poses individuales ya no se cargan como dibujos de combate independientes.
-- La ficha de selección, el menú y la cinemática usan también la primera pose generada desde el
-  mismo atlas y la paleta correspondiente.
-- `rangerSprites.test.js` sigue verificando que los PNG originales de referencia mantengan
-  su transparencia; no se sobrescriben ni se usan como fuente de animación.
-- Los escenarios se dibujan por código en `infrastructure/graphics/StageTextureFactory.js` y
-  `StageThemeFactory.js`, con paletas limitadas y texturas sin suavizado.
+El juego conserva sus estados de combate (reposo, movimiento, ataque, daño, teletransporte y KO)
+con las poses procedurales actuales. Las hojas archivadas reúnen el material de referencia para
+integrar secuencias cuadro a cuadro sin volver a depender del atlas compartido eliminado.
 
 ## Despliegue en Vercel
 

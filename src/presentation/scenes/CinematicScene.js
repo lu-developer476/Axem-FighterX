@@ -2,6 +2,11 @@ import Phaser from 'phaser';
 import { GAME_WIDTH } from '../../config/gameConfig.js';
 import { STAGE_IDS, getStage } from '../../domain/arena/stageCatalog.js';
 import { StageView } from '../views/StageView.js';
+import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
+import {
+  DEFAULT_RANGER_GENDER,
+  spriteKeyFor,
+} from '../../infrastructure/assets/assetManifest.js';
 
 const SPEAKERS = {
   violet: { name: 'AXEM VIOLET', color: '#d9a9ff', tint: 0xe6d4ff },
@@ -32,14 +37,29 @@ export class CinematicScene extends Phaser.Scene {
     this.stageView = new StageView(this, this.stage.id);
     this.cameras.main.setBounds(0, 0, 640, 270);
 
-    this.violet = this.add
-      .image(106, 232, 'ranger-violet')
+    const [leftSelection, rightSelection] = this.matchSetup.characters;
+    const normalizeCharacter = (selection, fallbackId) => {
+      if (typeof selection === 'string') {
+        return { id: selection, gender: DEFAULT_RANGER_GENDER };
+      }
+      return {
+        id: selection?.id ?? fallbackId,
+        gender: selection?.gender ?? DEFAULT_RANGER_GENDER,
+      };
+    };
+    const left = normalizeCharacter(leftSelection, RANGER_IDS.VIOLET);
+    const right = normalizeCharacter(rightSelection, RANGER_IDS.ORANGE);
+
+    this.leftCharacter = left;
+    this.rightCharacter = right;
+    this.leftSprite = this.add
+      .image(106, 232, spriteKeyFor(left.id, left.gender))
       .setOrigin(0.5, 1)
       .setScale(1)
       .setFlipX(true)
       .setDepth(100);
-    this.orange = this.add
-      .image(374, 232, 'ranger-orange')
+    this.rightSprite = this.add
+      .image(374, 232, spriteKeyFor(right.id, right.gender))
       .setOrigin(0.5, 1)
       .setScale(1)
       .setDepth(100);
@@ -137,8 +157,8 @@ export class CinematicScene extends Phaser.Scene {
     this.speaker.setText(speaker.name).setColor(speaker.color);
     this.dialogue.setText(line.text).setAlpha(0);
     this.progress.setText(String(this.lineIndex + 1).padStart(2, '0') + ' / ' + this.stage.dialogue.length);
-    this.violet.setAlpha(line.speaker === 'violet' ? 1 : 0.62);
-    this.orange.setAlpha(line.speaker === 'orange' ? 1 : 0.62);
+    this.leftSprite.setAlpha(this.leftCharacter.id === line.speaker ? 1 : 0.62);
+    this.rightSprite.setAlpha(this.rightCharacter.id === line.speaker ? 1 : 0.62);
 
     this.tweens.add({
       targets: this.dialogue,

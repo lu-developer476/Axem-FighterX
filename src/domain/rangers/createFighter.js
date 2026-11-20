@@ -7,8 +7,11 @@ import { rangerCatalog } from './rangerCatalog.js';
  * @param {{ x: number, y: number }} position
  * @param {1 | -1} [facing]
  */
-export function createFighter(rangerId, position, facing = 1) {
+export function createFighter(rangerId, position, facing = 1, gender = 'male') {
   const definition = rangerCatalog[rangerId];
   if (!definition) throw new Error(`Ranger desconocido: ${rangerId}`);
-  return new Fighter({ ...definition, position, facing });
+  if (gender !== 'male' && gender !== 'female') {
+    throw new Error(`Género de Axem Ranger desconocido: ${gender}`);
+  }
+  return new Fighter({ ...definition, position, facing, gender });
 }

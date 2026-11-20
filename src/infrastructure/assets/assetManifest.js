@@ -1,11 +1,12 @@
-import movesAtlasUrl from '../../../art/source/sprites/axem-rangers-moves-sprites.png?url';
+export const RANGER_GENDERS = Object.freeze(['male', 'female']);
+export const DEFAULT_RANGER_GENDER = 'male';
 
-/** Única fuente gráfica de movimiento para todos los Axem Rangers X. */
-export const AXEM_MOVES_ATLAS_KEY = 'axem-moves-atlas';
-export const AXEM_MOVES_ATLAS_URL = movesAtlasUrl;
+export const spriteKeyFor = (rangerId, gender = DEFAULT_RANGER_GENDER) =>
+  'ranger-' + gender + '-' + rangerId;
 
-/** Textura de pose base generada desde el primer cuadro del atlas compartido. */
-export const spriteKeyFor = (rangerId) => 'ranger-' + rangerId;
+export const spriteUrlFor = (rangerId, gender = DEFAULT_RANGER_GENDER) =>
+  import.meta.env.BASE_URL + 'generated/ranger-' + gender + '-' + rangerId + '.png';
 
-/** Hoja de cuadros de un estado, coloreada para el personaje indicado. */
-export const sheetTextureKey = (rangerId, state) => 'motion-' + rangerId + '-' + state;
+/** Reservado para futuras hojas de animación registradas por estado. */
+export const sheetTextureKey = (rangerId, state, gender = DEFAULT_RANGER_GENDER) =>
+  'motion-' + gender + '-' + rangerId + '-' + state;

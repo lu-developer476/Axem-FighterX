@@ -90,21 +90,23 @@ Para cambiar el control (gamepad, táctil), basta con otro adaptador que impleme
 ## Animaciones compartidas y paletas automáticas
 
 Violet y Orange utilizan una única fuente de cuadros: `art/source/sprites/axem-rangers-moves-sprites.png`.
-El atlas se recorta en memoria con coordenadas comunes para `idle`, `walk` y `attack`.
-La carga genera una textura por paleta a partir de esos mismos píxeles; no existen dos
+El atlas tiene una distribución irregular, por lo que cada cuadro se recorta con su propio
+rectángulo (`src/infrastructure/assets/axemAtlasFrames.json`, generado por
+`node scripts/analyze-atlas.mjs`) y se apoya sobre una línea base común. `idle` (7 cuadros),
+`walk` (9) y `attack` (10) son las mismas secuencias para ambos personajes; no existen dos
 dibujos ni colecciones de animaciones mantenidas manualmente.
 
 El procesamiento elimina el fondo teal conectado a los bordes y cambia únicamente
 el tono HSL de la familia roja del personaje. La luminosidad, saturación, transparencia
-y el resto de colores se conservan. Violet usa 273° y Orange 22°.
+y el resto de colores se conservan. Violet usa 268° y Orange 22°.
 
 Los estados `hurt`, `teleport` y `ko` aplican las mismas poses procedurales a la
 misma pose base derivada del primer cuadro de `idle`. El ataque usa el mismo orden
 de diez cuadros para ambos personajes y respeta la duración definida por el dominio.
 
-La distribución irregular del atlas, las coordenadas, grupos auxiliares y exclusiones
-visuales están documentadas en `art/source/sprites/README.md`. Para sumar otra variante
-cromática, agregá solo su paleta en `sharedAxemAtlas.js`.
+Las coordenadas de todos los cuadros, los grupos auxiliares y las exclusiones visuales están
+documentados en `art/source/sprites/README.md`. Para sumar otra variante cromática, agregá solo
+su paleta en `sharedAxemAtlas.js`.
 
 Los efectos independientes (explosión, chispa de impacto, polvo, onda de KO,
 teletransporte, tajo del hacha y curación) continúan generándose por código en

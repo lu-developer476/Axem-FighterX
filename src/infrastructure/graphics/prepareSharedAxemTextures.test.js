@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { RANGER_IDS, rangerCatalog } from '../../domain/rangers/rangerCatalog.js';
-import { AXEM_ATLAS_SIZE, SHARED_ANIMATION_SEQUENCES } from '../assets/sharedAxemAtlas.js';
+import {
+  AXEM_ATLAS_SIZE,
+  SHARED_ANIMATION_SEQUENCES,
+  SHARED_CELL,
+  placeFrameInCell,
+} from '../assets/sharedAxemAtlas.js';
 import { recolorAxemPixels } from './prepareSharedAxemTextures.js';
 
 function hueOf(red, green, blue) {
@@ -20,20 +25,27 @@ function hueOf(red, green, blue) {
 }
 
 describe('atlas compartido de Axem Rangers X', () => {
-  it('mantiene los recortes activos dentro de las dimensiones del atlas', () => {
+  it('mantiene los recortes activos dentro del atlas y de la celda común', () => {
     for (const sequence of Object.values(SHARED_ANIMATION_SEQUENCES)) {
-      expect(sequence.x).toBeGreaterThanOrEqual(0);
-      expect(sequence.y).toBeGreaterThanOrEqual(0);
-      expect(sequence.x + (sequence.frameCount - 1) * sequence.stepX + sequence.frameWidth)
-        .toBeLessThanOrEqual(AXEM_ATLAS_SIZE.width);
-      expect(sequence.y + sequence.frameHeight).toBeLessThanOrEqual(AXEM_ATLAS_SIZE.height);
+      for (const frame of sequence.frames) {
+        expect(frame.x).toBeGreaterThanOrEqual(0);
+        expect(frame.y).toBeGreaterThanOrEqual(0);
+        expect(frame.x + frame.w).toBeLessThanOrEqual(AXEM_ATLAS_SIZE.width);
+        expect(frame.y + frame.h).toBeLessThanOrEqual(AXEM_ATLAS_SIZE.height);
+
+        const placed = placeFrameInCell(frame, sequence.baseline);
+        expect(placed.x).toBeGreaterThanOrEqual(0);
+        expect(placed.y).toBeGreaterThanOrEqual(0);
+        expect(placed.x + frame.w).toBeLessThanOrEqual(SHARED_CELL.width);
+        expect(placed.y + frame.h).toBeLessThanOrEqual(SHARED_CELL.height);
+      }
     }
   });
 
   it('define una sola fuente y un mismo orden de cuadros para cada estado', () => {
     expect(Object.keys(SHARED_ANIMATION_SEQUENCES)).toEqual(['idle', 'walk', 'attack']);
     expect(SHARED_ANIMATION_SEQUENCES.idle.frameCount).toBe(7);
-    expect(SHARED_ANIMATION_SEQUENCES.walk.frameCount).toBe(10);
+    expect(SHARED_ANIMATION_SEQUENCES.walk.frameCount).toBe(9);
     expect(SHARED_ANIMATION_SEQUENCES.attack.frameCount).toBe(10);
   });
 

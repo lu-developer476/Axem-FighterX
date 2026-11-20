@@ -1,54 +1,98 @@
-/**
- * Distribución visual del atlas original (730 × 804).
- *
- * Los tres primeros grupos de la columna izquierda son secuencias completas y
- * coherentes para los estados que el combate reproduce como sprites:
- * reposo, desplazamiento y ataque. El orden de cada grupo es de izquierda a
- * derecha, sin reordenar cuadros.
- *
- * Los grupos auxiliares se documentan para conservar su ubicación y facilitar
- * futuras integraciones, pero no se interpretan automáticamente como estados:
- * algunos mezclan poses, accesorios y efectos que no deben convertirse en frames.
- */
-export const AXEM_ATLAS_SIZE = Object.freeze({ width: 730, height: 804 });
+import atlasManifest from './axemAtlasFrames.json';
+import { ATLAS_EXCLUDED_REGIONS } from './atlasLayoutRules.js';
 
-export const SHARED_ANIMATION_SEQUENCES = Object.freeze({
-  idle: Object.freeze({
-    x: 0, y: 0, frameWidth: 34, frameHeight: 52, stepX: 34,
-    frameCount: 7, frameRate: 6, loop: true,
-  }),
-  walk: Object.freeze({
-    x: 0, y: 55, frameWidth: 36, frameHeight: 54, stepX: 36,
-    frameCount: 10, frameRate: 10, loop: true,
-  }),
-  attack: Object.freeze({
-    x: 0, y: 111, frameWidth: 45, frameHeight: 54, stepX: 45,
-    frameCount: 10, frameRate: 24, loop: false,
-  }),
+/**
+ * Fuente única de movimientos de los Axem Rangers X.
+ *
+ * Los cuadros no están en una cuadrícula: cada uno tiene su propio rectángulo
+ * en `axemAtlasFrames.json` (generado por `scripts/analyze-atlas.mjs`). Las
+ * secuencias activas solo eligen qué grupo reproducir; Violet y Orange usan
+ * exactamente las mismas, y únicamente cambia el tono (AXEM_PALETTE_HUES).
+ */
+export const AXEM_ATLAS_SIZE = Object.freeze({
+  width: atlasManifest.width,
+  height: atlasManifest.height,
 });
 
+export { ATLAS_EXCLUDED_REGIONS as EXCLUDED_ATLAS_REGIONS };
+
+const freezeFrame = (frame) => Object.freeze({ ...frame });
+const freezeGroup = (group) => Object.freeze({
+  id: group.id,
+  bounds: Object.freeze([...group.bounds]),
+  frames: Object.freeze(group.frames.map(freezeFrame)),
+});
+
+/** Todos los grupos de cuadros detectados, en el orden visual del atlas. */
+export const ATLAS_GROUPS = Object.freeze(atlasManifest.groups.map(freezeGroup));
+
+const groupById = (id) => {
+  const group = ATLAS_GROUPS.find((candidate) => candidate.id === id);
+  if (!group) throw new Error('El atlas no tiene el grupo ' + id + '.');
+  return group;
+};
+
+const sequenceFrom = (groupId, { frameRate, loop }) => {
+  const { frames } = groupById(groupId);
+  return Object.freeze({
+    groupId,
+    frameRate,
+    loop,
+    frameCount: frames.length,
+    // Línea de los pies del grupo: los cuadros se apoyan sobre ella.
+    baseline: Math.max(...frames.map((frame) => frame.y + frame.h)),
+    frames,
+  });
+};
+
 /**
- * Grupos de cuadros auxiliares vistos en la columna izquierda del atlas.
- * bounds usa [x, y, width, height] y describe el bloque visual, no una tira
- * horizontal uniforme. No se cargan como animaciones hasta clasificar cada
- * pose y separar con certeza los elementos accesorios.
+ * Secuencias reproducidas en combate. Orden de cuadros = orden en el atlas.
+ *  - idle:   grupo 01, 7 cuadros
+ *  - walk:   grupo 02, 9 cuadros
+ *  - attack: grupo 03, 10 cuadros
  */
-export const AUXILIARY_ATLAS_GROUPS = Object.freeze([
-  Object.freeze({ id: 'group-04', bounds: [0, 165, 372, 55], framesSeen: 9 }),
-  Object.freeze({ id: 'group-05', bounds: [0, 220, 368, 54], framesSeen: 8 }),
-  Object.freeze({ id: 'group-06', bounds: [0, 277, 246, 54], framesSeen: 5 }),
-  Object.freeze({ id: 'group-07', bounds: [0, 335, 246, 54], framesSeen: 5 }),
-  Object.freeze({ id: 'group-08', bounds: [0, 395, 252, 54], framesSeen: 5 }),
-  Object.freeze({ id: 'group-09', bounds: [0, 455, 258, 54], framesSeen: 5 }),
-  Object.freeze({ id: 'group-10', bounds: [0, 514, 421, 55], framesSeen: 11 }),
-  Object.freeze({ id: 'group-11', bounds: [0, 575, 402, 55], framesSeen: 8 }),
-  Object.freeze({ id: 'group-12', bounds: [0, 630, 590, 55], framesSeen: 13 }),
-  Object.freeze({ id: 'group-13', bounds: [0, 687, 278, 55], framesSeen: 6 }),
-  Object.freeze({ id: 'group-14', bounds: [0, 747, 278, 55], framesSeen: 6 }),
-]);
+export const SHARED_ANIMATION_SEQUENCES = Object.freeze({
+  idle: sequenceFrom('group-01', { frameRate: 6, loop: true }),
+  walk: sequenceFrom('group-02', { frameRate: 10, loop: true }),
+  attack: sequenceFrom('group-03', { frameRate: 24, loop: false }),
+});
+
+/** Grupos del atlas que todavía no se reproducen como animación de combate. */
+export const AUXILIARY_ATLAS_GROUPS = Object.freeze(
+  ATLAS_GROUPS.filter((group) =>
+    !Object.values(SHARED_ANIMATION_SEQUENCES).some((sequence) => sequence.groupId === group.id)),
+);
+
+/**
+ * Celda común a todos los cuadros activos. Mantiene la misma escala en todos
+ * los estados y apoya los pies sobre el borde inferior. `anchorX` es la columna
+ * de la celda donde cae el pivote de pies de cada cuadro.
+ */
+export const SHARED_CELL_HEIGHT = 52;
+export const SHARED_CELL = (() => {
+  const frames = Object.values(SHARED_ANIMATION_SEQUENCES).flatMap((sequence) => sequence.frames);
+  const anchorX = Math.max(...frames.map((frame) => frame.pivotX));
+  const rightReach = Math.max(...frames.map((frame) => frame.w - frame.pivotX));
+  return Object.freeze({
+    width: anchorX + rightReach,
+    height: SHARED_CELL_HEIGHT,
+    anchorX,
+  });
+})();
+
+/**
+ * Posición de un cuadro dentro de su celda: pies sobre la línea base y pivote
+ * sobre `anchorX`. Función pura para poder verificarla sin canvas.
+ */
+export function placeFrameInCell(frame, baseline) {
+  return {
+    x: SHARED_CELL.anchorX - frame.pivotX,
+    y: SHARED_CELL.height - frame.h - (baseline - (frame.y + frame.h)),
+  };
+}
 
 /** Paletas destino; solo se sustituye la familia cromática roja del atlas. */
 export const AXEM_PALETTE_HUES = Object.freeze({
-  violet: 273,
+  violet: 268,
   orange: 22,
 });

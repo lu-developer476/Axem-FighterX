@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { RANGER_IDS } from './rangerCatalog.js';
 import { createFighter } from './createFighter.js';
 import { createDefaultMatch } from '../../application/useCases/CreateMatch.js';
+import { ARENA } from '../arena/arena.js';
 
 describe('Variantes de género de los Axem Rangers', () => {
   it('conserva el género seleccionado sin alterar la identidad cromática', () => {
@@ -35,6 +36,17 @@ describe('Variantes de género de los Axem Rangers', () => {
 
     expect(match.fighters.map((fighter) => fighter.gender)).toEqual(['female', 'male']);
   });
+
+  it('ubica ambos luchadores sobre la coordenada compartida del suelo', () => {
+    const match = createDefaultMatch();
+
+    expect(match.fighters.map((fighter) => fighter.position.y)).toEqual([
+      ARENA.groundY,
+      ARENA.groundY,
+    ]);
+    expect(ARENA.maxY).toBe(ARENA.groundY);
+  });
+
 
   it('rechaza valores de género no registrados', () => {
     expect(() => createFighter(

@@ -1,5 +1,6 @@
 import { GAME_WIDTH } from '../../config/gameConfig.js';
 import { PICKUP_TYPES } from '../../domain/entities/PowerUpPickup.js';
+import { contentWidth, insetSize } from './uiLayout.js';
 
 const BAR = { width: 176, height: 10, y: 16, margin: 12 };
 const COLORS = {
@@ -72,6 +73,18 @@ export class HudView {
       .setScrollFactor(0)
       .setDepth(10_002)
       .setVisible(false);
+    this.resultPanelInset = scene.add.rectangle(
+      GAME_WIDTH / 2,
+      220,
+      insetSize(440),
+      insetSize(88),
+      0x000000,
+      0,
+    )
+      .setStrokeStyle(1, 0x4b385c, 0.72)
+      .setScrollFactor(0)
+      .setDepth(10_002)
+      .setVisible(false);
     this.resultSpeaker = text(GAME_WIDTH / 2, 188, '', {
       fontSize: '11px',
       color: '#d9a9ff',
@@ -81,7 +94,7 @@ export class HudView {
       fontSize: '9px',
       color: '#f1ecdf',
       align: 'center',
-      wordWrap: { width: 400, useAdvancedWrap: true },
+      wordWrap: { width: contentWidth(440), useAdvancedWrap: true },
       maxLines: 2,
     }, 0.5).setDepth(10_003).setVisible(false);
     this.resultPrompt = text(GAME_WIDTH / 2, 252, 'ENTER / ESPACIO · CONTINUAR DIÁLOGO', {
@@ -142,6 +155,7 @@ export class HudView {
 
   showRoundResult(roundNumber, totalRounds, winnerName, wins) {
     this.resultPanel.setVisible(false);
+    this.resultPanelInset.setVisible(false);
     this.resultSpeaker.setVisible(false);
     this.resultDialogue.setVisible(false);
     this.resultPrompt.setVisible(false);
@@ -159,6 +173,7 @@ export class HudView {
     this.resultLines = [...dialogueLines];
     this.resultLineIndex = 0;
     this.resultPanel.setVisible(true);
+    this.resultPanelInset.setVisible(true);
     this.resultSpeaker.setVisible(true);
     this.resultDialogue.setVisible(true);
     this.resultPrompt.setVisible(true);
@@ -181,6 +196,7 @@ export class HudView {
     this.subtitle.setVisible(false);
     this.hint.setVisible(false);
     this.resultPanel.setVisible(false);
+    this.resultPanelInset.setVisible(false);
     this.resultSpeaker.setVisible(false);
     this.resultDialogue.setVisible(false);
     this.resultPrompt.setVisible(false);

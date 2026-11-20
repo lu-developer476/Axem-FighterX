@@ -4,6 +4,7 @@ import { STAGES } from '../../domain/arena/stageCatalog.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
+import { contentWidth, insetSize, UI_SPACING } from '../views/uiLayout.js';
 
 const PORTFOLIO_URL = 'https://lu-dev-portfolio.vercel.app/';
 const RANGER_ORDER = [RANGER_IDS.ORANGE, RANGER_IDS.VIOLET];
@@ -11,10 +12,6 @@ const readableFontSize = (value = '10px') => {
   const size = Number.parseFloat(value);
   return Number.isFinite(size) ? Math.max(8, Math.round(size * 1.25)) + 'px' : value;
 };
-const MODAL_LAYOUT = Object.freeze({
-  contentGutter: 12,
-  frameInset: 2,
-});
 const TRAINING_COLORS = Object.freeze([
   { label: 'NEGRO', color: '#111111' },
   { label: 'GRIS', color: '#555555' },
@@ -113,8 +110,8 @@ export class MenuScene extends Phaser.Scene {
     const inset = this.add.rectangle(
       GAME_WIDTH / 2,
       panelY,
-      width - MODAL_LAYOUT.frameInset * 2,
-      height - MODAL_LAYOUT.frameInset * 2,
+      insetSize(width),
+      insetSize(height),
       0x000000,
       0,
     )
@@ -154,8 +151,8 @@ export class MenuScene extends Phaser.Scene {
     const inset = this.add.rectangle(
       GAME_WIDTH / 2,
       panelY,
-      this.panelWidth - MODAL_LAYOUT.frameInset * 2,
-      panelHeight - MODAL_LAYOUT.frameInset * 2,
+      insetSize(this.panelWidth),
+      insetSize(panelHeight),
       0x000000,
       0,
     ).setStrokeStyle(1, 0x4b385c, 0.92);
@@ -181,7 +178,7 @@ export class MenuScene extends Phaser.Scene {
       color: '#e7def5',
       align: 'center',
       wordWrap: {
-        width: Math.max(100, this.panelWidth - MODAL_LAYOUT.contentGutter * 2),
+        width: Math.max(100, contentWidth(this.panelWidth)),
         useAdvancedWrap: true,
       },
       ...style,
@@ -193,7 +190,7 @@ export class MenuScene extends Phaser.Scene {
 
   #addButton(title, y, action, { width = 210, fontSize = '8px', x = GAME_WIDTH / 2 } = {}) {
     // El fondo, la etiqueta y el área interactiva comparten exactamente el mismo ancho y centro.
-    const buttonWidth = Math.floor(Math.min(width, Math.max(112, this.panelWidth - MODAL_LAYOUT.contentGutter * 2)));
+    const buttonWidth = Math.floor(Math.min(width, Math.max(112, contentWidth(this.panelWidth))));
     const buttonHeight = 20;
     const labelFontSize = readableFontSize(fontSize);
     const shadow = this.add.rectangle(x, y + 2, buttonWidth, buttonHeight, 0x090612, 0.98);
@@ -205,7 +202,7 @@ export class MenuScene extends Phaser.Scene {
       fontSize: labelFontSize,
       color: '#d9cde9',
       align: 'center',
-      wordWrap: { width: buttonWidth - 24, useAdvancedWrap: true },
+      wordWrap: { width: contentWidth(buttonWidth, UI_SPACING.buttonTextGutter), useAdvancedWrap: true },
     }).setOrigin(0.5);
     const hitArea = this.add.rectangle(x, y, buttonWidth, buttonHeight, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
@@ -393,11 +390,7 @@ export class MenuScene extends Phaser.Scene {
   #showVersusModes() {
     this.page = 'versus';
     this.matchSetup = { characters: [], playerSide: 'J1' };
-    this.#beginPage('JUGAR', 330, 168);
-    this.#addText('COMBATE', GAME_WIDTH / 2, 140, {
-      fontSize: '7px',
-      color: '#b7a9cb',
-    });
+    this.#beginPage('COMBATE', 330, 168);
 
     VERSUS_MODES.forEach((mode, index) => {
       this.#addButton(mode.label, 160 + index * 25, () => {

@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from '../../config/gameConfig.js';
+import { ARENA } from '../../domain/arena/arena.js';
+import { contentWidth, insetSize } from '../views/uiLayout.js';
 import { STAGE_IDS, getStage } from '../../domain/arena/stageCatalog.js';
 import { StageView } from '../views/StageView.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
@@ -55,13 +57,13 @@ export class CinematicScene extends Phaser.Scene {
     this.leftCharacter = left;
     this.rightCharacter = right;
     this.leftSprite = this.add
-      .image(106, 232, spriteKeyFor(left.id, left.gender))
+      .image(106, ARENA.groundY, spriteKeyFor(left.id, left.gender))
       .setOrigin(0.5, 1)
       .setScale(1)
       .setFlipX(shouldFlip(1, spriteFacingFor(left.id, left.gender)))
       .setDepth(100);
     this.rightSprite = this.add
-      .image(374, 232, spriteKeyFor(right.id, right.gender))
+      .image(374, ARENA.groundY, spriteKeyFor(right.id, right.gender))
       .setOrigin(0.5, 1)
       .setScale(1)
       .setFlipX(shouldFlip(-1, spriteFacingFor(right.id, right.gender)))
@@ -70,21 +72,28 @@ export class CinematicScene extends Phaser.Scene {
     // Los dos personajes comparten el mismo movimiento de espera, sin depender del género.
     this.tweens.add({
       targets: [this.leftSprite, this.rightSprite],
-      y: 228,
+      y: ARENA.groundY - 4,
       duration: 780,
       ease: 'Sine.easeInOut',
       yoyo: true,
       repeat: -1,
     });
 
-    // La conversación queda siempre anclada a una franja inferior.
-    this.add.rectangle(GAME_WIDTH / 2, 222, 440, 84, 0x100d1e, 0.97)
+    // La conversación comparte el mismo margen interno que el resto de los paneles.
+    const dialoguePanelWidth = 440;
+    const dialogueContentWidth = contentWidth(dialoguePanelWidth);
+    const dialogueTextLeft = (GAME_WIDTH - dialogueContentWidth) / 2;
+    this.add.rectangle(GAME_WIDTH / 2, 222, dialoguePanelWidth, 84, 0x100d1e, 0.97)
       .setStrokeStyle(1, 0x9277a8, 0.96)
       .setScrollFactor(0)
       .setDepth(1000);
-    this.add.rectangle(GAME_WIDTH / 2, 180, 440, 2, 0xe2b978, 0.92)
+    this.add.rectangle(GAME_WIDTH / 2, 222, insetSize(dialoguePanelWidth), insetSize(84), 0x000000, 0)
+      .setStrokeStyle(1, 0x4b385c, 0.72)
       .setScrollFactor(0)
       .setDepth(1001);
+    this.add.rectangle(GAME_WIDTH / 2, 180, dialoguePanelWidth, 2, 0xe2b978, 0.92)
+      .setScrollFactor(0)
+      .setDepth(1002);
 
     this.stageTitle = this.add.text(GAME_WIDTH / 2, 108, this.stage.name.toUpperCase(), {
       fontFamily: 'monospace',
@@ -109,22 +118,22 @@ export class CinematicScene extends Phaser.Scene {
       align: 'center',
     }).setOrigin(0.5).setScrollFactor(0).setDepth(1002);
 
-    this.speaker = this.add.text(38, 191, '', {
+    this.speaker = this.add.text(dialogueTextLeft, 191, '', {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#d9a9ff',
     }).setScrollFactor(0).setDepth(1002);
 
-    this.dialogue = this.add.text(38, 207, '', {
+    this.dialogue = this.add.text(dialogueTextLeft, 207, '', {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: '#f1ecdf',
       lineSpacing: 3,
-      wordWrap: { width: 370, useAdvancedWrap: true },
+      wordWrap: { width: dialogueContentWidth, useAdvancedWrap: true },
       maxLines: 3,
     }).setScrollFactor(0).setDepth(1002);
 
-    this.progress = this.add.text(GAME_WIDTH - 38, 191, '', {
+    this.progress = this.add.text(GAME_WIDTH - dialogueTextLeft, 191, '', {
       fontFamily: 'monospace',
       fontSize: '9px',
       color: '#c1b4d4',

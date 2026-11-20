@@ -161,7 +161,7 @@ function drawMid(ctx, w, h) {
 
 function drawNear(ctx, w) {
   const rnd = mulberry32(41);
-  const base = 242;
+  const base = ARENA.groundY + 10;
   for (let x = -6; x < w; x += 18 + Math.floor(rnd() * 3) * 8) {
     const treeHeight = 70 + Math.floor(rnd() * 5) * 10;
     const treeWidth = 22 + Math.floor(rnd() * 3) * 4;

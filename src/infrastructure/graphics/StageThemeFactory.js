@@ -183,7 +183,7 @@ function drawMid(ctx, width, height, palette, stageId) {
     }
     // Raíces que se extienden sobre el suelo.
     for (let x = 0; x < width; x += 34) {
-      rect(ctx, palette.mid, x, 210 + Math.round(hash2(x, 3, 45) * 8), 23, 4);
+      rect(ctx, palette.mid, x, ARENA.groundY - 22 + Math.round(hash2(x, 3, 45) * 8), 23, 4);
     }
     return;
   }
@@ -196,9 +196,9 @@ function drawMid(ctx, width, height, palette, stageId) {
       rect(ctx, palette.midLight, x + 2, top + 12, 2, 99);
       rect(ctx, palette.near, x + 8, top + 12, 2, 103);
       rect(ctx, palette.accent, x + 3, top + 36, 3, 11);
-      rect(ctx, palette.mid, x - 12, 218, 34, 8);
+      rect(ctx, palette.mid, x - 12, ARENA.groundY - 14, 34, 8);
     }
-    rect(ctx, palette.mid, 0, 210, width, 10);
+    rect(ctx, palette.mid, 0, ARENA.groundY - 22, width, 10);
     for (let x = 18; x < width; x += 96) {
       rect(ctx, palette.midLight, x, 70, 3, 16);
       rect(ctx, palette.accent, x - 2, 82, 7, 2);
@@ -237,7 +237,7 @@ function drawCanopy(ctx, cx, cy, radius, color) {
 function drawNear(ctx, width, height, palette, stageId) {
   if (stageId === STAGE_IDS.FOREST) {
     for (let x = -12; x < width; x += 56) {
-      const bushY = 214 - Math.round(hash2(x, 2, 84) * 15);
+      const bushY = ARENA.groundY - 18 - Math.round(hash2(x, 2, 84) * 15);
       for (let part = 0; part < 4; part++) {
         drawCanopy(ctx, x + part * 11, bushY + (part % 2) * 4, 18, part % 2 ? palette.near : palette.mid);
       }
@@ -249,19 +249,19 @@ function drawNear(ctx, width, height, palette, stageId) {
 
   if (stageId === STAGE_IDS.SANCTUARY) {
     for (let x = 20; x < width; x += 106) {
-      rect(ctx, palette.near, x, 188, 32, 42);
-      rect(ctx, palette.pillar, x - 4, 184, 40, 5);
-      rect(ctx, palette.accent, x + 15, 192, 3, 24);
-      rect(ctx, palette.midLight, x + 5, 202, 22, 2);
+      rect(ctx, palette.near, x, ARENA.groundY - 44, 32, 42);
+      rect(ctx, palette.pillar, x - 4, ARENA.groundY - 48, 40, 5);
+      rect(ctx, palette.accent, x + 15, ARENA.groundY - 40, 3, 24);
+      rect(ctx, palette.midLight, x + 5, ARENA.groundY - 30, 22, 2);
     }
     return;
   }
 
   for (let x = 0; x < width; x += 48) {
     const spike = 18 + Math.round(hash2(x, 4, 92) * 24);
-    rect(ctx, palette.near, x, 232 - spike, 16, spike);
-    rect(ctx, palette.mid, x + 8, 232 - spike - 7, 8, 7);
-    rect(ctx, palette.accent, x + 4, 225 - spike, 2, 5);
+    rect(ctx, palette.near, x, ARENA.groundY - spike, 16, spike);
+    rect(ctx, palette.mid, x + 8, ARENA.groundY - spike - 7, 8, 7);
+    rect(ctx, palette.accent, x + 4, ARENA.groundY - 7 - spike, 2, 5);
   }
 }
 

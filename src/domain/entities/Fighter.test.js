@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { createFighter } from '../rangers/createFighter.js';
+import { ARENA } from '../arena/arena.js';
 import { FighterState, TIMINGS } from './FighterState.js';
 
-const make = (id = 'violet', x = 100) => createFighter(id, { x, y: 232 });
+const make = (id = 'violet', x = 100) => createFighter(id, { x, y: ARENA.groundY });
 const idle = { x: 0, y: 0, z: 0, attack: false, teleport: false };
 const run = (fighter, intent, totalMs, step = 16) => {
   for (let t = 0; t < totalMs; t += step) fighter.update(intent, step);
@@ -35,10 +36,10 @@ describe('Fighter: movimiento y orientación', () => {
   it('se desplaza hacia arriba y abajo sin alterar la orientación', () => {
     const fighter = make();
     fighter.update({ ...idle, y: -1 }, 500);
-    expect(fighter.position.y).toBeCloseTo(232 - fighter.stats.moveSpeed / 2);
+    expect(fighter.position.y).toBeCloseTo(ARENA.groundY - fighter.stats.moveSpeed / 2);
     expect(fighter.facing).toBe(1);
     fighter.update({ ...idle, y: 1 }, 500);
-    expect(fighter.position.y).toBeCloseTo(232);
+    expect(fighter.position.y).toBeCloseTo(ARENA.groundY);
   });
 
   it('caminar por el terreno y volar son movimientos independientes', () => {
@@ -69,11 +70,11 @@ describe('Fighter: movimiento y orientación', () => {
     const fighter = make();
     fighter.update({ ...idle, z: 1 }, 5000);
     expect(fighter.position.z).toBe(fighter.maxAltitude);
-    expect(fighter.position.z).toBeLessThanOrEqual(232 - 84 - 8 - fighter.stats.hoverAmplitude);
+    expect(fighter.position.z).toBeLessThanOrEqual(ARENA.groundY - 84 - 8 - fighter.stats.hoverAmplitude);
 
-    fighter.position.y = 170;
-    fighter.clampTo({ minX: 40, maxX: 600, minY: 170, maxY: 232 });
-    expect(fighter.position.z).toBeLessThanOrEqual(170 - 84 - 8 - fighter.stats.hoverAmplitude);
+    fighter.position.y = ARENA.minY;
+    fighter.clampTo({ minX: ARENA.minX, maxX: ARENA.maxX, minY: ARENA.minY, maxY: ARENA.groundY });
+    expect(fighter.position.z).toBeLessThanOrEqual(ARENA.minY - 84 - 8 - fighter.stats.hoverAmplitude);
   });
 
   it('la levitación puede tocar el suelo y elevarse dentro de su amplitud', () => {

@@ -1,4 +1,5 @@
 import { GAME_WIDTH } from '../../config/gameConfig.js';
+import { contentWidth, insetSize, UI_SPACING } from './uiLayout.js';
 
 /** Menú superpuesto con paneles y botones de ancho coherente. */
 export class PauseMenuView {
@@ -89,7 +90,7 @@ export class PauseMenuView {
     const shadow = this.scene.add.rectangle(GAME_WIDTH / 2 + 3, panelY + 3, this.panelWidth, height, 0x06040b, 0.96);
     const panel = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth, height, 0x100d1e, 0.99)
       .setStrokeStyle(1, 0xd3a66d, 0.96);
-    const inset = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth - 8, height - 8, 0x000000, 0)
+    const inset = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, insetSize(this.panelWidth), insetSize(height), 0x000000, 0)
       .setStrokeStyle(1, 0x4b385c, 0.92);
     const heading = this.scene.add.text(GAME_WIDTH / 2, panelY - height / 2 + 24, title, {
       fontFamily: 'monospace',
@@ -102,7 +103,7 @@ export class PauseMenuView {
     const headerRule = this.scene.add.rectangle(
       GAME_WIDTH / 2,
       panelY - height / 2 + 44,
-      this.panelWidth - 28,
+      contentWidth(this.panelWidth),
       1,
       0xd3a66d,
       0.72,
@@ -116,15 +117,15 @@ export class PauseMenuView {
       fontSize: '9px',
       color: '#e7def5',
       align: 'center',
-      wordWrap: { width: this.panelWidth - 40, useAdvancedWrap: true },
+      wordWrap: { width: contentWidth(this.panelWidth), useAdvancedWrap: true },
       ...style,
     }).setOrigin(0.5);
     this.container.add(label);
     return label;
   }
 
-  #addButton(title, y, action, { width = this.panelWidth - 48 } = {}) {
-    const buttonWidth = Math.min(width, this.panelWidth - 48);
+  #addButton(title, y, action, { width = contentWidth(this.panelWidth) } = {}) {
+    const buttonWidth = Math.min(width, contentWidth(this.panelWidth));
     const box = this.scene.add.rectangle(GAME_WIDTH / 2, y, buttonWidth, 23, 0x241b3c, 0.98)
       .setStrokeStyle(1, 0x62527e, 1);
     const label = this.scene.add.text(GAME_WIDTH / 2, y, title, {
@@ -132,7 +133,7 @@ export class PauseMenuView {
       fontSize: '10px',
       color: '#d9cde9',
       align: 'center',
-      wordWrap: { width: buttonWidth - 24, useAdvancedWrap: true },
+      wordWrap: { width: contentWidth(buttonWidth, UI_SPACING.buttonTextGutter), useAdvancedWrap: true },
     }).setOrigin(0.5);
     const hitArea = this.scene.add.rectangle(GAME_WIDTH / 2, y, buttonWidth, 23, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });

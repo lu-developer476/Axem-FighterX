@@ -27,7 +27,7 @@ Desde **JUGAR** se elige el tipo de enfrentamiento (**Jugador vs IA**, **Jugador
 
 Los formatos respetan la cantidad total indicada: **Definitivo** disputa una ronda, **2 Rondas** disputa exactamente dos y **5 Rondas** disputa exactamente cinco. Entre rondas se muestra el marcador y se espera que el jugador pulse `ENTER` o `ESPACIO` para continuar. Al finalizar la cantidad prevista, gana quien haya obtenido más rondas; un empate en el marcador termina en empate. `ENTRENAMIENTO` permite elegir un fondo completamente sólido, con colores predefinidos o un selector de color personalizado.
 
-En los enfrentamientos de dos participantes se solicitan dos selecciones de personaje; en **Jugador vs IA**, el rival recibe automáticamente el personaje restante.
+En cada selección se elige primero el color (**Axem Naranja** o **Axem Violeta**) y luego el género (**masculino** o **femenino**), sin retratos ni descripciones físicas previas. En los enfrentamientos de dos participantes se solicitan dos selecciones; en **Jugador vs IA**, el rival recibe automáticamente el personaje restante.
 
 ## Escenarios y cinemáticas
 
@@ -84,6 +84,9 @@ Para cambiar el control (gamepad, táctil), basta con otro adaptador que impleme
 - **Hachazo:** carga (120 ms), fase activa con hitbox delante del personaje (110 ms) y recuperación (190 ms). Un ataque golpea una sola vez.
 - **Golpe recibido:** daño, aturdimiento, retroceso y breve invulnerabilidad. Con 0 de vida, KO.
 - **Teletransporte:** con el rival cerca reaparece detrás de él; si no, salta hacia adelante. Es invulnerable mientras dura y tiene enfriamiento.
+- **IA táctica:** estima la trayectoria del rival, comprueba alcance y carril antes de atacar, esquiva golpes anunciados y busca objetos que realmente le sirvan. Registra la cadencia del oponente y ajusta sus ventanas de respuesta.
+- **Progresión:** en series de varias rondas la IA pasa del nivel 1 hasta el nivel 5, con ataques más frecuentes, mayor anticipación y mejores respuestas defensivas. Reiniciar la serie restablece el nivel.
+- **Plano de suelo:** una única coordenada en `ARENA.groundY` gobierna el spawn, los pies de los luchadores, las barreras, los apoyos del escenario y los objetos; el carril jugable se compactó para acercar la acción al piso.
 - **Objetos de combate:** aparecen cada tanto y duran 9 segundos. El corazón recupera 25 puntos de vida; Furia aumenta el daño un 50%; Rapidez aumenta el movimiento un 40%; Escudo reduce el daño recibido un 50%. Los tres potenciadores duran 6,5 segundos y su estado se muestra debajo de cada barra de vida.
 - **Recolección:** ambos jugadores pueden recoger objetos al tocarlos. El corazón no se consume si el luchador ya tiene toda la vida; los potenciadores se pueden renovar al recoger otro del mismo tipo.
 

@@ -3,8 +3,8 @@ export const ARENA = Object.freeze({
   width: 640,
   /** Profundidad del plano del suelo; nunca permite caminar por debajo del piso. */
   minY: 170,
-  groundY: 232,
-  maxY: 232,
+  groundY: 218,
+  maxY: 218,
   minX: 40,
   maxX: 600,
   /** Distancia mínima entre centros: evita que los luchadores se atraviesen. */

@@ -49,7 +49,10 @@ export class FighterView {
     const laneDepth = FIGHTER_DEPTH + Math.round(fighter.position.y - fighter.position.z * 0.35);
     sprite.setDepth(laneDepth + (fighter.state === FighterState.ATTACK ? 2 : 0));
 
-    const laneProgress = (fighter.position.y - ARENA.minY) / (ARENA.maxY - ARENA.minY);
+    const laneRange = ARENA.maxY - ARENA.minY;
+    const laneProgress = laneRange > 0
+      ? Math.max(0, Math.min(1, (fighter.position.y - ARENA.minY) / laneRange))
+      : 1;
     const altitudeRatio = fighter.maxAltitude > 0 ? fighter.position.z / fighter.maxAltitude : 0;
     const shadowScale = 0.72 + laneProgress * 0.28;
     const flightScale = 1 - altitudeRatio * 0.3;

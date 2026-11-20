@@ -36,6 +36,21 @@ describe('Catálogo de escenarios', () => {
     expect(new Set(allLines).size).toBe(allLines.length);
   });
 
+  it('usa detalles concretos de cada escenario en lugar de parlamentos intercambiables', () => {
+    const anchors = {
+      [STAGE_IDS.RUINS]: ['carro', 'reja', 'cadena', 'contrapeso'],
+      [STAGE_IDS.VOLCANO]: ['vapor', 'placa', 'válvula', 'veta'],
+      [STAGE_IDS.FOREST]: ['tronco', 'corteza', 'arroyo', 'musgo'],
+      [STAGE_IDS.SANCTUARY]: ['anillo', 'sello', 'columna', 'pulsos'],
+    };
+
+    for (const stage of STAGES) {
+      const script = stage.dialogue.map((line) => line.text).join(' ').toLowerCase();
+      const groundedDetails = anchors[stage.id].filter((detail) => script.includes(detail));
+      expect(groundedDetails.length, stage.name).toBeGreaterThanOrEqual(2);
+    }
+  });
+
   it('cada escenario tiene parlamentos distintos para victoria, derrota y empate', () => {
     const allAftermathLines = [];
     for (const stage of STAGES) {

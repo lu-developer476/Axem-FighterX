@@ -44,14 +44,19 @@ export class FightScene extends Phaser.Scene {
 
     const playerOne = () => new PhaserKeyboardInput(this, KEYMAPS.PLAYER_1);
     const playerTwo = () => new PhaserKeyboardInput(this, KEYMAPS.PLAYER_2);
-    const aiOne = () => new AIInput(leftFighter, rightFighter, {
-      now: () => this.time.now,
-      phase: 0,
-    });
-    const aiTwo = () => new AIInput(rightFighter, leftFighter, {
-      now: () => this.time.now,
-      phase: Math.PI,
-    });
+    this.aiInputs = [];
+    const createAI = (fighter, opponent, phase) => {
+      const controller = new AIInput(fighter, opponent, {
+        now: () => this.time.now,
+        phase,
+        arena: matchArena,
+        getPickup: () => this.match.pickup,
+      });
+      this.aiInputs.push(controller);
+      return controller;
+    };
+    const aiOne = () => createAI(leftFighter, rightFighter, 0);
+    const aiTwo = () => createAI(rightFighter, leftFighter, Math.PI);
 
     let inputs;
     switch (versus.id) {
@@ -114,13 +119,22 @@ export class FightScene extends Phaser.Scene {
       stroke: '#0d0b16',
       strokeThickness: 2,
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(10003);
+    this.aiLevelLabel = this.aiInputs.length
+      ? this.add.text(GAME_WIDTH / 2, 62, 'IA · NIVEL 1', {
+        fontFamily: 'monospace',
+        fontSize: '7px',
+        color: '#c9b7dc',
+        stroke: '#0d0b16',
+        strokeThickness: 2,
+      }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(10003)
+      : null;
 
     this.cameras.main.setBounds(0, 0, ARENA.width, this.scale.height);
     this.hitStopMs = 0;
     this.#snapCamera();
     this.cameras.main.flash(160, 255, 255, 255);
     this.time.delayedCall(2600, () => {
-      this.tweens.add({ targets: [this.stageLabel, this.modeLabel], alpha: 0, duration: 380 });
+      this.tweens.add({ targets: [this.stageLabel, this.modeLabel, this.aiLevelLabel].filter(Boolean), alpha: 0, duration: 380 });
     });
   }
 
@@ -238,6 +252,9 @@ export class FightScene extends Phaser.Scene {
     if (!this.pendingNextRound) return;
     this.pendingNextRound = false;
     this.match.restart();
+    const nextAiLevel = this.roundSeries.completedRounds + 1;
+    this.aiInputs.forEach((controller) => controller.setDifficulty(nextAiLevel));
+    this.aiLevelLabel?.setText('IA · NIVEL ' + nextAiLevel).setAlpha(1);
     this.hud.hideResult();
     this.hud.setRoundScore(
       this.roundSeries.completedRounds,
@@ -257,6 +274,8 @@ export class FightScene extends Phaser.Scene {
   #restart() {
     this.match.restart();
     this.roundSeries?.reset();
+    this.aiInputs.forEach((controller) => controller.setDifficulty(1));
+    this.aiLevelLabel?.setText('IA · NIVEL 1').setAlpha(1);
     this.pendingNextRound = false;
     if (this.roundSeries) this.hud.setRoundScore(0, this.roundSeries.totalRounds, [0, 0]);
     this.hud.hideResult();

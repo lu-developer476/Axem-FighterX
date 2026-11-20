@@ -15,7 +15,6 @@ import { createStageTextures } from '../../infrastructure/graphics/StageTextureF
 import { createAdditionalStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';
 import { registerCharacterAnimations } from '../animation/registerCharacterAnimations.js';
 import { registerFxAnimations } from '../animation/registerFxAnimations.js';
-import titleArtUrl from '../../../art/source/title.png?url';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -105,7 +104,7 @@ export class PreloadScene extends Phaser.Scene {
         });
       }
     }
-    this.load.image('title-art', titleArtUrl);
+    this.load.image('title-art', import.meta.env.BASE_URL + 'generated/title.png');
   }
 
   create() {

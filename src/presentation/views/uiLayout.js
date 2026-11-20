@@ -3,9 +3,10 @@
  * Ninguna vista define márgenes internos independientes para sus modales.
  */
 export const UI_SPACING = Object.freeze({
-  panelFrame: 2,
-  contentGutter: 12,
-  buttonTextGutter: 10,
+  panelFrame: 1,
+  contentGutter: 6,
+  buttonTextGutter: 6,
+  footerGutter: 4,
 });
 
 export const contentWidth = (width, gutter = UI_SPACING.contentGutter) =>

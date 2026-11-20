@@ -35,11 +35,12 @@ describe('Fighter: movimiento y orientación', () => {
 
   it('se desplaza hacia arriba y abajo sin alterar la orientación', () => {
     const fighter = make();
+    fighter.position.y = ARENA.groundY + 30;
     fighter.update({ ...idle, y: -1 }, 500);
-    expect(fighter.position.y).toBeCloseTo(ARENA.groundY - fighter.stats.moveSpeed / 2);
+    expect(fighter.position.y).toBeCloseTo(ARENA.minY);
     expect(fighter.facing).toBe(1);
     fighter.update({ ...idle, y: 1 }, 500);
-    expect(fighter.position.y).toBeCloseTo(ARENA.groundY);
+    expect(fighter.position.y).toBeCloseTo(ARENA.maxY);
   });
 
   it('caminar por el terreno y volar son movimientos independientes', () => {

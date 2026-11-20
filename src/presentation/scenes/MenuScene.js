@@ -143,8 +143,8 @@ export class MenuScene extends Phaser.Scene {
 
     const veil = this.add.rectangle(GAME_WIDTH / 2, 135, GAME_WIDTH, 270, 0x000000, 0.84)
       .setInteractive();
-    const panelY = 151;
-    const panelHeight = 136;
+    const panelY = 154;
+    const panelHeight = 120;
     const shadow = this.add.rectangle(GAME_WIDTH / 2 + 3, panelY + 3, this.panelWidth, panelHeight, 0x06040b, 0.95);
     const panel = this.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth, panelHeight, 0x100d1e, 0.99)
       .setStrokeStyle(1, 0xd3a66d, 0.96);
@@ -156,16 +156,16 @@ export class MenuScene extends Phaser.Scene {
       0x000000,
       0,
     ).setStrokeStyle(1, 0x4b385c, 0.92);
-    const accent = this.add.rectangle(GAME_WIDTH / 2, panelY - panelHeight / 2 + 12, this.panelWidth - 24, 1, 0xd3a66d, 0.82);
+    const accent = this.add.rectangle(GAME_WIDTH / 2, panelY - panelHeight / 2 + 8, this.panelWidth - 24, 1, 0xd3a66d, 0.82);
     this.ui.add([veil, shadow, panel, inset, accent]);
 
-    this.#addText(title, GAME_WIDTH / 2, 91, {
+    this.#addText(title, GAME_WIDTH / 2, 113, {
       fontSize: '12px',
       color: '#f7cf83',
       letterSpacing: 1,
     });
     const mode = getVersusMode(this.matchSetup.versusMode);
-    this.#addText(mode.slotLabels[this.characterSlot] ?? 'PERSONAJE', GAME_WIDTH / 2, 111, {
+    this.#addText(mode.slotLabels[this.characterSlot] ?? 'PERSONAJE', GAME_WIDTH / 2, 133, {
       fontSize: '7px',
       color: '#b7a9cb',
     });
@@ -262,18 +262,18 @@ export class MenuScene extends Phaser.Scene {
     if (this.page !== 'home') return;
     const prefix = this.add.text(0, 253, '© 2026 AXEM FIGHTERX · DISEÑO Y DESARROLLO: ', {
       fontFamily: 'monospace',
-      fontSize: '6px',
-      color: '#aaa0bd',
+      fontSize: '8px',
+      color: '#c4bbd2',
     }).setOrigin(0, 0.5).setDepth(30);
 
     const author = this.add.text(0, 253, 'LUCAS MONTENEGRO ®', {
       fontFamily: 'monospace',
-      fontSize: '6px',
+      fontSize: '8px',
       color: '#f2c77e',
     }).setOrigin(0, 0.5).setDepth(30).setInteractive({ useHandCursor: true });
 
     const totalWidth = prefix.width + author.width;
-    const startX = Math.round((GAME_WIDTH - totalWidth) / 2);
+    const startX = Math.max(UI_SPACING.footerGutter, Math.round((GAME_WIDTH - totalWidth) / 2));
     prefix.setX(startX);
     author.setX(startX + prefix.width);
     author.on('pointerover', () => author.setColor('#fff1bc'));
@@ -427,7 +427,7 @@ export class MenuScene extends Phaser.Scene {
 
     RANGER_ORDER.forEach((rangerId, index) => {
       const title = rangerId === RANGER_IDS.ORANGE ? 'AXEM NARANJA' : 'AXEM VIOLETA';
-      this.#addButton(title, 174, () => {
+      this.#addButton(title, 178, () => {
         this.pendingCharacterId = rangerId;
         this.#showCharacterGender();
       }, {
@@ -446,14 +446,14 @@ export class MenuScene extends Phaser.Scene {
 
     this.page = 'character-gender';
     this.#beginCharacterModal('SELECCIONAR GÉNERO');
-    this.#addButton('MASCULINO', 174, () => {
+    this.#addButton('MASCULINO', 178, () => {
       this.#selectCharacter(this.pendingCharacterId, 'male');
     }, {
       width: 154,
       x: 160,
       fontSize: '7px',
     });
-    this.#addButton('FEMENINO', 174, () => {
+    this.#addButton('FEMENINO', 178, () => {
       this.#selectCharacter(this.pendingCharacterId, 'female');
     }, {
       width: 154,
@@ -491,26 +491,19 @@ export class MenuScene extends Phaser.Scene {
   #showPlayerSide() {
     this.page = 'player-side';
     this.#beginPage('ESQUINA INICIAL', 390, 154);
-    const side = this.matchSetup.playerSide ?? 'J1';
-    this.#addText(
-      'LADO ACTUAL: ' + (side === 'J1' ? 'JUGADOR 1 · IZQUIERDA' : 'JUGADOR 2 · DERECHA'),
-      GAME_WIDTH / 2,
-      145,
-      { fontSize: '7px', color: '#f7cf83' },
-    );
-    this.#addButton('JUGADOR 1 · IZQUIERDA', 174, () => {
+    this.#addButton('JUGADOR 1 · IZQUIERDA', 158, () => {
       this.matchSetup.playerSide = 'J1';
       this.#showPlayerSide();
     }, { width: 142, x: 160, fontSize: '7px' });
-    this.#addButton('JUGADOR 2 · DERECHA', 174, () => {
+    this.#addButton('JUGADOR 2 · DERECHA', 158, () => {
       this.matchSetup.playerSide = 'J2';
       this.#showPlayerSide();
     }, { width: 142, x: 320, fontSize: '7px' });
-    this.#addButton('CONTINUAR', 207, () => this.#showNextConfiguration(), {
+    this.#addButton('CONTINUAR', 192, () => this.#showNextConfiguration(), {
       width: 174,
       fontSize: '7px',
     });
-    this.#addButton('VOLVER', 232, () => this.#moveSelectionBackToCharacters(), {
+    this.#addButton('VOLVER', 219, () => this.#moveSelectionBackToCharacters(), {
       width: 120,
       fontSize: '7px',
     });

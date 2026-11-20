@@ -44,7 +44,8 @@ describe('Variantes de género de los Axem Rangers', () => {
       ARENA.groundY,
       ARENA.groundY,
     ]);
-    expect(ARENA.maxY).toBe(ARENA.groundY);
+    expect(ARENA.minY).toBe(ARENA.groundY);
+    expect(ARENA.maxY).toBeGreaterThan(ARENA.groundY);
   });
 
 

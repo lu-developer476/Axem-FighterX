@@ -2,8 +2,8 @@
 export const ARENA = Object.freeze({
   width: 640,
   /** Profundidad del plano del suelo; nunca permite caminar por debajo del piso. */
-  minY: 170,
-  groundY: 218,
+  minY: 202,
+  groundY: 202,
   maxY: 218,
   minX: 40,
   maxX: 600,

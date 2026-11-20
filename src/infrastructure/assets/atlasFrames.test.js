@@ -109,7 +109,7 @@ describe('resultados por género y color', () => {
 
   it('genera los GIF de acción de ambos masculinos en lienzos de 150×100 px', async () => {
     const animations = {
-      'idle.gif': 16,
+      'pose.gif': 16,
       'punch-01.gif': 10,
       'punch-02.gif': 8,
       'punch-03.gif': 8,

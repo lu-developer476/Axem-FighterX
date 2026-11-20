@@ -5,11 +5,8 @@ import { RANGER_IDS, rangerCatalog } from '../../domain/rangers/rangerCatalog.js
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import {
   spriteKeyFor,
-  menuSpriteKeyFor,
   maleAnimationKey,
 } from '../../infrastructure/assets/assetManifest.js';
-import { spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
-import { shouldFlip } from '../views/orientation.js';
 
 const PORTFOLIO_URL = 'https://lu-dev-portfolio.vercel.app/';
 const RANGER_ORDER = [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE];
@@ -77,9 +74,6 @@ export class MenuScene extends Phaser.Scene {
 
     const titleTexture = this.textures.get('title-art').getSourceImage();
     const titleScale = Math.min(1, 436 / titleTexture.width, 78 / titleTexture.height);
-    this.add.rectangle(GAME_WIDTH / 2, 42, 448, 88, 0x120c20, 0.5)
-      .setStrokeStyle(1, 0x71547d, 0.7)
-      .setDepth(-2);
     this.add.image(GAME_WIDTH / 2, 42, 'title-art')
       .setScale(titleScale)
       .setAlpha(1)
@@ -91,38 +85,8 @@ export class MenuScene extends Phaser.Scene {
   }
 
 
-  /** Cuatro rangers alrededor del panel; todos usan la misma regla de orientación. */
+  /** Mantiene únicamente las animaciones GIF en la pantalla principal. */
   #addHomeRangerArt() {
-    const addRanger = ({ texture, rangerId, gender, x, y, scale, facing }) => {
-      const sprite = this.add.image(x, y, texture)
-        .setOrigin(0.5, 1)
-        .setScale(scale)
-        .setFlipX(shouldFlip(facing, spriteFacingFor(rangerId, gender)))
-        .setAlpha(0.98);
-      this.ui.add(sprite);
-    };
-
-    // Las variantes femeninas se distribuyen en los laterales como las masculinas.
-    addRanger({
-      texture: spriteKeyFor(RANGER_IDS.VIOLET, 'female'),
-      rangerId: RANGER_IDS.VIOLET,
-      gender: 'female',
-      x: 112,
-      y: 237,
-      scale: 0.72,
-      facing: 1,
-    });
-    addRanger({
-      texture: spriteKeyFor(RANGER_IDS.ORANGE, 'female'),
-      rangerId: RANGER_IDS.ORANGE,
-      gender: 'female',
-      x: GAME_WIDTH - 112,
-      y: 237,
-      scale: 0.72,
-      facing: -1,
-    });
-
-    // Un ranger corre detrás de la moto; ambos reutilizan los GIF del repositorio.
     const runKey = maleAnimationKey(RANGER_IDS.ORANGE, 'run');
     const runner = this.add.sprite(GAME_WIDTH / 2 - 62, 139, runKey)
       .setOrigin(0.5, 1)
@@ -136,27 +100,8 @@ export class MenuScene extends Phaser.Scene {
       .setScale(0.54)
       .setDepth(1);
     if (this.anims.exists(bikeKey)) bike.play(bikeKey);
-    this.ui.add([runner, bike]);
 
-    // Los masculinos ocupan laterales opuestos con poses distintas.
-    addRanger({
-      texture: menuSpriteKeyFor(RANGER_IDS.VIOLET),
-      rangerId: RANGER_IDS.VIOLET,
-      gender: 'male',
-      x: 34,
-      y: 239,
-      scale: 0.72,
-      facing: 1,
-    });
-    addRanger({
-      texture: menuSpriteKeyFor(RANGER_IDS.ORANGE),
-      rangerId: RANGER_IDS.ORANGE,
-      gender: 'male',
-      x: GAME_WIDTH - 34,
-      y: 239,
-      scale: 0.72,
-      facing: -1,
-    });
+    this.ui.add([runner, bike]);
   }
 
   #beginPage(title, width = 282, height = 120) {

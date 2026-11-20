@@ -631,7 +631,7 @@ async function writeMaleSequenceGif(frames, color, filename, delay = 100) {
  * Animaciones adicionales del masculino naranja. El orden de los grupos y
  * los rangos de group-13 siguen la clasificación manual del spritesheet.
  */
-async function buildOrangeActionGifs(color, sequenceIndex) {
+async function buildMaleActionGifs(color, sequenceIndex) {
   const groups = new Map();
   for (const entry of sequenceIndex) {
     groups.set(entry.id, await readMaleSequenceFrames(color, entry));
@@ -846,7 +846,7 @@ async function buildGender(gender) {
       await writeMaleAnimation(run.frames, color, 'run', run.delay, run.loop);
       await writeMaleAnimation(bike.frames, color, 'bike', bike.delay, bike.loop);
       await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop);
-      if (color === 'orange') await buildOrangeActionGifs(color, sequenceIndex);
+      await buildMaleActionGifs(color, sequenceIndex);
       baseSource = run.frames[0];
     } else {
       const pinkReference = SOURCE('sprites', 'references', 'axem-pink');

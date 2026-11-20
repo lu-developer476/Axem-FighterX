@@ -107,7 +107,7 @@ describe('resultados por género y color', () => {
     }
   });
 
-  it('genera los GIF de acción del masculino naranja en lienzos de 150×100 px', async () => {
+  it('genera los GIF de acción de ambos masculinos en lienzos de 150×100 px', async () => {
     const animations = {
       'idle.gif': 16,
       'punch-01.gif': 10,
@@ -122,12 +122,14 @@ describe('resultados por género y color', () => {
       'teleport.gif': 6,
     };
 
-    for (const [animation, expectedFrames] of Object.entries(animations)) {
-      const metadata = await sharp(resultsPath('male', 'orange', animation), { animated: true }).metadata();
-      const frameHeight = metadata.pageHeight ?? metadata.height / (metadata.pages || 1);
-      expect(metadata.width, animation).toBe(150);
-      expect(frameHeight, animation).toBe(100);
-      expect(metadata.pages, animation).toBe(expectedFrames);
+    for (const color of COLORS) {
+      for (const [animation, expectedFrames] of Object.entries(animations)) {
+        const metadata = await sharp(resultsPath('male', color, animation), { animated: true }).metadata();
+        const frameHeight = metadata.pageHeight ?? metadata.height / (metadata.pages || 1);
+        expect(metadata.width, color + '/' + animation).toBe(150);
+        expect(frameHeight, color + '/' + animation).toBe(100);
+        expect(metadata.pages, color + '/' + animation).toBe(expectedFrames);
+      }
     }
   });
 

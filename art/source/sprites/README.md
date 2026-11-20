@@ -22,8 +22,8 @@ results/
       spritesheet.png                     hoja de Axem Red, mismas coordenadas que la referencia
       run.png  bike.png  double-axe.png   tiras PNG para el pipeline del juego
       run.gif  bike.gif  double-axe.gif   GIF originales de carrera, bicicleta y doble hacha
-      idle.gif punch-01.gif punch-02.gif punch-03.gif battle-pose.gif (solo Orange)
-      run.gif dash.gif jump.gif hit.gif hurt.gif teleport.gif (solo Orange)
+      idle.gif punch-01.gif punch-02.gif punch-03.gif battle-pose.gif
+      run.gif dash.gif jump.gif hit.gif hurt.gif teleport.gif (Violet y Orange)
       sequences/group-01.png … group-14.png + index.json
   female/
     axem-ranger-{violet,orange}.png     referencias femeninas apiladas
@@ -33,7 +33,7 @@ results/
 
 Los retratos laterales del menú se generan directamente desde la referencia original `references/axem-red/axem-red-spritesheet.png`; no se necesita una vista previa duplicada en `results/male/`. El recoloreado del cabello recorre cada componente rubio de todas las poses, incluso cuando está separado del casco o la cara, para evitar que queden mechones originales sin procesar.
 
-Los GIF masculinos de bicicleta y doble hacha conservan sus lienzos de **150 × 100 px**. Para el masculino naranja se generan además 11 GIF desde las secuencias clasificadas, todos con lienzos de **150 × 100 px**, transparencia y escalado nearest-neighbor para conservar el pixel-art. El pivote de los pies se centra horizontalmente y mantiene una línea de suelo fija para evitar saltos entre fotogramas.
+Los GIF masculinos de bicicleta y doble hacha conservan sus lienzos de **150 × 100 px**. Para los masculinos violeta y naranja se generan 11 GIF por variante desde las secuencias clasificadas, todos con lienzos de **150 × 100 px**, transparencia y escalado nearest-neighbor para conservar el pixel-art. El pivote de los pies se centra horizontalmente y mantiene una línea de suelo fija para evitar saltos entre fotogramas.
 
 ## El atlas no es una cuadrícula
 

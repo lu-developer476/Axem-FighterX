@@ -123,7 +123,12 @@ describe('resultados por género y color', () => {
     };
 
     for (const color of COLORS) {
-      for (const [animation, expectedFrames] of Object.entries(animations)) {
+      for (const [animation, originalFrames] of Object.entries(animations)) {
+        const expectedFrames = color === 'violet' && animation === 'battle-pose.gif'
+          ? originalFrames + 1
+          : color === 'violet' && animation === 'teleport.gif'
+            ? originalFrames + 3
+            : originalFrames;
         const metadata = await sharp(resultsPath('male', color, animation), { animated: true }).metadata();
         const frameHeight = metadata.pageHeight ?? metadata.height / (metadata.pages || 1);
         expect(metadata.width, color + '/' + animation).toBe(150);
@@ -131,6 +136,30 @@ describe('resultados por género y color', () => {
         expect(metadata.pages, color + '/' + animation).toBe(expectedFrames);
       }
     }
+  });
+
+  it('completa los GIF y la pose de derrota del Axem Violeta', async () => {
+    const animations = {
+      'battle-pose.gif': 21,
+      'teleport.gif': 9,
+      'charge.gif': 3,
+      'idle.gif': 8,
+    };
+
+    for (const [animation, expectedFrames] of Object.entries(animations)) {
+      const metadata = await sharp(resultsPath('male', 'violet', animation), { animated: true }).metadata();
+      expect(metadata.format, animation).toBe('gif');
+      expect(metadata.width, animation).toBe(150);
+      expect(metadata.pageHeight, animation).toBe(100);
+      expect(metadata.pages, animation).toBe(expectedFrames);
+      expect(metadata.hasAlpha, animation).toBe(true);
+    }
+
+    const defeated = await sharp(resultsPath('male', 'violet', 'defeated.png')).metadata();
+    expect(defeated.format).toBe('png');
+    expect(defeated.width).toBe(150);
+    expect(defeated.height).toBe(100);
+    expect(defeated.hasAlpha).toBe(true);
   });
 
   it('Violet y Orange comparten exactamente los mismos cuadros: solo cambia la paleta', async () => {

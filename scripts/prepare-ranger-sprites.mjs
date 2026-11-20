@@ -666,6 +666,200 @@ async function buildMaleActionGifs(color, sequenceIndex) {
   await writeMaleSequenceGif(frames('group-14'), color, 'teleport', 100);
 }
 
+
+/**
+ * Separa los sprites consecutivos de una tira PNG de secuencia por sus columnas
+ * opacas. Los cuadros conservan sus píxeles originales y se recortan solo por
+ * transparencia, sin deformar el personaje ni perder efectos asociados.
+ */
+async function extractVioletStripFrames(color, groupId, frameCount) {
+  const file = RESULTS('male', color, 'sequences', groupId + '.png');
+  const metadata = await sharp(file).metadata();
+  if (!metadata.width || !metadata.height || metadata.width % frameCount !== 0) {
+    throw new Error('La tira ' + groupId + '.png no se divide en ' + frameCount + ' celdas iguales.');
+  }
+
+  // Los grupos 15–19 están compuestos por celdas de ancho fijo y no por
+  // componentes separados: algunos elementos de las poses se superponen.
+  const cellWidth = metadata.width / frameCount;
+  const frames = [];
+  for (let index = 0; index < frameCount; index++) {
+    const input = await sharp(file)
+      .extract({
+        left: index * cellWidth,
+        top: 0,
+        width: cellWidth,
+        height: metadata.height,
+      })
+      .png()
+      .toBuffer();
+    const { data, info } = await sharp(input)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    let left = info.width;
+    let top = info.height;
+    let right = -1;
+    let bottom = -1;
+    let pixels = 0;
+    for (let y = 0; y < info.height; y++) {
+      for (let x = 0; x < info.width; x++) {
+        if (data[(y * info.width + x) * 4 + 3] < 24) continue;
+        left = Math.min(left, x);
+        top = Math.min(top, y);
+        right = Math.max(right, x);
+        bottom = Math.max(bottom, y);
+        pixels += 1;
+      }
+    }
+
+    if (pixels < 100 || right < left || bottom < top) {
+      throw new Error('La celda ' + (index + 1) + ' de ' + groupId + '.png está vacía.');
+    }
+    frames.push({
+      input,
+      bounds: [index * cellWidth + left, top, right - left + 1, bottom - top + 1],
+      pixels,
+    });
+  }
+
+  console.log(
+    'Secuencia violeta ' + groupId + ': ' + frames.length + ' fotogramas ' +
+    JSON.stringify(frames.map((frame) => frame.bounds)),
+  );
+  return frames;
+}
+
+async function normalizeVioletActionFrame(input, addAura = false) {
+  const trimmed = await sharp(input)
+    .trim({ background: TRANSPARENT, threshold: 1 })
+    .png()
+    .toBuffer();
+  const metadata = await sharp(trimmed).metadata();
+  const scale = Math.min(1.3, 142 / metadata.width, 92 / metadata.height);
+  const width = Math.max(1, Math.round(metadata.width * scale));
+  const height = Math.max(1, Math.round(metadata.height * scale));
+  const sprite = await sharp(trimmed)
+    .resize(width, height, { fit: 'fill', kernel: 'nearest' })
+    .png()
+    .toBuffer();
+  const left = Math.round((ACTION_GIF_SIZE.width - width) / 2);
+  const top = ACTION_GIF_SIZE.height - SEQUENCE_GIF_FEET_MARGIN - height;
+
+  const layers = [];
+  if (addAura) {
+    // Amplía y difumina la silueta para que el aura violeta se distinga
+    // claramente del personaje incluso con la paleta limitada del formato GIF.
+    const glow = await sharp(sprite)
+      .resize({ width: width + 14, height: height + 14, kernel: 'nearest' })
+      .blur(7)
+      .tint({ r: 195, g: 70, b: 255 })
+      .png()
+      .toBuffer();
+    layers.push({ input: glow, left: left - 7, top: top - 7 });
+  }
+  layers.push({ input: sprite, left, top });
+
+  return sharp({
+    create: {
+      width: ACTION_GIF_SIZE.width,
+      height: ACTION_GIF_SIZE.height,
+      channels: 4,
+      background: TRANSPARENT,
+    },
+  })
+    .composite(layers)
+    .png()
+    .toBuffer();
+}
+
+async function readVioletGifFrames(color, filename) {
+  const file = RESULTS('male', color, filename);
+  const metadata = await sharp(file, { animated: true }).metadata();
+  const count = Math.max(1, metadata.pages || 1);
+  const frames = [];
+  const delays = [];
+
+  for (let page = 0; page < count; page++) {
+    const frame = await sharp(file, { page, pages: 1 })
+      .resize(ACTION_GIF_SIZE.width, ACTION_GIF_SIZE.height, {
+        fit: 'contain',
+        position: 'centre',
+        kernel: 'nearest',
+        background: TRANSPARENT,
+      })
+      .png()
+      .toBuffer();
+    frames.push(frame);
+    delays.push(Array.isArray(metadata.delay) ? metadata.delay[page] || 100 : metadata.delay || 100);
+  }
+  return { frames, delays };
+}
+
+async function writeVioletActionGif(color, filename, frames, delays) {
+  if (!frames.length) throw new Error('La animación ' + filename + ' no tiene fotogramas.');
+  const gif = await sharp(frames, { join: { animated: true } })
+    .gif({
+      loop: 0,
+      delay: delays.length === frames.length ? delays : frames.map(() => 100),
+      colours: 256,
+      dither: 0,
+      effort: 10,
+      keepDuplicateFrames: true,
+    })
+    .toBuffer();
+  await writeResult('male', color, filename + '.gif', gif);
+}
+
+/** Completa las secuencias adicionales propias de Axem Violeta. */
+async function buildMaleVioletExtraGifs(color) {
+  const teleportAppend = await extractVioletStripFrames(color, 'group-15', 3);
+  const defeatedAndAxe = await extractVioletStripFrames(color, 'group-16', 2);
+  const chargeFrames = await extractVioletStripFrames(color, 'group-17', 3);
+  const idleFrames = [
+    ...await extractVioletStripFrames(color, 'group-18', 3),
+    ...await extractVioletStripFrames(color, 'group-19', 5),
+  ];
+
+  if (defeatedAndAxe.length < 2) {
+    throw new Error('group-16.png debe contener la pose de derrota y la invocación del hacha.');
+  }
+
+  const defeated = await normalizeVioletActionFrame(defeatedAndAxe[0].input);
+  await writeResult('male', color, 'defeated.png', defeated);
+
+  const teleport = await readVioletGifFrames(color, 'teleport.gif');
+  const teleportTail = await Promise.all(
+    teleportAppend.map((frame) => normalizeVioletActionFrame(frame.input)),
+  );
+  await writeVioletActionGif(
+    color,
+    'teleport',
+    [...teleport.frames, ...teleportTail],
+    [...teleport.delays, ...teleportTail.map(() => 100)],
+  );
+
+  const battlePose = await readVioletGifFrames(color, 'battle-pose.gif');
+  const axePose = await normalizeVioletActionFrame(defeatedAndAxe[1].input);
+  await writeVioletActionGif(
+    color,
+    'battle-pose',
+    [...battlePose.frames, axePose],
+    [...battlePose.delays, 120],
+  );
+
+  const charged = await Promise.all(
+    chargeFrames.map((frame) => normalizeVioletActionFrame(frame.input, true)),
+  );
+  await writeVioletActionGif(color, 'charge', charged, charged.map(() => 100));
+
+  const idle = await Promise.all(
+    idleFrames.map((frame) => normalizeVioletActionFrame(frame.input)),
+  );
+  await writeVioletActionGif(color, 'idle', idle, idle.map(() => 140));
+}
+
 /**
  * Localiza figuras separadas dentro de una referencia ya procesada.
  * Descarta motas, efectos y piezas demasiado pequeñas para ser una pose.
@@ -847,6 +1041,7 @@ async function buildGender(gender) {
       await writeMaleAnimation(bike.frames, color, 'bike', bike.delay, bike.loop);
       await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop);
       await buildMaleActionGifs(color, sequenceIndex);
+      if (color === 'violet') await buildMaleVioletExtraGifs(color);
       baseSource = run.frames[0];
     } else {
       const pinkReference = SOURCE('sprites', 'references', 'axem-pink');

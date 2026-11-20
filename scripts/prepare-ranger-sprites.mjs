@@ -123,6 +123,308 @@ function hslToRgb(hue, saturation, lightness) {
   ];
 }
 
+
+function hueDistance(left, right) {
+  const distance = Math.abs(left - right) % 360;
+  return Math.min(distance, 360 - distance);
+}
+
+function isMaleHairPixel(red, green, blue) {
+  const [hue, saturation, lightness] = rgbToHsl(red, green, blue);
+  return hue >= 28 && hue <= 72 && saturation >= 0.26 && lightness >= 0.16;
+}
+
+/**
+ * Oscurece únicamente las regiones doradas conectadas visualmente con la
+ * parte superior de la cabeza. No modifica el resto de los amarillos del traje,
+ * armas ni efectos.
+ */
+function blackenMaleHair(pixels, width, height, targetHue) {
+  const total = width * height;
+  const visited = new Uint8Array(total);
+  const nearHead = new Uint8Array(total);
+  const componentQueue = new Uint32Array(total);
+  const radius = 7;
+
+  // Detecta cada figura visible y localiza la zona superior de su color principal.
+  for (let start = 0; start < total; start += 1) {
+    const startOffset = start * 4;
+    if (visited[start] || pixels[startOffset + 3] < 24) continue;
+
+    let head = 0;
+    let tail = 0;
+    let minY = height;
+    let maxY = 0;
+    visited[start] = 1;
+    componentQueue[tail++] = start;
+
+    while (head < tail) {
+      const index = componentQueue[head++];
+      const x = index % width;
+      const y = Math.floor(index / width);
+      minY = Math.min(minY, y);
+      maxY = Math.max(maxY, y);
+
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+          const next = ny * width + nx;
+          if (visited[next] || pixels[next * 4 + 3] < 24) continue;
+          visited[next] = 1;
+          componentQueue[tail++] = next;
+        }
+      }
+    }
+
+    if (tail < 12 || maxY - minY < 6) continue;
+
+    let firstBodyY = height;
+    let lastBodyY = -1;
+    for (let position = 0; position < tail; position += 1) {
+      const index = componentQueue[position];
+      const offset = index * 4;
+      const [hue, saturation] = rgbToHsl(
+        pixels[offset],
+        pixels[offset + 1],
+        pixels[offset + 2],
+      );
+      if (saturation < 0.2 || hueDistance(hue, targetHue) > 20) continue;
+      const y = Math.floor(index / width);
+      firstBodyY = Math.min(firstBodyY, y);
+      lastBodyY = Math.max(lastBodyY, y);
+    }
+
+    if (lastBodyY < 0) continue;
+    const headBandEnd = Math.min(
+      maxY,
+      firstBodyY + Math.max(6, Math.round((lastBodyY - firstBodyY) * 0.45)),
+    );
+
+    for (let position = 0; position < tail; position += 1) {
+      const index = componentQueue[position];
+      const x = index % width;
+      const y = Math.floor(index / width);
+      if (y > headBandEnd) continue;
+
+      const offset = index * 4;
+      const [hue, saturation] = rgbToHsl(
+        pixels[offset],
+        pixels[offset + 1],
+        pixels[offset + 2],
+      );
+      if (saturation < 0.2 || hueDistance(hue, targetHue) > 20) continue;
+
+      for (let dy = -radius; dy <= radius; dy += 1) {
+        for (let dx = -radius; dx <= radius; dx += 1) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+            nearHead[ny * width + nx] = 1;
+          }
+        }
+      }
+    }
+  }
+
+  // Cada grupo dorado que toca esa zona se considera cabello y conserva sus sombras.
+  const visitedHair = new Uint8Array(total);
+  const hairQueue = new Uint32Array(total);
+  let recoloredPixels = 0;
+
+  for (let start = 0; start < total; start += 1) {
+    const offset = start * 4;
+    if (
+      visitedHair[start] ||
+      nearHead[start] === 0 ||
+      pixels[offset + 3] < 24 ||
+      !isMaleHairPixel(pixels[offset], pixels[offset + 1], pixels[offset + 2])
+    ) continue;
+
+    let head = 0;
+    let tail = 0;
+    visitedHair[start] = 1;
+    hairQueue[tail++] = start;
+
+    while (head < tail) {
+      const index = hairQueue[head++];
+      const pixelOffset = index * 4;
+      const [, , lightness] = rgbToHsl(
+        pixels[pixelOffset],
+        pixels[pixelOffset + 1],
+        pixels[pixelOffset + 2],
+      );
+      const shade = Math.max(6, Math.min(36, Math.round(4 + lightness * 34)));
+      pixels[pixelOffset] = shade;
+      pixels[pixelOffset + 1] = shade;
+      pixels[pixelOffset + 2] = shade;
+      recoloredPixels += 1;
+
+      const x = index % width;
+      const y = Math.floor(index / width);
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+          const next = ny * width + nx;
+          if (visitedHair[next] || pixels[next * 4 + 3] < 24) continue;
+          const nextOffset = next * 4;
+          if (!isMaleHairPixel(pixels[nextOffset], pixels[nextOffset + 1], pixels[nextOffset + 2])) continue;
+          visitedHair[next] = 1;
+          hairQueue[tail++] = next;
+        }
+      }
+    }
+  }
+
+  return recoloredPixels;
+}
+
+function rgbKey(red, green, blue) {
+  return (red << 16) | (green << 8) | blue;
+}
+
+/**
+ * Aprende los cambios de paleta comparando la pose original recoloreada con
+ * el PNG final canónico. La geometría de ambos debe coincidir.
+ */
+async function buildPaletteTransfer(sourceBuffer, targetBuffer, label) {
+  const [source, target] = await Promise.all([
+    sharp(sourceBuffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    sharp(targetBuffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+  ]);
+
+  if (
+    source.info.width !== target.info.width ||
+    source.info.height !== target.info.height
+  ) {
+    throw new Error(
+      'La referencia canónica ' + label + ' no coincide en dimensiones con la pose base: ' +
+      source.info.width + 'x' + source.info.height + ' vs ' +
+      target.info.width + 'x' + target.info.height
+    );
+  }
+
+  const sourcePixels = new Uint8ClampedArray(
+    source.data.buffer,
+    source.data.byteOffset,
+    source.data.byteLength,
+  );
+  const targetPixels = new Uint8ClampedArray(
+    target.data.buffer,
+    target.data.byteOffset,
+    target.data.byteLength,
+  );
+  const histogram = new Map();
+  let sourceOpaque = 0;
+  let targetOpaque = 0;
+  let overlap = 0;
+
+  for (let offset = 0; offset < sourcePixels.length; offset += 4) {
+    const sourceVisible = sourcePixels[offset + 3] >= 24;
+    const targetVisible = targetPixels[offset + 3] >= 24;
+    if (sourceVisible) sourceOpaque += 1;
+    if (targetVisible) targetOpaque += 1;
+    if (!sourceVisible || !targetVisible) continue;
+
+    overlap += 1;
+    const sourceKey = rgbKey(
+      sourcePixels[offset],
+      sourcePixels[offset + 1],
+      sourcePixels[offset + 2],
+    );
+    const targetKey = rgbKey(
+      targetPixels[offset],
+      targetPixels[offset + 1],
+      targetPixels[offset + 2],
+    );
+    let targets = histogram.get(sourceKey);
+    if (!targets) {
+      targets = new Map();
+      histogram.set(sourceKey, targets);
+    }
+    targets.set(targetKey, (targets.get(targetKey) ?? 0) + 1);
+  }
+
+  const alphaCoverage = overlap / Math.max(1, sourceOpaque);
+  const alphaAgreement = overlap / Math.max(1, Math.max(sourceOpaque, targetOpaque));
+  if (alphaCoverage < 0.7 || alphaAgreement < 0.68) {
+    throw new Error(
+      'La referencia canónica ' + label + ' no está alineada con la pose fuente. ' +
+      'Cobertura alfa: ' + alphaCoverage.toFixed(3) +
+      '; coincidencia: ' + alphaAgreement.toFixed(3)
+    );
+  }
+
+  const transfer = new Map();
+  let mappedSamples = 0;
+  let ambiguousColors = 0;
+
+  for (const [sourceKey, targets] of histogram) {
+    let bestTarget = null;
+    let bestCount = 0;
+    let totalCount = 0;
+    for (const [targetKey, count] of targets) {
+      totalCount += count;
+      if (count > bestCount) {
+        bestTarget = targetKey;
+        bestCount = count;
+      }
+    }
+
+    if (bestCount / Math.max(1, totalCount) >= 0.72) {
+      transfer.set(sourceKey, bestTarget);
+      mappedSamples += totalCount;
+    } else {
+      ambiguousColors += 1;
+    }
+  }
+
+  const paletteCoverage = mappedSamples / Math.max(1, overlap);
+  if (transfer.size === 0 || paletteCoverage < 0.5) {
+    throw new Error(
+      'La transferencia de paleta ' + label + ' no encontró suficientes colores comunes. ' +
+      'Cobertura de paleta: ' + paletteCoverage.toFixed(3)
+    );
+  }
+
+  console.log(
+    'Paleta canónica ' + label + ': ' + transfer.size + ' colores; ' +
+    'cobertura ' + (paletteCoverage * 100).toFixed(1) + '%; ' +
+    ambiguousColors + ' colores ambiguos.'
+  );
+  return transfer;
+}
+
+async function applyPaletteTransfer(inputBuffer, transfer) {
+  const { data, info } = await sharp(inputBuffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
+
+  for (let offset = 0; offset < pixels.length; offset += 4) {
+    if (pixels[offset + 3] < 16) continue;
+    const targetKey = transfer.get(rgbKey(
+      pixels[offset],
+      pixels[offset + 1],
+      pixels[offset + 2],
+    ));
+    if (targetKey === undefined) continue;
+    pixels[offset] = (targetKey >> 16) & 255;
+    pixels[offset + 1] = (targetKey >> 8) & 255;
+    pixels[offset + 2] = targetKey & 255;
+  }
+
+  return sharp(Buffer.from(pixels), {
+    raw: { width: info.width, height: info.height, channels: 4 },
+  }).png().toBuffer();
+}
+
 async function recolorAndKey(input, gender, targetHue, toleranceOverride) {
   const { data, info } = await sharp(input)
     .ensureAlpha()
@@ -151,6 +453,10 @@ async function recolorAndKey(input, gender, targetHue, toleranceOverride) {
     pixels[offset] = red;
     pixels[offset + 1] = green;
     pixels[offset + 2] = blue;
+  }
+
+  if (gender === 'male') {
+    blackenMaleHair(pixels, info.width, info.height, targetHue);
   }
 
   return sharp(Buffer.from(pixels), {
@@ -409,24 +715,62 @@ async function buildGender(gender) {
       baseSource = run.frames[0];
     } else {
       const pinkReference = SOURCE('sprites', 'references', 'axem-pink');
-      for (const file of [
+      const files = [
         'axem-pink-spritesheet.png',
         'axem-pink-pose.png',
         'axem-pink-battle-pose.png',
         'axem-pink-levitate.png',
-      ]) {
-        const recolored = await recolorAndKey(path.join(pinkReference, file), gender, targetHue);
-        parts.push(recolored);
-        await writeResult(gender, color, file.replace(/^axem-pink-/, ''), recolored);
+      ];
+      const canonicalPosePath = path.join(
+        RESULTS(gender),
+        'axem-ranger-' + color + '.png',
+      );
+      const canonicalPose = await fs.readFile(canonicalPosePath);
+      const sourcePose = await recolorAndKey(
+        path.join(pinkReference, 'axem-pink-pose.png'),
+        gender,
+        targetHue,
+      );
+      const paletteTransfer = await buildPaletteTransfer(
+        sourcePose,
+        canonicalPose,
+        gender + '/' + color,
+      );
+
+      for (const file of files) {
+        const outputName = file.replace(/^axem-pink-/, '');
+        let corrected;
+        if (file === 'axem-pink-pose.png') {
+          // La pose final del usuario es la fuente canónica, no una reconstrucción.
+          corrected = canonicalPose;
+        } else {
+          const recolored = await recolorAndKey(
+            path.join(pinkReference, file),
+            gender,
+            targetHue,
+          );
+          corrected = await applyPaletteTransfer(recolored, paletteTransfer);
+        }
+        parts.push(corrected);
+        await writeResult(gender, color, outputName, corrected);
       }
-      baseSource = parts[1];
+      baseSource = canonicalPose;
     }
 
-    const atlas = await makeVerticalAtlas(parts);
-    const resultsDirectory = RESULTS(gender);
-    await fs.mkdir(resultsDirectory, { recursive: true });
-    const atlasPath = path.join(resultsDirectory, 'axem-ranger-' + color + '.png');
-    await fs.writeFile(atlasPath, atlas);
+    let atlasPath = null;
+    if (gender === 'male') {
+      const atlas = await makeVerticalAtlas(parts);
+      const resultsDirectory = RESULTS(gender);
+      await fs.mkdir(resultsDirectory, { recursive: true });
+      atlasPath = path.join(resultsDirectory, 'axem-ranger-' + color + '.png');
+      await fs.writeFile(atlasPath, atlas);
+      console.log('Generado ' + path.relative(ROOT, atlasPath));
+    } else {
+      console.log(
+        'Se conserva la imagen canónica femenina: ' +
+        path.relative(ROOT, RESULTS(gender, 'axem-ranger-' + color + '.png'))
+      );
+    }
 
     const basePath = path.join(GENERATED, 'ranger-' + gender + '-' + color + '.png');
     const baseSprite = await sharp(baseSource)
@@ -440,7 +784,7 @@ async function buildGender(gender) {
       .toBuffer();
     await fs.writeFile(basePath, baseSprite);
 
-    console.log('Generado ' + path.relative(ROOT, atlasPath));
+    if (atlasPath) console.log('Generado ' + path.relative(ROOT, atlasPath));
     console.log('Generado ' + path.relative(ROOT, basePath));
   }
 }

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -33,6 +33,19 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Confirmar sprites generados en main
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add art/source/sprites/results/female art/source/sprites/results/male
+          if git diff --cached --quiet; then
+            echo "Los sprites generados ya están actualizados."
+          else
+            git commit -m "Actualizar sprites y paletas de Axem Rangers"
+            git push origin HEAD:main
+          fi
+
       - name: Instalar Chromium para la captura
         run: npx playwright install --with-deps chromium
 
@@ -44,6 +57,15 @@ jobs:
             sleep 1
           done
           node scripts/capture.mjs http://localhost:4173/
+
+      - name: Adjuntar sprites procesados para revisión
+        if: always()
+        run: |
+          mkdir -p artifacts/sprites-review
+          cp -R art/source/sprites/results/female artifacts/sprites-review/
+          cp -R art/source/sprites/results/male artifacts/sprites-review/
+          mkdir -p artifacts/sprites-review/generated
+          cp public/generated/axem-*.png artifacts/sprites-review/generated/ 2>/dev/null || true
 
       - name: Subir capturas y video
         if: always()

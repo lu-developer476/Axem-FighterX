@@ -611,7 +611,7 @@ export class MenuScene extends Phaser.Scene {
     });
 
     STAGES.forEach((stage, index) => {
-      const depthLabel = stage.depthMode === 'restricted' ? 'CARRIL FIJO' : 'PROFUNDIDAD LIBRE';
+      const depthLabel = stage.groundDepthMode === 'restricted' ? 'CARRIL FIJO · VUELO LIBRE' : 'PROFUNDIDAD LIBRE';
       this.#addButton(stage.name.toUpperCase() + ' · ' + depthLabel, 153 + index * 21, () => {
         this.#startSelectedFight(stage.id, true);
       }, {

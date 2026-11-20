@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Match } from './Match.js';
 import { FighterState, TIMINGS } from './FighterState.js';
 import { createFighter } from '../rangers/createFighter.js';
-import { ARENA, PICKUP, getArenaForDepthMode } from '../arena/arena.js';
+import { ARENA, PICKUP, getArenaForGroundDepthMode } from '../arena/arena.js';
 import { PICKUP_TYPES } from './PowerUpPickup.js';
 
 const idle = { x: 0, y: 0, z: 0, attack: false, teleport: false };
@@ -107,7 +107,7 @@ describe('Match: KO', () => {
 
 describe('Match: cuerpos y escenario', () => {
   it('bloquea el eje de profundidad en escenarios lineales', () => {
-    const match = make({ arena: getArenaForDepthMode('restricted') });
+    const match = make({ arena: getArenaForGroundDepthMode('restricted') });
     const [fighter] = match.fighters;
 
     advance(match, [{ ...idle, y: -1 }, idle], 1000);
@@ -115,8 +115,24 @@ describe('Match: cuerpos y escenario', () => {
     expect(fighter.position.y).toBe(ARENA.groundY);
   });
 
+  it('permite elevarse y combatir en el aire aunque el escenario tenga carril lineal', () => {
+    const match = make({ arena: getArenaForGroundDepthMode('restricted') });
+    const [attacker, target] = match.fighters;
+
+    advance(match, [{ ...idle, z: 1 }, { ...idle, z: 1 }], 650);
+
+    expect(attacker.position.y).toBe(ARENA.groundY);
+    expect(target.position.y).toBe(ARENA.groundY);
+    expect(attacker.position.z).toBeGreaterThan(0);
+    expect(target.position.z).toBeGreaterThan(0);
+
+    const events = advance(match, [{ ...idle, attack: true }, idle], 600);
+    expect(events.some((event) => event.type === 'hit')).toBe(true);
+    expect(target.health).toBeLessThan(target.maxHealth);
+  });
+
   it('conserva el desplazamiento de profundidad en escenarios abiertos', () => {
-    const match = make({ arena: getArenaForDepthMode('free') });
+    const match = make({ arena: getArenaForGroundDepthMode('free') });
     const [fighter] = match.fighters;
 
     advance(match, [{ ...idle, y: -1 }, idle], 500);

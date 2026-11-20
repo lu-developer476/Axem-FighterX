@@ -17,9 +17,12 @@ export const ARENA = Object.freeze({
   teleportRange: 150,
 });
 
-/** Elige los límites transitables según la geometría real del escenario. */
-export function getArenaForDepthMode(depthMode = 'free') {
-  if (depthMode !== 'restricted') return ARENA;
+/**
+ * Restringe únicamente la profundidad del plano del suelo (Y).
+ * La altura de vuelo (Z) sigue gobernada por FLIGHT en todos los escenarios.
+ */
+export function getArenaForGroundDepthMode(groundDepthMode = 'free') {
+  if (groundDepthMode !== 'restricted') return ARENA;
   return Object.freeze({
     ...ARENA,
     minY: ARENA.groundY,

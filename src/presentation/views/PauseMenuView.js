@@ -12,7 +12,7 @@ export class PauseMenuView {
     this.panelWidth = 320;
     this.container = scene.add.container(0, 0)
       .setScrollFactor(0)
-      .setDepth(20_000)
+      .setDepth(30_000)
       .setVisible(false);
   }
 
@@ -20,44 +20,44 @@ export class PauseMenuView {
     this.showingControls = false;
     this.#beginPanel('PAUSA', 170);
     this.#addButton('CONTINUAR', 116, this.onResume);
-    this.#addButton('TUTORIALES', 151, () => this.showControls());
+    this.#addButton('TUTORIAL', 151, () => this.showControls());
     this.#addButton('VOLVER AL MENÚ', 186, this.onReturnToMenu);
     this.container.setVisible(true);
   }
 
   showControls() {
     this.showingControls = true;
-    this.#beginPanel('TUTORIALES', 250);
-    this.#addText('J1 · A/D MOVER · Q ASCENDER · E DESCENDER', 76, {
-      fontSize: '6px',
+    this.#beginPanel('TUTORIAL', 250);
+    this.#addText('JUGADOR 1 · A/D MOVER · Q ASCENDER · E DESCENDER', 76, {
+      fontSize: '9px',
       color: '#d9a9ff',
     });
-    this.#addText('J1 · ATAQUE F · TELETRANSPORTE G', 96, {
-      fontSize: '6px',
+    this.#addText('JUGADOR 1 · ATAQUE F · TELETRANSPORTE G', 96, {
+      fontSize: '9px',
       color: '#d9a9ff',
     });
-    this.#addText('J2 · ←/→ MOVER · ↑ ASCENDER · ↓ DESCENDER', 116, {
-      fontSize: '6px',
+    this.#addText('JUGADOR 2 · ←/→ MOVER · ↑ ASCENDER · ↓ DESCENDER', 116, {
+      fontSize: '9px',
       color: '#ffc17e',
     });
-    this.#addText('J2 · ATAQUE L · TELETRANSPORTE K', 136, {
-      fontSize: '6px',
+    this.#addText('JUGADOR 2 · ATAQUE L · TELETRANSPORTE K', 136, {
+      fontSize: '9px',
       color: '#ffc17e',
     });
     this.#addText('OBJETOS · VIDA · FURIA · RAPIDEZ · ESCUDO', 164, {
-      fontSize: '7px',
+      fontSize: '9px',
       color: '#e7d6a8',
     });
     this.#addText('P · ABRIR / CERRAR PAUSA', 184, {
-      fontSize: '7px',
+      fontSize: '9px',
       color: '#fff0c9',
     });
     this.#addText('R · REINICIAR EL COMBATE', 204, {
-      fontSize: '7px',
+      fontSize: '9px',
       color: '#aaa0bd',
     });
     this.#addText('ESC · MENÚ / PAUSA: REANUDAR / TUTORIALES: VOLVER', 222, {
-      fontSize: '6px',
+      fontSize: '9px',
       color: '#aaa0bd',
     });
     this.#addButton('VOLVER A PAUSA', 242, () => this.showMenu(), { width: 178 });
@@ -104,7 +104,7 @@ export class PauseMenuView {
   #addText(value, y, style = {}) {
     const label = this.scene.add.text(GAME_WIDTH / 2, y, value, {
       fontFamily: 'monospace',
-      fontSize: '7px',
+      fontSize: '9px',
       color: '#e7def5',
       align: 'center',
       wordWrap: { width: this.panelWidth - 28, useAdvancedWrap: true },
@@ -120,7 +120,7 @@ export class PauseMenuView {
       .setStrokeStyle(1, 0x62527e, 1);
     const label = this.scene.add.text(GAME_WIDTH / 2, y, title, {
       fontFamily: 'monospace',
-      fontSize: '8px',
+      fontSize: '10px',
       color: '#d9cde9',
       align: 'center',
       wordWrap: { width: buttonWidth - 14, useAdvancedWrap: true },

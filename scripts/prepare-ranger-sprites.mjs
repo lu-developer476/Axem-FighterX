@@ -144,6 +144,24 @@ async function makeHorizontalStrip(frames, width, height) {
   }).composite(layers).png().toBuffer();
 }
 
+async function writeMaleAnimation(frames, rangerId, action) {
+  const normalized = await Promise.all(frames.map((frame) =>
+    sharp(frame)
+      .trim({ background: TRANSPARENT, threshold: 1 })
+      .resize(BASE_SIZE.width, BASE_SIZE.height, {
+        fit: 'contain',
+        kernel: 'nearest',
+        background: TRANSPARENT,
+      })
+      .png()
+      .toBuffer()
+  ));
+  const strip = await makeHorizontalStrip(normalized, BASE_SIZE.width, BASE_SIZE.height);
+  const outputPath = path.join(GENERATED, 'axem-' + rangerId + '-' + action + '.png');
+  await fs.writeFile(outputPath, strip);
+  console.log('Generada animación ' + path.relative(ROOT, outputPath));
+}
+
 async function makeVerticalAtlas(parts) {
   const metadata = await Promise.all(parts.map((input) => sharp(input).metadata()));
   const width = Math.max(...metadata.map((item) => item.width));
@@ -333,6 +351,9 @@ async function buildGender(gender) {
       parts.push(await makeHorizontalStrip(run.frames, run.width, run.height));
       parts.push(await makeHorizontalStrip(bike.frames, bike.width, bike.height));
       parts.push(await makeHorizontalStrip(doubleAxe.frames, doubleAxe.width, doubleAxe.height));
+      await writeMaleAnimation(run.frames, color, 'run');
+      await writeMaleAnimation(bike.frames, color, 'bike');
+      await writeMaleAnimation(doubleAxe.frames, color, 'double-axe');
       baseSource = run.frames[0];
     } else {
       const pinkReference = SOURCE('sprites', 'references', 'axem-pink');

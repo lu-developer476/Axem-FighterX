@@ -7,6 +7,8 @@ import {
   spriteUrlFor,
   menuSpriteKeyFor,
   menuSpriteUrlFor,
+  maleAnimationKey,
+  maleAnimationUrl,
 } from '../../infrastructure/assets/assetManifest.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { createStageTextures } from '../../infrastructure/graphics/StageTextureFactory.js';
@@ -82,6 +84,12 @@ export class PreloadScene extends Phaser.Scene {
     }
     for (const rangerId of [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE]) {
       this.load.image(menuSpriteKeyFor(rangerId), menuSpriteUrlFor(rangerId));
+      for (const action of ['run', 'bike', 'double-axe']) {
+        this.load.spritesheet(maleAnimationKey(rangerId, action), maleAnimationUrl(rangerId, action), {
+          frameWidth: 53,
+          frameHeight: 83,
+        });
+      }
     }
     this.load.image('title-art', titleArtUrl);
   }

@@ -13,10 +13,10 @@ import { flameAnimationKey } from '../animation/registerFxAnimations.js';
 const PILLAR_X = 20;
 const BARRIER_X = 26;
 const STAGE_VISUALS = {
-  [STAGE_IDS.RUINS]: { hazeAlpha: 0.12, barrierBaseAlpha: 0.55, flicker: 0.25 },
-  [STAGE_IDS.VOLCANO]: { hazeAlpha: 0.06, barrierBaseAlpha: 0.7, flicker: 0.34 },
-  [STAGE_IDS.FOREST]: { hazeAlpha: 0.1, barrierBaseAlpha: 0.45, flicker: 0.12 },
-  [STAGE_IDS.SANCTUARY]: { hazeAlpha: 0.05, barrierBaseAlpha: 0.62, flicker: 0.16 },
+  [STAGE_IDS.RUINS]: { hazeAlpha: 0.035, barrierBaseAlpha: 0.55, flicker: 0.08 },
+  [STAGE_IDS.VOLCANO]: { hazeAlpha: 0.025, barrierBaseAlpha: 0.7, flicker: 0.1 },
+  [STAGE_IDS.FOREST]: { hazeAlpha: 0.03, barrierBaseAlpha: 0.45, flicker: 0.06 },
+  [STAGE_IDS.SANCTUARY]: { hazeAlpha: 0.02, barrierBaseAlpha: 0.62, flicker: 0.07 },
 };
 
 /** Construye el escenario seleccionado o un fondo plano para el entrenamiento. */

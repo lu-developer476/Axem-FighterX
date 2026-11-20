@@ -32,20 +32,18 @@ export class HudView {
     const text = (x, y, value, style, originX = 0) =>
       scene.add.text(x, y, value, { ...FONT, ...style }).setOrigin(originX, 0).setScrollFactor(0).setDepth(10_001);
 
-    text(BAR.margin, 3, fighters[0].name.toUpperCase(), { fontSize: '8px' });
-    text(GAME_WIDTH - BAR.margin, 3, fighters[1].name.toUpperCase(), { fontSize: '8px' }, 1);
-    this.roundScore = text(GAME_WIDTH / 2, 3, '', {
-      fontSize: '6px',
-      color: '#fff0c9',
-      align: 'center',
-    }, 0.5).setVisible(false);
+    text(BAR.margin, 3, fighters[0].name.toUpperCase(), { fontSize: '11px' });
+    text(GAME_WIDTH - BAR.margin, 3, fighters[1].name.toUpperCase(), { fontSize: '11px' }, 1);
+    this.roundIndicators = scene.add.graphics().setScrollFactor(0).setDepth(10_002);
+    this.totalRounds = 0;
+    this.roundWins = [0, 0];
 
     this.statusLabels = fighters.map((fighter, index) =>
       text(
         index === 0 ? BAR.margin : GAME_WIDTH - BAR.margin,
         31,
         '',
-        { fontSize: '7px', color: index === 0 ? '#d9a9ff' : '#ffc17e', align: index === 0 ? 'left' : 'right' },
+        { fontSize: '9px', color: index === 0 ? '#d9a9ff' : '#ffc17e', align: index === 0 ? 'left' : 'right' },
         index === 0 ? 0 : 1,
       ),
     );
@@ -75,7 +73,7 @@ export class HudView {
       .setDepth(10_002)
       .setVisible(false);
     this.resultSpeaker = text(GAME_WIDTH / 2, 190, '', {
-      fontSize: '8px',
+      fontSize: '11px',
       color: '#d9a9ff',
       align: 'center',
     }, 0.5).setDepth(10_003).setVisible(false);
@@ -87,7 +85,7 @@ export class HudView {
       maxLines: 2,
     }, 0.5).setDepth(10_003).setVisible(false);
     this.resultPrompt = text(GAME_WIDTH / 2, 257, 'ENTER / ESPACIO: SIGUIENTE LÍNEA', {
-      fontSize: '6px',
+      fontSize: '9px',
       color: '#fff0c9',
       align: 'center',
     }, 0.5).setDepth(10_003).setVisible(false);
@@ -98,9 +96,28 @@ export class HudView {
   }
 
   setRoundScore(completedRounds, totalRounds, wins) {
-    const visibleRound = Math.min(completedRounds + 1, totalRounds);
-    const score = 'RONDA ' + visibleRound + '/' + totalRounds + '  ·  J1 ' + wins[0] + ' : ' + wins[1] + ' J2';
-    this.roundScore.setText(score).setVisible(true);
+    this.totalRounds = totalRounds;
+    this.roundWins = [...wins];
+    this.#drawRoundIndicators();
+  }
+
+  #drawRoundIndicators() {
+    const g = this.roundIndicators;
+    g.clear();
+    if (!this.totalRounds) return;
+    for (let player = 0; player < 2; player += 1) {
+      for (let round = 0; round < this.totalRounds; round += 1) {
+        const x = player === 0
+          ? BAR.margin + round * 10 + 4
+          : GAME_WIDTH - BAR.margin - round * 10 - 4;
+        const y = 34;
+        const won = round < this.roundWins[player];
+        g.fillStyle(won ? (player === 0 ? 0xc99aff : 0xffc17e) : 0x514765, 1);
+        g.fillCircle(x, y, 3.5);
+        g.lineStyle(1, won ? 0xffedc2 : 0x8b809d, 0.95);
+        g.strokeCircle(x, y, 4.5);
+      }
+    }
   }
 
   update(deltaMs) {
@@ -126,7 +143,8 @@ export class HudView {
     this.title.setText('RONDA ' + roundNumber + '/' + totalRounds).setVisible(true).setScale(1).setAlpha(1);
     this.subtitle.setText(winnerName ? 'Gana ' + winnerName : 'EMPATE').setVisible(true);
     this.hint.setText('ENTER / ESPACIO: SIGUIENTE RONDA').setVisible(true);
-    this.roundScore.setText('RONDA ' + roundNumber + '/' + totalRounds + '  ·  J1 ' + wins[0] + ' : ' + wins[1] + ' J2').setVisible(true);
+    this.setRoundScore(roundNumber, totalRounds, wins);
+    this.title.setText('¡RONDA!').setVisible(true).setScale(1).setAlpha(1);
   }
 
   showResult(winnerName, dialogueLines = []) {
@@ -163,6 +181,8 @@ export class HudView {
     this.resultPrompt.setVisible(false);
     this.resultLines = [];
     this.resultLineIndex = 0;
+    this.roundIndicators.clear();
+    this.totalRounds = 0;
   }
 
   #renderResultLine() {

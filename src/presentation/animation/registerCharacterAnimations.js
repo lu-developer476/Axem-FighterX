@@ -4,7 +4,7 @@ import {
   animationKey,
   characterAnimationData,
 } from '../../infrastructure/assets/characterAnimationData.js';
-import { sheetTextureKey } from '../../infrastructure/assets/assetManifest.js';
+import { sheetTextureKey, maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
 
 const RANGER_ORDER = [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE];
 const LOOPING_STATES = new Set(['idle', 'walk']);
@@ -29,6 +29,21 @@ const oneShotDurationMs = (state) => {
  * personajes. Solo cambia la textura ya recoloreada automáticamente.
  */
 export function registerCharacterAnimations(scene) {
+  for (const rangerId of RANGER_ORDER) {
+    for (const [action, frameRate] of [['run', 10], ['bike', 9], ['double-axe', 12]]) {
+      const key = maleAnimationKey(rangerId, action);
+      const texture = scene.textures.get(key);
+      if (!scene.anims.exists(key) && texture) {
+        const frames = scene.anims.generateFrameNumbers(key, { start: 0, end: texture.frameTotal - 2 });
+        if (frames.length) scene.anims.create({
+          key,
+          frames,
+          frameRate,
+          repeat: action === 'double-axe' ? 0 : -1,
+        });
+      }
+    }
+  }
   for (const rangerId of RANGER_ORDER) {
     const { sheets } = characterAnimationData[rangerId];
 

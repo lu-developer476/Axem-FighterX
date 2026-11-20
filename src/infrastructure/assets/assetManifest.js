@@ -16,3 +16,9 @@ export const menuSpriteKeyFor = (rangerId) => 'menu-ranger-male-' + rangerId;
 
 export const menuSpriteUrlFor = (rangerId) =>
   import.meta.env.BASE_URL + 'generated/menu-ranger-male-' + rangerId + '.png';
+
+export const maleAnimationKey = (rangerId, action) =>
+  'axem-' + rangerId + '-' + action;
+
+export const maleAnimationUrl = (rangerId, action) =>
+  import.meta.env.BASE_URL + 'generated/axem-' + rangerId + '-' + action + '.png';

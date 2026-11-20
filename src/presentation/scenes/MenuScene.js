@@ -6,6 +6,7 @@ import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../
 import {
   spriteKeyFor,
   menuSpriteKeyFor,
+  maleAnimationKey,
 } from '../../infrastructure/assets/assetManifest.js';
 import { spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
 import { shouldFlip } from '../views/orientation.js';
@@ -94,25 +95,32 @@ export class MenuScene extends Phaser.Scene {
       this.ui.add(sprite);
     };
 
-    // Las femeninas quedan juntas, centradas sobre el recuadro de INICIO.
+    // Las variantes femeninas se distribuyen en los laterales como las masculinas.
     addRanger({
       texture: spriteKeyFor(RANGER_IDS.VIOLET, 'female'),
       rangerId: RANGER_IDS.VIOLET,
       gender: 'female',
-      x: 226,
-      y: 109,
-      scale: 0.44,
+      x: 112,
+      y: 237,
+      scale: 0.72,
       facing: 1,
     });
     addRanger({
       texture: spriteKeyFor(RANGER_IDS.ORANGE, 'female'),
       rangerId: RANGER_IDS.ORANGE,
       gender: 'female',
-      x: 254,
-      y: 109,
-      scale: 0.44,
+      x: GAME_WIDTH - 112,
+      y: 237,
+      scale: 0.72,
       facing: -1,
     });
+
+    const bikeKey = maleAnimationKey(RANGER_IDS.VIOLET, 'bike');
+    const bike = this.add.sprite(GAME_WIDTH / 2, 102, bikeKey)
+      .setOrigin(0.5, 1)
+      .setScale(0.48)
+      .setDepth(1);
+    if (this.anims.exists(bikeKey)) bike.play(bikeKey);
 
     // Los masculinos ocupan laterales opuestos con poses distintas.
     addRanger({
@@ -147,11 +155,13 @@ export class MenuScene extends Phaser.Scene {
       .setStrokeStyle(1, 0x3e315e, 0.9);
     this.ui.add([panel, inset]);
 
-    this.#addText(title, GAME_WIDTH / 2, 122, {
-      fontSize: '12px',
-      color: '#f7cf83',
-      letterSpacing: 1,
-    });
+    if (title) {
+      this.#addText(title, GAME_WIDTH / 2, 122, {
+        fontSize: '14px',
+        color: '#f7cf83',
+        letterSpacing: 1,
+      });
+    }
   }
 
   #beginCharacterModal() {
@@ -293,20 +303,20 @@ export class MenuScene extends Phaser.Scene {
   }
 
   #addFooter() {
-    const prefix = this.add.text(0, 255,
+    const prefix = this.add.text(0, 264,
       '© 2026 Todos los derechos reservados - Diseño y Programación por ',
       {
         fontFamily: 'monospace',
         fontSize: '6px',
         color: '#aaa0bd',
       },
-    ).setOrigin(0, 0.5);
+    ).setOrigin(0, 0.5).setDepth(30);
 
-    const author = this.add.text(0, 255, 'Lucas Montenegro ®', {
+    const author = this.add.text(0, 264, 'Lucas Montenegro ®', {
       fontFamily: 'monospace',
       fontSize: '6px',
       color: '#f2c77e',
-    }).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
+    }).setOrigin(0, 0.5).setDepth(30).setInteractive({ useHandCursor: true });
 
     const totalWidth = prefix.width + author.width;
     const startX = (GAME_WIDTH - totalWidth) / 2;
@@ -409,10 +419,10 @@ export class MenuScene extends Phaser.Scene {
     this.page = 'home';
     this.matchSetup = {};
     this.characterSlot = 0;
-    this.#beginPage('INICIO');
+    this.#beginPage('');
     this.#addHomeRangerArt();
     this.#addButton('JUGAR', 160, () => this.#showVersusModes());
-    this.#addButton('TUTORIALES', 184, () => this.#showControls());
+    this.#addButton('TUTORIAL', 184, () => this.#showControls());
     this.#addButton('CRÉDITOS', 208, () => this.#showCredits());
     this.#addFooter();
   }
@@ -513,20 +523,20 @@ export class MenuScene extends Phaser.Scene {
     this.#beginPage('ELEGÍ TU LADO', 390, 176);
     const side = this.matchSetup.playerSide ?? 'J1';
     this.#addText(
-      'LADO ACTUAL: ' + side + ' · ' + (side === 'J1' ? 'IZQUIERDA' : 'DERECHA'),
+      'LADO ACTUAL: ' + (side === 'J1' ? 'JUGADOR 1 · IZQUIERDA' : 'JUGADOR 2 · DERECHA'),
       GAME_WIDTH / 2,
       145,
       { fontSize: '7px', color: '#f7cf83' },
     );
-    this.#addButton('J1 · IZQUIERDA', 174, () => {
+    this.#addButton('JUGADOR 1 · IZQUIERDA', 174, () => {
       this.matchSetup.playerSide = 'J1';
       this.#showPlayerSide();
     }, { width: 142, x: 160, fontSize: '7px' });
-    this.#addButton('J2 · DERECHA', 174, () => {
+    this.#addButton('JUGADOR 2 · DERECHA', 174, () => {
       this.matchSetup.playerSide = 'J2';
       this.#showPlayerSide();
     }, { width: 142, x: 320, fontSize: '7px' });
-    this.#addText('J1: A / D · F · G     J2: FLECHAS · L · K', GAME_WIDTH / 2, 198, {
+    this.#addText('JUGADOR 1: A / D · F · G     JUGADOR 2: FLECHAS · L · K', GAME_WIDTH / 2, 198, {
       fontSize: '6px',
       color: '#b7a9cb',
     });
@@ -635,8 +645,8 @@ export class MenuScene extends Phaser.Scene {
 
   #showControls() {
     this.page = 'controls';
-    this.#beginPage('TUTORIALES', 390, 154);
-    this.#addText('JUGADOR 1 · AXEM VIOLET', GAME_WIDTH / 2, 143, {
+    this.#beginPage('TUTORIAL', 390, 154);
+    this.#addText('JUGADOR 1', GAME_WIDTH / 2, 143, {
       fontSize: '7px',
       color: '#d9a9ff',
     });
@@ -646,7 +656,7 @@ export class MenuScene extends Phaser.Scene {
     this.#addText('Ataque F · Teletransporte G', GAME_WIDTH / 2, 168, {
       fontSize: '6px',
     });
-    this.#addText('JUGADOR 2 · AXEM ORANGE', GAME_WIDTH / 2, 183, {
+    this.#addText('JUGADOR 2', GAME_WIDTH / 2, 183, {
       fontSize: '7px',
       color: '#ffc17e',
     });

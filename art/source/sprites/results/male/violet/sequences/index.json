@@ -1,0 +1,128 @@
+[
+ {
+  "id": "group-01",
+  "role": "idle",
+  "file": "group-01.png",
+  "frameCount": 7,
+  "cellWidth": 37,
+  "cellHeight": 45,
+  "anchor": "feet"
+ },
+ {
+  "id": "group-02",
+  "role": "walk",
+  "file": "group-02.png",
+  "frameCount": 9,
+  "cellWidth": 34,
+  "cellHeight": 42,
+  "anchor": "feet"
+ },
+ {
+  "id": "group-03",
+  "role": "attack",
+  "file": "group-03.png",
+  "frameCount": 10,
+  "cellWidth": 48,
+  "cellHeight": 44,
+  "anchor": "feet"
+ },
+ {
+  "id": "group-04",
+  "role": null,
+  "file": "group-04.png",
+  "frameCount": 8,
+  "cellWidth": 42,
+  "cellHeight": 45,
+  "anchor": "feet"
+ },
+ {
+  "id": "group-05",
+  "role": null,
+  "file": "group-05.png",
+  "frameCount": 8,
+  "cellWidth": 45,
+  "cellHeight": 43,
+  "anchor": "feet"
+ },
+ {
+  "id": "group-06",
+  "role": null,
+  "file": "group-06.png",
+  "frameCount": 5,
+  "cellWidth": 52,
+  "cellHeight": 41,
+  "anchor": "feet"
+ },
+ {
+  "id": "group-07",
+  "role": null,
+  "file": "group-07.png",
+  "frameCount": 5,
+  "cellWidth": 45,
+  "cellHeight": 37,
+  "anchor": "feet"
+ },
+ {
+  "id": "group-08",
+  "role": null,
+  "file": "group-08.png",
+  "frameCount": 5,
+  "cellWidth": 44,
+  "cellHeight": 46,
+  "anchor": "feet"
+ },
+ {
+  "id": "group-09",
+  "role": null,
+  "file": "group-09.png",
+  "frameCount": 5,
+  "cellWidth": 37,
+  "cellHeight": 54,
+  "anchor": "feet"
+ },
+ {
+  "id": "group-10",
+  "role": null,
+  "file": "group-10.png",
+  "frameCount": 11,
+  "cellWidth": 58,
+  "cellHeight": 40,
+  "anchor": "feet"
+ },
+ {
+  "id": "group-11",
+  "role": null,
+  "file": "group-11.png",
+  "frameCount": 8,
+  "cellWidth": 42,
+  "cellHeight": 39,
+  "anchor": "feet"
+ },
+ {
+  "id": "group-12",
+  "role": null,
+  "file": "group-12.png",
+  "frameCount": 14,
+  "cellWidth": 40,
+  "cellHeight": 50,
+  "anchor": "feet"
+ },
+ {
+  "id": "group-13",
+  "role": null,
+  "file": "group-13.png",
+  "frameCount": 6,
+  "cellWidth": 38,
+  "cellHeight": 45,
+  "anchor": "feet"
+ },
+ {
+  "id": "group-14",
+  "role": null,
+  "file": "group-14.png",
+  "frameCount": 6,
+  "cellWidth": 35,
+  "cellHeight": 45,
+  "anchor": "feet"
+ }
+]

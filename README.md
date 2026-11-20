@@ -124,8 +124,11 @@ agrupa a las femeninas sobre el panel INICIO y ubica a los masculinos en los lat
 poses distintas extraídas de la referencia masculina.
 
 El juego conserva sus estados de combate (reposo, movimiento, ataque, daño, teletransporte y KO)
-con las poses procedurales actuales. Las hojas archivadas reúnen el material de referencia para
-integrar secuencias cuadro a cuadro sin volver a depender del atlas compartido eliminado.
+con las poses procedurales actuales. Para integrar secuencias cuadro a cuadro, cada color tiene
+en `results/male/<color>/sequences/` una tira por grupo del atlas Red (idle, walk y attack son
+`group-01`, `group-02` y `group-03`) y las hojas femeninas conservan toda la referencia de Pink.
+Las coordenadas de cada cuadro, el orden y las zonas excluidas están en
+`art/source/sprites/README.md`; se regeneran con `node scripts/analyze-atlas.mjs`.
 
 ## Despliegue en Vercel
 

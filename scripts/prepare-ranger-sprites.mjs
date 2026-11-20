@@ -3,6 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { removeSpriteBackground } from '../src/infrastructure/graphics/removeSpriteBackground.js';
+import { layoutSequence } from '../src/infrastructure/assets/atlasFrameDetection.js';
+import { ATLAS_SEQUENCE_ROLES, ATLAS_SOURCES } from '../src/infrastructure/assets/atlasLayoutRules.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = (...parts) => path.join(ROOT, 'art', 'source', ...parts);
@@ -20,6 +22,49 @@ const MENU_POSE_REFERENCES = Object.freeze([
   SOURCE('sprites', 'references', 'axem-red', 'axem-red-spritesheet.png'),
 ]);
 const TRANSPARENT = Object.freeze({ r: 0, g: 0, b: 0, alpha: 0 });
+const ATLAS_FRAMES_PATH = path.join(ROOT, 'src', 'infrastructure', 'assets', 'atlasFrames.json');
+
+async function writeResult(gender, color, relativePath, buffer) {
+  const target = path.join(RESULTS(gender, color), relativePath);
+  await fs.mkdir(path.dirname(target), { recursive: true });
+  await fs.writeFile(target, buffer);
+  console.log('Generado ' + path.relative(ROOT, target));
+}
+
+/**
+ * Una tira por grupo de cuadros de la hoja masculina. Todas las celdas de una
+ * tira miden lo mismo y los pies quedan sobre la misma línea, de modo que Violet
+ * y Orange comparten exactamente los mismos cuadros y solo cambia la paleta.
+ */
+async function writeMaleSequences(color, recoloredSheet, groups) {
+  const index = [];
+  for (const group of groups) {
+    const { cellWidth, cellHeight, placements } = layoutSequence(group.frames, { anchor: 'feet' });
+    const layers = await Promise.all(group.frames.map(async (frame, position) => ({
+      input: await sharp(recoloredSheet)
+        .extract({ left: frame.x, top: frame.y, width: frame.w, height: frame.h })
+        .png()
+        .toBuffer(),
+      left: position * cellWidth + placements[position].x,
+      top: placements[position].y,
+    })));
+    const strip = await sharp({
+      create: { width: cellWidth * group.frames.length, height: cellHeight, channels: 4, background: TRANSPARENT },
+    }).composite(layers).png().toBuffer();
+
+    await writeResult('male', color, path.join('sequences', group.id + '.png'), strip);
+    index.push({
+      id: group.id,
+      role: ATLAS_SEQUENCE_ROLES.male[group.id] ?? null,
+      file: group.id + '.png',
+      frameCount: group.frames.length,
+      cellWidth,
+      cellHeight,
+      anchor: 'feet',
+    });
+  }
+  await writeResult('male', color, path.join('sequences', 'index.json'), Buffer.from(JSON.stringify(index, null, 1) + '\n'));
+}
 
 function hueMatches(hue, ranges) {
   return ranges.some(([min, max]) => hue >= min && hue <= max);
@@ -78,7 +123,7 @@ function hslToRgb(hue, saturation, lightness) {
   ];
 }
 
-async function recolorAndKey(input, gender, targetHue) {
+async function recolorAndKey(input, gender, targetHue, toleranceOverride) {
   const { data, info } = await sharp(input)
     .ensureAlpha()
     .raw()
@@ -90,7 +135,7 @@ async function recolorAndKey(input, gender, targetHue) {
     width: info.width,
     height: info.height,
   }, {
-    tolerance: gender === 'male' ? 42 : 48,
+    tolerance: toleranceOverride ?? (gender === 'male' ? 42 : 48),
     minBorderCoverage: 0.025,
   });
 
@@ -343,7 +388,8 @@ async function buildGender(gender) {
     if (gender === 'male') {
       // Use the actual checked-in Axem Red reference; legacy preview filenames are absent.
       const redReference = SOURCE('sprites', 'references', 'axem-red', 'axem-red-spritesheet.png');
-      parts.push(await recolorAndKey(redReference, gender, targetHue));
+      // El atlas Red trae ruido de compresión: con tolerancia 42 queda un halo verdoso.
+      parts.push(await recolorAndKey(redReference, gender, targetHue, ATLAS_SOURCES.male.tolerance));
 
       const run = await extractGifFrames(SOURCE('axem-ranger-run.gif'), gender, targetHue);
       const bike = await extractGifFrames(SOURCE('axem-ranger-bike.gif'), gender, targetHue);
@@ -351,6 +397,12 @@ async function buildGender(gender) {
       parts.push(await makeHorizontalStrip(run.frames, run.width, run.height));
       parts.push(await makeHorizontalStrip(bike.frames, bike.width, bike.height));
       parts.push(await makeHorizontalStrip(doubleAxe.frames, doubleAxe.width, doubleAxe.height));
+      await writeResult(gender, color, 'spritesheet.png', parts[0]);
+      await writeResult(gender, color, 'run.png', parts[1]);
+      await writeResult(gender, color, 'bike.png', parts[2]);
+      await writeResult(gender, color, 'double-axe.png', parts[3]);
+      const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
+      await writeMaleSequences(color, parts[0], manifest.male.groups);
       await writeMaleAnimation(run.frames, color, 'run');
       await writeMaleAnimation(bike.frames, color, 'bike');
       await writeMaleAnimation(doubleAxe.frames, color, 'double-axe');
@@ -363,7 +415,9 @@ async function buildGender(gender) {
         'axem-pink-battle-pose.png',
         'axem-pink-levitate.png',
       ]) {
-        parts.push(await recolorAndKey(path.join(pinkReference, file), gender, targetHue));
+        const recolored = await recolorAndKey(path.join(pinkReference, file), gender, targetHue);
+        parts.push(recolored);
+        await writeResult(gender, color, file.replace(/^axem-pink-/, ''), recolored);
       }
       baseSource = parts[1];
     }

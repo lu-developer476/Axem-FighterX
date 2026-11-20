@@ -28,10 +28,26 @@ describe('cuadros de la hoja masculina (Axem Red)', () => {
       .toEqual([7, 9, 10, 8, 8, 5, 5, 5, 5, 11, 8, 14, 6, 6]);
   });
 
-  it('los grupos de combate tienen los cuadros de idle, walk y attack', () => {
+  it('clasifica los 14 grupos según las secuencias manuales del personaje', () => {
     const countOf = (id) => groups.find((group) => group.id === id).frames.length;
-    expect(ATLAS_SEQUENCE_ROLES.male).toEqual({ 'group-01': 'idle', 'group-02': 'walk', 'group-03': 'attack' });
-    expect([countOf('group-01'), countOf('group-02'), countOf('group-03')]).toEqual([7, 9, 10]);
+    expect(ATLAS_SEQUENCE_ROLES.male).toEqual({
+      'group-01': 'idle',
+      'group-02': 'idle',
+      'group-03': 'punch',
+      'group-04': 'punch',
+      'group-05': 'punch',
+      'group-06': 'battle-pose',
+      'group-07': 'battle-pose',
+      'group-08': 'battle-pose',
+      'group-09': 'battle-pose',
+      'group-10': 'run',
+      'group-11': 'dash',
+      'group-12': 'jump',
+      'group-13': 'hit-hurt',
+      'group-14': 'teleport',
+    });
+    expect(groups.map((group) => countOf(group.id)))
+      .toEqual([7, 9, 10, 8, 8, 5, 5, 5, 5, 11, 8, 14, 6, 6]);
   });
 
   it('no tiene cuadros superpuestos, fuera de la hoja ni dentro de zonas excluidas', () => {
@@ -82,11 +98,36 @@ describe('resultados por género y color', () => {
         expect(entry.frameCount).toBe(group.frames.length);
         expect(entry.cellWidth).toBe(layout.cellWidth);
         expect(entry.cellHeight).toBe(layout.cellHeight);
+        expect(entry.anchorX).toBe(layout.placements[0].x + group.frames[0].pivotX);
 
         const metadata = await sharp(resultsPath('male', color, 'sequences', entry.file)).metadata();
         expect(metadata.width).toBe(entry.cellWidth * entry.frameCount);
         expect(metadata.height).toBe(entry.cellHeight);
       }
+    }
+  });
+
+  it('genera los GIF de acción del masculino naranja en lienzos de 150×100 px', async () => {
+    const animations = {
+      'idle.gif': 16,
+      'punch-01.gif': 10,
+      'punch-02.gif': 8,
+      'punch-03.gif': 8,
+      'battle-pose.gif': 20,
+      'run.gif': 11,
+      'dash.gif': 8,
+      'jump.gif': 14,
+      'hit.gif': 2,
+      'hurt.gif': 3,
+      'teleport.gif': 6,
+    };
+
+    for (const [animation, expectedFrames] of Object.entries(animations)) {
+      const metadata = await sharp(resultsPath('male', 'orange', animation), { animated: true }).metadata();
+      const frameHeight = metadata.pageHeight ?? metadata.height / (metadata.pages || 1);
+      expect(metadata.width, animation).toBe(150);
+      expect(frameHeight, animation).toBe(100);
+      expect(metadata.pages, animation).toBe(expectedFrames);
     }
   });
 

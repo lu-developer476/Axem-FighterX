@@ -38,13 +38,24 @@ export const ATLAS_SOURCES = Object.freeze({
 });
 
 /**
- * Grupos de Axem Red que el combate reproduce como estados. El resto de los
- * grupos se conserva como secuencia disponible, sin interpretarla.
+ * Clasificación manual de las 14 secuencias de Axem Red. Los grupos que
+ * comparten una animación conservan su identidad individual en el atlas.
  */
 export const ATLAS_SEQUENCE_ROLES = Object.freeze({
   male: Object.freeze({
     'group-01': 'idle',
-    'group-02': 'walk',
-    'group-03': 'attack',
+    'group-02': 'idle',
+    'group-03': 'punch',
+    'group-04': 'punch',
+    'group-05': 'punch',
+    'group-06': 'battle-pose',
+    'group-07': 'battle-pose',
+    'group-08': 'battle-pose',
+    'group-09': 'battle-pose',
+    'group-10': 'run',
+    'group-11': 'dash',
+    'group-12': 'jump',
+    'group-13': 'hit-hurt',
+    'group-14': 'teleport',
   }),
 });

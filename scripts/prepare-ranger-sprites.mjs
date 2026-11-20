@@ -17,6 +17,8 @@ const PALETTE_SOURCES = Object.freeze({
 });
 const BASE_SIZE = Object.freeze({ width: 53, height: 83 });
 const ACTION_GIF_SIZE = Object.freeze({ width: 150, height: 100 });
+const SEQUENCE_GIF_SCALE = 1.75;
+const SEQUENCE_GIF_FEET_MARGIN = 4;
 const MENU_SIZE = Object.freeze({ width: 78, height: 112 });
 const MENU_POSE_REFERENCES = Object.freeze([
   SOURCE('sprites', 'references', 'axem-red', 'axem-red-spritesheet.png'),
@@ -60,10 +62,12 @@ async function writeMaleSequences(color, recoloredSheet, groups) {
       frameCount: group.frames.length,
       cellWidth,
       cellHeight,
+      anchorX: Math.max(...group.frames.map((frame) => frame.pivotX ?? Math.round(frame.w / 2))),
       anchor: 'feet',
     });
   }
   await writeResult('male', color, path.join('sequences', 'index.json'), Buffer.from(JSON.stringify(index, null, 1) + '\n'));
+  return index;
 }
 
 function hueMatches(hue, ranges) {
@@ -537,6 +541,131 @@ async function writeMaleAnimation(frames, rangerId, action, frameDelays, loop = 
     .toBuffer();
   await writeResult('male', rangerId, action + '.gif', gif);
 }
+
+/**
+ * Lee cada celda de una tira de secuencia manteniendo el pivote horizontal
+ * común y la línea de pies calculada durante la generación del atlas.
+ */
+async function readMaleSequenceFrames(color, entry) {
+  const strip = await fs.readFile(RESULTS('male', color, 'sequences', entry.file));
+  const frames = [];
+
+  for (let frameIndex = 0; frameIndex < entry.frameCount; frameIndex += 1) {
+    const input = await sharp(strip)
+      .extract({
+        left: frameIndex * entry.cellWidth,
+        top: 0,
+        width: entry.cellWidth,
+        height: entry.cellHeight,
+      })
+      .png()
+      .toBuffer();
+
+    frames.push({
+      input,
+      cellWidth: entry.cellWidth,
+      cellHeight: entry.cellHeight,
+      anchorX: entry.anchorX,
+    });
+  }
+
+  return frames;
+}
+
+/**
+ * Compone cada cuadro sobre un lienzo transparente de 150×100 px.
+ * El escalado nearest-neighbor preserva el pixel-art; el pivote de los pies
+ * queda centrado y la línea de suelo permanece constante entre fotogramas.
+ */
+async function writeMaleSequenceGif(frames, color, filename, delay = 100) {
+  if (!Array.isArray(frames) || frames.length === 0) {
+    throw new Error('La animación ' + filename + ' no contiene fotogramas.');
+  }
+
+  const gifFrames = await Promise.all(frames.map(async (frame) => {
+    const width = Math.round(frame.cellWidth * SEQUENCE_GIF_SCALE);
+    const height = Math.round(frame.cellHeight * SEQUENCE_GIF_SCALE);
+    if (width > ACTION_GIF_SIZE.width || height + SEQUENCE_GIF_FEET_MARGIN > ACTION_GIF_SIZE.height) {
+      throw new Error('La celda excede el lienzo de 150×100 px en ' + filename);
+    }
+
+    const sprite = await sharp(frame.input)
+      .resize(width, height, { fit: 'fill', kernel: 'nearest' })
+      .png()
+      .toBuffer();
+    const left = Math.round(ACTION_GIF_SIZE.width / 2 - frame.anchorX * SEQUENCE_GIF_SCALE);
+    const top = ACTION_GIF_SIZE.height - SEQUENCE_GIF_FEET_MARGIN - height;
+
+    if (left < 0 || left + width > ACTION_GIF_SIZE.width || top < 0) {
+      throw new Error('El pivote de ' + filename + ' queda fuera del lienzo.');
+    }
+
+    return sharp({
+      create: {
+        width: ACTION_GIF_SIZE.width,
+        height: ACTION_GIF_SIZE.height,
+        channels: 4,
+        background: TRANSPARENT,
+      },
+    })
+      .composite([{ input: sprite, left, top }])
+      .png()
+      .toBuffer();
+  }));
+
+  const gif = await sharp(gifFrames, { join: { animated: true } })
+    .gif({
+      loop: 0,
+      delay,
+      colours: 256,
+      dither: 0,
+      effort: 10,
+      keepDuplicateFrames: true,
+    })
+    .toBuffer();
+
+  await writeResult('male', color, filename + '.gif', gif);
+}
+
+/**
+ * Animaciones adicionales del masculino naranja. El orden de los grupos y
+ * los rangos de group-13 siguen la clasificación manual del spritesheet.
+ */
+async function buildOrangeActionGifs(color, sequenceIndex) {
+  const groups = new Map();
+  for (const entry of sequenceIndex) {
+    groups.set(entry.id, await readMaleSequenceFrames(color, entry));
+  }
+
+  const frames = (...ids) => ids.flatMap((id) => {
+    const group = groups.get(id);
+    if (!group) throw new Error('No existe ' + id + ' para generar GIFs.');
+    return group;
+  });
+
+  await writeMaleSequenceGif(frames('group-01', 'group-02'), color, 'idle', 140);
+
+  await writeMaleSequenceGif(frames('group-03'), color, 'punch-01', 90);
+  await writeMaleSequenceGif(frames('group-04'), color, 'punch-02', 90);
+  await writeMaleSequenceGif(frames('group-05'), color, 'punch-03', 90);
+
+  await writeMaleSequenceGif(
+    frames('group-09', 'group-08', 'group-07', 'group-06'),
+    color,
+    'battle-pose',
+    120,
+  );
+
+  await writeMaleSequenceGif(frames('group-10'), color, 'run', 80);
+  await writeMaleSequenceGif(frames('group-11'), color, 'dash', 80);
+  await writeMaleSequenceGif(frames('group-12'), color, 'jump', 100);
+
+  await writeMaleSequenceGif(groups.get('group-13').slice(0, 2), color, 'hit', 120);
+  await writeMaleSequenceGif(groups.get('group-13').slice(3, 6), color, 'hurt', 150);
+
+  await writeMaleSequenceGif(frames('group-14'), color, 'teleport', 100);
+}
+
 /**
  * Localiza figuras separadas dentro de una referencia ya procesada.
  * Descarta motas, efectos y piezas demasiado pequeñas para ser una pose.
@@ -713,10 +842,11 @@ async function buildGender(gender) {
       await writeResult(gender, color, 'bike.png', parts[2]);
       await writeResult(gender, color, 'double-axe.png', parts[3]);
       const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
-      await writeMaleSequences(color, parts[0], manifest.male.groups);
+      const sequenceIndex = await writeMaleSequences(color, parts[0], manifest.male.groups);
       await writeMaleAnimation(run.frames, color, 'run', run.delay, run.loop);
       await writeMaleAnimation(bike.frames, color, 'bike', bike.delay, bike.loop);
       await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop);
+      if (color === 'orange') await buildOrangeActionGifs(color, sequenceIndex);
       baseSource = run.frames[0];
     } else {
       const pinkReference = SOURCE('sprites', 'references', 'axem-pink');

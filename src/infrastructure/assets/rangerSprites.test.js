@@ -29,4 +29,18 @@ describe('Variantes de Axem Rangers', () => {
       });
     }
   }
+  
+  for (const color of COLORS) {
+    for (const action of ['run', 'bike', 'double-axe']) {
+      it(`male/${color}/${action} conserva celdas de animación uniformes de 53×83 px`, async () => {
+        const animationPath = fileURLToPath(new URL(`../../../public/generated/axem-${color}-${action}.png`, import.meta.url));
+        const metadata = await sharp(animationPath).metadata();
+        expect(metadata.format).toBe('png');
+        expect(metadata.height).toBe(83);
+        expect(metadata.width % 53).toBe(0);
+        expect(metadata.pages ?? 1).toBe(1);
+      });
+    }
+  }
+
 });

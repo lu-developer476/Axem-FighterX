@@ -40,26 +40,26 @@ export class PreloadScene extends Phaser.Scene {
     this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x0b0818).setOrigin(0);
     this.add.text(GAME_WIDTH / 2, 91, 'Axem FighterX', {
       fontFamily: 'monospace',
-      fontSize: '22px',
+      fontSize: '28px',
       color: '#f4d18b',
       stroke: '#3b2149',
       strokeThickness: 3,
     }).setOrigin(0.5);
     this.add.text(GAME_WIDTH / 2, 119, 'PREPARANDO EL COMBATE', {
       fontFamily: 'monospace',
-      fontSize: '8px',
+      fontSize: '11px',
       color: '#b9afd2',
       letterSpacing: 2,
     }).setOrigin(0.5);
 
     const status = this.add.text(GAME_WIDTH / 2, 145, 'CARGANDO RECURSOS...', {
       fontFamily: 'monospace',
-      fontSize: '7px',
+      fontSize: '10px',
       color: '#8f86ae',
     }).setOrigin(0.5);
     const percentage = this.add.text(GAME_WIDTH / 2, 177, '0%', {
       fontFamily: 'monospace',
-      fontSize: '7px',
+      fontSize: '10px',
       color: '#f4d18b',
     }).setOrigin(0.5);
     const progressBar = this.add.graphics();

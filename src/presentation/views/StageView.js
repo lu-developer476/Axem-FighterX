@@ -21,8 +21,8 @@ const STAGE_VISUALS = {
 
 /** Construye el escenario seleccionado o un fondo plano para el entrenamiento. */
 export class StageView {
-  /** @param {Phaser.Scene} scene @param {string} [stageId] @param {{ backgroundColor?: string | null }} [options] */
-  constructor(scene, stageId = STAGE_IDS.RUINS, { backgroundColor = null } = {}) {
+  /** @param {Phaser.Scene} scene @param {string} [stageId] @param {{ backgroundColor?: string | null, cinematic?: boolean }} [options] */
+  constructor(scene, stageId = STAGE_IDS.RUINS, { backgroundColor = null, cinematic = false } = {}) {
     this.solidBackground = typeof backgroundColor === 'string' && /^#[\da-f]{6}$/i.test(backgroundColor)
       ? backgroundColor
       : null;
@@ -53,13 +53,16 @@ export class StageView {
     layer(this.textures.sky, 0, -100);
     layer(this.textures.far, PARALLAX.far, -90);
     layer(this.textures.mid, PARALLAX.mid, -80);
-    this.fog = scene.add
-      .tileSprite(0, 168, VIEW.width, 40, this.textures.fog)
-      .setOrigin(0, 0)
-      .setScrollFactor(0)
-      .setDepth(-75)
-      .setAlpha(this.visuals.hazeAlpha);
-    layer(this.textures.near, PARALLAX.near, -70);
+    // Las cinemáticas priorizan lectura y composición: sin niebla móvil ni capa de ruido en primer plano.
+    if (!cinematic) {
+      this.fog = scene.add
+        .tileSprite(0, 168, VIEW.width, 40, this.textures.fog)
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDepth(-75)
+        .setAlpha(this.visuals.hazeAlpha);
+      layer(this.textures.near, PARALLAX.near, -70);
+    }
     layer(this.textures.floor, 1, -20, 0, ARENA.minY);
 
     for (const x of [0, ARENA.width - WALL_WIDTH]) {
@@ -89,7 +92,7 @@ export class StageView {
     for (const { image, factor, originX } of this.parallaxLayers) {
       image.setX(Math.round(originX - scrollX * factor));
     }
-    this.fog.tilePositionX = Math.round(timeMs * 0.012 + scrollX * 0.4);
+    if (this.fog) this.fog.tilePositionX = Math.round(timeMs * 0.012 + scrollX * 0.4);
     const flicker = this.visuals.barrierBaseAlpha + this.visuals.flicker * (0.5 + 0.5 * Math.sin(timeMs / 90));
     for (const barrier of this.barriers) barrier.setAlpha(flicker);
   }

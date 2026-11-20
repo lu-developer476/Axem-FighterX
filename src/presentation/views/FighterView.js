@@ -34,7 +34,8 @@ export class FighterView {
     const facing = fighter.facing;
     const lift = fighter.state === FighterState.KO ? 0 : fighter.hoverOffset;
 
-    const baseScale = data.displayHeight / sprite.frame.realHeight;
+    // La escala usa la celda de animación fija, nunca el recorte del frame activo.
+    const baseScale = data.displayHeight / data.frameHeight;
     sprite.setScale(baseScale * pose.scaleX, baseScale * pose.scaleY);
     sprite.setFlipX(shouldFlip(facing, spriteFacingFor(fighter.id, fighter.gender)));
     sprite.setAngle(pose.angle * facing);

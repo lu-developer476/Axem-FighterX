@@ -13,6 +13,10 @@ import { shouldFlip } from '../views/orientation.js';
 
 const PORTFOLIO_URL = 'https://lu-dev-portfolio.vercel.app/';
 const RANGER_ORDER = [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE];
+const readableFontSize = (value = '10px') => {
+  const size = Number.parseFloat(value);
+  return Number.isFinite(size) ? Math.max(8, Math.round(size * 1.25)) + 'px' : value;
+};
 const RANGER_VARIANTS = Object.freeze([
   { id: RANGER_IDS.VIOLET, gender: 'male' },
   { id: RANGER_IDS.VIOLET, gender: 'female' },
@@ -72,11 +76,14 @@ export class MenuScene extends Phaser.Scene {
       .setDepth(-100);
 
     const titleTexture = this.textures.get('title-art').getSourceImage();
-    const titleScale = Math.min(0.72, 250 / titleTexture.width, 50 / titleTexture.height);
-    this.add.image(GAME_WIDTH / 2, 39, 'title-art')
+    const titleScale = Math.min(1, 436 / titleTexture.width, 78 / titleTexture.height);
+    this.add.rectangle(GAME_WIDTH / 2, 42, 448, 88, 0x120c20, 0.5)
+      .setStrokeStyle(1, 0x71547d, 0.7)
+      .setDepth(-2);
+    this.add.image(GAME_WIDTH / 2, 42, 'title-art')
       .setScale(titleScale)
-      .setAlpha(0.98)
-      .setDepth(-1);
+      .setAlpha(1)
+      .setDepth(2);
 
     this.add.rectangle(GAME_WIDTH / 2, 250, GAME_WIDTH, 40, 0x000000, 0.94)
       .setStrokeStyle(1, 0x55456e, 0.9)
@@ -115,12 +122,21 @@ export class MenuScene extends Phaser.Scene {
       facing: -1,
     });
 
-    const bikeKey = maleAnimationKey(RANGER_IDS.VIOLET, 'bike');
-    const bike = this.add.sprite(GAME_WIDTH / 2, 102, bikeKey)
+    // Un ranger corre detrás de la moto; ambos reutilizan los GIF del repositorio.
+    const runKey = maleAnimationKey(RANGER_IDS.ORANGE, 'run');
+    const runner = this.add.sprite(GAME_WIDTH / 2 - 62, 139, runKey)
       .setOrigin(0.5, 1)
-      .setScale(0.48)
+      .setScale(0.52)
+      .setDepth(0);
+    if (this.anims.exists(runKey)) runner.play(runKey);
+
+    const bikeKey = maleAnimationKey(RANGER_IDS.VIOLET, 'bike');
+    const bike = this.add.sprite(GAME_WIDTH / 2, 132, bikeKey)
+      .setOrigin(0.5, 1)
+      .setScale(0.54)
       .setDepth(1);
     if (this.anims.exists(bikeKey)) bike.play(bikeKey);
+    this.ui.add([runner, bike]);
 
     // Los masculinos ocupan laterales opuestos con poses distintas.
     addRanger({
@@ -193,28 +209,32 @@ export class MenuScene extends Phaser.Scene {
   #addText(value, x, y, style = {}) {
     const text = this.add.text(x, y, value, {
       fontFamily: 'monospace',
-      fontSize: '8px',
+      fontSize: readableFontSize(style.fontSize ?? '10px'),
       color: '#e7def5',
       align: 'center',
       wordWrap: { width: Math.max(100, this.panelWidth - 28), useAdvancedWrap: true },
       ...style,
-    }).setOrigin(0.5);
+    });
+    text.setFontSize(readableFontSize(style.fontSize ?? '10px')).setOrigin(0.5);
     this.ui.add(text);
     return text;
   }
 
   #addButton(title, y, action, { width = 210, fontSize = '8px', x = GAME_WIDTH / 2 } = {}) {
-    const buttonWidth = Math.min(width, Math.max(112, this.panelWidth - 36));
-    const box = this.add.rectangle(x, y, buttonWidth, 20, 0x241b3c, 0.98)
+    // El fondo, la etiqueta y el área interactiva comparten exactamente el mismo ancho y centro.
+    const buttonWidth = Math.floor(Math.min(width, Math.max(112, this.panelWidth - 36)));
+    const buttonHeight = 20;
+    const labelFontSize = readableFontSize(fontSize);
+    const box = this.add.rectangle(x, y, buttonWidth, buttonHeight, 0x241b3c, 0.98)
       .setStrokeStyle(1, 0x62527e, 1);
     const label = this.add.text(x, y, title, {
       fontFamily: 'monospace',
-      fontSize,
+      fontSize: labelFontSize,
       color: '#d9cde9',
       align: 'center',
-      wordWrap: { width: buttonWidth - 14, useAdvancedWrap: true },
+      wordWrap: { width: buttonWidth - 16, useAdvancedWrap: true },
     }).setOrigin(0.5);
-    const hitArea = this.add.rectangle(x, y, buttonWidth, 20, 0xffffff, 0)
+    const hitArea = this.add.rectangle(x, y, buttonWidth, buttonHeight, 0xffffff, 0)
       .setInteractive({ useHandCursor: true });
 
     const index = this.buttons.length;
@@ -242,7 +262,7 @@ export class MenuScene extends Phaser.Scene {
       .setStrokeStyle(1, 0x80758f, 0.8);
     const label = this.add.text(x, y + 8, title, {
       fontFamily: 'monospace',
-      fontSize: '6px',
+      fontSize: readableFontSize('6px'),
       color: '#d9cde9',
       align: 'center',
     }).setOrigin(0.5);
@@ -278,7 +298,7 @@ export class MenuScene extends Phaser.Scene {
       .setScale(0.34);
     const label = this.add.text(x + 19, y, title, {
       fontFamily: 'monospace',
-      fontSize: '6px',
+      fontSize: readableFontSize('6px'),
       color: '#d9cde9',
       align: 'center',
       wordWrap: { width: 112 },
@@ -303,18 +323,20 @@ export class MenuScene extends Phaser.Scene {
   }
 
   #addFooter() {
+    // El footer solo aparece en la pantalla principal; nunca queda por encima de un modal.
+    if (this.page !== 'home') return;
     const prefix = this.add.text(0, 264,
       '© 2026 Todos los derechos reservados - Diseño y Programación por ',
       {
         fontFamily: 'monospace',
-        fontSize: '6px',
+        fontSize: '8px',
         color: '#aaa0bd',
       },
     ).setOrigin(0, 0.5).setDepth(30);
 
     const author = this.add.text(0, 264, 'Lucas Montenegro ®', {
       fontFamily: 'monospace',
-      fontSize: '6px',
+      fontSize: '8px',
       color: '#f2c77e',
     }).setOrigin(0, 0.5).setDepth(30).setInteractive({ useHandCursor: true });
 

@@ -41,9 +41,9 @@ export class HudView {
     this.statusLabels = fighters.map((fighter, index) =>
       text(
         index === 0 ? BAR.margin : GAME_WIDTH - BAR.margin,
-        31,
+        44,
         '',
-        { fontSize: '9px', color: index === 0 ? '#d9a9ff' : '#ffc17e', align: index === 0 ? 'left' : 'right' },
+        { fontSize: '10px', color: index === 0 ? '#d9a9ff' : '#ffc17e', align: index === 0 ? 'left' : 'right' },
         index === 0 ? 0 : 1,
       ),
     );
@@ -110,12 +110,17 @@ export class HudView {
         const x = player === 0
           ? BAR.margin + round * 10 + 4
           : GAME_WIDTH - BAR.margin - round * 10 - 4;
-        const y = 34;
+        const y = 36;
         const won = round < this.roundWins[player];
-        g.fillStyle(won ? (player === 0 ? 0xc99aff : 0xffc17e) : 0x514765, 1);
-        g.fillCircle(x, y, 3.5);
-        g.lineStyle(1, won ? 0xffedc2 : 0x8b809d, 0.95);
-        g.strokeCircle(x, y, 4.5);
+        const accent = player === 0 ? 0xc99aff : 0xffc17e;
+        g.fillStyle(won ? accent : 0x241b3c, 1);
+        g.fillCircle(x, y, 4);
+        g.lineStyle(won ? 1.5 : 1, won ? 0xffedc2 : 0x8b809d, 0.95);
+        g.strokeCircle(x, y, 5.25);
+        if (won) {
+          g.fillStyle(0xffffff, 0.95);
+          g.fillCircle(x, y, 1.25);
+        }
       }
     }
   }
@@ -140,11 +145,11 @@ export class HudView {
     this.resultSpeaker.setVisible(false);
     this.resultDialogue.setVisible(false);
     this.resultPrompt.setVisible(false);
-    this.title.setText('RONDA ' + roundNumber + '/' + totalRounds).setVisible(true).setScale(1).setAlpha(1);
+    // El marcador de rondas vive bajo las barras de salud; no duplicamos el dato en texto.
+    this.title.setText('¡RONDA!').setVisible(true).setScale(1).setAlpha(1);
     this.subtitle.setText(winnerName ? 'Gana ' + winnerName : 'EMPATE').setVisible(true);
     this.hint.setText('ENTER / ESPACIO: SIGUIENTE RONDA').setVisible(true);
     this.setRoundScore(roundNumber, totalRounds, wins);
-    this.title.setText('¡RONDA!').setVisible(true).setScale(1).setAlpha(1);
   }
 
   showResult(winnerName, dialogueLines = []) {

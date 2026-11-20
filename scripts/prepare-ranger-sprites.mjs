@@ -17,8 +17,7 @@ const BASE_SIZE = Object.freeze({ width: 53, height: 83 });
 const MENU_SIZE = Object.freeze({ width: 78, height: 112 });
 const MENU_POSE_REFERENCES = Object.freeze([
   SOURCE('sprites', 'results', 'male', 'preview (1).png'),
-  SOURCE('sprites', 'references', 'axem-red', 'preview (2).png'),
-  SOURCE('sprites', 'references', 'axem-red', 'preview.png'),
+  SOURCE('sprites', 'references', 'axem-red', 'axem-red-spritesheet.png'),
 ]);
 const TRANSPARENT = Object.freeze({ r: 0, g: 0, b: 0, alpha: 0 });
 
@@ -144,12 +143,15 @@ async function makeHorizontalStrip(frames, width, height) {
   }).composite(layers).png().toBuffer();
 }
 
+/**
+ * Every GIF frame uses one fixed 53×83 cell. Do not trim each frame:
+ * weapons and effects may extend beyond the body and must not shrink the ranger.
+ */
 async function writeMaleAnimation(frames, rangerId, action) {
   const normalized = await Promise.all(frames.map((frame) =>
     sharp(frame)
-      .trim({ background: TRANSPARENT, threshold: 1 })
       .resize(BASE_SIZE.width, BASE_SIZE.height, {
-        fit: 'contain',
+        fit: 'fill',
         kernel: 'nearest',
         background: TRANSPARENT,
       })
@@ -161,7 +163,6 @@ async function writeMaleAnimation(frames, rangerId, action) {
   await fs.writeFile(outputPath, strip);
   console.log('Generada animación ' + path.relative(ROOT, outputPath));
 }
-
 async function makeVerticalAtlas(parts) {
   const metadata = await Promise.all(parts.map((input) => sharp(input).metadata()));
   const width = Math.max(...metadata.map((item) => item.width));
@@ -340,10 +341,9 @@ async function buildGender(gender) {
     let baseSource;
 
     if (gender === 'male') {
-      const redReference = SOURCE('sprites', 'references', 'axem-red');
-      for (const file of ['preview.png', 'preview (2).png']) {
-        parts.push(await recolorAndKey(path.join(redReference, file), gender, targetHue));
-      }
+      // Use the actual checked-in Axem Red reference; legacy preview filenames are absent.
+      const redReference = SOURCE('sprites', 'references', 'axem-red', 'axem-red-spritesheet.png');
+      parts.push(await recolorAndKey(redReference, gender, targetHue));
 
       const run = await extractGifFrames(SOURCE('axem-ranger-run.gif'), gender, targetHue);
       const bike = await extractGifFrames(SOURCE('axem-ranger-bike.gif'), gender, targetHue);

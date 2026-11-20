@@ -52,8 +52,8 @@ export function prepareSpriteTexture(scene, { sourceKey, targetKey, frames = 1, 
       ctx.drawImage(source, frameX, 0, frameWidth, frameHeight, destX, 0, width, height);
     } else {
       const reduced = halveWhileLarge(cropFrame(source, frameX, frameWidth, frameHeight), width, height);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      // Pixel art must never be interpolated while resizing user-provided sprites.
+      ctx.imageSmoothingEnabled = false;
       ctx.drawImage(reduced, 0, 0, reduced.width, reduced.height, destX, 0, width, height);
     }
 
@@ -94,8 +94,7 @@ function halveWhileLarge(canvas, targetWidth, targetHeight) {
     half.width = Math.ceil(current.width / 2);
     half.height = Math.ceil(current.height / 2);
     const ctx = half.getContext('2d');
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+    ctx.imageSmoothingEnabled = false;
     ctx.drawImage(current, 0, 0, half.width, half.height);
     current = half;
   }

@@ -23,6 +23,20 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   preload() {
+    // El filtrado point (nearest-neighbor) evita interpolar y suavizar los píxeles.
+    // Se aplica a texturas actuales y a todas las que se incorporen durante la ejecución,
+    // independientemente de si provienen del recoloreo o de archivos agregados al proyecto.
+    const pointFilter = Phaser.Textures.FilterMode.NEAREST;
+    const applyPointFilter = (_key, texture) => {
+      if (texture && typeof texture.setFilter === 'function') {
+        texture.setFilter(pointFilter);
+      }
+    };
+
+    this.textures.on(Phaser.Textures.Events.ADD, applyPointFilter);
+    Object.values(this.textures.list).forEach((texture) => {
+      applyPointFilter(texture.key, texture);
+    });
     this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x0b0818).setOrigin(0);
     this.add.text(GAME_WIDTH / 2, 91, 'Axem FighterX', {
       fontFamily: 'monospace',

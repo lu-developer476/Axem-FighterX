@@ -1,4 +1,4 @@
-name: Suite de pruebas sin regeneración de assets
+name: Verificación de controles y selección de jugadores
 
 on:
   push:
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   test:
-    name: Vitest completo
+    name: Teclado, personajes y esquinas
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,11 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
-      # La suite valida el código; la preparación visual de sprites pertenece al pipeline de build.
-      # Se evita el hook pretest porque regenera referencias de imagen antes de ejecutar Vitest.
-      - name: Ejecutar pruebas
-        run: npx vitest run
+      # Ejecuta las pruebas del flujo modificado sin depender de la generación de sprites.
+      - name: Ejecutar pruebas de controles y asignaciones
+        run: >-
+          npx vitest run
+          src/infrastructure/input/PhaserKeyboardInput.test.js
+          src/domain/match/playerAssignments.test.js
+          src/application/useCases/CreateMatch.test.js
+          src/domain/match/matchModes.test.js

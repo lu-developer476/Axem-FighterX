@@ -32,9 +32,9 @@ const MENU_POSE_REFERENCES = Object.freeze([
 const TRANSPARENT = Object.freeze({ r: 0, g: 0, b: 0, alpha: 0 });
 const ATLAS_FRAMES_PATH = path.join(ROOT, 'src', 'infrastructure', 'assets', 'atlasFrames.json');
 const KI_AURA_SHEET_PATH = path.join(
-  ROOT, 'art', 'source', 'effects', 'dragon-ball-style', 'super-saiyan-aura.svg',
+  ROOT, 'art', 'source', 'effects', 'dragon-ball-style', 'super-saiyan-aura.webp',
 );
-const KI_AURA_GRID = Object.freeze({ columns: 2, rows: 2, cellWidth: 128, cellHeight: 128 });
+const KI_AURA_GRID = Object.freeze({ columns: 2, rows: 2, cellWidth: 64, cellHeight: 64 });
 const KI_AURA_HOLD_DELAY = 180;
 
 async function writeResult(gender, color, relativePath, buffer) {
@@ -944,14 +944,14 @@ async function normalizeMaleActionFrame(input, addAura = false, targetHeight = n
 }
 
 /**
- * Compone el aura CC0 detrás de la última pose masculina de group-09.
+ * Compone el aura dorada Super Saiyan detrás de la última pose masculina de group-09.
  * La pose original se conserva y se mantiene visible durante el cierre de carga.
  */
 async function buildMaleKiAuraHoldFrames(sourceFrame) {
   const metadata = await sharp(KI_AURA_SHEET_PATH).metadata();
   const { columns, rows, cellWidth, cellHeight } = KI_AURA_GRID;
   if (metadata.width !== columns * cellWidth || metadata.height !== rows * cellHeight) {
-    throw new Error('La hoja de aura Super Saiyan debe medir 256×256 px en una cuadrícula 2×2.');
+    throw new Error('La hoja de aura Super Saiyan debe medir 128×128 px en una cuadrícula 2×2.');
   }
   if (!metadata.hasAlpha) {
     throw new Error('La hoja de aura Super Saiyan debe conservar transparencia.');
@@ -984,7 +984,15 @@ async function buildMaleKiAuraHoldFrames(sourceFrame) {
       },
     })
       .composite([
-        { input: await sharp(aura).resize(110, 110, { fit: 'fill', kernel: 'nearest' }).extract({ left: 0, top: 5, width: 110, height: 100 }).png().toBuffer(), left: 20, top: 0 },
+        {
+          input: await sharp(aura)
+            .resize(112, 112, { fit: 'fill', kernel: 'nearest' })
+            .extract({ left: 0, top: 8, width: 112, height: 100 })
+            .png()
+            .toBuffer(),
+          left: 19,
+          top: 0,
+        },
         { input: heldPose, left: 0, top: 0 },
       ])
       .png()

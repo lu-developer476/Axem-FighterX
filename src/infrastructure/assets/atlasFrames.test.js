@@ -271,12 +271,12 @@ describe('resultados por género y color', () => {
 
   it.each(COLORS)('termina charge %s sosteniendo la última pose de group-09 con aura Super Saiyan', async (color) => {
     const auraPath = fileURLToPath(new URL(
-      '../../../art/source/effects/dragon-ball-style/super-saiyan-aura.svg',
+      '../../../art/source/effects/dragon-ball-style/super-saiyan-aura.webp',
       import.meta.url,
     ));
     const auraMetadata = await sharp(auraPath).metadata();
-    expect(auraMetadata.width).toBe(256);
-    expect(auraMetadata.height).toBe(256);
+    expect(auraMetadata.width).toBe(128);
+    expect(auraMetadata.height).toBe(128);
     expect(auraMetadata.hasAlpha).toBe(true);
 
     const chargePath = resultsPath('male', color, 'charge.gif');
@@ -331,7 +331,22 @@ describe('resultados por género y color', () => {
     }
     expect(opaquePosePixels).toBeGreaterThan(900);
 
+    const previousAuraFrames = [];
     for (let page = 3; page < 7; page += 1) {
+      const frameIndex = page - 3;
+      const sourceAura = await sharp(auraPath)
+        .extract({
+          left: (frameIndex % 2) * 64,
+          top: Math.floor(frameIndex / 2) * 64,
+          width: 64,
+          height: 64,
+        })
+        .resize(112, 112, { fit: 'fill', kernel: 'nearest' })
+        .extract({ left: 0, top: 8, width: 112, height: 100 })
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+
       const finalRaw = await sharp(chargePath, { page, pages: 1 })
         .ensureAlpha()
         .raw()
@@ -367,17 +382,41 @@ describe('resultados por género y color', () => {
         }
       }
 
+      let expectedAuraPixels = 0;
+      let matchingAuraPixels = 0;
       let auraPixelsOutsidePose = 0;
-      for (let pixel = 0; pixel < finalMask.length; pixel += 1) {
-        if (bestPoseMask[pixel] === 0 && finalRaw.data[pixel * 4 + 3] > 36) {
+      for (let y = 0; y < 100; y += 1) {
+        for (let x = 0; x < 112; x += 1) {
+          const auraOffset = (y * 112 + x) * 4;
+          if (sourceAura.data[auraOffset + 3] < 96) continue;
+          const screenX = x + 19;
+          const screenY = y;
+          const screenIndex = screenY * 150 + screenX;
+          if (bestPoseMask[screenIndex]) continue;
+
+          expectedAuraPixels += 1;
+          const outputOffset = screenIndex * 4;
+          if (finalRaw.data[outputOffset + 3] <= 100) continue;
           auraPixelsOutsidePose += 1;
+          const channelDelta = Math.abs(sourceAura.data[auraOffset] - finalRaw.data[outputOffset]) +
+            Math.abs(sourceAura.data[auraOffset + 1] - finalRaw.data[outputOffset + 1]) +
+            Math.abs(sourceAura.data[auraOffset + 2] - finalRaw.data[outputOffset + 2]);
+          if (channelDelta <= 180) matchingAuraPixels += 1;
         }
       }
 
       expect(bestPoseOverlap / opaquePosePixels, color + '/frame-' + page)
         .toBeGreaterThan(0.9);
-      expect(auraPixelsOutsidePose, color + '/frame-' + page)
-        .toBeGreaterThan(500);
+      expect(expectedAuraPixels, color + '/source-aura-' + frameIndex).toBeGreaterThan(800);
+      expect(auraPixelsOutsidePose, color + '/frame-' + page).toBeGreaterThan(700);
+      expect(matchingAuraPixels / expectedAuraPixels, color + '/source-aura-' + frameIndex)
+        .toBeGreaterThan(0.62);
+
+      const currentFrameHash = finalRaw.data.toString('hex');
+      previousAuraFrames.push(currentFrameHash);
+    }
+
+    expect(new Set(previousAuraFrames).size).toBe(4);
     }
   });
 

@@ -14,6 +14,8 @@ import { GIF_ACTIONS, GIF_CELL } from '../../infrastructure/assets/characterAnim
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { createStageTextures } from '../../infrastructure/graphics/StageTextureFactory.js';
 import { createAdditionalStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';
+import { createKenneyStageBackgrounds, KENNEY_STAGE_ATLAS_KEY } from '../../infrastructure/graphics/KenneyStageBackgrounds.js';
+import stageBackgroundAtlasUrl from '../../../art/source/environments/kenney-pixel-platformer/tilemap-backgrounds.png';
 import { registerCharacterAnimations } from '../animation/registerCharacterAnimations.js';
 import { registerFxAnimations } from '../animation/registerFxAnimations.js';
 
@@ -116,11 +118,13 @@ export class PreloadScene extends Phaser.Scene {
       );
     }
     this.load.image('title-art', import.meta.env.BASE_URL + 'generated/title.png');
+    this.load.image(KENNEY_STAGE_ATLAS_KEY, stageBackgroundAtlasUrl);
   }
 
   create() {
     createStageTextures(this);
     createAdditionalStageTextures(this);
+    createKenneyStageBackgrounds(this);
     createFxTextures(this);
     registerFxAnimations(this);
     registerCharacterAnimations(this);

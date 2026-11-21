@@ -8,7 +8,7 @@ import {
   maleAnimationKey,
   spriteKeyFor,
 } from '../../infrastructure/assets/assetManifest.js';
-import { isAllowedRangerVariant } from '../../domain/rangers/rangerCatalog.js';
+import { isAvailableRangerVariant } from '../../domain/rangers/rangerVariants.js';
 import { GIF_ORIGIN_Y, spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
 import { shouldFlip } from '../views/orientation.js';
 import { playStageMusic } from '../../infrastructure/audio/GameMusic.js';
@@ -78,7 +78,7 @@ export class CinematicScene extends Phaser.Scene {
       if (
         !selection ||
         typeof selection.id !== 'string' ||
-        !isAllowedRangerVariant(selection.id, selection.gender)
+        !isAvailableRangerVariant(selection.id, selection.gender)
       ) {
         throw new Error('La cinemática requiere las dos variantes canónicas de Axem.');
       }

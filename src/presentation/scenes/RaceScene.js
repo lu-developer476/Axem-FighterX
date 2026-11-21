@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
+import { genderForRanger, getCounterpartSelection } from '../../domain/rangers/rangerVariants.js';
 import { maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
 import {
@@ -217,9 +218,11 @@ export class RaceScene extends Phaser.Scene {
     this.instructions.setText('↑ / ↓ CAMBIAR CARRIL · → / D ACELERAR · ← / A FRENAR · ESPACIO NITRO')
       .setFontSize(5);
 
-    const opponentId = this.selectedRangerId === RANGER_IDS.VIOLET
-      ? RANGER_IDS.ORANGE
-      : RANGER_IDS.VIOLET;
+    const opponentSelection = getCounterpartSelection({
+      id: this.selectedRangerId,
+      gender: genderForRanger(this.selectedRangerId),
+    });
+    const opponentId = opponentSelection.id;
     this.player = this.#createRacer(this.selectedRangerId, 'J1', 0, true);
     this.opponents = [1, 2, 3].map((number, index) =>
       this.#createRacer(opponentId, 'IA ' + number, index + 1, false),

@@ -879,11 +879,6 @@ async function buildMaleVioletExtraGifs(color) {
   const teleportAppend = await extractMaleStripFrames(color, 'group-15', 3);
   const defeatedAndAxe = await extractMaleStripFrames(color, 'group-16', 2);
   const chargeFrames = await extractMaleStripFrames(color, 'group-17', 3);
-  const idleFrames = [
-    ...await extractMaleStripFrames(color, 'group-18', 3),
-    ...await extractMaleStripFrames(color, 'group-19', 5),
-  ];
-
   await buildMaleGroup16Sequence(color, defeatedAndAxe);
 
   const teleport = await readMaleGifFrames(color, 'teleport.gif');
@@ -902,8 +897,21 @@ async function buildMaleVioletExtraGifs(color) {
   );
   await writeMaleActionGif(color, 'charge', charged, charged.map(() => 100));
 
+  await buildMaleIdleGif(color);
+}
+
+/**
+ * Genera idle.gif con los ocho cuadros de group-18 (3) y group-19 (5),
+ * normalizados a una altura común sobre el lienzo fijo de 150×100 px.
+ * Se usa igual para el Axem Violeta y el Axem Naranja.
+ */
+async function buildMaleIdleGif(color) {
+  const idleFrames = [
+    ...await extractMaleStripFrames(color, 'group-18', 3),
+    ...await extractMaleStripFrames(color, 'group-19', 5),
+  ];
   const idleTargetHeight = await getCommonMaleActionHeight(idleFrames);
-  console.log('Altura uniforme de idle: ' + idleTargetHeight + ' px para los ocho fotogramas.');
+  console.log('Altura uniforme de idle (' + color + '): ' + idleTargetHeight + ' px para los ocho fotogramas.');
   const idle = await Promise.all(
     idleFrames.map((frame) => normalizeMaleActionFrame(frame.input, false, idleTargetHeight)),
   );
@@ -914,6 +922,7 @@ async function buildMaleVioletExtraGifs(color) {
 async function buildMaleOrangeExtraGifs(color) {
   const defeatedAndAxe = await extractMaleStripFrames(color, 'group-16', 2);
   await buildMaleGroup16Sequence(color, defeatedAndAxe);
+  await buildMaleIdleGif(color);
 }
 
 /**

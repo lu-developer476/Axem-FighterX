@@ -85,6 +85,7 @@ export class RaceScene extends Phaser.Scene {
     this.finished = false;
     this.trackOffset = 0;
     this.sceneryOffset = 0;
+    this.lastSceneryChunk = -1;
     this.obstacles = MOTORCYCLE_RACE_OBSTACLES.map((item) => ({ ...item, resolved: false, hitRacers: new Set() }));
     this.keys = this.input.keyboard.addKeys({
       left: Phaser.Input.Keyboard.KeyCodes.LEFT,
@@ -211,8 +212,8 @@ export class RaceScene extends Phaser.Scene {
       racer.distance += (this.speed * (0.88 + index * 0.035) + Math.sin(time / (390 + index * 55)) * 15) * frame;
       racer.laneSwitchMs = Math.max(0, racer.laneSwitchMs - frame * 1000);
       const upcoming = this.obstacles.find((obstacle) => !obstacle.resolved &&
-        obstacle.lane === racer.lane && obstacle.distance - this.distance < 125 &&
-        obstacle.distance - this.distance > 0);
+        obstacle.lane === racer.lane && obstacle.distance - racer.distance < 125 &&
+        obstacle.distance - racer.distance > 0);
       if (upcoming && racer.laneSwitchMs <= 0 && Math.random() < 0.045) {
         this.#changeLane(racer, racer.lane === 3 ? -1 : 1);
       }
@@ -240,7 +241,9 @@ export class RaceScene extends Phaser.Scene {
       for (const racer of this.racers) {
         if (racer.crashed || racer.lane !== obstacle.lane || obstacle.hitRacers.has(racer.label)) continue;
         const racerX = racer.isPlayer ? PLAYER_X : OPPONENT_X;
-        if (Math.abs(screenX - racerX) < (obstacle.kind === 'oil' ? 18 : 20)) {
+        const racerDistance = racer.isPlayer ? this.distance : racer.distance;
+        const collisionX = racerX + (obstacle.distance - racerDistance) * 0.19;
+        if (Math.abs(collisionX - racerX) < (obstacle.kind === 'oil' ? 18 : 20)) {
           racer.stunMs = 720;
           if (racer.isPlayer) this.boost = Math.max(0, this.boost - 22);
           racer.distance -= 20;

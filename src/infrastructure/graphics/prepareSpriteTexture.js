@@ -34,6 +34,8 @@ export function prepareSpriteTexture(scene, { sourceKey, targetKey, frames = 1, 
 
   const texture = scene.textures.createCanvas(targetKey, width * frames, height);
   const ctx = texture.getContext();
+  // Toda operación de dibujo conserva el borde del pixel art sin interpolación.
+  ctx.imageSmoothingEnabled = false;
 
   for (let i = 0; i < frames; i++) {
     const frameX = i * frameWidth;

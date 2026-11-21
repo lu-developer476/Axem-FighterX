@@ -3,7 +3,7 @@
  * El jugador conserva su personaje y su esquema de teclado al cambiar de esquina.
  */
 const VALID_SIDES = new Set(['left', 'right']);
-const VALID_GENDERS = new Set(['male', 'female']);
+import { isAllowedRangerVariant } from '../../infrastructure/assets/assetManifest.js';
 
 export function getPlayersByStartCorner(playerSides) {
   const j1Side = playerSides?.J1;
@@ -30,9 +30,9 @@ export function getCharacterSelectionsByCorner(playerCharacters, playerSides) {
     if (
       !selection
       || typeof selection.id !== 'string'
-      || !VALID_GENDERS.has(selection.gender)
+      || !isAllowedRangerVariant(selection.id, selection.gender)
     ) {
-      throw new Error(`${player} debe elegir explícitamente su Axem y género antes de iniciar.`);
+      throw new Error(`${player} debe elegir una variante disponible de Axem antes de iniciar.`);
     }
     return { id: selection.id, gender: selection.gender };
   });

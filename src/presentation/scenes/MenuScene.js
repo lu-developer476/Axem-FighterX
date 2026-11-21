@@ -456,12 +456,13 @@ export class MenuScene extends Phaser.Scene {
     this.page = 'home';
     this.matchSetup = {};
     this.characterSlot = 0;
-    this.#beginPage('');
+    this.#beginPage('', 282, 146);
     this.#addHomeRangerArt();
-    this.#addButton('JUGAR', 158, () => this.#showVersusModes());
-    this.#addButton('CARRERA AXEM', 180, () => this.scene.start('RaceScene'));
-    this.#addButton('TUTORIAL', 202, () => this.#showControls());
-    this.#addButton('CRÉDITOS', 224, () => this.#showCredits());
+    this.#addButton('JUGAR', 151, () => this.#showVersusModes());
+    this.#addButton('CARRERA AXEM', 170, () => this.scene.start('RaceScene'));
+    this.#addButton('CARRERA TERRESTRE', 189, () => this.scene.start('LandRaceScene'));
+    this.#addButton('TUTORIAL', 208, () => this.#showControls());
+    this.#addButton('CRÉDITOS', 227, () => this.#showCredits());
     this.#addFooter();
   }
 

@@ -80,6 +80,15 @@ Para agregar un personaje: sumarlo a `rangerCatalog.js`, registrar su PNG en
 Para agregar un escenario, colocar un PNG, WebP, JPG o JPEG en `art/source/environments/maps/`, o un tileset compatible en `art/source/environments/maps/tilesets/`. El siguiente build lo agrega automáticamente al selector. Se admiten subcarpetas; las imágenes de `tilesets/` se procesan como recursos procedurales y no como mapas directos.
 Para cambiar el control (gamepad, táctil), basta con otro adaptador que implemente `InputPort`.
 
+## Minijuegos
+
+El menú principal ofrece dos carreras independientes:
+
+- **Carrera Axem** conserva la modalidad en bicicleta.
+- **Carrera terrestre** es una prueba de atletismo de dos carriles contra un rival controlado por IA. El jugador acelera con D o flecha derecha, frena con A o flecha izquierda, salta vallas con W o flecha arriba y rueda bajo obstáculos bajos con S o flecha abajo. La barra de resistencia limita los sprints; fallar un obstáculo reduce temporalmente la velocidad. R reinicia y ESC vuelve al menú.
+
+La carrera terrestre reutiliza los GIF de idle, roll y jump, y la secuencia run de los Axem Naranja y Violeta. Como el repositorio no contiene un GIF walk separado, la animación de caminata usa los mismos cuadros de carrera con una cadencia menor. La grada, las vallas, las barras bajas, los tacos de salida, los conos y el arco de llegada se generan como sprites pixel-art durante la carga de la escena.
+
 ## Combate
 
 - **Vida:** 100 por personaje, con barra y estela de daño en el HUD.

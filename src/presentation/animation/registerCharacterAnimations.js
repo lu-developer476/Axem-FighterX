@@ -54,6 +54,7 @@ export function registerCharacterAnimations(scene) {
       }
     }
     registerBikeAnimations(scene, rangerId);
+    registerWalkAnimations(scene, rangerId);
   }
   for (const rangerId of RANGER_ORDER) registerGifAnimations(scene, rangerId);
   for (const rangerId of RANGER_ORDER) {
@@ -120,9 +121,21 @@ function registerGifAnimations(scene, rangerId) {
 }
 
 /**
- * Variantes de ritmo para la carrera. Comparten los cuadros originales de bicicleta,
- * pero cada fase tiene una cadencia propia y se selecciona según la entrada del jugador.
+ * El repositorio no contiene un walk.gif independiente. La caminata reutiliza
+ * la secuencia run con una cadencia menor, sin duplicar recursos raster.
  */
+function registerWalkAnimations(scene, rangerId) {
+  const sourceKey = maleAnimationKey(rangerId, 'run');
+  const texture = scene.textures.get(sourceKey);
+  const key = maleAnimationKey(rangerId, 'walk');
+  if (!texture || scene.anims.exists(key)) return;
+  const frames = scene.anims.generateFrameNumbers(sourceKey, {
+    start: 0,
+    end: texture.frameTotal - 2,
+  });
+  if (frames.length) scene.anims.create({ key, frames, frameRate: 5, repeat: -1 });
+}
+
 function registerBikeAnimations(scene, rangerId) {
   const sourceKey = maleAnimationKey(rangerId, 'bike');
   const texture = scene.textures.get(sourceKey);

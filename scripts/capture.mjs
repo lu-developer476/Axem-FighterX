@@ -207,6 +207,24 @@ await tap('r');
 await wait(600);
 await shot('23-reinicio');
 
+// Comprueba que la carrera terrestre está disponible desde el menú y que las animaciones responden.
+await tap('Escape'); // Combate → menú
+await wait(180);
+await tap('ArrowDown');
+await tap('ArrowDown'); // CARRERA TERRESTRE
+await tap('Enter');
+await wait(3200); // Cuenta regresiva
+await hold('d', 620); // Sprint
+await tap('w'); // Salto de la primera valla
+await wait(500);
+await hold('d', 300);
+await hold('d', 200); // Ajusta la distancia antes de la barra baja
+await tap('s'); // Rodada ante el siguiente obstáculo
+await hold('d', 650);
+await shot('29-carrera-terrestre');
+await tap('Escape');
+await wait(150);
+
 await context.close();
 await browser.close();
 

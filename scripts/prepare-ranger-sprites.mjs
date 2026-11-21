@@ -731,15 +731,51 @@ async function extractMaleStripFrames(color, groupId, frameCount) {
   return frames;
 }
 
-async function normalizeMaleActionFrame(input, addAura = false) {
+/**
+ * Calcula una altura visible común para una secuencia. Se conserva el tamaño
+ * máximo que ya podía alcanzar el cuadro mayor, pero todos los demás cuadros
+ * se escalan hasta esa misma altura antes de componer el lienzo de 150×100.
+ */
+async function getCommonMaleActionHeight(frames) {
+  if (!Array.isArray(frames) || frames.length === 0) {
+    throw new Error('No se puede normalizar una secuencia sin fotogramas.');
+  }
+
+  const dimensions = await Promise.all(frames.map(async ({ input }) => {
+    const trimmed = await sharp(input)
+      .trim({ background: TRANSPARENT, threshold: 1 })
+      .png()
+      .toBuffer();
+    const metadata = await sharp(trimmed).metadata();
+    if (!metadata.width || !metadata.height) {
+      throw new Error('No se pudo medir uno de los fotogramas de la secuencia.');
+    }
+    return { width: metadata.width, height: metadata.height };
+  }));
+
+  const largestNaturalHeight = Math.max(
+    ...dimensions.map(({ height }) => Math.min(92, height * 1.3)),
+  );
+  const widthLimitedHeight = Math.min(
+    ...dimensions.map(({ width, height }) => 142 * height / width),
+  );
+  return Math.max(1, Math.floor(Math.min(92, largestNaturalHeight, widthLimitedHeight)));
+}
+
+async function normalizeMaleActionFrame(input, addAura = false, targetHeight = null) {
   const trimmed = await sharp(input)
     .trim({ background: TRANSPARENT, threshold: 1 })
     .png()
     .toBuffer();
   const metadata = await sharp(trimmed).metadata();
-  const scale = Math.min(1.3, 142 / metadata.width, 92 / metadata.height);
+  const scale = targetHeight === null
+    ? Math.min(1.3, 142 / metadata.width, 92 / metadata.height)
+    : targetHeight / metadata.height;
   const width = Math.max(1, Math.round(metadata.width * scale));
-  const height = Math.max(1, Math.round(metadata.height * scale));
+  const height = targetHeight ?? Math.max(1, Math.round(metadata.height * scale));
+  if (width > 142 || height > 92) {
+    throw new Error('El fotograma normalizado excede el espacio disponible en el lienzo de 150×100 px.');
+  }
   const sprite = await sharp(trimmed)
     .resize(width, height, { fit: 'fill', kernel: 'nearest' })
     .png()
@@ -866,8 +902,10 @@ async function buildMaleVioletExtraGifs(color) {
   );
   await writeMaleActionGif(color, 'charge', charged, charged.map(() => 100));
 
+  const idleTargetHeight = await getCommonMaleActionHeight(idleFrames);
+  console.log('Altura uniforme de idle: ' + idleTargetHeight + ' px para los ocho fotogramas.');
   const idle = await Promise.all(
-    idleFrames.map((frame) => normalizeMaleActionFrame(frame.input)),
+    idleFrames.map((frame) => normalizeMaleActionFrame(frame.input, false, idleTargetHeight)),
   );
   await writeMaleActionGif(color, 'idle', idle, idle.map(() => 140));
 }

@@ -33,7 +33,7 @@ results/
 
 Los retratos laterales del menú se generan directamente desde la referencia original `references/axem-red/axem-red-spritesheet.png`; no se necesita una vista previa duplicada en `results/male/`. El recoloreado del cabello recorre cada componente rubio de todas las poses, incluso cuando está separado del casco o la cara, para evitar que queden mechones originales sin procesar.
 
-Los GIF masculinos de bicicleta y doble hacha conservan sus lienzos de **150 × 100 px**. Para los masculinos violeta y naranja se generan 11 GIF por variante desde las secuencias clasificadas, todos con lienzos de **150 × 100 px**, transparencia y escalado nearest-neighbor para conservar el pixel-art. El pivote de los pies se centra horizontalmente y mantiene una línea de suelo fija para evitar saltos entre fotogramas.
+Los GIF masculinos de bicicleta y doble hacha conservan sus lienzos de **150 × 100 px**. Los 11 GIF base de cada variante masculina se generan desde las secuencias clasificadas; todos los GIF de acción usan lienzos de **150 × 100 px**, transparencia y escalado nearest-neighbor para conservar el pixel-art. El pivote de los pies se centra horizontalmente y mantiene una línea de suelo fija para evitar saltos entre fotogramas.
 
 ## El atlas no es una cuadrícula
 
@@ -50,6 +50,13 @@ La clasificación de las secuencias para el masculino naranja es: `group-01` + `
 ### Grupo 16 — derrota e invocación del hacha
 
 La secuencia complementaria `group-16.png` contiene dos cuadros alineados: el primero se exporta como `defeated.png` y se pre-carga para mostrar la pose de derrota cuando un Ranger masculino entra en KO; el segundo se añade al final de `battle-pose.gif`, cerrando la animación con el hacha invocada y el personaje listo para combatir. El generador produce ambos resultados para Orange y Violet.
+
+### Secuencias complementarias del Axem Violeta
+
+- `group-15.png` añade tres cuadros al final de `teleport.gif`.
+- `group-17.png` genera `charge.gif`.
+- `group-18.png` y `group-19.png` forman los ocho cuadros de `idle.gif`.
+- La animación `idle.gif` normaliza los ocho cuadros a una altura visible común, mantiene los pies sobre la misma línea y compone cada fotograma sobre un lienzo fijo de **150 × 100 px**. Así se evita que el personaje cambie de escala al pasar de una secuencia a la otra.
 
 ### group-01 — `idle`
 

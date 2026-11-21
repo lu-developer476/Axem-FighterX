@@ -28,6 +28,7 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
-      # Ejecuta Vitest directamente para que el hook pretest no regenere sprites.
+      # La suite valida el código; la preparación visual de sprites pertenece al pipeline de build.
+      # Se evita el hook pretest porque regenera referencias de imagen antes de ejecutar Vitest.
       - name: Ejecutar pruebas
         run: npx vitest run

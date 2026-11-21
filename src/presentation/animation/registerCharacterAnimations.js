@@ -121,10 +121,6 @@ function registerGifAnimations(scene, rangerId) {
 }
 
 /**
- * Variantes de ritmo para la carrera. Comparten los cuadros originales de bicicleta,
- * pero cada fase tiene una cadencia propia y se selecciona según la entrada del jugador.
- */
-/**
  * El repositorio no contiene un walk.gif independiente. La caminata reutiliza
  * la secuencia run con una cadencia menor, sin duplicar recursos raster.
  */

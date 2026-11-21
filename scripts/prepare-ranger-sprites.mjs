@@ -1372,7 +1372,7 @@ async function buildMenuMalePoses() {
   const { file, poses, width: sourceWidth, height: sourceHeight } = await findMenuPoseReference();
   await fs.mkdir(GENERATED, { recursive: true });
 
-  for (const [index, [color, targetHue]] of Object.entries(COLORS).entries()) {
+  for (const [index, [color, targetHue]] of Object.entries(COLORS).filter(([color]) => color === 'orange').entries()) {
     const recolored = await recolorAndKey(file, 'male', targetHue);
     const bounds = poses[index];
     const padding = 4;
@@ -1395,8 +1395,8 @@ async function buildMenuMalePoses() {
   }
 }
 
-async function buildGender(gender) {
-  for (const [color, targetHue] of Object.entries(COLORS)) {
+async function buildGender(gender, allowedColors) {
+  for (const [color, targetHue] of Object.entries(COLORS).filter(([color]) => allowedColors.includes(color))) {
     const parts = [];
     let baseSource;
 
@@ -1497,8 +1497,8 @@ async function buildGender(gender) {
 
 async function main() {
   await fs.mkdir(GENERATED, { recursive: true });
-  await buildGender('male');
-  await buildGender('female');
+  await buildGender('male', ['orange']);
+  await buildGender('female', ['violet']);
   await buildMenuMalePoses();
 }
 

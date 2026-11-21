@@ -417,7 +417,6 @@ describe('resultados por género y color', () => {
     }
 
     expect(new Set(previousAuraFrames).size).toBe(4);
-    }
   });
 
 

@@ -33,7 +33,7 @@ export class PauseMenuView {
       fontSize: '8px',
       color: '#d9a9ff',
     });
-    this.#addText('J1 · HACHazo F · TELETRANSPORTE G · DASH C · BLOQUEO V · ESQUIVA X · ESPECIAL Z', 96, {
+    this.#addText('J1 · HACHAZO F · TELETRANSPORTE G · DASH C · BLOQUEO V · ESQUIVA X · ESPECIAL Z', 96, {
       fontSize: '7px',
       color: '#d9a9ff',
     });
@@ -41,7 +41,7 @@ export class PauseMenuView {
       fontSize: '7px',
       color: '#ffc17e',
     });
-    this.#addText('J2 · HACHazo L · TELETRANSPORTE K · DASH H · BLOQUEO N · ESQUIVA J · ESPECIAL M', 136, {
+    this.#addText('J2 · HACHAZO L · TELETRANSPORTE K · DASH H · BLOQUEO N · ESQUIVA J · ESPECIAL M', 136, {
       fontSize: '7px',
       color: '#ffc17e',
     });

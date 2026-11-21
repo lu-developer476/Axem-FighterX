@@ -790,7 +790,7 @@ export class MenuScene extends Phaser.Scene {
     this.#addText('TERRESTRE · IZQUIERDA A · DERECHA D · ARRIBA W · ABAJO S', GAME_WIDTH / 2, 153, {
       fontSize: '5px',
     });
-    this.#addText('VUELO · SUBIR Q · BAJAR E · HACHazo F · TELETRANSPORTE G', GAME_WIDTH / 2, 166, {
+    this.#addText('VUELO · SUBIR Q · BAJAR E · HACHAZO F · TELETRANSPORTE G', GAME_WIDTH / 2, 166, {
       fontSize: '5px',
     });
     this.#addText('DASH C · BLOQUEAR V · ESQUIVAR X · ATAQUE ESPECIAL Z', GAME_WIDTH / 2, 179, {
@@ -803,7 +803,7 @@ export class MenuScene extends Phaser.Scene {
     this.#addText('TERRESTRE · IZQUIERDA ← · DERECHA → · ARRIBA ↑ · ABAJO ↓', GAME_WIDTH / 2, 205, {
       fontSize: '5px',
     });
-    this.#addText('VUELO · SUBIR I · BAJAR O · HACHazo L · TELETRANSPORTE K', GAME_WIDTH / 2, 218, {
+    this.#addText('VUELO · SUBIR I · BAJAR O · HACHAZO L · TELETRANSPORTE K', GAME_WIDTH / 2, 218, {
       fontSize: '5px',
     });
     this.#addText('DASH H · BLOQUEAR N · ESQUIVAR J · ATAQUE ESPECIAL M', GAME_WIDTH / 2, 231, {

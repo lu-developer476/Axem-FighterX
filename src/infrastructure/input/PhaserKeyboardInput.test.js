@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { KEYMAPS } from './keyMaps.js';
+import { PhaserKeyboardInput } from './PhaserKeyboardInput.js';
 
 describe('Controles de teclado', () => {
   it('asigna a J1 el movimiento terrestre A/D/W/S y el vuelo Q/E', () => {
@@ -41,6 +42,53 @@ describe('Controles de teclado', () => {
     expect(KEYMAPS.PLAYER_1.down).not.toBe(KEYMAPS.PLAYER_1.descend);
     expect(KEYMAPS.PLAYER_2.up).not.toBe(KEYMAPS.PLAYER_2.ascend);
     expect(KEYMAPS.PLAYER_2.down).not.toBe(KEYMAPS.PLAYER_2.descend);
+  });
+
+  it('W y la flecha arriba mueven hacia arriba en el terreno; S y abajo, hacia abajo', () => {
+    const createScene = () => ({
+      input: {
+        keyboard: {
+          addKeys: (definitions) => Object.fromEntries(
+            Object.keys(definitions).map((name) => [name, { isDown: false, _justDown: false }]),
+          ),
+        },
+      },
+    });
+
+    const j1 = new PhaserKeyboardInput(createScene(), KEYMAPS.PLAYER_1);
+    j1.keys.up.isDown = true;
+    expect(j1.readIntent().y).toBe(-1);
+    j1.keys.up.isDown = false;
+    j1.keys.down.isDown = true;
+    expect(j1.readIntent().y).toBe(1);
+
+    const j2 = new PhaserKeyboardInput(createScene(), KEYMAPS.PLAYER_2);
+    j2.keys.up.isDown = true;
+    expect(j2.readIntent().y).toBe(-1);
+    j2.keys.up.isDown = false;
+    j2.keys.down.isDown = true;
+    expect(j2.readIntent().y).toBe(1);
+  });
+
+  it('Q/I suben en vuelo y E/O bajan sin alterar el eje terrestre', () => {
+    const createScene = () => ({
+      input: {
+        keyboard: {
+          addKeys: (definitions) => Object.fromEntries(
+            Object.keys(definitions).map((name) => [name, { isDown: false, _justDown: false }]),
+          ),
+        },
+      },
+    });
+
+    for (const keymap of Object.values(KEYMAPS)) {
+      const input = new PhaserKeyboardInput(createScene(), keymap);
+      input.keys.ascend.isDown = true;
+      expect(input.readIntent()).toMatchObject({ y: 0, z: 1 });
+      input.keys.ascend.isDown = false;
+      input.keys.descend.isDown = true;
+      expect(input.readIntent()).toMatchObject({ y: 0, z: -1 });
+    }
   });
 
   it('no repite teclas dentro de cada esquema', () => {

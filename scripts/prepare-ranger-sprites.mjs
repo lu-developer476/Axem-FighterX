@@ -998,14 +998,17 @@ async function buildMaleKiAuraHoldFrame(color, sourceFrame) {
       channels: 4,
     },
   })
-    .resize(96, 96, { fit: 'fill', kernel: 'nearest' })
+    .resize(128, 128, { fit: 'fill', kernel: 'nearest' })
+    .extract({ left: 0, top: 14, width: 128, height: 100 })
     .png()
     .toBuffer();
 
+  // El glow se construye desde la misma silueta de group-09 y el Aura38 queda detrás.
   const heldPose = await normalizeMaleActionFrame(
     sourceFrame.input,
-    false,
+    true,
     STANDARD_STANDING_HEIGHT,
+    { auraColor: palette },
   );
 
   return sharp({
@@ -1017,7 +1020,7 @@ async function buildMaleKiAuraHoldFrame(color, sourceFrame) {
     },
   })
     .composite([
-      { input: aura, left: 27, top: 0 },
+      { input: aura, left: 11, top: 0 },
       { input: heldPose, left: 0, top: 0 },
     ])
     .png()

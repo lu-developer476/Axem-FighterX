@@ -18,14 +18,6 @@ const REFERENCES = Object.freeze([
 ]);
 const CANVAS_REFERENCES = Object.freeze([
   {
-    file: path.join(ROOT, 'art', 'source', 'sprites', 'references', 'axem-pink', 'axem-pink-battle-pose.png'),
-    label: 'Axem Pink battle pose',
-  },
-  {
-    file: path.join(ROOT, 'art', 'source', 'sprites', 'references', 'axem-pink', 'axem-pink-levitate.png'),
-    label: 'Axem Pink levitate',
-  },
-  {
     file: path.join(ROOT, 'art', 'source', 'sprites', 'references', 'axem-pink', 'axem-pink-pose.png'),
     label: 'Axem Pink pose',
   },

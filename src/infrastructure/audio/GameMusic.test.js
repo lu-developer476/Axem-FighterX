@@ -14,7 +14,7 @@ import {
 describe('Descubrimiento automático de música', () => {
   it('descubre las pistas existentes sin limitar el inventario a cuatro archivos', () => {
     expect(MUSIC_TRACKS.length).toBeGreaterThanOrEqual(1);
-    expect(MUSIC_TRACKS.map(({ stem }) => stem)).toContain('cathedral');
+    expect(MUSIC_TRACKS.map(({ stem }) => stem)).toContain('menu--cathedral');
     expect(MUSIC_TRACKS.every(({ url, id }) => typeof url === 'string' && id.startsWith('music-'))).toBe(true);
     expect(getMenuMusicTrack()).not.toBe(null);
     expect(getStageMusicTrack(STAGES[0].id)).not.toBe(null);
@@ -22,10 +22,10 @@ describe('Descubrimiento automático de música', () => {
 
   it('asigna una pista estable a menú, combates y cada carrera', () => {
     expect(MUSIC_ROLES).toEqual({
-      menu: 'mecha-collection',
-      combat: 'cathedral',
-      motorcycleRace: 'dark-music-final',
-      landRace: 'slow-dark-music',
+      menu: 'menu--cathedral',
+      combat: 'combat--dark-music-final',
+      motorcycleRace: 'race--mecha-collection',
+      landRace: 'race--slow-dark-music',
     });
     for (const role of Object.keys(MUSIC_ROLES)) {
       expect(selectMusicForMode(role)?.stem).toBe(MUSIC_ROLES[role]);

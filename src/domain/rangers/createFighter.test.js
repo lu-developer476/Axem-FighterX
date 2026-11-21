@@ -18,7 +18,7 @@ describe('Variantes de género de los Axem Rangers', () => {
     expect(femaleViolet.name).toBe('Axem Violet');
   });
 
-  it('mantiene el género masculino como valor predeterminado para compatibilidad', () => {
+  it('elige la variante masculina de Naranja por defecto', () => {
     const maleOrange = createFighter(
       RANGER_IDS.ORANGE,
       { x: 360, y: 180 },
@@ -37,9 +37,9 @@ describe('Variantes de género de los Axem Rangers', () => {
     expect(match.fighters.map((fighter) => fighter.gender)).toEqual(['female', 'male']);
   });
 
-  it('ubica ambos luchadores sobre la coordenada compartida del suelo sin asignar personajes por defecto', () => {
+  it('ubica ambos luchadores sobre la coordenada compartida del suelo', () => {
     const match = createDefaultMatch(() => 0, [
-      { id: RANGER_IDS.VIOLET, gender: 'male' },
+      { id: RANGER_IDS.VIOLET, gender: 'female' },
       { id: RANGER_IDS.ORANGE, gender: 'male' },
     ]);
 
@@ -52,12 +52,12 @@ describe('Variantes de género de los Axem Rangers', () => {
   });
 
 
-  it('rechaza valores de género no registrados', () => {
+  it('rechaza variantes retiradas del catálogo', () => {
     expect(() => createFighter(
       RANGER_IDS.VIOLET,
       { x: 120, y: 180 },
       1,
-      'unknown',
-    )).toThrow('Género de Axem Ranger desconocido');
+      'male',
+    )).toThrow('Variante de Axem Ranger no disponible');
   });
 });

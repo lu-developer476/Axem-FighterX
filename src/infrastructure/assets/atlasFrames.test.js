@@ -133,23 +133,6 @@ describe('resultados por género y color', () => {
     }
   });
 
-  it('genera las siete franjas femeninas y su índice completo para ambos colores', async () => {
-    for (const color of COLORS) {
-      const index = JSON.parse(await readFile(resultsPath('female', color, 'sequences', 'index.json'), 'utf8'));
-      expect(index.map((entry) => entry.regionCount)).toEqual([12, 20, 18, 17, 20, 23, 6]);
-      expect(index.flatMap((entry) => entry.regions)).toHaveLength(atlasFrames.female.regions.length);
-
-      for (const entry of index) {
-        const group = atlasFrames.female.groups.find((candidate) => candidate.id === entry.id);
-        expect(entry.sourceBounds).toEqual(group.bounds);
-        const metadata = await sharp(resultsPath('female', color, 'sequences', entry.file)).metadata();
-        expect(metadata.width).toBe(group.bounds[2]);
-        expect(metadata.height).toBe(group.bounds[3]);
-        expect(metadata.hasAlpha).toBe(true);
-      }
-    }
-  });
-
   it('genera las seis tiras compactas de poses femeninas y los siete grupos suplementarios', async () => {
     for (const color of COLORS) {
       const index = JSON.parse(await readFile(resultsPath('female', color, 'sequences', 'index.json'), 'utf8'));

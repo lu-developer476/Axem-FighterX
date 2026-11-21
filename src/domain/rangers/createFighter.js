@@ -1,5 +1,6 @@
 import { Fighter } from '../entities/Fighter.js';
-import { rangerCatalog, allowedGenderFor, isAllowedRangerVariant } from './rangerCatalog.js';
+import { rangerCatalog } from './rangerCatalog.js';
+import { genderForRanger, isAvailableRangerVariant } from './rangerVariants.js';
 
 /**
  * Fábrica de dominio: crea un Fighter a partir del catálogo.
@@ -7,11 +8,12 @@ import { rangerCatalog, allowedGenderFor, isAllowedRangerVariant } from './range
  * @param {{ x: number, y: number }} position
  * @param {1 | -1} [facing]
  */
-export function createFighter(rangerId, position, facing = 1, gender = allowedGenderFor(rangerId)) {
+export function createFighter(rangerId, position, facing = 1, gender) {
   const definition = rangerCatalog[rangerId];
   if (!definition) throw new Error(`Ranger desconocido: ${rangerId}`);
-  if (!isAllowedRangerVariant(rangerId, gender)) {
-    throw new Error(`Variante de Axem Ranger no disponible: ${rangerId}/${gender}`);
+  const selectedGender = gender ?? genderForRanger(rangerId);
+  if (!isAvailableRangerVariant(rangerId, selectedGender)) {
+    throw new Error(`Variante de Axem no disponible: ${rangerId}/${selectedGender}`);
   }
-  return new Fighter({ ...definition, position, facing, gender });
+  return new Fighter({ ...definition, position, facing, gender: selectedGender });
 }

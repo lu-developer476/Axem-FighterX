@@ -5,6 +5,7 @@ import { genderForRanger, getCounterpartSelection } from '../../domain/rangers/r
 import { maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
 import {
+  MOTORCYCLE_LANE_COUNT,
   MOTORCYCLE_LANE_BASELINES,
   MOTORCYCLE_LANE_SCALES,
   MOTORCYCLE_RACE_OBSTACLES,

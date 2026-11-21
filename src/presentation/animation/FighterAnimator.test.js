@@ -68,12 +68,12 @@ describe('FighterAnimator', () => {
   });
 
   it('mantiene las hojas de correr y de doble hacha con origen en el borde inferior', () => {
-    const { animator, sprite } = createAnimator('violet', 'male', true);
+    const { animator, sprite } = createAnimator('orange', 'male', true);
     animator.update(fighter('walk'));
-    expect(sprite.play).toHaveBeenLastCalledWith('axem-violet-run');
+    expect(sprite.play).toHaveBeenLastCalledWith('axem-orange-run');
     expect(sprite.setOrigin).toHaveBeenLastCalledWith(0.5, 1);
     animator.update(fighter('attack', { position: { z: 12 } }));
-    expect(sprite.play).toHaveBeenLastCalledWith('axem-violet-double-axe');
+    expect(sprite.play).toHaveBeenLastCalledWith('axem-orange-double-axe');
   });
 
   it('alterna los tres golpes en el suelo y usa jump, dash, teleport, daño y carga', () => {

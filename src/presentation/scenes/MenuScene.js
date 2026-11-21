@@ -90,14 +90,13 @@ export class MenuScene extends Phaser.Scene {
       .setDepth(0);
     if (this.anims.exists(runKey)) runner.play(runKey);
 
-    const bikeKey = maleAnimationKey(RANGER_IDS.VIOLET, 'bike');
-    const bike = this.add.sprite(GAME_WIDTH / 2, 132, bikeKey)
+    const violetKey = spriteKeyFor(RANGER_IDS.VIOLET, 'female');
+    const violet = this.add.sprite(GAME_WIDTH / 2, 132, violetKey)
       .setOrigin(0.5, 1)
-      .setScale(0.54)
+      .setScale(0.72)
       .setDepth(1);
-    if (this.anims.exists(bikeKey)) bike.play(bikeKey);
 
-    this.ui.add([runner, bike]);
+    this.ui.add([runner, violet]);
   }
 
   #beginPage(title, width = 282, height = 120) {
@@ -530,7 +529,7 @@ export class MenuScene extends Phaser.Scene {
     const rangerId = this.pendingCharacterId;
     const gender = rangerId === RANGER_IDS.VIOLET ? 'female' : 'male';
     this.page = 'character-gender';
-    this.#beginCharacterModal('VARIANTE DISPONIBLE');
+    this.#beginCharacterModal('VARIANTE CANÓNICA DISPONIBLE');
     this.#addButton(gender === 'female' ? 'AXEM VIOLETA · FEMENINO' : 'AXEM NARANJA · MASCULINO',
       181, () => this.#selectCharacter(rangerId, gender), {
         width: 190, fontSize: '7px',

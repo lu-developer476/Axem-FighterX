@@ -126,7 +126,7 @@ describe('resultados por género y color', () => {
       for (const [animation, originalFrames] of Object.entries(animations)) {
         const expectedFrames = animation === 'battle-pose.gif'
           ? originalFrames + 1
-          : color === 'violet' && animation === 'teleport.gif'
+          : animation === 'teleport.gif'
             ? originalFrames + 3
             : originalFrames;
         const metadata = await sharp(resultsPath('male', color, animation), { animated: true }).metadata();
@@ -162,8 +162,8 @@ describe('resultados por género y color', () => {
     expect(defeated.hasAlpha).toBe(true);
   });
 
-  it('mantiene una escala uniforme del personaje en los ocho cuadros de idle violeta', async () => {
-    const file = resultsPath('male', 'violet', 'idle.gif');
+  it.each(COLORS)('mantiene la escala estándar del personaje en los ocho cuadros de idle %s', async (color) => {
+    const file = resultsPath('male', color, 'idle.gif');
     const metadata = await sharp(file, { animated: true }).metadata();
     const visibleHeights = [];
 
@@ -193,6 +193,7 @@ describe('resultados por género y color', () => {
 
     expect(visibleHeights.every((height) => height > 0)).toBe(true);
     expect(Math.max(...visibleHeights) - Math.min(...visibleHeights)).toBeLessThanOrEqual(1);
+    expect(Math.abs(visibleHeights[0] - 78)).toBeLessThanOrEqual(1);
   });
 
   it('integra la invocación del hacha y la pose de derrota del Axem Naranja', async () => {

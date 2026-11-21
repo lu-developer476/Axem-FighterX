@@ -19,6 +19,8 @@ const BASE_SIZE = Object.freeze({ width: 53, height: 83 });
 const ACTION_GIF_SIZE = Object.freeze({ width: 150, height: 100 });
 const SEQUENCE_GIF_SCALE = 1.75;
 const SEQUENCE_GIF_FEET_MARGIN = 4;
+/** Altura visible estándar del personaje de pie, común a todas las animaciones masculinas. */
+const STANDARD_STANDING_HEIGHT = 78;
 const MENU_SIZE = Object.freeze({ width: 78, height: 112 });
 const MENU_POSE_REFERENCES = Object.freeze([
   SOURCE('sprites', 'references', 'axem-red', 'axem-red-spritesheet.png'),
@@ -731,48 +733,22 @@ async function extractMaleStripFrames(color, groupId, frameCount) {
   return frames;
 }
 
-/**
- * Calcula una altura visible común para una secuencia. Se conserva el tamaño
- * máximo que ya podía alcanzar el cuadro mayor, pero todos los demás cuadros
- * se escalan hasta esa misma altura antes de componer el lienzo de 150×100.
- */
-async function getCommonMaleActionHeight(frames) {
-  if (!Array.isArray(frames) || frames.length === 0) {
-    throw new Error('No se puede normalizar una secuencia sin fotogramas.');
-  }
-
-  const dimensions = await Promise.all(frames.map(async ({ input }) => {
-    const trimmed = await sharp(input)
-      .trim({ background: TRANSPARENT, threshold: 1 })
-      .png()
-      .toBuffer();
-    const metadata = await sharp(trimmed).metadata();
-    if (!metadata.width || !metadata.height) {
-      throw new Error('No se pudo medir uno de los fotogramas de la secuencia.');
-    }
-    return { width: metadata.width, height: metadata.height };
-  }));
-
-  const largestNaturalHeight = Math.max(
-    ...dimensions.map(({ height }) => Math.min(92, height * 1.3)),
-  );
-  const widthLimitedHeight = Math.min(
-    ...dimensions.map(({ width, height }) => 142 * height / width),
-  );
-  return Math.max(1, Math.floor(Math.min(92, largestNaturalHeight, widthLimitedHeight)));
-}
-
-async function normalizeMaleActionFrame(input, addAura = false, targetHeight = null) {
+async function normalizeMaleActionFrame(input, addAura = false, targetHeight = null, options = {}) {
+  const { targetScale = null, auraColor = { r: 195, g: 70, b: 255 } } = options;
   const trimmed = await sharp(input)
     .trim({ background: TRANSPARENT, threshold: 1 })
     .png()
     .toBuffer();
   const metadata = await sharp(trimmed).metadata();
-  const scale = targetHeight === null
-    ? Math.min(1.3, 142 / metadata.width, 92 / metadata.height)
-    : targetHeight / metadata.height;
+  const scale = targetScale !== null
+    ? targetScale
+    : targetHeight === null
+      ? Math.min(1.3, 142 / metadata.width, 92 / metadata.height)
+      : targetHeight / metadata.height;
   const width = Math.max(1, Math.round(metadata.width * scale));
-  const height = targetHeight ?? Math.max(1, Math.round(metadata.height * scale));
+  const height = targetScale === null && targetHeight !== null
+    ? targetHeight
+    : Math.max(1, Math.round(metadata.height * scale));
   if (width > 142 || height > 92) {
     throw new Error('El fotograma normalizado excede el espacio disponible en el lienzo de 150×100 px.');
   }
@@ -790,7 +766,7 @@ async function normalizeMaleActionFrame(input, addAura = false, targetHeight = n
     const glow = await sharp(sprite)
       .resize({ width: width + 14, height: height + 14, kernel: 'nearest' })
       .blur(7)
-      .tint({ r: 195, g: 70, b: 255 })
+      .tint(auraColor)
       .png()
       .toBuffer();
     layers.push({ input: glow, left: left - 7, top: top - 7 });
@@ -849,8 +825,8 @@ async function writeMaleActionGif(color, filename, frames, delays) {
 }
 
 /** Completa las secuencias adicionales propias de Axem Violeta. */
-async function writeMaleDefeatedPose(color, frame) {
-  const defeated = await normalizeMaleActionFrame(frame.input);
+async function writeMaleDefeatedPose(color, frame, targetScale = null) {
+  const defeated = await normalizeMaleActionFrame(frame.input, false, null, { targetScale });
   await writeResult('male', color, 'defeated.png', defeated);
   const generatedPath = path.join(GENERATED, 'axem-' + color + '-defeated.png');
   await fs.writeFile(generatedPath, defeated);
@@ -863,10 +839,16 @@ async function buildMaleGroup16Sequence(color, frames) {
     throw new Error('group-16.png debe contener exactamente dos fotogramas.');
   }
 
-  await writeMaleDefeatedPose(color, frames[0]);
+  // El cuadro del hacha es la pose de pie: fija la escala estándar y la derrota la comparte.
+  const axeTrimmed = await sharp(frames[1].input)
+    .trim({ background: TRANSPARENT, threshold: 1 })
+    .png()
+    .toBuffer();
+  const axeHeight = (await sharp(axeTrimmed).metadata()).height;
+  await writeMaleDefeatedPose(color, frames[0], STANDARD_STANDING_HEIGHT / axeHeight);
 
   const battlePose = await readMaleGifFrames(color, 'battle-pose.gif');
-  const axePose = await normalizeMaleActionFrame(frames[1].input);
+  const axePose = await normalizeMaleActionFrame(frames[1].input, false, STANDARD_STANDING_HEIGHT);
   await writeMaleActionGif(
     color,
     'battle-pose',
@@ -875,15 +857,21 @@ async function buildMaleGroup16Sequence(color, frames) {
   );
 }
 
-async function buildMaleVioletExtraGifs(color) {
+/**
+ * Completa teleport, charge, idle, derrota e invocación del hacha. Se genera
+ * igual para Violeta y Naranja; el personaje de pie mide STANDARD_STANDING_HEIGHT
+ * px, con los pies sobre la misma línea del lienzo de 150×100 px.
+ */
+async function buildMaleSharedExtraGifs(color) {
   const teleportAppend = await extractMaleStripFrames(color, 'group-15', 3);
   const defeatedAndAxe = await extractMaleStripFrames(color, 'group-16', 2);
   const chargeFrames = await extractMaleStripFrames(color, 'group-17', 3);
+
   await buildMaleGroup16Sequence(color, defeatedAndAxe);
 
   const teleport = await readMaleGifFrames(color, 'teleport.gif');
   const teleportTail = await Promise.all(
-    teleportAppend.map((frame) => normalizeMaleActionFrame(frame.input)),
+    teleportAppend.map((frame) => normalizeMaleActionFrame(frame.input, false, STANDARD_STANDING_HEIGHT)),
   );
   await writeMaleActionGif(
     color,
@@ -892,8 +880,11 @@ async function buildMaleVioletExtraGifs(color) {
     [...teleport.delays, ...teleportTail.map(() => 100)],
   );
 
+  const auraColor = color === 'orange'
+    ? { r: 255, g: 140, b: 40 }
+    : { r: 195, g: 70, b: 255 };
   const charged = await Promise.all(
-    chargeFrames.map((frame) => normalizeMaleActionFrame(frame.input, true)),
+    chargeFrames.map((frame) => normalizeMaleActionFrame(frame.input, true, STANDARD_STANDING_HEIGHT, { auraColor })),
   );
   await writeMaleActionGif(color, 'charge', charged, charged.map(() => 100));
 
@@ -902,27 +893,17 @@ async function buildMaleVioletExtraGifs(color) {
 
 /**
  * Genera idle.gif con los ocho cuadros de group-18 (3) y group-19 (5),
- * normalizados a una altura común sobre el lienzo fijo de 150×100 px.
- * Se usa igual para el Axem Violeta y el Axem Naranja.
+ * todos a la altura estándar sobre el lienzo fijo de 150×100 px.
  */
 async function buildMaleIdleGif(color) {
   const idleFrames = [
     ...await extractMaleStripFrames(color, 'group-18', 3),
     ...await extractMaleStripFrames(color, 'group-19', 5),
   ];
-  const idleTargetHeight = await getCommonMaleActionHeight(idleFrames);
-  console.log('Altura uniforme de idle (' + color + '): ' + idleTargetHeight + ' px para los ocho fotogramas.');
   const idle = await Promise.all(
-    idleFrames.map((frame) => normalizeMaleActionFrame(frame.input, false, idleTargetHeight)),
+    idleFrames.map((frame) => normalizeMaleActionFrame(frame.input, false, STANDARD_STANDING_HEIGHT)),
   );
   await writeMaleActionGif(color, 'idle', idle, idle.map(() => 140));
-}
-
-/** Completa la secuencia de derrota e invocación del hacha del Axem Naranja. */
-async function buildMaleOrangeExtraGifs(color) {
-  const defeatedAndAxe = await extractMaleStripFrames(color, 'group-16', 2);
-  await buildMaleGroup16Sequence(color, defeatedAndAxe);
-  await buildMaleIdleGif(color);
 }
 
 /**
@@ -1106,8 +1087,7 @@ async function buildGender(gender) {
       await writeMaleAnimation(bike.frames, color, 'bike', bike.delay, bike.loop);
       await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop);
       await buildMaleActionGifs(color, sequenceIndex);
-      if (color === 'violet') await buildMaleVioletExtraGifs(color);
-      else await buildMaleOrangeExtraGifs(color);
+      await buildMaleSharedExtraGifs(color);
       baseSource = run.frames[0];
     } else {
       const pinkReference = SOURCE('sprites', 'references', 'axem-pink');

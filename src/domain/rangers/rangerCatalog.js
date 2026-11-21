@@ -8,6 +8,14 @@ export const RANGER_IDS = Object.freeze({
   ORANGE: 'orange',
 });
 
+/** Únicas variantes visuales soportadas por el juego. */
+export const RANGER_GENDER_BY_ID = Object.freeze({
+  [RANGER_IDS.VIOLET]: 'female',
+  [RANGER_IDS.ORANGE]: 'male',
+});
+export const allowedGenderFor = (rangerId) => RANGER_GENDER_BY_ID[rangerId] ?? null;
+export const isAllowedRangerVariant = (rangerId, gender) => allowedGenderFor(rangerId) === gender;
+
 const SHARED_RANGER_STATS = Object.freeze({
   maxHealth: 100,
   moveSpeed: 95,

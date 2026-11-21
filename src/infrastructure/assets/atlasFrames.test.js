@@ -64,47 +64,51 @@ describe('cuadros de la hoja masculina (Axem Red)', () => {
   });
 });
 
-describe('regiones y grupos de la hoja femenina (Axem Pink)', () => {
+describe('secuencias y recursos de la hoja femenina (Axem Pink)', () => {
   const { regions, groups, width, height } = atlasFrames.female;
 
-  it('separa los personajes de efectos, íconos y siluetas', () => {
+  it('reconoce las 116 regiones y distingue poses de recursos', () => {
     const characters = regions.filter((region) => region.kind === 'character');
-    expect(characters.length).toBeGreaterThan(70);
-    expect(regions.length - characters.length).toBeGreaterThan(10);
+    expect(regions).toHaveLength(116);
+    expect(characters).toHaveLength(84);
+    expect(regions.length - characters.length).toBe(32);
   });
 
-  it('mantiene todas las regiones dentro de la hoja', () => {
-    for (const region of regions) {
-      expect(region.x + region.w).toBeLessThanOrEqual(width);
-      expect(region.y + region.h).toBeLessThanOrEqual(height);
-    }
+  it('clasifica las siete filas en tiras compactas y recursos suplementarios', () => {
+    expect(groups.map((group) => group.frameCount)).toEqual([11, 14, 15, 16, 18, 10, 0]);
+    expect(groups.map((group) => group.assetCount)).toEqual([1, 6, 3, 1, 2, 13, 6]);
+    expect(groups.map((group) => group.role)).toEqual([
+      'pose-sequence', 'pose-sequence', 'pose-sequence', 'pose-sequence',
+      'pose-sequence', 'pose-sequence', 'effects-only',
+    ]);
   });
 
-  it('agrupa las siete franjas y asigna las 116 regiones una sola vez', () => {
-    expect(groups.map((group) => group.regionCount)).toEqual([12, 20, 18, 17, 20, 23, 6]);
-    expect(groups.map((group) => group.characterCount)).toEqual([11, 14, 15, 16, 18, 10, 0]);
-    const indices = groups.flatMap((group) => group.regionIndices);
+  it('asigna cada región del atlas a una sola fila y a una sola celda o recurso', () => {
+    const indices = groups.flatMap((group) => [
+      ...group.frames.map((frame) => frame.regionIndex),
+      ...group.assets.map((asset) => asset.regionIndex),
+    ]);
     expect(indices).toHaveLength(regions.length);
     expect(new Set(indices).size).toBe(regions.length);
     expect([...indices].sort((a, b) => a - b)).toEqual(regions.map((region) => region.index));
   });
 
-  it('amplía los recortes para conservar completas las regiones asignadas', () => {
+  it('mantiene cada recorte dentro de las dimensiones de la hoja', () => {
     for (const group of groups) {
-      const [left, top, groupWidth, groupHeight] = group.bounds;
-      expect(left).toBe(0);
-      expect(groupWidth).toBe(width);
-      for (const regionIndex of group.regionIndices) {
-        const region = regions.find((candidate) => candidate.index === regionIndex);
-        expect(region.y).toBeGreaterThanOrEqual(top);
-        expect(region.y + region.h).toBeLessThanOrEqual(top + groupHeight);
+      for (const frame of [...group.frames, ...group.assets]) {
+        expect(frame.x).toBeGreaterThanOrEqual(0);
+        expect(frame.y).toBeGreaterThanOrEqual(0);
+        expect(frame.x + frame.w).toBeLessThanOrEqual(width);
+        expect(frame.y + frame.h).toBeLessThanOrEqual(height);
       }
     }
   });
 
-  it('señala las regiones dudosas para revisión manual', () => {
-    const reviews = new Set(regions.map((region) => region.review).filter(Boolean));
-    for (const reason of reviews) expect(['varias-poses', 'posible-personaje']).toContain(reason);
+  it('conserva marcadas las regiones compuestas o dudosas para revisión', () => {
+    const reviewed = groups.flatMap((group) => [...group.frames, ...group.assets])
+      .filter((item) => item.review);
+    expect(reviewed).toHaveLength(12);
+    for (const item of reviewed) expect(['varias-poses', 'posible-personaje']).toContain(item.review);
   });
 });
 
@@ -142,6 +146,40 @@ describe('resultados por género y color', () => {
         expect(metadata.width).toBe(group.bounds[2]);
         expect(metadata.height).toBe(group.bounds[3]);
         expect(metadata.hasAlpha).toBe(true);
+      }
+    }
+  });
+
+  it('genera las seis tiras compactas de poses femeninas y los siete grupos suplementarios', async () => {
+    for (const color of COLORS) {
+      const index = JSON.parse(await readFile(resultsPath('female', color, 'sequences', 'index.json'), 'utf8'));
+      expect(index).toHaveLength(7);
+      expect(index.map((entry) => entry.frameCount)).toEqual([11, 14, 15, 16, 18, 10, 0]);
+      expect(index.map((entry) => entry.assetCount)).toEqual([1, 6, 3, 1, 2, 13, 6]);
+
+      for (const entry of index) {
+        const group = atlasFrames.female.groups.find((candidate) => candidate.id === entry.id);
+        expect(entry.regionIndices).toEqual(group.regionIndices);
+
+        if (group.frameCount) {
+          const metadata = await sharp(resultsPath('female', color, 'sequences', entry.sequence.file)).metadata();
+          expect(metadata.width).toBe(entry.sequence.cellWidth * group.frameCount);
+          expect(metadata.height).toBe(entry.sequence.cellHeight);
+          expect(metadata.hasAlpha).toBe(true);
+          expect(entry.sequence.frames.map((frame) => frame.sourceRegion))
+            .toEqual(group.frames.map((frame) => frame.regionIndex));
+        } else {
+          expect(entry.sequence).toBeNull();
+        }
+
+        if (group.assetCount) {
+          const metadata = await sharp(resultsPath('female', color, 'supplemental', entry.supplemental.file)).metadata();
+          expect(metadata.width).toBe(entry.supplemental.cellWidth * group.assetCount);
+          expect(metadata.height).toBe(entry.supplemental.cellHeight);
+          expect(metadata.hasAlpha).toBe(true);
+          expect(entry.supplemental.items.map((item) => item.sourceRegion))
+            .toEqual(group.assets.map((asset) => asset.regionIndex));
+        }
       }
     }
   });
@@ -258,7 +296,10 @@ describe('resultados por género y color', () => {
       ],
       female: [
         'spritesheet.png', 'pose.png', 'battle-pose.png', 'levitate.png',
-        ...atlasFrames.female.groups.map((group) => 'sequences/' + group.id + '.png'),
+        ...atlasFrames.female.groups.flatMap((group) => [
+          ...(group.frameCount ? ['sequences/' + group.id + '.png'] : []),
+          ...(group.assetCount ? ['supplemental/' + group.id + '.png'] : []),
+        ]),
       ],
     };
 

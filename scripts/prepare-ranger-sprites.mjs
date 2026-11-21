@@ -92,47 +92,73 @@ async function writeMaleSequences(color, recoloredSheet, groups) {
  * artificiales: cada PNG conserva el ancho completo del atlas y todos los
  * píxeles comprendidos entre los extremos de sus regiones asignadas.
  */
-async function writeFemaleSequences(color, recoloredSheet, groups, regions) {
-  const regionByIndex = new Map(regions.map((region) => [region.index, region]));
-  const index = [];
-
-  for (const group of groups) {
-    const [left, top, width, height] = group.bounds;
-    const rowImage = await sharp(recoloredSheet)
-      .extract({ left, top, width, height })
+/**
+ * Exporta cada región femenina como una celda independiente, agrupada por la
+ * fila original del atlas. Las poses forman sequences/group-XX; efectos, armas,
+ * íconos y siluetas se conservan aparte en supplemental/group-XX.
+ */
+async function writeFemaleStrip(color, recoloredSheet, frames, relativePath) {
+  if (!frames.length) return null;
+  const { cellWidth, cellHeight, placements } = layoutSequence(frames, { anchor: 'center' });
+  const layers = await Promise.all(frames.map(async (frame, position) => ({
+    input: await sharp(recoloredSheet)
+      .extract({ left: frame.x, top: frame.y, width: frame.w, height: frame.h })
       .png()
-      .toBuffer();
-    await writeResult('female', color, path.join('sequences', group.id + '.png'), rowImage);
+      .toBuffer(),
+    left: position * cellWidth + placements[position].x,
+    top: placements[position].y,
+  })));
+  const strip = await sharp({
+    create: { width: cellWidth * frames.length, height: cellHeight, channels: 4, background: TRANSPARENT },
+  }).composite(layers).png().toBuffer();
+  await writeResult('female', color, relativePath, strip);
+  return { frameCount: frames.length, cellWidth, cellHeight };
+}
 
-    const groupRegions = group.regionIndices.map((regionIndex) => {
-      const region = regionByIndex.get(regionIndex);
-      if (!region) throw new Error('No existe la región femenina ' + regionIndex + ' de ' + group.id);
-      return {
-        index: region.index,
-        bounds: [region.x, region.y, region.w, region.h],
-        kind: region.kind,
-        ...(region.review ? { review: region.review } : {}),
-      };
-    });
+async function writeFemaleSequences(color, recoloredSheet, groups) {
+  const index = [];
+  for (const group of groups) {
+    const sequenceLayout = await writeFemaleStrip(
+      color, recoloredSheet, group.frames, path.join('sequences', group.id + '.png'),
+    );
+    const supplementalLayout = await writeFemaleStrip(
+      color, recoloredSheet, group.assets, path.join('supplemental', group.id + '.png'),
+    );
 
     index.push({
       id: group.id,
-      role: 'row',
       row: group.row,
-      file: group.id + '.png',
-      sourceBounds: group.bounds,
+      role: group.role,
+      sequence: sequenceLayout ? {
+        file: group.id + '.png',
+        ...sequenceLayout,
+        frames: group.frames.map((frame, position) => ({
+          position,
+          sourceRegion: frame.regionIndex,
+          bounds: [frame.x, frame.y, frame.w, frame.h],
+          ...(frame.review ? { review: frame.review } : {}),
+        })),
+      } : null,
+      supplemental: supplementalLayout ? {
+        file: group.id + '.png',
+        ...supplementalLayout,
+        items: group.assets.map((asset, position) => ({
+          position,
+          sourceRegion: asset.regionIndex,
+          bounds: [asset.x, asset.y, asset.w, asset.h],
+          ...(asset.review ? { review: asset.review } : {}),
+        })),
+      } : null,
+      frameCount: group.frameCount,
+      assetCount: group.assetCount,
       regionCount: group.regionCount,
-      characterCount: group.characterCount,
-      otherCount: group.otherCount,
       reviewCount: group.reviewCount,
-      regions: groupRegions,
+      regionIndices: group.regionIndices,
     });
   }
 
   await writeResult(
-    'female',
-    color,
-    path.join('sequences', 'index.json'),
+    'female', color, path.join('sequences', 'index.json'),
     Buffer.from(JSON.stringify(index, null, 1) + '\n'),
   );
 }
@@ -1310,7 +1336,7 @@ async function buildGender(gender) {
 
     if (gender === 'female') {
       const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
-      await writeFemaleSequences(color, parts[0], manifest.female.groups, manifest.female.regions);
+      await writeFemaleSequences(color, parts[0], manifest.female.groups);
       console.log(
         'Se conserva la imagen canónica femenina: ' +
         path.relative(ROOT, RESULTS(gender, 'axem-ranger-' + color + '.png'))

@@ -29,26 +29,41 @@ const FRAMES_PATH = path.join(
  * Los cortes clasifican por centro vertical; los bounds de salida se amplían
  * hasta los extremos de las regiones asignadas para no cortar poses solapadas.
  */
-function groupFemaleRegions(regions, width, height, rowCuts) {
+function groupFemaleRegions(regions, height, rowCuts) {
   const edges = [0, ...rowCuts, height];
   return Array.from({ length: edges.length - 1 }, (_, index) => {
     const minCenter = edges[index];
     const maxCenter = edges[index + 1];
-    const members = regions.filter((region) => {
-      const centerY = region.y + region.h / 2;
-      return centerY >= minCenter && centerY < maxCenter;
-    });
+    const members = regions
+      .filter((region) => {
+        const centerY = region.y + region.h / 2;
+        return centerY >= minCenter && centerY < maxCenter;
+      })
+      .sort((left, right) => left.x - right.x);
     if (!members.length) return null;
 
-    const top = Math.min(...members.map((region) => region.y));
-    const bottom = Math.max(...members.map((region) => region.y + region.h));
+    const frames = members
+      .filter((region) => region.kind === 'character')
+      .map(({ index: regionIndex, x, y, w, h, review }) => ({
+        regionIndex, x, y, w, h, ...(review ? { review } : {}),
+      }));
+    const assets = members
+      .filter((region) => region.kind === 'other')
+      .map(({ index: regionIndex, x, y, w, h, review }) => ({
+        regionIndex, x, y, w, h, ...(review ? { review } : {}),
+      }));
+
     return {
       id: 'group-' + String(index + 1).padStart(2, '0'),
       row: index + 1,
-      bounds: [0, top, width, bottom - top],
+      role: frames.length ? 'pose-sequence' : 'effects-only',
+      frames,
+      assets,
+      frameCount: frames.length,
+      assetCount: assets.length,
       regionCount: members.length,
-      characterCount: members.filter((region) => region.kind === 'character').length,
-      otherCount: members.filter((region) => region.kind === 'other').length,
+      characterCount: frames.length,
+      otherCount: assets.length,
       reviewCount: members.filter((region) => Boolean(region.review)).length,
       regionIndices: members.map((region) => region.index),
     };
@@ -99,7 +114,7 @@ async function analyze(rules) {
       }
       return region;
     });
-    result.groups = groupFemaleRegions(result.regions, info.width, info.height, rules.rowCuts);
+    result.groups = groupFemaleRegions(result.regions, info.height, rules.rowCuts);
   }
   return result;
 }
@@ -118,6 +133,6 @@ console.log(
   'male: ' + male.length + ' grupos, ' + male.reduce((sum, group) => sum + group.frames.length, 0) + ' cuadros',
 );
 console.log(
-  'female: ' + femaleGroups.length + ' grupos, ' + female.length + ' regiones, ' + female.filter((region) => region.kind === 'character').length + ' de personaje',
+  'female: ' + femaleGroups.length + ' grupos, ' + femaleGroups.reduce((sum, group) => sum + group.frameCount, 0) + ' cuadros de personaje y ' + femaleGroups.reduce((sum, group) => sum + group.assetCount, 0) + ' recursos suplementarios',
 );
 console.log('→ ' + path.relative(ROOT, FRAMES_PATH));

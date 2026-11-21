@@ -1,1300 +1,1472 @@
 [
  {
   "id": "group-01",
-  "role": "row",
   "row": 1,
-  "file": "group-01.png",
-  "sourceBounds": [
-   0,
-   9,
-   900,
-   67
-  ],
+  "role": "pose-sequence",
+  "sequence": {
+   "file": "group-01.png",
+   "frameCount": 11,
+   "cellWidth": 40,
+   "cellHeight": 53,
+   "frames": [
+    {
+     "position": 0,
+     "sourceRegion": 0,
+     "bounds": [
+      435,
+      9,
+      32,
+      39
+     ]
+    },
+    {
+     "position": 1,
+     "sourceRegion": 1,
+     "bounds": [
+      479,
+      10,
+      28,
+      39
+     ]
+    },
+    {
+     "position": 2,
+     "sourceRegion": 2,
+     "bounds": [
+      527,
+      26,
+      36,
+      47
+     ]
+    },
+    {
+     "position": 3,
+     "sourceRegion": 3,
+     "bounds": [
+      578,
+      27,
+      37,
+      46
+     ]
+    },
+    {
+     "position": 4,
+     "sourceRegion": 4,
+     "bounds": [
+      622,
+      25,
+      40,
+      48
+     ]
+    },
+    {
+     "position": 5,
+     "sourceRegion": 5,
+     "bounds": [
+      668,
+      23,
+      33,
+      53
+     ]
+    },
+    {
+     "position": 6,
+     "sourceRegion": 6,
+     "bounds": [
+      710,
+      35,
+      24,
+      38
+     ]
+    },
+    {
+     "position": 7,
+     "sourceRegion": 7,
+     "bounds": [
+      742,
+      37,
+      28,
+      37
+     ]
+    },
+    {
+     "position": 8,
+     "sourceRegion": 8,
+     "bounds": [
+      778,
+      33,
+      18,
+      37
+     ]
+    },
+    {
+     "position": 9,
+     "sourceRegion": 9,
+     "bounds": [
+      800,
+      35,
+      29,
+      33
+     ]
+    },
+    {
+     "position": 10,
+     "sourceRegion": 10,
+     "bounds": [
+      836,
+      32,
+      28,
+      36
+     ]
+    }
+   ]
+  },
+  "supplemental": {
+   "file": "group-01.png",
+   "frameCount": 1,
+   "cellWidth": 18,
+   "cellHeight": 35,
+   "items": [
+    {
+     "position": 0,
+     "sourceRegion": 11,
+     "bounds": [
+      872,
+      30,
+      18,
+      35
+     ]
+    }
+   ]
+  },
+  "frameCount": 11,
+  "assetCount": 1,
   "regionCount": 12,
-  "characterCount": 11,
-  "otherCount": 1,
   "reviewCount": 0,
-  "regions": [
-   {
-    "index": 0,
-    "bounds": [
-     435,
-     9,
-     32,
-     39
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 1,
-    "bounds": [
-     479,
-     10,
-     28,
-     39
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 2,
-    "bounds": [
-     527,
-     26,
-     36,
-     47
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 3,
-    "bounds": [
-     578,
-     27,
-     37,
-     46
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 4,
-    "bounds": [
-     622,
-     25,
-     40,
-     48
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 5,
-    "bounds": [
-     668,
-     23,
-     33,
-     53
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 6,
-    "bounds": [
-     710,
-     35,
-     24,
-     38
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 7,
-    "bounds": [
-     742,
-     37,
-     28,
-     37
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 8,
-    "bounds": [
-     778,
-     33,
-     18,
-     37
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 9,
-    "bounds": [
-     800,
-     35,
-     29,
-     33
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 10,
-    "bounds": [
-     836,
-     32,
-     28,
-     36
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 11,
-    "bounds": [
-     872,
-     30,
-     18,
-     35
-    ],
-    "kind": "other"
-   }
+  "regionIndices": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11
   ]
  },
  {
   "id": "group-02",
-  "role": "row",
   "row": 2,
-  "file": "group-02.png",
-  "sourceBounds": [
-   0,
-   59,
-   900,
-   80
-  ],
+  "role": "pose-sequence",
+  "sequence": {
+   "file": "group-02.png",
+   "frameCount": 14,
+   "cellWidth": 84,
+   "cellHeight": 55,
+   "frames": [
+    {
+     "position": 0,
+     "sourceRegion": 18,
+     "bounds": [
+      16,
+      80,
+      31,
+      32
+     ]
+    },
+    {
+     "position": 1,
+     "sourceRegion": 21,
+     "bounds": [
+      106,
+      81,
+      23,
+      32
+     ]
+    },
+    {
+     "position": 2,
+     "sourceRegion": 22,
+     "bounds": [
+      144,
+      83,
+      29,
+      34
+     ]
+    },
+    {
+     "position": 3,
+     "sourceRegion": 12,
+     "bounds": [
+      203,
+      79,
+      29,
+      36
+     ]
+    },
+    {
+     "position": 4,
+     "sourceRegion": 13,
+     "bounds": [
+      241,
+      61,
+      31,
+      52
+     ]
+    },
+    {
+     "position": 5,
+     "sourceRegion": 14,
+     "bounds": [
+      281,
+      64,
+      32,
+      52
+     ]
+    },
+    {
+     "position": 6,
+     "sourceRegion": 15,
+     "bounds": [
+      324,
+      68,
+      31,
+      53
+     ]
+    },
+    {
+     "position": 7,
+     "sourceRegion": 16,
+     "bounds": [
+      368,
+      67,
+      31,
+      52
+     ]
+    },
+    {
+     "position": 8,
+     "sourceRegion": 17,
+     "bounds": [
+      409,
+      59,
+      84,
+      54
+     ],
+     "review": "varias-poses"
+    },
+    {
+     "position": 9,
+     "sourceRegion": 24,
+     "bounds": [
+      504,
+      82,
+      40,
+      38
+     ]
+    },
+    {
+     "position": 10,
+     "sourceRegion": 25,
+     "bounds": [
+      566,
+      82,
+      52,
+      54
+     ]
+    },
+    {
+     "position": 11,
+     "sourceRegion": 26,
+     "bounds": [
+      639,
+      84,
+      32,
+      55
+     ]
+    },
+    {
+     "position": 12,
+     "sourceRegion": 27,
+     "bounds": [
+      688,
+      81,
+      30,
+      55
+     ]
+    },
+    {
+     "position": 13,
+     "sourceRegion": 29,
+     "bounds": [
+      770,
+      94,
+      23,
+      38
+     ]
+    }
+   ]
+  },
+  "supplemental": {
+   "file": "group-02.png",
+   "frameCount": 6,
+   "cellWidth": 28,
+   "cellHeight": 45,
+   "items": [
+    {
+     "position": 0,
+     "sourceRegion": 19,
+     "bounds": [
+      54,
+      81,
+      18,
+      32
+     ]
+    },
+    {
+     "position": 1,
+     "sourceRegion": 20,
+     "bounds": [
+      78,
+      82,
+      16,
+      31
+     ]
+    },
+    {
+     "position": 2,
+     "sourceRegion": 23,
+     "bounds": [
+      182,
+      83,
+      17,
+      30
+     ]
+    },
+    {
+     "position": 3,
+     "sourceRegion": 28,
+     "bounds": [
+      732,
+      101,
+      17,
+      31
+     ]
+    },
+    {
+     "position": 4,
+     "sourceRegion": 30,
+     "bounds": [
+      808,
+      82,
+      19,
+      45
+     ],
+     "review": "posible-personaje"
+    },
+    {
+     "position": 5,
+     "sourceRegion": 31,
+     "bounds": [
+      833,
+      89,
+      28,
+      37
+     ]
+    }
+   ]
+  },
+  "frameCount": 14,
+  "assetCount": 6,
   "regionCount": 20,
-  "characterCount": 14,
-  "otherCount": 6,
   "reviewCount": 2,
-  "regions": [
-   {
-    "index": 12,
-    "bounds": [
-     203,
-     79,
-     29,
-     36
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 13,
-    "bounds": [
-     241,
-     61,
-     31,
-     52
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 14,
-    "bounds": [
-     281,
-     64,
-     32,
-     52
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 15,
-    "bounds": [
-     324,
-     68,
-     31,
-     53
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 16,
-    "bounds": [
-     368,
-     67,
-     31,
-     52
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 17,
-    "bounds": [
-     409,
-     59,
-     84,
-     54
-    ],
-    "kind": "character",
-    "review": "varias-poses"
-   },
-   {
-    "index": 18,
-    "bounds": [
-     16,
-     80,
-     31,
-     32
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 19,
-    "bounds": [
-     54,
-     81,
-     18,
-     32
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 20,
-    "bounds": [
-     78,
-     82,
-     16,
-     31
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 21,
-    "bounds": [
-     106,
-     81,
-     23,
-     32
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 22,
-    "bounds": [
-     144,
-     83,
-     29,
-     34
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 23,
-    "bounds": [
-     182,
-     83,
-     17,
-     30
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 24,
-    "bounds": [
-     504,
-     82,
-     40,
-     38
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 25,
-    "bounds": [
-     566,
-     82,
-     52,
-     54
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 26,
-    "bounds": [
-     639,
-     84,
-     32,
-     55
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 27,
-    "bounds": [
-     688,
-     81,
-     30,
-     55
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 28,
-    "bounds": [
-     732,
-     101,
-     17,
-     31
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 29,
-    "bounds": [
-     770,
-     94,
-     23,
-     38
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 30,
-    "bounds": [
-     808,
-     82,
-     19,
-     45
-    ],
-    "kind": "other",
-    "review": "posible-personaje"
-   },
-   {
-    "index": 31,
-    "bounds": [
-     833,
-     89,
-     28,
-     37
-    ],
-    "kind": "other"
-   }
+  "regionIndices": [
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31
   ]
  },
  {
   "id": "group-03",
-  "role": "row",
   "row": 3,
-  "file": "group-03.png",
-  "sourceBounds": [
-   0,
-   124,
-   900,
-   73
-  ],
+  "role": "pose-sequence",
+  "sequence": {
+   "file": "group-03.png",
+   "frameCount": 15,
+   "cellWidth": 96,
+   "cellHeight": 67,
+   "frames": [
+    {
+     "position": 0,
+     "sourceRegion": 32,
+     "bounds": [
+      12,
+      127,
+      44,
+      61
+     ]
+    },
+    {
+     "position": 1,
+     "sourceRegion": 33,
+     "bounds": [
+      67,
+      124,
+      96,
+      67
+     ],
+     "review": "varias-poses"
+    },
+    {
+     "position": 2,
+     "sourceRegion": 34,
+     "bounds": [
+      181,
+      125,
+      48,
+      61
+     ]
+    },
+    {
+     "position": 3,
+     "sourceRegion": 35,
+     "bounds": [
+      241,
+      139,
+      31,
+      41
+     ]
+    },
+    {
+     "position": 4,
+     "sourceRegion": 36,
+     "bounds": [
+      284,
+      138,
+      17,
+      40
+     ]
+    },
+    {
+     "position": 5,
+     "sourceRegion": 37,
+     "bounds": [
+      318,
+      137,
+      14,
+      40
+     ]
+    },
+    {
+     "position": 6,
+     "sourceRegion": 38,
+     "bounds": [
+      359,
+      138,
+      19,
+      39
+     ]
+    },
+    {
+     "position": 7,
+     "sourceRegion": 39,
+     "bounds": [
+      386,
+      127,
+      32,
+      52
+     ]
+    },
+    {
+     "position": 8,
+     "sourceRegion": 40,
+     "bounds": [
+      427,
+      134,
+      36,
+      43
+     ]
+    },
+    {
+     "position": 9,
+     "sourceRegion": 41,
+     "bounds": [
+      472,
+      144,
+      48,
+      35
+     ]
+    },
+    {
+     "position": 10,
+     "sourceRegion": 42,
+     "bounds": [
+      532,
+      142,
+      43,
+      37
+     ]
+    },
+    {
+     "position": 11,
+     "sourceRegion": 45,
+     "bounds": [
+      683,
+      143,
+      42,
+      46
+     ]
+    },
+    {
+     "position": 12,
+     "sourceRegion": 46,
+     "bounds": [
+      734,
+      151,
+      40,
+      36
+     ]
+    },
+    {
+     "position": 13,
+     "sourceRegion": 47,
+     "bounds": [
+      785,
+      147,
+      27,
+      36
+     ]
+    },
+    {
+     "position": 14,
+     "sourceRegion": 49,
+     "bounds": [
+      854,
+      145,
+      31,
+      32
+     ]
+    }
+   ]
+  },
+  "supplemental": {
+   "file": "group-03.png",
+   "frameCount": 3,
+   "cellWidth": 41,
+   "cellHeight": 46,
+   "items": [
+    {
+     "position": 0,
+     "sourceRegion": 43,
+     "bounds": [
+      587,
+      151,
+      41,
+      31
+     ]
+    },
+    {
+     "position": 1,
+     "sourceRegion": 44,
+     "bounds": [
+      644,
+      151,
+      27,
+      46
+     ],
+     "review": "posible-personaje"
+    },
+    {
+     "position": 2,
+     "sourceRegion": 48,
+     "bounds": [
+      826,
+      146,
+      18,
+      35
+     ]
+    }
+   ]
+  },
+  "frameCount": 15,
+  "assetCount": 3,
   "regionCount": 18,
-  "characterCount": 15,
-  "otherCount": 3,
   "reviewCount": 2,
-  "regions": [
-   {
-    "index": 32,
-    "bounds": [
-     12,
-     127,
-     44,
-     61
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 33,
-    "bounds": [
-     67,
-     124,
-     96,
-     67
-    ],
-    "kind": "character",
-    "review": "varias-poses"
-   },
-   {
-    "index": 34,
-    "bounds": [
-     181,
-     125,
-     48,
-     61
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 35,
-    "bounds": [
-     241,
-     139,
-     31,
-     41
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 36,
-    "bounds": [
-     284,
-     138,
-     17,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 37,
-    "bounds": [
-     318,
-     137,
-     14,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 38,
-    "bounds": [
-     359,
-     138,
-     19,
-     39
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 39,
-    "bounds": [
-     386,
-     127,
-     32,
-     52
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 40,
-    "bounds": [
-     427,
-     134,
-     36,
-     43
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 41,
-    "bounds": [
-     472,
-     144,
-     48,
-     35
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 42,
-    "bounds": [
-     532,
-     142,
-     43,
-     37
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 43,
-    "bounds": [
-     587,
-     151,
-     41,
-     31
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 44,
-    "bounds": [
-     644,
-     151,
-     27,
-     46
-    ],
-    "kind": "other",
-    "review": "posible-personaje"
-   },
-   {
-    "index": 45,
-    "bounds": [
-     683,
-     143,
-     42,
-     46
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 46,
-    "bounds": [
-     734,
-     151,
-     40,
-     36
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 47,
-    "bounds": [
-     785,
-     147,
-     27,
-     36
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 48,
-    "bounds": [
-     826,
-     146,
-     18,
-     35
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 49,
-    "bounds": [
-     854,
-     145,
-     31,
-     32
-    ],
-    "kind": "character"
-   }
+  "regionIndices": [
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49
   ]
  },
  {
   "id": "group-04",
-  "role": "row",
   "row": 4,
-  "file": "group-04.png",
-  "sourceBounds": [
-   0,
-   194,
-   900,
-   53
-  ],
+  "role": "pose-sequence",
+  "sequence": {
+   "file": "group-04.png",
+   "frameCount": 16,
+   "cellWidth": 56,
+   "cellHeight": 48,
+   "frames": [
+    {
+     "position": 0,
+     "sourceRegion": 58,
+     "bounds": [
+      21,
+      207,
+      27,
+      40
+     ]
+    },
+    {
+     "position": 1,
+     "sourceRegion": 60,
+     "bounds": [
+      93,
+      212,
+      28,
+      33
+     ]
+    },
+    {
+     "position": 2,
+     "sourceRegion": 61,
+     "bounds": [
+      131,
+      201,
+      22,
+      39
+     ]
+    },
+    {
+     "position": 3,
+     "sourceRegion": 62,
+     "bounds": [
+      164,
+      200,
+      22,
+      39
+     ]
+    },
+    {
+     "position": 4,
+     "sourceRegion": 50,
+     "bounds": [
+      201,
+      195,
+      34,
+      41
+     ]
+    },
+    {
+     "position": 5,
+     "sourceRegion": 51,
+     "bounds": [
+      248,
+      198,
+      56,
+      40
+     ],
+     "review": "varias-poses"
+    },
+    {
+     "position": 6,
+     "sourceRegion": 63,
+     "bounds": [
+      315,
+      200,
+      49,
+      39
+     ]
+    },
+    {
+     "position": 7,
+     "sourceRegion": 52,
+     "bounds": [
+      370,
+      199,
+      48,
+      40
+     ]
+    },
+    {
+     "position": 8,
+     "sourceRegion": 53,
+     "bounds": [
+      431,
+      199,
+      33,
+      39
+     ]
+    },
+    {
+     "position": 9,
+     "sourceRegion": 54,
+     "bounds": [
+      478,
+      199,
+      56,
+      41
+     ],
+     "review": "varias-poses"
+    },
+    {
+     "position": 10,
+     "sourceRegion": 64,
+     "bounds": [
+      551,
+      202,
+      49,
+      41
+     ]
+    },
+    {
+     "position": 11,
+     "sourceRegion": 65,
+     "bounds": [
+      609,
+      202,
+      47,
+      40
+     ]
+    },
+    {
+     "position": 12,
+     "sourceRegion": 66,
+     "bounds": [
+      666,
+      201,
+      42,
+      44
+     ]
+    },
+    {
+     "position": 13,
+     "sourceRegion": 55,
+     "bounds": [
+      723,
+      197,
+      43,
+      45
+     ]
+    },
+    {
+     "position": 14,
+     "sourceRegion": 56,
+     "bounds": [
+      781,
+      194,
+      43,
+      48
+     ]
+    },
+    {
+     "position": 15,
+     "sourceRegion": 57,
+     "bounds": [
+      841,
+      195,
+      42,
+      47
+     ]
+    }
+   ]
+  },
+  "supplemental": {
+   "file": "group-04.png",
+   "frameCount": 1,
+   "cellWidth": 23,
+   "cellHeight": 32,
+   "items": [
+    {
+     "position": 0,
+     "sourceRegion": 59,
+     "bounds": [
+      61,
+      213,
+      23,
+      32
+     ]
+    }
+   ]
+  },
+  "frameCount": 16,
+  "assetCount": 1,
   "regionCount": 17,
-  "characterCount": 16,
-  "otherCount": 1,
   "reviewCount": 2,
-  "regions": [
-   {
-    "index": 50,
-    "bounds": [
-     201,
-     195,
-     34,
-     41
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 51,
-    "bounds": [
-     248,
-     198,
-     56,
-     40
-    ],
-    "kind": "character",
-    "review": "varias-poses"
-   },
-   {
-    "index": 52,
-    "bounds": [
-     370,
-     199,
-     48,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 53,
-    "bounds": [
-     431,
-     199,
-     33,
-     39
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 54,
-    "bounds": [
-     478,
-     199,
-     56,
-     41
-    ],
-    "kind": "character",
-    "review": "varias-poses"
-   },
-   {
-    "index": 55,
-    "bounds": [
-     723,
-     197,
-     43,
-     45
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 56,
-    "bounds": [
-     781,
-     194,
-     43,
-     48
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 57,
-    "bounds": [
-     841,
-     195,
-     42,
-     47
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 58,
-    "bounds": [
-     21,
-     207,
-     27,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 59,
-    "bounds": [
-     61,
-     213,
-     23,
-     32
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 60,
-    "bounds": [
-     93,
-     212,
-     28,
-     33
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 61,
-    "bounds": [
-     131,
-     201,
-     22,
-     39
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 62,
-    "bounds": [
-     164,
-     200,
-     22,
-     39
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 63,
-    "bounds": [
-     315,
-     200,
-     49,
-     39
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 64,
-    "bounds": [
-     551,
-     202,
-     49,
-     41
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 65,
-    "bounds": [
-     609,
-     202,
-     47,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 66,
-    "bounds": [
-     666,
-     201,
-     42,
-     44
-    ],
-    "kind": "character"
-   }
+  "regionIndices": [
+   58,
+   59,
+   60,
+   61,
+   62,
+   50,
+   51,
+   63,
+   52,
+   53,
+   54,
+   64,
+   65,
+   66,
+   55,
+   56,
+   57
   ]
  },
  {
   "id": "group-05",
-  "role": "row",
   "row": 5,
-  "file": "group-05.png",
-  "sourceBounds": [
-   0,
-   251,
-   900,
-   55
-  ],
+  "role": "pose-sequence",
+  "sequence": {
+   "file": "group-05.png",
+   "frameCount": 18,
+   "cellWidth": 95,
+   "cellHeight": 53,
+   "frames": [
+    {
+     "position": 0,
+     "sourceRegion": 67,
+     "bounds": [
+      15,
+      257,
+      49,
+      40
+     ]
+    },
+    {
+     "position": 1,
+     "sourceRegion": 68,
+     "bounds": [
+      77,
+      256,
+      43,
+      40
+     ]
+    },
+    {
+     "position": 2,
+     "sourceRegion": 69,
+     "bounds": [
+      128,
+      253,
+      23,
+      42
+     ]
+    },
+    {
+     "position": 3,
+     "sourceRegion": 70,
+     "bounds": [
+      167,
+      254,
+      22,
+      40
+     ]
+    },
+    {
+     "position": 4,
+     "sourceRegion": 71,
+     "bounds": [
+      200,
+      253,
+      28,
+      39
+     ]
+    },
+    {
+     "position": 5,
+     "sourceRegion": 72,
+     "bounds": [
+      239,
+      255,
+      32,
+      40
+     ]
+    },
+    {
+     "position": 6,
+     "sourceRegion": 73,
+     "bounds": [
+      282,
+      253,
+      28,
+      39
+     ]
+    },
+    {
+     "position": 7,
+     "sourceRegion": 74,
+     "bounds": [
+      324,
+      253,
+      22,
+      40
+     ]
+    },
+    {
+     "position": 8,
+     "sourceRegion": 75,
+     "bounds": [
+      358,
+      254,
+      23,
+      41
+     ]
+    },
+    {
+     "position": 9,
+     "sourceRegion": 76,
+     "bounds": [
+      388,
+      254,
+      32,
+      40
+     ]
+    },
+    {
+     "position": 10,
+     "sourceRegion": 77,
+     "bounds": [
+      437,
+      254,
+      22,
+      40
+     ]
+    },
+    {
+     "position": 11,
+     "sourceRegion": 78,
+     "bounds": [
+      480,
+      260,
+      56,
+      34
+     ],
+     "review": "varias-poses"
+    },
+    {
+     "position": 12,
+     "sourceRegion": 80,
+     "bounds": [
+      569,
+      251,
+      31,
+      41
+     ]
+    },
+    {
+     "position": 13,
+     "sourceRegion": 81,
+     "bounds": [
+      620,
+      253,
+      20,
+      53
+     ]
+    },
+    {
+     "position": 14,
+     "sourceRegion": 82,
+     "bounds": [
+      647,
+      256,
+      95,
+      41
+     ],
+     "review": "varias-poses"
+    },
+    {
+     "position": 15,
+     "sourceRegion": 83,
+     "bounds": [
+      748,
+      257,
+      28,
+      40
+     ]
+    },
+    {
+     "position": 16,
+     "sourceRegion": 84,
+     "bounds": [
+      788,
+      253,
+      19,
+      44
+     ]
+    },
+    {
+     "position": 17,
+     "sourceRegion": 85,
+     "bounds": [
+      816,
+      251,
+      32,
+      40
+     ]
+    }
+   ]
+  },
+  "supplemental": {
+   "file": "group-05.png",
+   "frameCount": 2,
+   "cellWidth": 30,
+   "cellHeight": 37,
+   "items": [
+    {
+     "position": 0,
+     "sourceRegion": 79,
+     "bounds": [
+      541,
+      260,
+      17,
+      30
+     ]
+    },
+    {
+     "position": 1,
+     "sourceRegion": 86,
+     "bounds": [
+      856,
+      261,
+      30,
+      37
+     ]
+    }
+   ]
+  },
+  "frameCount": 18,
+  "assetCount": 2,
   "regionCount": 20,
-  "characterCount": 18,
-  "otherCount": 2,
   "reviewCount": 2,
-  "regions": [
-   {
-    "index": 67,
-    "bounds": [
-     15,
-     257,
-     49,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 68,
-    "bounds": [
-     77,
-     256,
-     43,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 69,
-    "bounds": [
-     128,
-     253,
-     23,
-     42
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 70,
-    "bounds": [
-     167,
-     254,
-     22,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 71,
-    "bounds": [
-     200,
-     253,
-     28,
-     39
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 72,
-    "bounds": [
-     239,
-     255,
-     32,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 73,
-    "bounds": [
-     282,
-     253,
-     28,
-     39
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 74,
-    "bounds": [
-     324,
-     253,
-     22,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 75,
-    "bounds": [
-     358,
-     254,
-     23,
-     41
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 76,
-    "bounds": [
-     388,
-     254,
-     32,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 77,
-    "bounds": [
-     437,
-     254,
-     22,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 78,
-    "bounds": [
-     480,
-     260,
-     56,
-     34
-    ],
-    "kind": "character",
-    "review": "varias-poses"
-   },
-   {
-    "index": 79,
-    "bounds": [
-     541,
-     260,
-     17,
-     30
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 80,
-    "bounds": [
-     569,
-     251,
-     31,
-     41
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 81,
-    "bounds": [
-     620,
-     253,
-     20,
-     53
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 82,
-    "bounds": [
-     647,
-     256,
-     95,
-     41
-    ],
-    "kind": "character",
-    "review": "varias-poses"
-   },
-   {
-    "index": 83,
-    "bounds": [
-     748,
-     257,
-     28,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 84,
-    "bounds": [
-     788,
-     253,
-     19,
-     44
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 85,
-    "bounds": [
-     816,
-     251,
-     32,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 86,
-    "bounds": [
-     856,
-     261,
-     30,
-     37
-    ],
-    "kind": "other"
-   }
+  "regionIndices": [
+   67,
+   68,
+   69,
+   70,
+   71,
+   72,
+   73,
+   74,
+   75,
+   76,
+   77,
+   78,
+   79,
+   80,
+   81,
+   82,
+   83,
+   84,
+   85,
+   86
   ]
  },
  {
   "id": "group-06",
-  "role": "row",
   "row": 6,
-  "file": "group-06.png",
-  "sourceBounds": [
-   0,
-   306,
-   900,
-   59
-  ],
+  "role": "pose-sequence",
+  "sequence": {
+   "file": "group-06.png",
+   "frameCount": 10,
+   "cellWidth": 34,
+   "cellHeight": 44,
+   "frames": [
+    {
+     "position": 0,
+     "sourceRegion": 90,
+     "bounds": [
+      108,
+      311,
+      33,
+      35
+     ]
+    },
+    {
+     "position": 1,
+     "sourceRegion": 91,
+     "bounds": [
+      146,
+      310,
+      30,
+      35
+     ]
+    },
+    {
+     "position": 2,
+     "sourceRegion": 92,
+     "bounds": [
+      183,
+      307,
+      29,
+      36
+     ]
+    },
+    {
+     "position": 3,
+     "sourceRegion": 93,
+     "bounds": [
+      224,
+      307,
+      27,
+      35
+     ]
+    },
+    {
+     "position": 4,
+     "sourceRegion": 94,
+     "bounds": [
+      263,
+      310,
+      27,
+      35
+     ]
+    },
+    {
+     "position": 5,
+     "sourceRegion": 95,
+     "bounds": [
+      305,
+      310,
+      34,
+      34
+     ]
+    },
+    {
+     "position": 6,
+     "sourceRegion": 96,
+     "bounds": [
+      351,
+      307,
+      21,
+      40
+     ]
+    },
+    {
+     "position": 7,
+     "sourceRegion": 97,
+     "bounds": [
+      387,
+      311,
+      29,
+      34
+     ]
+    },
+    {
+     "position": 8,
+     "sourceRegion": 98,
+     "bounds": [
+      433,
+      307,
+      22,
+      41
+     ]
+    },
+    {
+     "position": 9,
+     "sourceRegion": 100,
+     "bounds": [
+      515,
+      309,
+      18,
+      44
+     ]
+    }
+   ]
+  },
+  "supplemental": {
+   "file": "group-06.png",
+   "frameCount": 13,
+   "cellWidth": 97,
+   "cellHeight": 52,
+   "items": [
+    {
+     "position": 0,
+     "sourceRegion": 108,
+     "bounds": [
+      14,
+      320,
+      10,
+      11
+     ]
+    },
+    {
+     "position": 1,
+     "sourceRegion": 109,
+     "bounds": [
+      25,
+      324,
+      67,
+      41
+     ],
+     "review": "posible-personaje"
+    },
+    {
+     "position": 2,
+     "sourceRegion": 87,
+     "bounds": [
+      28,
+      306,
+      39,
+      27
+     ]
+    },
+    {
+     "position": 3,
+     "sourceRegion": 88,
+     "bounds": [
+      74,
+      306,
+      11,
+      11
+     ]
+    },
+    {
+     "position": 4,
+     "sourceRegion": 89,
+     "bounds": [
+      92,
+      314,
+      5,
+      4
+     ]
+    },
+    {
+     "position": 5,
+     "sourceRegion": 99,
+     "bounds": [
+      463,
+      318,
+      39,
+      22
+     ]
+    },
+    {
+     "position": 6,
+     "sourceRegion": 101,
+     "bounds": [
+      556,
+      312,
+      31,
+      44
+     ]
+    },
+    {
+     "position": 7,
+     "sourceRegion": 102,
+     "bounds": [
+      604,
+      314,
+      32,
+      45
+     ],
+     "review": "posible-personaje"
+    },
+    {
+     "position": 8,
+     "sourceRegion": 103,
+     "bounds": [
+      656,
+      307,
+      32,
+      49
+     ],
+     "review": "posible-personaje"
+    },
+    {
+     "position": 9,
+     "sourceRegion": 104,
+     "bounds": [
+      704,
+      309,
+      27,
+      48
+     ]
+    },
+    {
+     "position": 10,
+     "sourceRegion": 105,
+     "bounds": [
+      746,
+      307,
+      14,
+      49
+     ]
+    },
+    {
+     "position": 11,
+     "sourceRegion": 106,
+     "bounds": [
+      773,
+      307,
+      18,
+      52
+     ]
+    },
+    {
+     "position": 12,
+     "sourceRegion": 107,
+     "bounds": [
+      796,
+      313,
+      97,
+      41
+     ],
+     "review": "posible-personaje"
+    }
+   ]
+  },
+  "frameCount": 10,
+  "assetCount": 13,
   "regionCount": 23,
-  "characterCount": 10,
-  "otherCount": 13,
   "reviewCount": 4,
-  "regions": [
-   {
-    "index": 87,
-    "bounds": [
-     28,
-     306,
-     39,
-     27
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 88,
-    "bounds": [
-     74,
-     306,
-     11,
-     11
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 89,
-    "bounds": [
-     92,
-     314,
-     5,
-     4
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 90,
-    "bounds": [
-     108,
-     311,
-     33,
-     35
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 91,
-    "bounds": [
-     146,
-     310,
-     30,
-     35
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 92,
-    "bounds": [
-     183,
-     307,
-     29,
-     36
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 93,
-    "bounds": [
-     224,
-     307,
-     27,
-     35
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 94,
-    "bounds": [
-     263,
-     310,
-     27,
-     35
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 95,
-    "bounds": [
-     305,
-     310,
-     34,
-     34
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 96,
-    "bounds": [
-     351,
-     307,
-     21,
-     40
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 97,
-    "bounds": [
-     387,
-     311,
-     29,
-     34
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 98,
-    "bounds": [
-     433,
-     307,
-     22,
-     41
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 99,
-    "bounds": [
-     463,
-     318,
-     39,
-     22
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 100,
-    "bounds": [
-     515,
-     309,
-     18,
-     44
-    ],
-    "kind": "character"
-   },
-   {
-    "index": 101,
-    "bounds": [
-     556,
-     312,
-     31,
-     44
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 102,
-    "bounds": [
-     604,
-     314,
-     32,
-     45
-    ],
-    "kind": "other",
-    "review": "posible-personaje"
-   },
-   {
-    "index": 103,
-    "bounds": [
-     656,
-     307,
-     32,
-     49
-    ],
-    "kind": "other",
-    "review": "posible-personaje"
-   },
-   {
-    "index": 104,
-    "bounds": [
-     704,
-     309,
-     27,
-     48
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 105,
-    "bounds": [
-     746,
-     307,
-     14,
-     49
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 106,
-    "bounds": [
-     773,
-     307,
-     18,
-     52
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 107,
-    "bounds": [
-     796,
-     313,
-     97,
-     41
-    ],
-    "kind": "other",
-    "review": "posible-personaje"
-   },
-   {
-    "index": 108,
-    "bounds": [
-     14,
-     320,
-     10,
-     11
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 109,
-    "bounds": [
-     25,
-     324,
-     67,
-     41
-    ],
-    "kind": "other",
-    "review": "posible-personaje"
-   }
+  "regionIndices": [
+   108,
+   109,
+   87,
+   88,
+   89,
+   90,
+   91,
+   92,
+   93,
+   94,
+   95,
+   96,
+   97,
+   98,
+   99,
+   100,
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107
   ]
  },
  {
   "id": "group-07",
-  "role": "row",
   "row": 7,
-  "file": "group-07.png",
-  "sourceBounds": [
-   0,
-   374,
-   900,
-   35
-  ],
+  "role": "effects-only",
+  "sequence": null,
+  "supplemental": {
+   "file": "group-07.png",
+   "frameCount": 6,
+   "cellWidth": 48,
+   "cellHeight": 33,
+   "items": [
+    {
+     "position": 0,
+     "sourceRegion": 110,
+     "bounds": [
+      6,
+      374,
+      33,
+      22
+     ]
+    },
+    {
+     "position": 1,
+     "sourceRegion": 111,
+     "bounds": [
+      59,
+      378,
+      46,
+      23
+     ]
+    },
+    {
+     "position": 2,
+     "sourceRegion": 112,
+     "bounds": [
+      126,
+      376,
+      48,
+      22
+     ]
+    },
+    {
+     "position": 3,
+     "sourceRegion": 113,
+     "bounds": [
+      192,
+      377,
+      46,
+      23
+     ]
+    },
+    {
+     "position": 4,
+     "sourceRegion": 114,
+     "bounds": [
+      250,
+      376,
+      39,
+      33
+     ]
+    },
+    {
+     "position": 5,
+     "sourceRegion": 115,
+     "bounds": [
+      306,
+      382,
+      43,
+      20
+     ]
+    }
+   ]
+  },
+  "frameCount": 0,
+  "assetCount": 6,
   "regionCount": 6,
-  "characterCount": 0,
-  "otherCount": 6,
   "reviewCount": 0,
-  "regions": [
-   {
-    "index": 110,
-    "bounds": [
-     6,
-     374,
-     33,
-     22
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 111,
-    "bounds": [
-     59,
-     378,
-     46,
-     23
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 112,
-    "bounds": [
-     126,
-     376,
-     48,
-     22
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 113,
-    "bounds": [
-     192,
-     377,
-     46,
-     23
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 114,
-    "bounds": [
-     250,
-     376,
-     39,
-     33
-    ],
-    "kind": "other"
-   },
-   {
-    "index": 115,
-    "bounds": [
-     306,
-     382,
-     43,
-     20
-    ],
-    "kind": "other"
-   }
+  "regionIndices": [
+   110,
+   111,
+   112,
+   113,
+   114,
+   115
   ]
  }
 ]

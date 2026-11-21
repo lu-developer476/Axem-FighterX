@@ -29,7 +29,8 @@ results/
     axem-ranger-{violet,orange}.png     referencias femeninas apiladas
     {violet,orange}/
       spritesheet.png  pose.png
-      sequences/group-01.png … group-07.png + index.json
+      sequences/group-01.png … group-06.png + index.json
+      supplemental/group-01.png … group-07.png (armas, efectos, íconos y siluetas)
 ```
 
 Los retratos laterales del menú se generan directamente desde la referencia original `references/axem-red/axem-red-spritesheet.png`; no se necesita una vista previa duplicada en `results/male/`. El recoloreado del cabello recorre cada componente rubio de todas las poses, incluso cuando está separado del casco o la cara, para evitar que queden mechones originales sin procesar.
@@ -396,21 +397,27 @@ La hoja de Pink tiene distribución libre (poses en el aire, estelas, armas suel
 | 115 | 306 | 382 | 43 | 20 | other |  |
 
 
-### Grupos de filas femeninas
+### Grupos femeninos por fila
 
-Las 116 regiones se asignan exactamente una vez a **siete grupos**, de arriba hacia abajo. Como el atlas mezcla poses, estelas, armas, corazones, efectos y siluetas en una distribución libre, estos grupos son espaciales (filas), no animaciones inventadas. Cada PNG conserva el ancho completo de 900 px y se recorta desde el primer hasta el último píxel de las regiones asignadas; los límites verticales pueden solaparse entre grupos contiguos para no cortar poses altas o inclinadas. Así se contemplan las siete franjas y se mantienen las 84 regiones de personaje, las 32 regiones de otros elementos y las 12 marcas de revisión.
+La hoja completa se recorre de arriba hacia abajo y cada uno de sus siete renglones se procesa. **Cada región de personaje se extrae a una celda individual** y se compone en una tira horizontal compacta, con celdas uniformes y centradas para conservar también las poses aéreas o tumbadas. El formato es el mismo que el de las tiras masculinas: `sequences/group-XX.png` y un `index.json` con el orden, las coordenadas de origen y las marcas de revisión de cada fotograma.
 
-| Grupo | Regiones | Personajes | Otros | Revisión |
-|---|---:|---:|---:|---:|
-| group-01 | 12 | 11 | 1 | 0 |
-| group-02 | 20 | 14 | 6 | 2 |
-| group-03 | 18 | 15 | 3 | 2 |
-| group-04 | 17 | 16 | 1 | 2 |
-| group-05 | 20 | 18 | 2 | 2 |
-| group-06 | 23 | 10 | 13 | 4 |
-| group-07 | 6 | 0 | 6 | 0 |
+Los elementos que no son fotogramas de personaje (armas, estelas, efectos, corazones, íconos y siluetas) no se mezclan con las secuencias: se conservan en `supplemental/group-XX.png`, vinculados al grupo de la misma fila. La séptima fila no contiene poses clasificadas como personaje, pero sus seis recursos suplementarios también se exportan. No se descarta ninguna de las 116 regiones detectadas.
 
-Los archivos `sequences/index.json` de Orange y Violet conservan la lista de regiones, sus coordenadas, tipo y marca de revisión. Los dos colores comparten exactamente los mismos recortes y transparencia; únicamente cambia la paleta.
+| Grupo | Fotogramas | Recursos suplementarios | Regiones |
+|---|---:|---:|---:|
+| group-01 | 11 | 1 | 12 |
+| group-02 | 14 | 6 | 20 |
+| group-03 | 15 | 3 | 18 |
+| group-04 | 16 | 1 | 17 |
+| group-05 | 18 | 2 | 20 |
+| group-06 | 10 | 13 | 23 |
+| group-07 | 0 | 6 | 6 |
+| **Total** | **84** | **32** | **116** |
+
+**Revisión manual:** las 12 regiones que el detector considera compuestas (`varias-poses`) o dudosas (`posible-personaje`) permanecen identificadas en los índices y se exportan sin recortarlas ni perder píxeles. Esas marcas distinguen una caja que puede contener más de una pose o un personaje lateral del resto; no se usan como motivo para omitirla.
+
+Orange y Violet utilizan las mismas regiones, orden y dimensiones de celda. Solo cambia la paleta.
+
 
 ## Acciones añadidas para combate y carrera
 

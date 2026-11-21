@@ -1876,12 +1876,97 @@
    {
     "id": "group-01",
     "row": 1,
-    "bounds": [
-     0,
-     9,
-     900,
-     67
+    "role": "pose-sequence",
+    "frames": [
+     {
+      "regionIndex": 0,
+      "x": 435,
+      "y": 9,
+      "w": 32,
+      "h": 39
+     },
+     {
+      "regionIndex": 1,
+      "x": 479,
+      "y": 10,
+      "w": 28,
+      "h": 39
+     },
+     {
+      "regionIndex": 2,
+      "x": 527,
+      "y": 26,
+      "w": 36,
+      "h": 47
+     },
+     {
+      "regionIndex": 3,
+      "x": 578,
+      "y": 27,
+      "w": 37,
+      "h": 46
+     },
+     {
+      "regionIndex": 4,
+      "x": 622,
+      "y": 25,
+      "w": 40,
+      "h": 48
+     },
+     {
+      "regionIndex": 5,
+      "x": 668,
+      "y": 23,
+      "w": 33,
+      "h": 53
+     },
+     {
+      "regionIndex": 6,
+      "x": 710,
+      "y": 35,
+      "w": 24,
+      "h": 38
+     },
+     {
+      "regionIndex": 7,
+      "x": 742,
+      "y": 37,
+      "w": 28,
+      "h": 37
+     },
+     {
+      "regionIndex": 8,
+      "x": 778,
+      "y": 33,
+      "w": 18,
+      "h": 37
+     },
+     {
+      "regionIndex": 9,
+      "x": 800,
+      "y": 35,
+      "w": 29,
+      "h": 33
+     },
+     {
+      "regionIndex": 10,
+      "x": 836,
+      "y": 32,
+      "w": 28,
+      "h": 36
+     }
     ],
+    "assets": [
+     {
+      "regionIndex": 11,
+      "x": 872,
+      "y": 30,
+      "w": 18,
+      "h": 35
+     }
+    ],
+    "frameCount": 11,
+    "assetCount": 1,
     "regionCount": 12,
     "characterCount": 11,
     "otherCount": 1,
@@ -1904,29 +1989,172 @@
    {
     "id": "group-02",
     "row": 2,
-    "bounds": [
-     0,
-     59,
-     900,
-     80
+    "role": "pose-sequence",
+    "frames": [
+     {
+      "regionIndex": 18,
+      "x": 16,
+      "y": 80,
+      "w": 31,
+      "h": 32
+     },
+     {
+      "regionIndex": 21,
+      "x": 106,
+      "y": 81,
+      "w": 23,
+      "h": 32
+     },
+     {
+      "regionIndex": 22,
+      "x": 144,
+      "y": 83,
+      "w": 29,
+      "h": 34
+     },
+     {
+      "regionIndex": 12,
+      "x": 203,
+      "y": 79,
+      "w": 29,
+      "h": 36
+     },
+     {
+      "regionIndex": 13,
+      "x": 241,
+      "y": 61,
+      "w": 31,
+      "h": 52
+     },
+     {
+      "regionIndex": 14,
+      "x": 281,
+      "y": 64,
+      "w": 32,
+      "h": 52
+     },
+     {
+      "regionIndex": 15,
+      "x": 324,
+      "y": 68,
+      "w": 31,
+      "h": 53
+     },
+     {
+      "regionIndex": 16,
+      "x": 368,
+      "y": 67,
+      "w": 31,
+      "h": 52
+     },
+     {
+      "regionIndex": 17,
+      "x": 409,
+      "y": 59,
+      "w": 84,
+      "h": 54,
+      "review": "varias-poses"
+     },
+     {
+      "regionIndex": 24,
+      "x": 504,
+      "y": 82,
+      "w": 40,
+      "h": 38
+     },
+     {
+      "regionIndex": 25,
+      "x": 566,
+      "y": 82,
+      "w": 52,
+      "h": 54
+     },
+     {
+      "regionIndex": 26,
+      "x": 639,
+      "y": 84,
+      "w": 32,
+      "h": 55
+     },
+     {
+      "regionIndex": 27,
+      "x": 688,
+      "y": 81,
+      "w": 30,
+      "h": 55
+     },
+     {
+      "regionIndex": 29,
+      "x": 770,
+      "y": 94,
+      "w": 23,
+      "h": 38
+     }
     ],
+    "assets": [
+     {
+      "regionIndex": 19,
+      "x": 54,
+      "y": 81,
+      "w": 18,
+      "h": 32
+     },
+     {
+      "regionIndex": 20,
+      "x": 78,
+      "y": 82,
+      "w": 16,
+      "h": 31
+     },
+     {
+      "regionIndex": 23,
+      "x": 182,
+      "y": 83,
+      "w": 17,
+      "h": 30
+     },
+     {
+      "regionIndex": 28,
+      "x": 732,
+      "y": 101,
+      "w": 17,
+      "h": 31
+     },
+     {
+      "regionIndex": 30,
+      "x": 808,
+      "y": 82,
+      "w": 19,
+      "h": 45,
+      "review": "posible-personaje"
+     },
+     {
+      "regionIndex": 31,
+      "x": 833,
+      "y": 89,
+      "w": 28,
+      "h": 37
+     }
+    ],
+    "frameCount": 14,
+    "assetCount": 6,
     "regionCount": 20,
     "characterCount": 14,
     "otherCount": 6,
     "reviewCount": 2,
     "regionIndices": [
-     12,
-     13,
-     14,
-     15,
-     16,
-     17,
      18,
      19,
      20,
      21,
      22,
      23,
+     12,
+     13,
+     14,
+     15,
+     16,
+     17,
      24,
      25,
      26,
@@ -1940,12 +2168,141 @@
    {
     "id": "group-03",
     "row": 3,
-    "bounds": [
-     0,
-     124,
-     900,
-     73
+    "role": "pose-sequence",
+    "frames": [
+     {
+      "regionIndex": 32,
+      "x": 12,
+      "y": 127,
+      "w": 44,
+      "h": 61
+     },
+     {
+      "regionIndex": 33,
+      "x": 67,
+      "y": 124,
+      "w": 96,
+      "h": 67,
+      "review": "varias-poses"
+     },
+     {
+      "regionIndex": 34,
+      "x": 181,
+      "y": 125,
+      "w": 48,
+      "h": 61
+     },
+     {
+      "regionIndex": 35,
+      "x": 241,
+      "y": 139,
+      "w": 31,
+      "h": 41
+     },
+     {
+      "regionIndex": 36,
+      "x": 284,
+      "y": 138,
+      "w": 17,
+      "h": 40
+     },
+     {
+      "regionIndex": 37,
+      "x": 318,
+      "y": 137,
+      "w": 14,
+      "h": 40
+     },
+     {
+      "regionIndex": 38,
+      "x": 359,
+      "y": 138,
+      "w": 19,
+      "h": 39
+     },
+     {
+      "regionIndex": 39,
+      "x": 386,
+      "y": 127,
+      "w": 32,
+      "h": 52
+     },
+     {
+      "regionIndex": 40,
+      "x": 427,
+      "y": 134,
+      "w": 36,
+      "h": 43
+     },
+     {
+      "regionIndex": 41,
+      "x": 472,
+      "y": 144,
+      "w": 48,
+      "h": 35
+     },
+     {
+      "regionIndex": 42,
+      "x": 532,
+      "y": 142,
+      "w": 43,
+      "h": 37
+     },
+     {
+      "regionIndex": 45,
+      "x": 683,
+      "y": 143,
+      "w": 42,
+      "h": 46
+     },
+     {
+      "regionIndex": 46,
+      "x": 734,
+      "y": 151,
+      "w": 40,
+      "h": 36
+     },
+     {
+      "regionIndex": 47,
+      "x": 785,
+      "y": 147,
+      "w": 27,
+      "h": 36
+     },
+     {
+      "regionIndex": 49,
+      "x": 854,
+      "y": 145,
+      "w": 31,
+      "h": 32
+     }
     ],
+    "assets": [
+     {
+      "regionIndex": 43,
+      "x": 587,
+      "y": 151,
+      "w": 41,
+      "h": 31
+     },
+     {
+      "regionIndex": 44,
+      "x": 644,
+      "y": 151,
+      "w": 27,
+      "h": 46,
+      "review": "posible-personaje"
+     },
+     {
+      "regionIndex": 48,
+      "x": 826,
+      "y": 146,
+      "w": 18,
+      "h": 35
+     }
+    ],
+    "frameCount": 15,
+    "assetCount": 3,
     "regionCount": 18,
     "characterCount": 15,
     "otherCount": 3,
@@ -1974,45 +2331,310 @@
    {
     "id": "group-04",
     "row": 4,
-    "bounds": [
-     0,
-     194,
-     900,
-     53
+    "role": "pose-sequence",
+    "frames": [
+     {
+      "regionIndex": 58,
+      "x": 21,
+      "y": 207,
+      "w": 27,
+      "h": 40
+     },
+     {
+      "regionIndex": 60,
+      "x": 93,
+      "y": 212,
+      "w": 28,
+      "h": 33
+     },
+     {
+      "regionIndex": 61,
+      "x": 131,
+      "y": 201,
+      "w": 22,
+      "h": 39
+     },
+     {
+      "regionIndex": 62,
+      "x": 164,
+      "y": 200,
+      "w": 22,
+      "h": 39
+     },
+     {
+      "regionIndex": 50,
+      "x": 201,
+      "y": 195,
+      "w": 34,
+      "h": 41
+     },
+     {
+      "regionIndex": 51,
+      "x": 248,
+      "y": 198,
+      "w": 56,
+      "h": 40,
+      "review": "varias-poses"
+     },
+     {
+      "regionIndex": 63,
+      "x": 315,
+      "y": 200,
+      "w": 49,
+      "h": 39
+     },
+     {
+      "regionIndex": 52,
+      "x": 370,
+      "y": 199,
+      "w": 48,
+      "h": 40
+     },
+     {
+      "regionIndex": 53,
+      "x": 431,
+      "y": 199,
+      "w": 33,
+      "h": 39
+     },
+     {
+      "regionIndex": 54,
+      "x": 478,
+      "y": 199,
+      "w": 56,
+      "h": 41,
+      "review": "varias-poses"
+     },
+     {
+      "regionIndex": 64,
+      "x": 551,
+      "y": 202,
+      "w": 49,
+      "h": 41
+     },
+     {
+      "regionIndex": 65,
+      "x": 609,
+      "y": 202,
+      "w": 47,
+      "h": 40
+     },
+     {
+      "regionIndex": 66,
+      "x": 666,
+      "y": 201,
+      "w": 42,
+      "h": 44
+     },
+     {
+      "regionIndex": 55,
+      "x": 723,
+      "y": 197,
+      "w": 43,
+      "h": 45
+     },
+     {
+      "regionIndex": 56,
+      "x": 781,
+      "y": 194,
+      "w": 43,
+      "h": 48
+     },
+     {
+      "regionIndex": 57,
+      "x": 841,
+      "y": 195,
+      "w": 42,
+      "h": 47
+     }
     ],
+    "assets": [
+     {
+      "regionIndex": 59,
+      "x": 61,
+      "y": 213,
+      "w": 23,
+      "h": 32
+     }
+    ],
+    "frameCount": 16,
+    "assetCount": 1,
     "regionCount": 17,
     "characterCount": 16,
     "otherCount": 1,
     "reviewCount": 2,
     "regionIndices": [
-     50,
-     51,
-     52,
-     53,
-     54,
-     55,
-     56,
-     57,
      58,
      59,
      60,
      61,
      62,
+     50,
+     51,
      63,
+     52,
+     53,
+     54,
      64,
      65,
-     66
+     66,
+     55,
+     56,
+     57
     ]
    },
    {
     "id": "group-05",
     "row": 5,
-    "bounds": [
-     0,
-     251,
-     900,
-     55
+    "role": "pose-sequence",
+    "frames": [
+     {
+      "regionIndex": 67,
+      "x": 15,
+      "y": 257,
+      "w": 49,
+      "h": 40
+     },
+     {
+      "regionIndex": 68,
+      "x": 77,
+      "y": 256,
+      "w": 43,
+      "h": 40
+     },
+     {
+      "regionIndex": 69,
+      "x": 128,
+      "y": 253,
+      "w": 23,
+      "h": 42
+     },
+     {
+      "regionIndex": 70,
+      "x": 167,
+      "y": 254,
+      "w": 22,
+      "h": 40
+     },
+     {
+      "regionIndex": 71,
+      "x": 200,
+      "y": 253,
+      "w": 28,
+      "h": 39
+     },
+     {
+      "regionIndex": 72,
+      "x": 239,
+      "y": 255,
+      "w": 32,
+      "h": 40
+     },
+     {
+      "regionIndex": 73,
+      "x": 282,
+      "y": 253,
+      "w": 28,
+      "h": 39
+     },
+     {
+      "regionIndex": 74,
+      "x": 324,
+      "y": 253,
+      "w": 22,
+      "h": 40
+     },
+     {
+      "regionIndex": 75,
+      "x": 358,
+      "y": 254,
+      "w": 23,
+      "h": 41
+     },
+     {
+      "regionIndex": 76,
+      "x": 388,
+      "y": 254,
+      "w": 32,
+      "h": 40
+     },
+     {
+      "regionIndex": 77,
+      "x": 437,
+      "y": 254,
+      "w": 22,
+      "h": 40
+     },
+     {
+      "regionIndex": 78,
+      "x": 480,
+      "y": 260,
+      "w": 56,
+      "h": 34,
+      "review": "varias-poses"
+     },
+     {
+      "regionIndex": 80,
+      "x": 569,
+      "y": 251,
+      "w": 31,
+      "h": 41
+     },
+     {
+      "regionIndex": 81,
+      "x": 620,
+      "y": 253,
+      "w": 20,
+      "h": 53
+     },
+     {
+      "regionIndex": 82,
+      "x": 647,
+      "y": 256,
+      "w": 95,
+      "h": 41,
+      "review": "varias-poses"
+     },
+     {
+      "regionIndex": 83,
+      "x": 748,
+      "y": 257,
+      "w": 28,
+      "h": 40
+     },
+     {
+      "regionIndex": 84,
+      "x": 788,
+      "y": 253,
+      "w": 19,
+      "h": 44
+     },
+     {
+      "regionIndex": 85,
+      "x": 816,
+      "y": 251,
+      "w": 32,
+      "h": 40
+     }
     ],
+    "assets": [
+     {
+      "regionIndex": 79,
+      "x": 541,
+      "y": 260,
+      "w": 17,
+      "h": 30
+     },
+     {
+      "regionIndex": 86,
+      "x": 856,
+      "y": 261,
+      "w": 30,
+      "h": 37
+     }
+    ],
+    "frameCount": 18,
+    "assetCount": 2,
     "regionCount": 20,
     "characterCount": 18,
     "otherCount": 2,
@@ -2043,17 +2665,185 @@
    {
     "id": "group-06",
     "row": 6,
-    "bounds": [
-     0,
-     306,
-     900,
-     59
+    "role": "pose-sequence",
+    "frames": [
+     {
+      "regionIndex": 90,
+      "x": 108,
+      "y": 311,
+      "w": 33,
+      "h": 35
+     },
+     {
+      "regionIndex": 91,
+      "x": 146,
+      "y": 310,
+      "w": 30,
+      "h": 35
+     },
+     {
+      "regionIndex": 92,
+      "x": 183,
+      "y": 307,
+      "w": 29,
+      "h": 36
+     },
+     {
+      "regionIndex": 93,
+      "x": 224,
+      "y": 307,
+      "w": 27,
+      "h": 35
+     },
+     {
+      "regionIndex": 94,
+      "x": 263,
+      "y": 310,
+      "w": 27,
+      "h": 35
+     },
+     {
+      "regionIndex": 95,
+      "x": 305,
+      "y": 310,
+      "w": 34,
+      "h": 34
+     },
+     {
+      "regionIndex": 96,
+      "x": 351,
+      "y": 307,
+      "w": 21,
+      "h": 40
+     },
+     {
+      "regionIndex": 97,
+      "x": 387,
+      "y": 311,
+      "w": 29,
+      "h": 34
+     },
+     {
+      "regionIndex": 98,
+      "x": 433,
+      "y": 307,
+      "w": 22,
+      "h": 41
+     },
+     {
+      "regionIndex": 100,
+      "x": 515,
+      "y": 309,
+      "w": 18,
+      "h": 44
+     }
     ],
+    "assets": [
+     {
+      "regionIndex": 108,
+      "x": 14,
+      "y": 320,
+      "w": 10,
+      "h": 11
+     },
+     {
+      "regionIndex": 109,
+      "x": 25,
+      "y": 324,
+      "w": 67,
+      "h": 41,
+      "review": "posible-personaje"
+     },
+     {
+      "regionIndex": 87,
+      "x": 28,
+      "y": 306,
+      "w": 39,
+      "h": 27
+     },
+     {
+      "regionIndex": 88,
+      "x": 74,
+      "y": 306,
+      "w": 11,
+      "h": 11
+     },
+     {
+      "regionIndex": 89,
+      "x": 92,
+      "y": 314,
+      "w": 5,
+      "h": 4
+     },
+     {
+      "regionIndex": 99,
+      "x": 463,
+      "y": 318,
+      "w": 39,
+      "h": 22
+     },
+     {
+      "regionIndex": 101,
+      "x": 556,
+      "y": 312,
+      "w": 31,
+      "h": 44
+     },
+     {
+      "regionIndex": 102,
+      "x": 604,
+      "y": 314,
+      "w": 32,
+      "h": 45,
+      "review": "posible-personaje"
+     },
+     {
+      "regionIndex": 103,
+      "x": 656,
+      "y": 307,
+      "w": 32,
+      "h": 49,
+      "review": "posible-personaje"
+     },
+     {
+      "regionIndex": 104,
+      "x": 704,
+      "y": 309,
+      "w": 27,
+      "h": 48
+     },
+     {
+      "regionIndex": 105,
+      "x": 746,
+      "y": 307,
+      "w": 14,
+      "h": 49
+     },
+     {
+      "regionIndex": 106,
+      "x": 773,
+      "y": 307,
+      "w": 18,
+      "h": 52
+     },
+     {
+      "regionIndex": 107,
+      "x": 796,
+      "y": 313,
+      "w": 97,
+      "h": 41,
+      "review": "posible-personaje"
+     }
+    ],
+    "frameCount": 10,
+    "assetCount": 13,
     "regionCount": 23,
     "characterCount": 10,
     "otherCount": 13,
     "reviewCount": 4,
     "regionIndices": [
+     108,
+     109,
      87,
      88,
      89,
@@ -2074,20 +2864,60 @@
      104,
      105,
      106,
-     107,
-     108,
-     109
+     107
     ]
    },
    {
     "id": "group-07",
     "row": 7,
-    "bounds": [
-     0,
-     374,
-     900,
-     35
+    "role": "effects-only",
+    "frames": [],
+    "assets": [
+     {
+      "regionIndex": 110,
+      "x": 6,
+      "y": 374,
+      "w": 33,
+      "h": 22
+     },
+     {
+      "regionIndex": 111,
+      "x": 59,
+      "y": 378,
+      "w": 46,
+      "h": 23
+     },
+     {
+      "regionIndex": 112,
+      "x": 126,
+      "y": 376,
+      "w": 48,
+      "h": 22
+     },
+     {
+      "regionIndex": 113,
+      "x": 192,
+      "y": 377,
+      "w": 46,
+      "h": 23
+     },
+     {
+      "regionIndex": 114,
+      "x": 250,
+      "y": 376,
+      "w": 39,
+      "h": 33
+     },
+     {
+      "regionIndex": 115,
+      "x": 306,
+      "y": 382,
+      "w": 43,
+      "h": 20
+     }
     ],
+    "frameCount": 0,
+    "assetCount": 6,
     "regionCount": 6,
     "characterCount": 0,
     "otherCount": 6,

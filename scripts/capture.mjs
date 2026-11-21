@@ -218,6 +218,7 @@ await hold('d', 620); // Sprint
 await tap('w'); // Salto de la primera valla
 await wait(500);
 await hold('d', 300);
+await hold('d', 200); // Ajusta la distancia antes de la barra baja
 await tap('s'); // Rodada ante el siguiente obstáculo
 await hold('d', 650);
 await shot('29-carrera-terrestre');

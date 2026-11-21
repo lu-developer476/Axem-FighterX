@@ -16,7 +16,7 @@ describe('Variantes canónicas de Axem Rangers', () => {
     expect(genderForRanger('violet')).toBe('female');
     expect(genderForRanger('orange')).toBe('male');
     expect(isAvailableRangerVariant('violet', 'male')).toBe(false);
-    expect(isAllowedRangerVariant('orange', 'female')).toBe(false);
+    expect(isAvailableRangerVariant('orange', 'female')).toBe(false);
   });
 
   for (const variant of variants) {

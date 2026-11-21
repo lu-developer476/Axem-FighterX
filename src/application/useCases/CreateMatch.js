@@ -1,17 +1,16 @@
 import { ARENA } from '../../domain/arena/arena.js';
 import { Match } from '../../domain/entities/Match.js';
 import { createFighter } from '../../domain/rangers/createFighter.js';
-
-const VALID_GENDERS = new Set(['male', 'female']);
+import { isAllowedRangerVariant } from '../../infrastructure/assets/assetManifest.js';
 
 function normalizeSelection(selection, index) {
   if (
     !selection ||
     typeof selection !== 'object' ||
     typeof selection.id !== 'string' ||
-    !VALID_GENDERS.has(selection.gender)
+    !isAllowedRangerVariant(selection.id, selection.gender)
   ) {
-    throw new Error(`El personaje ${index + 1} debe tener Axem y género seleccionados.`);
+    throw new Error(`El personaje ${index + 1} debe tener una variante disponible de Axem seleccionada.`);
   }
 
   return { id: selection.id, gender: selection.gender };

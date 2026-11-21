@@ -7,6 +7,7 @@ import { StageView } from '../views/StageView.js';
 import {
   maleAnimationKey,
   spriteKeyFor,
+  isAllowedRangerVariant,
 } from '../../infrastructure/assets/assetManifest.js';
 import { GIF_ORIGIN_Y, spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
 import { shouldFlip } from '../views/orientation.js';
@@ -77,9 +78,9 @@ export class CinematicScene extends Phaser.Scene {
       if (
         !selection ||
         typeof selection.id !== 'string' ||
-        !['male', 'female'].includes(selection.gender)
+        !isAllowedRangerVariant(selection.id, selection.gender)
       ) {
-        throw new Error('La cinemática requiere las dos selecciones explícitas de Axem y género.');
+        throw new Error('La cinemática requiere las dos variantes canónicas de Axem.');
       }
       return { id: selection.id, gender: selection.gender };
     };

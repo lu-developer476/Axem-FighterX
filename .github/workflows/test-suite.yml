@@ -1,0 +1,33 @@
+name: Suite de pruebas sin regeneración de assets
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-direct-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Vitest completo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund
+
+      # Ejecuta Vitest directamente para que el hook pretest no regenere sprites.
+      - name: Ejecutar pruebas
+        run: npx vitest run

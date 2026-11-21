@@ -3,6 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { DEFAULT_STAGE_ID, STAGES } from '../../infrastructure/assets/stageAssetManifest.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
+import { getCharacterSelectionsByCorner } from '../../domain/match/playerAssignments.js';
 import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
 import { playMenuMusic } from '../../infrastructure/audio/GameMusic.js';
 import { contentWidth, insetSize, mapPanelY, UI_SPACING } from '../views/uiLayout.js';
@@ -360,12 +361,19 @@ export class MenuScene extends Phaser.Scene {
       ...this.matchSetup,
       characters: [...(this.matchSetup.characters ?? [])],
       playerSides: this.matchSetup.playerSides ? { ...this.matchSetup.playerSides } : undefined,
+      playerCharacters: this.matchSetup.playerCharacters
+        ? { ...this.matchSetup.playerCharacters }
+        : undefined,
     };
 
-    if (matchSetup.versusMode === 'player-vs-ai' && matchSetup.playerSide === 'J2') {
-      matchSetup.characters.reverse();
-    }
-    if (matchSetup.versusMode === 'player-vs-player' && matchSetup.playerSides?.J1 === 'right') {
+    if (matchSetup.versusMode === 'player-vs-player') {
+      // La identidad del personaje pertenece al jugador, no a la posición física.
+      // Solo al iniciar se ordenan las selecciones según las esquinas elegidas.
+      matchSetup.characters = getCharacterSelectionsByCorner(
+        matchSetup.playerCharacters,
+        matchSetup.playerSides,
+      );
+    } else if (matchSetup.versusMode === 'player-vs-ai' && matchSetup.playerSide === 'J2') {
       matchSetup.characters.reverse();
     }
     return matchSetup;
@@ -459,7 +467,12 @@ export class MenuScene extends Phaser.Scene {
 
   #showVersusModes() {
     this.page = 'versus';
-    this.matchSetup = { characters: [], playerSide: null, playerSides: null };
+    this.matchSetup = {
+      characters: [],
+      playerSide: null,
+      playerSides: null,
+      playerCharacters: { J1: null, J2: null },
+    };
     this.#beginPage('COMBATE', 330, 168);
 
     VERSUS_MODES.forEach((mode, index) => {
@@ -536,7 +549,15 @@ export class MenuScene extends Phaser.Scene {
     this.pendingCharacterId = null;
     const mode = getVersusMode(this.matchSetup.versusMode);
     const selection = { id: rangerId, gender };
-    this.matchSetup.characters[this.characterSlot] = selection;
+    if (mode.id === 'player-vs-player') {
+      const player = this.characterSlot === 0 ? 'J1' : 'J2';
+      this.matchSetup.playerCharacters = {
+        ...(this.matchSetup.playerCharacters ?? { J1: null, J2: null }),
+        [player]: selection,
+      };
+    } else {
+      this.matchSetup.characters[this.characterSlot] = selection;
+    }
 
     if (this.characterSlot + 1 < mode.characterSlots) {
       this.characterSlot += 1;

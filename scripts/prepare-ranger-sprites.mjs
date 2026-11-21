@@ -1503,7 +1503,8 @@ async function main() {
     'ranger-female-orange.png',
     'menu-ranger-male-violet.png',
     ...['violet'].flatMap((color) => [
-      'run', 'bike', 'double-axe', 'defeated', 'idle', 'dash', 'jump', 'roll',
+      'run', 'bike', 'bike-idle', 'bike-accelerate', 'bike-brake', 'bike-boost',
+      'bike-victory', 'bike-defeat', 'double-axe', 'defeated', 'idle', 'dash', 'jump', 'roll',
       'guard', 'ko', 'charge', 'pose', 'battle-pose', 'teleport',
       'punch-01', 'punch-02', 'punch-03', 'hit', 'hurt',
     ].map((action) => 'axem-' + color + '-' + action + '.png')),

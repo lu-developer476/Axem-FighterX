@@ -1497,6 +1497,18 @@ async function buildGender(gender, allowedColors) {
 
 async function main() {
   await fs.mkdir(GENERATED, { recursive: true });
+  // Elimina salidas antiguas de las dos combinaciones que ya no forman parte del juego.
+  const retiredAssets = [
+    'ranger-male-violet.png',
+    'ranger-female-orange.png',
+    'menu-ranger-male-violet.png',
+    ...['violet'].flatMap((color) => [
+      'run', 'bike', 'double-axe', 'defeated', 'idle', 'dash', 'jump', 'roll',
+      'guard', 'ko', 'charge', 'pose', 'battle-pose', 'teleport',
+      'punch-01', 'punch-02', 'punch-03', 'hit', 'hurt',
+    ].map((action) => 'axem-' + color + '-' + action + '.png')),
+  ];
+  await Promise.all(retiredAssets.map((name) => fs.rm(path.join(GENERATED, name), { force: true })));
   await buildGender('male', ['orange']);
   await buildGender('female', ['violet']);
   await buildMenuMalePoses();

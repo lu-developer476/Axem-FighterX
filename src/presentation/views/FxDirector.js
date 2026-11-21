@@ -92,6 +92,7 @@ export class FxDirector {
         if (elapsed >= DASH_DUST_INTERVAL_MS) {
           const x = fighter.position.x - fighter.facing * 17;
           this.#play('dust', x, fighter.position.y - 5, { scale: 1.1, depth: FX_DEPTH - 10 });
+          this.#playWhitePuff(x, fighter.position.y - 7, 0.12, 370);
           this.#scatter(x, fighter.position.y - 4, 2, FX_PARTICLES.rubble, 0xc5b49b, -fighter.facing);
           this.dashTimers.set(fighter.id, 0);
         } else this.dashTimers.set(fighter.id, elapsed);

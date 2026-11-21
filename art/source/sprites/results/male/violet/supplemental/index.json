@@ -1,0 +1,247 @@
+[
+ {
+  "id": "group-01",
+  "row": 1,
+  "role": "reference-assets",
+  "file": "group-01.png",
+  "assetCount": 3,
+  "cellWidth": 22,
+  "cellHeight": 46,
+  "sourceBounds": [
+   525,
+   0,
+   205,
+   65
+  ],
+  "assets": [
+   {
+    "position": 0,
+    "sourceRegion": 0,
+    "bounds": [
+     555,
+     4,
+     22,
+     45
+    ]
+   },
+   {
+    "position": 1,
+    "sourceRegion": 1,
+    "bounds": [
+     601,
+     3,
+     22,
+     46
+    ]
+   },
+   {
+    "position": 2,
+    "sourceRegion": 2,
+    "bounds": [
+     648,
+     3,
+     22,
+     46
+    ]
+   }
+  ]
+ },
+ {
+  "id": "group-02",
+  "row": 2,
+  "role": "reference-assets",
+  "file": "group-02.png",
+  "assetCount": 2,
+  "cellWidth": 50,
+  "cellHeight": 57,
+  "sourceBounds": [
+   525,
+   65,
+   205,
+   70
+  ],
+  "assets": [
+   {
+    "position": 0,
+    "sourceRegion": 4,
+    "bounds": [
+     531,
+     92,
+     49,
+     15
+    ]
+   },
+   {
+    "position": 1,
+    "sourceRegion": 3,
+    "bounds": [
+     598,
+     68,
+     50,
+     57
+    ]
+   }
+  ]
+ },
+ {
+  "id": "group-03",
+  "row": 3,
+  "role": "reference-assets",
+  "file": "group-03.png",
+  "assetCount": 3,
+  "cellWidth": 36,
+  "cellHeight": 43,
+  "sourceBounds": [
+   525,
+   135,
+   205,
+   70
+  ],
+  "assets": [
+   {
+    "position": 0,
+    "sourceRegion": 5,
+    "bounds": [
+     532,
+     133,
+     36,
+     43
+    ]
+   },
+   {
+    "position": 1,
+    "sourceRegion": 6,
+    "bounds": [
+     578,
+     135,
+     36,
+     41
+    ]
+   },
+   {
+    "position": 2,
+    "sourceRegion": 7,
+    "bounds": [
+     620,
+     135,
+     36,
+     41
+    ]
+   }
+  ]
+ },
+ {
+  "id": "group-04",
+  "row": 4,
+  "role": "reference-assets",
+  "file": "group-04.png",
+  "assetCount": 3,
+  "cellWidth": 27,
+  "cellHeight": 46,
+  "sourceBounds": [
+   525,
+   205,
+   205,
+   75
+  ],
+  "assets": [
+   {
+    "position": 0,
+    "sourceRegion": 8,
+    "bounds": [
+     541,
+     227,
+     25,
+     45
+    ]
+   },
+   {
+    "position": 1,
+    "sourceRegion": 9,
+    "bounds": [
+     572,
+     226,
+     27,
+     46
+    ]
+   },
+   {
+    "position": 2,
+    "sourceRegion": 10,
+    "bounds": [
+     606,
+     227,
+     27,
+     45
+    ]
+   }
+  ]
+ },
+ {
+  "id": "group-05",
+  "row": 5,
+  "role": "reference-assets",
+  "file": "group-05.png",
+  "assetCount": 5,
+  "cellWidth": 24,
+  "cellHeight": 45,
+  "sourceBounds": [
+   525,
+   280,
+   205,
+   105
+  ],
+  "assets": [
+   {
+    "position": 0,
+    "sourceRegion": 11,
+    "bounds": [
+     543,
+     284,
+     22,
+     45
+    ]
+   },
+   {
+    "position": 1,
+    "sourceRegion": 12,
+    "bounds": [
+     574,
+     284,
+     24,
+     45
+    ]
+   },
+   {
+    "position": 2,
+    "sourceRegion": 13,
+    "bounds": [
+     606,
+     284,
+     24,
+     45
+    ]
+   },
+   {
+    "position": 3,
+    "sourceRegion": 14,
+    "bounds": [
+     640,
+     284,
+     24,
+     45
+    ]
+   },
+   {
+    "position": 4,
+    "sourceRegion": 15,
+    "bounds": [
+     671,
+     284,
+     24,
+     45
+    ]
+   }
+  ]
+ }
+]

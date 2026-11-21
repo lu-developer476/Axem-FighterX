@@ -7,7 +7,7 @@
    "file": "group-01.png",
    "frameCount": 11,
    "cellWidth": 40,
-   "cellHeight": 53,
+   "cellHeight": 52,
    "frames": [
     {
      "position": 0,
@@ -34,9 +34,9 @@
      "sourceRegion": 2,
      "bounds": [
       527,
-      26,
+      27,
       36,
-      47
+      46
      ]
     },
     {
@@ -64,9 +64,9 @@
      "sourceRegion": 5,
      "bounds": [
       668,
-      23,
+      24,
       33,
-      53
+      52
      ]
     },
     {
@@ -96,16 +96,16 @@
       778,
       33,
       18,
-      37
+      36
      ]
     },
     {
      "position": 9,
      "sourceRegion": 9,
      "bounds": [
-      800,
+      801,
       35,
-      29,
+      28,
       33
      ]
     },
@@ -113,9 +113,9 @@
      "position": 10,
      "sourceRegion": 10,
      "bounds": [
-      836,
+      837,
       32,
-      28,
+      27,
       36
      ]
     }
@@ -180,26 +180,16 @@
     },
     {
      "position": 1,
-     "sourceRegion": 21,
+     "sourceRegion": 22,
      "bounds": [
-      106,
-      81,
-      23,
-      32
+      144,
+      84,
+      29,
+      33
      ]
     },
     {
      "position": 2,
-     "sourceRegion": 22,
-     "bounds": [
-      144,
-      83,
-      29,
-      34
-     ]
-    },
-    {
-     "position": 3,
      "sourceRegion": 12,
      "bounds": [
       203,
@@ -209,17 +199,17 @@
      ]
     },
     {
-     "position": 4,
+     "position": 3,
      "sourceRegion": 13,
      "bounds": [
       241,
       61,
-      31,
+      32,
       52
      ]
     },
     {
-     "position": 5,
+     "position": 4,
      "sourceRegion": 14,
      "bounds": [
       281,
@@ -229,7 +219,7 @@
      ]
     },
     {
-     "position": 6,
+     "position": 5,
      "sourceRegion": 15,
      "bounds": [
       324,
@@ -239,7 +229,7 @@
      ]
     },
     {
-     "position": 7,
+     "position": 6,
      "sourceRegion": 16,
      "bounds": [
       368,
@@ -249,7 +239,7 @@
      ]
     },
     {
-     "position": 8,
+     "position": 7,
      "sourceRegion": 17,
      "bounds": [
       409,
@@ -260,27 +250,27 @@
      "review": "varias-poses"
     },
     {
-     "position": 9,
+     "position": 8,
      "sourceRegion": 24,
      "bounds": [
       504,
-      82,
+      84,
       40,
-      38
+      35
      ]
     },
     {
-     "position": 10,
+     "position": 9,
      "sourceRegion": 25,
      "bounds": [
       566,
       82,
-      52,
+      53,
       54
      ]
     },
     {
-     "position": 11,
+     "position": 10,
      "sourceRegion": 26,
      "bounds": [
       639,
@@ -290,17 +280,17 @@
      ]
     },
     {
-     "position": 12,
+     "position": 11,
      "sourceRegion": 27,
      "bounds": [
       688,
       81,
-      30,
+      29,
       55
      ]
     },
     {
-     "position": 13,
+     "position": 12,
      "sourceRegion": 29,
      "bounds": [
       770,
@@ -308,13 +298,23 @@
       23,
       38
      ]
+    },
+    {
+     "position": 13,
+     "sourceRegion": 31,
+     "bounds": [
+      833,
+      89,
+      28,
+      37
+     ]
     }
    ]
   },
   "supplemental": {
    "file": "group-02.png",
    "frameCount": 6,
-   "cellWidth": 28,
+   "cellWidth": 23,
    "cellHeight": 45,
    "items": [
     {
@@ -339,6 +339,16 @@
     },
     {
      "position": 2,
+     "sourceRegion": 21,
+     "bounds": [
+      106,
+      81,
+      23,
+      32
+     ]
+    },
+    {
+     "position": 3,
      "sourceRegion": 23,
      "bounds": [
       182,
@@ -348,7 +358,7 @@
      ]
     },
     {
-     "position": 3,
+     "position": 4,
      "sourceRegion": 28,
      "bounds": [
       732,
@@ -358,7 +368,7 @@
      ]
     },
     {
-     "position": 4,
+     "position": 5,
      "sourceRegion": 30,
      "bounds": [
       808,
@@ -367,16 +377,6 @@
       45
      ],
      "review": "posible-personaje"
-    },
-    {
-     "position": 5,
-     "sourceRegion": 31,
-     "bounds": [
-      833,
-      89,
-      28,
-      37
-     ]
     }
    ]
   },
@@ -455,9 +455,9 @@
      "position": 3,
      "sourceRegion": 34,
      "bounds": [
-      181,
+      182,
       125,
-      48,
+      47,
       61
      ]
     },
@@ -505,9 +505,9 @@
      "position": 8,
      "sourceRegion": 39,
      "bounds": [
-      386,
+      387,
       127,
-      32,
+      31,
       52
      ]
     },
@@ -693,7 +693,7 @@
      "bounds": [
       164,
       200,
-      22,
+      21,
       39
      ]
     },
@@ -724,7 +724,7 @@
      "bounds": [
       315,
       200,
-      49,
+      48,
       39
      ]
     },
@@ -732,9 +732,9 @@
      "position": 7,
      "sourceRegion": 52,
      "bounds": [
-      370,
+      371,
       199,
-      48,
+      47,
       40
      ]
     },
@@ -871,7 +871,7 @@
    "file": "group-05.png",
    "frameCount": 20,
    "cellWidth": 56,
-   "cellHeight": 53,
+   "cellHeight": 52,
    "frames": [
     {
      "position": 0,
@@ -947,9 +947,9 @@
      "position": 7,
      "sourceRegion": 74,
      "bounds": [
-      324,
+      325,
       253,
-      22,
+      21,
       40
      ]
     },
@@ -1009,9 +1009,9 @@
      "sourceRegion": 81,
      "bounds": [
       620,
-      253,
+      254,
       20,
-      53
+      52
      ]
     },
     {
@@ -1092,9 +1092,9 @@
      "position": 0,
      "sourceRegion": 79,
      "bounds": [
-      541,
+      542,
       260,
-      17,
+      16,
       30
      ]
     },
@@ -1191,9 +1191,9 @@
      "position": 4,
      "sourceRegion": 94,
      "bounds": [
-      263,
+      264,
       310,
-      27,
+      26,
       35
      ]
     },
@@ -1214,7 +1214,7 @@
       351,
       307,
       21,
-      40
+      39
      ]
     },
     {
@@ -1224,7 +1224,7 @@
       387,
       311,
       29,
-      34
+      33
      ]
     },
     {
@@ -1252,7 +1252,7 @@
   "supplemental": {
    "file": "group-06.png",
    "frameCount": 13,
-   "cellWidth": 97,
+   "cellWidth": 96,
    "cellHeight": 52,
    "items": [
     {
@@ -1382,9 +1382,9 @@
      "position": 12,
      "sourceRegion": 107,
      "bounds": [
-      796,
+      797,
       313,
-      97,
+      96,
       41
      ],
      "review": "posible-personaje"
@@ -1438,7 +1438,7 @@
      "bounds": [
       6,
       374,
-      33,
+      32,
       22
      ]
     },
@@ -1448,7 +1448,7 @@
      "bounds": [
       59,
       378,
-      46,
+      45,
       23
      ]
     },

@@ -86,6 +86,61 @@ async function writeMaleSequences(color, recoloredSheet, groups) {
   return index;
 }
 
+/**
+ * Exporta las siluetas y poses masculinas fuera de las 14 secuencias.
+ * Cada recurso ocupa una celda propia en una tira compacta por renglón.
+ */
+async function writeMaleSupplemental(color, recoloredSheet, groups) {
+  const outputDirectory = RESULTS('male', color, 'supplemental');
+  await fs.rm(outputDirectory, { recursive: true, force: true });
+  const index = [];
+
+  for (const group of groups) {
+    const { cellWidth, cellHeight, placements } = layoutSequence(group.assets, { anchor: 'center' });
+    const layers = await Promise.all(group.assets.map(async (asset, position) => ({
+      input: await sharp(recoloredSheet)
+        .extract({ left: asset.x, top: asset.y, width: asset.w, height: asset.h })
+        .png()
+        .toBuffer(),
+      left: position * cellWidth + placements[position].x,
+      top: placements[position].y,
+    })));
+    const strip = await sharp({
+      create: {
+        width: cellWidth * group.assets.length,
+        height: cellHeight,
+        channels: 4,
+        background: TRANSPARENT,
+      },
+    }).composite(layers).png().toBuffer();
+
+    await writeResult('male', color, path.join('supplemental', group.id + '.png'), strip);
+    index.push({
+      id: group.id,
+      row: group.row,
+      role: group.role,
+      file: group.id + '.png',
+      assetCount: group.assets.length,
+      cellWidth,
+      cellHeight,
+      sourceBounds: group.bounds,
+      assets: group.assets.map((asset, position) => ({
+        position,
+        sourceRegion: asset.index,
+        bounds: [asset.x, asset.y, asset.w, asset.h],
+      })),
+    });
+  }
+
+  await writeResult(
+    'male',
+    color,
+    path.join('supplemental', 'index.json'),
+    Buffer.from(JSON.stringify(index, null, 1) + '\n'),
+  );
+  return index;
+}
+
 
 /**
  * Exporta las siete franjas de Axem Pink sin convertirlas en animaciones
@@ -1289,6 +1344,7 @@ async function buildGender(gender) {
       await writeResult(gender, color, 'double-axe.png', parts[3]);
       const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
       const sequenceIndex = await writeMaleSequences(color, parts[0], manifest.male.groups);
+      await writeMaleSupplemental(color, parts[0], manifest.male.supplementalGroups || []);
       await writeMaleAnimation(run.frames, color, 'run', run.delay, run.loop);
       await writeMaleAnimation(bike.frames, color, 'bike', bike.delay, bike.loop);
       await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop);

@@ -24,7 +24,7 @@
   "role": "punch",
   "file": "group-03.png",
   "frameCount": 10,
-  "cellWidth": 48,
+  "cellWidth": 47,
   "cellHeight": 44,
   "anchorX": 18,
   "anchor": "feet"
@@ -34,7 +34,7 @@
   "role": "punch",
   "file": "group-04.png",
   "frameCount": 8,
-  "cellWidth": 42,
+  "cellWidth": 41,
   "cellHeight": 45,
   "anchorX": 15,
   "anchor": "feet"
@@ -45,7 +45,7 @@
   "file": "group-05.png",
   "frameCount": 8,
   "cellWidth": 45,
-  "cellHeight": 43,
+  "cellHeight": 44,
   "anchorX": 19,
   "anchor": "feet"
  },
@@ -104,9 +104,9 @@
   "role": "dash",
   "file": "group-11.png",
   "frameCount": 8,
-  "cellWidth": 42,
+  "cellWidth": 43,
   "cellHeight": 39,
-  "anchorX": 15,
+  "anchorX": 16,
   "anchor": "feet"
  },
  {

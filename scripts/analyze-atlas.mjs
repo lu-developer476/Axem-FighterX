@@ -97,6 +97,63 @@ function groupFemaleRegions(regions, height, rowCuts) {
   }).filter(Boolean);
 }
 
+/**
+ * Detecta los elementos independientes del área de referencia masculina.
+ * La zona queda excluida de las secuencias, pero sus recursos se exportan
+ * agrupados por los cinco renglones originales de la hoja.
+ */
+function groupMaleSupplementalRegions(image, rules) {
+  const reference = rules.excluded[0];
+  if (!reference) return [];
+  const [left, top, width, height] = reference.bounds;
+  const completeMask = foregroundMask(image, {
+    background: rules.background,
+    tolerance: rules.tolerance,
+    despeckle: Boolean(rules.despeckle),
+    excluded: [],
+  });
+  const croppedMask = new Uint8Array(width * height);
+
+  for (let y = 0; y < height; y += 1) {
+    const sourceStart = (top + y) * image.width + left;
+    croppedMask.set(completeMask.subarray(sourceStart, sourceStart + width), y * width);
+  }
+
+  const detected = detectRegions(croppedMask, width, height, {
+    gap: 0,
+    minPixels: 8,
+    rowBand: 40,
+  }).map((region, index) => ({
+    index,
+    x: left + region.x,
+    y: top + region.y,
+    w: region.w,
+    h: region.h,
+  }));
+
+  const edges = [0, ...rules.supplementalRowCuts, height];
+  return Array.from({ length: edges.length - 1 }, (_, rowIndex) => {
+    const rowTop = edges[rowIndex];
+    const rowBottom = edges[rowIndex + 1];
+    const assets = detected
+      .filter((asset) => {
+        const centerY = asset.y - top + asset.h / 2;
+        return centerY >= rowTop && centerY < rowBottom;
+      })
+      .sort((a, b) => a.x - b.x);
+    if (!assets.length) return null;
+
+    return {
+      id: 'group-' + String(rowIndex + 1).padStart(2, '0'),
+      row: rowIndex + 1,
+      role: 'reference-assets',
+      bounds: [left, top + rowTop, width, rowBottom - rowTop],
+      assets,
+      assetCount: assets.length,
+    };
+  }).filter(Boolean);
+}
+
 async function analyze(rules) {
   const { data, info } = await sharp(path.join(ROOT, rules.file))
     .ensureAlpha()
@@ -121,6 +178,7 @@ async function analyze(rules) {
 
   if (rules.strategy === 'rows') {
     result.groups = detectRowGroups(mask, info.width, info.height);
+    result.supplementalGroups = groupMaleSupplementalRegions(image, rules);
   } else {
     const regions = detectRegions(mask, info.width, info.height, rules).map((region, index) => {
       const { pixels, ...box } = region;
@@ -161,5 +219,9 @@ console.log(
 );
 console.log(
   'female: ' + femaleGroups.length + ' grupos, ' + femaleGroups.reduce((sum, group) => sum + group.frameCount, 0) + ' cuadros de personaje y ' + femaleGroups.reduce((sum, group) => sum + group.assetCount, 0) + ' recursos suplementarios',
+);
+console.log(
+  'male supplemental: ' + (manifest.male.supplementalGroups || []).length + ' grupos, ' +
+  (manifest.male.supplementalGroups || []).reduce((sum, group) => sum + group.assetCount, 0) + ' recursos',
 );
 console.log('→ ' + path.relative(ROOT, FRAMES_PATH));

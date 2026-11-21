@@ -25,6 +25,7 @@ results/
       pose.gif punch-01.gif punch-02.gif punch-03.gif battle-pose.gif
       run.gif dash.gif jump.gif hit.gif hurt.gif teleport.gif (Violet y Orange)
       sequences/group-01.png … group-14.png + index.json
+      supplemental/group-01.png … group-05.png + index.json (siluetas y poses de referencia)
   female/
     axem-ranger-{violet,orange}.png     referencias femeninas apiladas
     {violet,orange}/
@@ -267,9 +268,9 @@ Región `[6, 744, 164, 45]` · 6 cuadros
 | 4 | 123 | 744 | 22 | 45 | 11 |
 | 5 | 148 | 744 | 22 | 45 | 11 |
 
-### Zona excluida
+### Recursos suplementarios masculinos
 
-- `reference-poses` `[525, 0, 205, 385]`: Siluetas de referencia (rojo pleno, rojo claro y rosa), personaje caído, pose con hacha, y poses sueltas: no forman tiras de animación.
+La zona `reference-poses` `[525, 0, 205, 385]` queda excluida de las secuencias animadas, pero sus elementos se conservan: el análisis detecta los recursos independientes y los exporta, agrupados por los cinco renglones originales, como `supplemental/group-01.png` a `group-05.png` más `supplemental/index.json`. Allí se incluyen las siluetas de referencia, la pose de derrota, la pose con hacha y las demás poses sueltas. Cada elemento ocupa una celda propia y el índice mantiene sus coordenadas de origen. Orange y Violet comparten el orden, las dimensiones y la transparencia; solo cambia la paleta.
 
 ## Femenino (Axem Pink): 7 grupos, 116 regiones, 84 de personaje
 

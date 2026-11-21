@@ -13,6 +13,8 @@ export const ATLAS_SOURCES = Object.freeze({
     tolerance: 100,
     despeckle: true,
     strategy: 'rows',
+    // Cinco renglones con poses de referencia y siluetas, no animaciones.
+    supplementalRowCuts: Object.freeze([65, 135, 205, 280]),
     // bounds = [x, y, ancho, alto]
     excluded: Object.freeze([
       Object.freeze({

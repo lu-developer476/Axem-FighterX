@@ -50,6 +50,24 @@ describe('cuadros de la hoja masculina (Axem Red)', () => {
       .toEqual([7, 9, 10, 8, 8, 5, 5, 5, 5, 11, 8, 14, 6, 6]);
   });
 
+  it('clasifica los recursos de referencia fuera de las secuencias masculinas', () => {
+    const groups = atlasFrames.male.supplementalGroups;
+    const excluded = ATLAS_SOURCES.male.excluded[0].bounds;
+    expect(groups).toHaveLength(5);
+    expect(groups.every((group) => group.assets.length > 0)).toBe(true);
+
+    const assets = groups.flatMap((group) => group.assets);
+    expect(assets.length).toBeGreaterThanOrEqual(8);
+    expect(new Set(assets.map((asset) => asset.index)).size).toBe(assets.length);
+
+    for (const asset of assets) {
+      expect(asset.x).toBeGreaterThanOrEqual(excluded[0]);
+      expect(asset.y).toBeGreaterThanOrEqual(excluded[1]);
+      expect(asset.x + asset.w).toBeLessThanOrEqual(excluded[0] + excluded[2]);
+      expect(asset.y + asset.h).toBeLessThanOrEqual(excluded[1] + excluded[3]);
+    }
+  });
+
   it('no tiene cuadros superpuestos, fuera de la hoja ni dentro de zonas excluidas', () => {
     const frames = groups.flatMap((group) => group.frames);
     const excluded = ATLAS_SOURCES.male.excluded.map(({ bounds: [x, y, w, h] }) => ({ x, y, w, h }));
@@ -119,6 +137,24 @@ describe('secuencias y recursos de la hoja femenina (Axem Pink)', () => {
 });
 
 describe('resultados por género y color', () => {
+  it('exporta los recursos suplementarios masculinos para Orange y Violet', async () => {
+    const groups = atlasFrames.male.supplementalGroups;
+    for (const color of COLORS) {
+      const index = JSON.parse(await readFile(resultsPath('male', color, 'supplemental', 'index.json'), 'utf8'));
+      expect(index).toHaveLength(groups.length);
+
+      for (const entry of index) {
+        const group = groups.find((candidate) => candidate.id === entry.id);
+        expect(entry.assetCount).toBe(group.assets.length);
+        expect(entry.assets.map((asset) => asset.sourceRegion)).toEqual(group.assets.map((asset) => asset.index));
+        const metadata = await sharp(resultsPath('male', color, 'supplemental', entry.file)).metadata();
+        expect(metadata.width).toBe(entry.cellWidth * entry.assetCount);
+        expect(metadata.height).toBe(entry.cellHeight);
+        expect(metadata.hasAlpha).toBe(true);
+      }
+    }
+  });
+
   it('cada tira masculina mide celdas × cuadros según su índice', async () => {
     for (const color of COLORS) {
       const index = JSON.parse(await readFile(resultsPath('male', color, 'sequences', 'index.json'), 'utf8'));
@@ -287,6 +323,7 @@ describe('resultados por género y color', () => {
       male: [
         'spritesheet.png', 'run.png', 'bike.png', 'double-axe.png',
         ...atlasFrames.male.groups.map((group) => 'sequences/' + group.id + '.png'),
+        ...atlasFrames.male.supplementalGroups.map((group) => 'supplemental/' + group.id + '.png'),
       ],
       female: [
         'spritesheet.png', 'pose.png', 'battle-pose.png', 'levitate.png',

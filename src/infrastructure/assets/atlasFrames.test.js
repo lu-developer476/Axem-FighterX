@@ -153,6 +153,8 @@ describe('resultados por género y color', () => {
             .toEqual(group.frames.map((frame) => frame.regionIndex));
         } else {
           expect(entry.sequence).toBeNull();
+          await expect(readFile(resultsPath('female', color, 'sequences', group.id + '.png')))
+            .rejects.toMatchObject({ code: 'ENOENT' });
         }
 
         if (group.assetCount) {

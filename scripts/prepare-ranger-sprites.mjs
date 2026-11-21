@@ -118,12 +118,16 @@ async function writeFemaleStrip(color, recoloredSheet, frames, relativePath) {
 async function writeFemaleSequences(color, recoloredSheet, groups) {
   const index = [];
   for (const group of groups) {
+    const sequencePath = path.join(RESULTS('female', color), 'sequences', group.id + '.png');
+    const supplementalPath = path.join(RESULTS('female', color), 'supplemental', group.id + '.png');
     const sequenceLayout = await writeFemaleStrip(
       color, recoloredSheet, group.frames, path.join('sequences', group.id + '.png'),
     );
     const supplementalLayout = await writeFemaleStrip(
       color, recoloredSheet, group.assets, path.join('supplemental', group.id + '.png'),
     );
+    if (!sequenceLayout) await fs.rm(sequencePath, { force: true });
+    if (!supplementalLayout) await fs.rm(supplementalPath, { force: true });
 
     index.push({
       id: group.id,

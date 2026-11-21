@@ -321,7 +321,8 @@ export class LandRaceScene extends Phaser.Scene {
     const duration = ACTION_DURATION_MS[action];
     if (!duration) return;
     const animationKey = maleAnimationKey(racer.rangerId, action);
-    if (!this.anims.exists(animationKey)) return;
+    const usesProceduralFemaleMotion = racer.rangerId === RANGER_IDS.VIOLET;
+    if (!usesProceduralFemaleMotion && !this.anims.exists(animationKey)) return;
     racer.actionMode = action;
     racer.actionDurationMs = duration;
     racer.actionElapsedMs = 0;

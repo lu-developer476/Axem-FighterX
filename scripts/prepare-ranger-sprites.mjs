@@ -139,6 +139,8 @@ async function writeFemaleSequences(color, recoloredSheet, groups) {
         frames: group.frames.map((frame, position) => ({
           position,
           sourceRegion: frame.regionIndex,
+          ...(frame.segment !== undefined ? { segment: frame.segment } : {}),
+          ...(frame.splitFrom !== undefined ? { splitFrom: frame.splitFrom } : {}),
           bounds: [frame.x, frame.y, frame.w, frame.h],
           ...(frame.review ? { review: frame.review } : {}),
         })),

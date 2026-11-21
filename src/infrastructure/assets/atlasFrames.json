@@ -1984,7 +1984,8 @@
      9,
      10,
      11
-    ]
+    ],
+    "splitRegions": []
    },
    {
     "id": "group-02",
@@ -2163,7 +2164,8 @@
      29,
      30,
      31
-    ]
+    ],
+    "splitRegions": []
    },
    {
     "id": "group-03",
@@ -2179,11 +2181,21 @@
      },
      {
       "regionIndex": 33,
+      "splitFrom": 33,
+      "segment": 0,
       "x": 67,
       "y": 124,
-      "w": 96,
-      "h": 67,
-      "review": "varias-poses"
+      "w": 45,
+      "h": 67
+     },
+     {
+      "regionIndex": 33,
+      "splitFrom": 33,
+      "segment": 1,
+      "x": 112,
+      "y": 124,
+      "w": 51,
+      "h": 67
      },
      {
       "regionIndex": 34,
@@ -2301,10 +2313,10 @@
       "h": 35
      }
     ],
-    "frameCount": 15,
+    "frameCount": 16,
     "assetCount": 3,
     "regionCount": 18,
-    "characterCount": 15,
+    "characterCount": 16,
     "otherCount": 3,
     "reviewCount": 2,
     "regionIndices": [
@@ -2326,6 +2338,9 @@
      47,
      48,
      49
+    ],
+    "splitRegions": [
+     33
     ]
    },
    {
@@ -2481,7 +2496,8 @@
      55,
      56,
      57
-    ]
+    ],
+    "splitRegions": []
    },
    {
     "id": "group-05",
@@ -2589,11 +2605,30 @@
      },
      {
       "regionIndex": 82,
+      "splitFrom": 82,
+      "segment": 0,
       "x": 647,
       "y": 256,
-      "w": 95,
-      "h": 41,
-      "review": "varias-poses"
+      "w": 33,
+      "h": 41
+     },
+     {
+      "regionIndex": 82,
+      "splitFrom": 82,
+      "segment": 1,
+      "x": 680,
+      "y": 256,
+      "w": 31,
+      "h": 41
+     },
+     {
+      "regionIndex": 82,
+      "splitFrom": 82,
+      "segment": 2,
+      "x": 711,
+      "y": 256,
+      "w": 31,
+      "h": 41
      },
      {
       "regionIndex": 83,
@@ -2633,10 +2668,10 @@
       "h": 37
      }
     ],
-    "frameCount": 18,
+    "frameCount": 20,
     "assetCount": 2,
     "regionCount": 20,
-    "characterCount": 18,
+    "characterCount": 20,
     "otherCount": 2,
     "reviewCount": 2,
     "regionIndices": [
@@ -2660,6 +2695,9 @@
      84,
      85,
      86
+    ],
+    "splitRegions": [
+     82
     ]
    },
    {
@@ -2865,7 +2903,8 @@
      105,
      106,
      107
-    ]
+    ],
+    "splitRegions": []
    },
    {
     "id": "group-07",
@@ -2929,7 +2968,8 @@
      113,
      114,
      115
-    ]
+    ],
+    "splitRegions": []
    }
   ]
  }

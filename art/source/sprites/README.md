@@ -401,20 +401,20 @@ La hoja de Pink tiene distribución libre (poses en el aire, estelas, armas suel
 
 La hoja completa se recorre de arriba hacia abajo y cada uno de sus siete renglones se procesa. **Cada región de personaje se extrae a una celda individual** y se compone en una tira horizontal compacta, con celdas uniformes y centradas para conservar también las poses aéreas o tumbadas. El formato es el mismo que el de las tiras masculinas: `sequences/group-XX.png` y un `index.json` con el orden, las coordenadas de origen y las marcas de revisión de cada fotograma.
 
-Los elementos que no son fotogramas de personaje (armas, estelas, efectos, corazones, íconos y siluetas) no se mezclan con las secuencias: se conservan en `supplemental/group-XX.png`, vinculados al grupo de la misma fila. La séptima fila no contiene poses clasificadas como personaje, pero sus seis recursos suplementarios también se exportan. No se descarta ninguna de las 116 regiones detectadas.
+Dos cajas detectadas contenían varias poses claramente independientes: la región 33 se separa en dos fotogramas y la región 82 en tres. Así, las **84 regiones de personaje detectadas producen 87 celdas de fotograma** sin fusionar personajes distintos. Los elementos que no son fotogramas de personaje (armas, estelas, efectos, corazones, íconos y siluetas) no se mezclan con las secuencias: se conservan en `supplemental/group-XX.png`, vinculados al grupo de la misma fila. La séptima fila no contiene poses clasificadas como personaje, pero sus seis recursos suplementarios también se exportan. No se descarta ninguna de las 116 regiones detectadas.
 
 | Grupo | Fotogramas | Recursos suplementarios | Regiones |
 |---|---:|---:|---:|
 | group-01 | 11 | 1 | 12 |
 | group-02 | 14 | 6 | 20 |
-| group-03 | 15 | 3 | 18 |
+| group-03 | 16 | 3 | 18 |
 | group-04 | 16 | 1 | 17 |
-| group-05 | 18 | 2 | 20 |
+| group-05 | 20 | 2 | 20 |
 | group-06 | 10 | 13 | 23 |
 | group-07 | 0 | 6 | 6 |
-| **Total** | **84** | **32** | **116** |
+| **Total** | **87** | **32** | **116** |
 
-**Revisión manual:** las 12 regiones que el detector considera compuestas (`varias-poses`) o dudosas (`posible-personaje`) permanecen identificadas en los índices y se exportan sin recortarlas ni perder píxeles. Esas marcas distinguen una caja que puede contener más de una pose o un personaje lateral del resto; no se usan como motivo para omitirla.
+**Revisión manual:** las 12 regiones que el detector considera compuestas (`varias-poses`) o dudosas (`posible-personaje`) se conservan identificadas. Las dos cajas que contenían varios personajes se dividieron manualmente con coordenadas explícitas; las demás siguen en su celda original con su marca de revisión. Ninguna región se omite.
 
 Orange y Violet utilizan las mismas regiones, orden y dimensiones de celda. Solo cambia la paleta.
 

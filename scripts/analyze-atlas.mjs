@@ -23,6 +23,23 @@ const FRAMES_PATH = path.join(
   ROOT, 'src', 'infrastructure', 'assets', 'atlasFrames.json',
 );
 
+/**
+ * Dos componentes de Pink contienen más de un personaje claramente separado.
+ * Sus celdas se dividen manualmente para no convertir varias poses en un único
+ * fotograma. Las coordenadas se mantienen relativas a la hoja original.
+ */
+const FEMALE_MANUAL_SPLITS = Object.freeze({
+  33: Object.freeze([
+    Object.freeze({ segment: 0, x: 67, y: 124, w: 45, h: 67 }),
+    Object.freeze({ segment: 1, x: 112, y: 124, w: 51, h: 67 }),
+  ]),
+  82: Object.freeze([
+    Object.freeze({ segment: 0, x: 647, y: 256, w: 33, h: 41 }),
+    Object.freeze({ segment: 1, x: 680, y: 256, w: 31, h: 41 }),
+    Object.freeze({ segment: 2, x: 711, y: 256, w: 31, h: 41 }),
+  ]),
+});
+
 
 /**
  * Agrupa todas las regiones femeninas por su franja de lectura.
@@ -44,9 +61,18 @@ function groupFemaleRegions(regions, height, rowCuts) {
 
     const frames = members
       .filter((region) => region.kind === 'character')
-      .map(({ index: regionIndex, x, y, w, h, review }) => ({
-        regionIndex, x, y, w, h, ...(review ? { review } : {}),
-      }));
+      .flatMap((region) => {
+        const manualSegments = FEMALE_MANUAL_SPLITS[region.index];
+        if (manualSegments) {
+          return manualSegments.map((segment) => ({
+            regionIndex: region.index,
+            splitFrom: region.index,
+            ...segment,
+          }));
+        }
+        const { index: regionIndex, x, y, w, h, review } = region;
+        return [{ regionIndex, x, y, w, h, ...(review ? { review } : {}) }];
+      });
     const assets = members
       .filter((region) => region.kind === 'other')
       .map(({ index: regionIndex, x, y, w, h, review }) => ({
@@ -65,6 +91,7 @@ function groupFemaleRegions(regions, height, rowCuts) {
       characterCount: frames.length,
       otherCount: assets.length,
       reviewCount: members.filter((region) => Boolean(region.review)).length,
+      splitRegions: members.filter((region) => FEMALE_MANUAL_SPLITS[region.index]).map((region) => region.index),
       regionIndices: members.map((region) => region.index),
     };
   }).filter(Boolean);

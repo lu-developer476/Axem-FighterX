@@ -413,8 +413,8 @@
   "role": "pose-sequence",
   "sequence": {
    "file": "group-03.png",
-   "frameCount": 15,
-   "cellWidth": 96,
+   "frameCount": 16,
+   "cellWidth": 51,
    "cellHeight": 67,
    "frames": [
     {
@@ -430,16 +430,29 @@
     {
      "position": 1,
      "sourceRegion": 33,
+     "segment": 0,
+     "splitFrom": 33,
      "bounds": [
       67,
       124,
-      96,
+      45,
       67
-     ],
-     "review": "varias-poses"
+     ]
     },
     {
      "position": 2,
+     "sourceRegion": 33,
+     "segment": 1,
+     "splitFrom": 33,
+     "bounds": [
+      112,
+      124,
+      51,
+      67
+     ]
+    },
+    {
+     "position": 3,
      "sourceRegion": 34,
      "bounds": [
       181,
@@ -449,7 +462,7 @@
      ]
     },
     {
-     "position": 3,
+     "position": 4,
      "sourceRegion": 35,
      "bounds": [
       241,
@@ -459,7 +472,7 @@
      ]
     },
     {
-     "position": 4,
+     "position": 5,
      "sourceRegion": 36,
      "bounds": [
       284,
@@ -469,7 +482,7 @@
      ]
     },
     {
-     "position": 5,
+     "position": 6,
      "sourceRegion": 37,
      "bounds": [
       318,
@@ -479,7 +492,7 @@
      ]
     },
     {
-     "position": 6,
+     "position": 7,
      "sourceRegion": 38,
      "bounds": [
       359,
@@ -489,7 +502,7 @@
      ]
     },
     {
-     "position": 7,
+     "position": 8,
      "sourceRegion": 39,
      "bounds": [
       386,
@@ -499,7 +512,7 @@
      ]
     },
     {
-     "position": 8,
+     "position": 9,
      "sourceRegion": 40,
      "bounds": [
       427,
@@ -509,7 +522,7 @@
      ]
     },
     {
-     "position": 9,
+     "position": 10,
      "sourceRegion": 41,
      "bounds": [
       472,
@@ -519,7 +532,7 @@
      ]
     },
     {
-     "position": 10,
+     "position": 11,
      "sourceRegion": 42,
      "bounds": [
       532,
@@ -529,7 +542,7 @@
      ]
     },
     {
-     "position": 11,
+     "position": 12,
      "sourceRegion": 45,
      "bounds": [
       683,
@@ -539,7 +552,7 @@
      ]
     },
     {
-     "position": 12,
+     "position": 13,
      "sourceRegion": 46,
      "bounds": [
       734,
@@ -549,7 +562,7 @@
      ]
     },
     {
-     "position": 13,
+     "position": 14,
      "sourceRegion": 47,
      "bounds": [
       785,
@@ -559,7 +572,7 @@
      ]
     },
     {
-     "position": 14,
+     "position": 15,
      "sourceRegion": 49,
      "bounds": [
       854,
@@ -609,7 +622,7 @@
     }
    ]
   },
-  "frameCount": 15,
+  "frameCount": 16,
   "assetCount": 3,
   "regionCount": 18,
   "reviewCount": 2,
@@ -856,8 +869,8 @@
   "role": "pose-sequence",
   "sequence": {
    "file": "group-05.png",
-   "frameCount": 18,
-   "cellWidth": 95,
+   "frameCount": 20,
+   "cellWidth": 56,
    "cellHeight": 53,
    "frames": [
     {
@@ -1004,16 +1017,41 @@
     {
      "position": 14,
      "sourceRegion": 82,
+     "segment": 0,
+     "splitFrom": 82,
      "bounds": [
       647,
       256,
-      95,
+      33,
       41
-     ],
-     "review": "varias-poses"
+     ]
     },
     {
      "position": 15,
+     "sourceRegion": 82,
+     "segment": 1,
+     "splitFrom": 82,
+     "bounds": [
+      680,
+      256,
+      31,
+      41
+     ]
+    },
+    {
+     "position": 16,
+     "sourceRegion": 82,
+     "segment": 2,
+     "splitFrom": 82,
+     "bounds": [
+      711,
+      256,
+      31,
+      41
+     ]
+    },
+    {
+     "position": 17,
      "sourceRegion": 83,
      "bounds": [
       748,
@@ -1023,7 +1061,7 @@
      ]
     },
     {
-     "position": 16,
+     "position": 18,
      "sourceRegion": 84,
      "bounds": [
       788,
@@ -1033,7 +1071,7 @@
      ]
     },
     {
-     "position": 17,
+     "position": 19,
      "sourceRegion": 85,
      "bounds": [
       816,
@@ -1072,7 +1110,7 @@
     }
    ]
   },
-  "frameCount": 18,
+  "frameCount": 20,
   "assetCount": 2,
   "regionCount": 20,
   "reviewCount": 2,

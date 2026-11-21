@@ -75,7 +75,7 @@ describe('secuencias y recursos de la hoja femenina (Axem Pink)', () => {
   });
 
   it('clasifica las siete filas en tiras compactas y recursos suplementarios', () => {
-    expect(groups.map((group) => group.frameCount)).toEqual([11, 14, 15, 16, 18, 10, 0]);
+    expect(groups.map((group) => group.frameCount)).toEqual([11, 14, 16, 16, 20, 10, 0]);
     expect(groups.map((group) => group.assetCount)).toEqual([1, 6, 3, 1, 2, 13, 6]);
     expect(groups.map((group) => group.role)).toEqual([
       'pose-sequence', 'pose-sequence', 'pose-sequence', 'pose-sequence',
@@ -84,10 +84,11 @@ describe('secuencias y recursos de la hoja femenina (Axem Pink)', () => {
   });
 
   it('asigna cada región del atlas a una sola fila y a una sola celda o recurso', () => {
-    const indices = groups.flatMap((group) => [
-      ...group.frames.map((frame) => frame.regionIndex),
-      ...group.assets.map((asset) => asset.regionIndex),
-    ]);
+    const indices = groups.flatMap((group) => group.regionIndices);
+    for (const group of groups) {
+      for (const frame of group.frames) expect(group.regionIndices).toContain(frame.regionIndex);
+      for (const asset of group.assets) expect(group.regionIndices).toContain(asset.regionIndex);
+    }
     expect(indices).toHaveLength(regions.length);
     expect(new Set(indices).size).toBe(regions.length);
     expect([...indices].sort((a, b) => a - b)).toEqual(regions.map((region) => region.index));
@@ -105,10 +106,15 @@ describe('secuencias y recursos de la hoja femenina (Axem Pink)', () => {
   });
 
   it('conserva marcadas las regiones compuestas o dudosas para revisión', () => {
-    const reviewed = groups.flatMap((group) => [...group.frames, ...group.assets])
-      .filter((item) => item.review);
+    const reviewed = regions.filter((region) => region.review);
     expect(reviewed).toHaveLength(12);
-    for (const item of reviewed) expect(['varias-poses', 'posible-personaje']).toContain(item.review);
+    for (const region of reviewed) expect(['varias-poses', 'posible-personaje']).toContain(region.review);
+    expect(groups[2].frames.filter((frame) => frame.splitFrom === 33).map((frame) => frame.segment))
+      .toEqual([0, 1]);
+    expect(groups[4].frames.filter((frame) => frame.splitFrom === 82).map((frame) => frame.segment))
+      .toEqual([0, 1, 2]);
+    expect(groups[2].splitRegions).toEqual([33]);
+    expect(groups[4].splitRegions).toEqual([82]);
   });
 });
 
@@ -137,7 +143,7 @@ describe('resultados por género y color', () => {
     for (const color of COLORS) {
       const index = JSON.parse(await readFile(resultsPath('female', color, 'sequences', 'index.json'), 'utf8'));
       expect(index).toHaveLength(7);
-      expect(index.map((entry) => entry.frameCount)).toEqual([11, 14, 15, 16, 18, 10, 0]);
+      expect(index.map((entry) => entry.frameCount)).toEqual([11, 14, 16, 16, 20, 10, 0]);
       expect(index.map((entry) => entry.assetCount)).toEqual([1, 6, 3, 1, 2, 13, 6]);
 
       for (const entry of index) {
@@ -149,8 +155,11 @@ describe('resultados por género y color', () => {
           expect(metadata.width).toBe(entry.sequence.cellWidth * group.frameCount);
           expect(metadata.height).toBe(entry.sequence.cellHeight);
           expect(metadata.hasAlpha).toBe(true);
-          expect(entry.sequence.frames.map((frame) => frame.sourceRegion))
-            .toEqual(group.frames.map((frame) => frame.regionIndex));
+          expect(entry.sequence.frames.map((frame) => [
+            frame.sourceRegion, frame.segment ?? null, frame.splitFrom ?? null,
+          ])).toEqual(group.frames.map((frame) => [
+            frame.regionIndex, frame.segment ?? null, frame.splitFrom ?? null,
+          ]));
         } else {
           expect(entry.sequence).toBeNull();
           await expect(readFile(resultsPath('female', color, 'sequences', group.id + '.png')))

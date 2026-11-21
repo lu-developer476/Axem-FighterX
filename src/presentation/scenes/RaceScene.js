@@ -157,7 +157,7 @@ export class RaceScene extends Phaser.Scene {
     this.player.laneSwitchMs = Math.max(0, this.player.laneSwitchMs - delta);
     if (this.player.laneSwitchMs === 0) this.player.lane = this.player.targetLane;
     const frame = Math.min(delta, 50) / 1000;
-    const targetSpeed = 205 + (accelerate ? 105 : 0) - (brake ? 92 : 0) + (boosting ? 105 : 0);
+    const targetSpeed = 172 + (accelerate ? 100 : 0) - (brake ? 70 : 0) + (boosting ? 90 : 0);
     this.speed = Phaser.Math.Linear(this.speed, clamp(targetSpeed, 85, 410), Math.min(1, frame * 3.2));
     this.distance += this.speed * frame;
     this.player.distance = this.distance;
@@ -209,7 +209,7 @@ export class RaceScene extends Phaser.Scene {
 
   #updateOpponents(time, frame) {
     this.opponents.forEach((racer, index) => {
-      racer.distance += (this.speed * (0.88 + index * 0.035) + Math.sin(time / (390 + index * 55)) * 15) * frame;
+      racer.distance += (196 + index * 7 + Math.sin(time / (390 + index * 55)) * 15) * frame;
       racer.laneSwitchMs = Math.max(0, racer.laneSwitchMs - frame * 1000);
       const upcoming = this.obstacles.find((obstacle) => !obstacle.resolved &&
         obstacle.lane === racer.lane && obstacle.distance - racer.distance < 125 &&
@@ -259,8 +259,8 @@ export class RaceScene extends Phaser.Scene {
       this.lastSceneryChunk = Math.floor(this.sceneryOffset / 105);
       const side = this.lastSceneryChunk % 2 ? 1 : -1;
       const texture = this.lastSceneryChunk % 4 === 0 ? 'bike-race-rock' : 'bike-race-tree';
-      const item = this.add.image(side < 0 ? 12 : GAME_WIDTH - 12,
-        108 + (this.lastSceneryChunk % 3) * 10, texture).setDepth(8).setScale(0.45 + (this.lastSceneryChunk % 3) * 0.1);
+      const item = this.add.image(GAME_WIDTH + 28,
+        108 + (this.lastSceneryChunk % 3) * 10, texture).setFlipX(side < 0).setDepth(8).setScale(0.45 + (this.lastSceneryChunk % 3) * 0.1);
       this.scenery.push({ item, chunk: this.lastSceneryChunk });
     }
     for (const entry of this.scenery) {

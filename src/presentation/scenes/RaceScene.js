@@ -39,6 +39,14 @@ function createTexture(scene, key, width, height, draw) {
 }
 
 function createRaceTextures(scene) {
+  createTexture(scene, 'bike-race-motorcycle', 76, 34, (g) => {
+    g.fillStyle(0x151a23, 1).fillCircle(14, 25, 9).fillCircle(60, 25, 9);
+    g.fillStyle(0x9ca6a8, 1).fillCircle(14, 25, 4).fillCircle(60, 25, 4);
+    g.lineStyle(4, 0x9a4d40, 1).lineBetween(14, 25, 34, 14).lineBetween(34, 14, 60, 25);
+    g.lineStyle(3, 0xd7b26f, 1).lineBetween(34, 14, 44, 24).lineBetween(44, 24, 60, 25);
+    g.fillStyle(0x333f51, 1).fillRoundedRect(27, 7, 23, 8, 3);
+    g.fillStyle(0xd7b26f, 1).fillRect(42, 4, 13, 3);
+  });
   createTexture(scene, 'bike-race-barrier', 42, 24, (g) => {
     g.fillStyle(0x252332, 1).fillRect(5, 4, 5, 20).fillRect(32, 4, 5, 20);
     g.fillStyle(0xe7d7b5, 1).fillRect(3, 3, 36, 6);
@@ -162,6 +170,7 @@ export class RaceScene extends Phaser.Scene {
     const targetSpeed = 205 + (accelerate ? 105 : 0) - (brake ? 92 : 0) + (boosting ? 105 : 0);
     this.speed = Phaser.Math.Linear(this.speed, clamp(targetSpeed, 85, 410), Math.min(1, frame * 3.2));
     this.distance += this.speed * frame;
+    this.player.distance = this.distance;
     this.boost = clamp(this.boost + (boosting ? -38 : 13) * frame, 0, 100);
     this.trackOffset = (this.trackOffset + this.speed * frame * 0.9) % 34;
     this.sceneryOffset += this.speed * frame * 0.52;
@@ -190,9 +199,13 @@ export class RaceScene extends Phaser.Scene {
     if (rangerId === RANGER_IDS.ORANGE && this.anims.exists(maleAnimationKey(rangerId, 'bike'))) {
       sprite.play(maleAnimationKey(rangerId, 'bike'));
     }
+    const vehicle = rangerId === RANGER_IDS.VIOLET
+      ? this.add.image(sprite.x, sprite.y + 8, 'bike-race-motorcycle')
+        .setOrigin(0.5, 0.75).setScale(MOTORCYCLE_LANE_SCALES[lane] * 0.78).setDepth(34 + lane)
+      : null;
     const labelText = this.#text(label, sprite.x, sprite.y - 27, isPlayer ? '#e3d4ff' : '#ffe0b2', 5);
     return {
-      rangerId, label, lane, targetLane: lane, isPlayer, sprite, labelText,
+      rangerId, label, lane, targetLane: lane, isPlayer, sprite, vehicle, labelText,
       distance: isPlayer ? 0 : lane * 18,
       stunMs: 0, laneSwitchMs: 0, crashed: false,
     };
@@ -242,6 +255,7 @@ export class RaceScene extends Phaser.Scene {
           racer.stunMs = 720;
           if (racer.isPlayer) this.boost = Math.max(0, this.boost - 22);
           racer.distance -= 20;
+          if (racer.isPlayer) this.distance = Math.max(0, this.distance - 20);
           obstacle.hitRacers.add(racer.label);
         }
       }
@@ -316,6 +330,7 @@ export class RaceScene extends Phaser.Scene {
       racer.sprite.setScale(MOTORCYCLE_LANE_SCALES[racer.lane] * (racer.isPlayer ? 0.78 : 0.7));
       if (racer.rangerId === RANGER_IDS.VIOLET) racer.sprite.setAngle(Math.sin(time / 160) * 1.5);
       racer.labelText.setPosition(x, targetY - 27);
+      if (racer.vehicle) racer.vehicle.setPosition(x, targetY + 8).setScale(MOTORCYCLE_LANE_SCALES[racer.lane] * 0.78);
     }
   }
 

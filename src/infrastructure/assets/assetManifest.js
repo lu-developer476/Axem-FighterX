@@ -1,9 +1,8 @@
-import { allowedGenderFor, isAllowedRangerVariant } from '../../domain/rangers/rangerCatalog.js';
-export { allowedGenderFor, isAllowedRangerVariant };
+import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 
 export const DEFAULT_RANGER_GENDER = 'male';
 
-export const spriteKeyFor = (rangerId, gender = allowedGenderFor(rangerId) ?? DEFAULT_RANGER_GENDER) =>
+export const spriteKeyFor = (rangerId, gender = genderForRanger(rangerId) ?? DEFAULT_RANGER_GENDER) =>
   'ranger-' + gender + '-' + rangerId;
 
 export const spriteUrlFor = (rangerId, gender = allowedGenderFor(rangerId) ?? DEFAULT_RANGER_GENDER) =>

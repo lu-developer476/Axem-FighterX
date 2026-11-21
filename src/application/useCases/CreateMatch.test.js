@@ -19,6 +19,10 @@ describe('createDefaultMatch', () => {
     expect(() => createDefaultMatch(Math.random, [{ id: 'violet', gender: 'male' }]))
       .toThrow(/dos selecciones explícitas/);
     expect(() => createDefaultMatch(Math.random, [
+      { id: 'violet', gender: 'male' },
+      { id: 'orange', gender: 'male' },
+    ])).toThrow(/variante disponible de Axem seleccionada/);
+    expect(() => createDefaultMatch(Math.random, [
       { id: 'violet' },
       { id: 'orange', gender: 'female' },
     ])).toThrow(/variante disponible de Axem seleccionada/);

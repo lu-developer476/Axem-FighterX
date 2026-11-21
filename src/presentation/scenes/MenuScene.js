@@ -4,6 +4,8 @@ import { STAGES } from '../../domain/arena/stageCatalog.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
+import { getStageVisualVariants } from '../../infrastructure/assets/stageAssetManifest.js';
+import { playMenuMusic } from '../../infrastructure/audio/GameMusic.js';
 import { contentWidth, insetSize, mapPanelY, UI_SPACING } from '../views/uiLayout.js';
 
 const RANGER_ORDER = [RANGER_IDS.ORANGE, RANGER_IDS.VIOLET];
@@ -33,10 +35,12 @@ export class MenuScene extends Phaser.Scene {
     this.matchSetup = {};
     this.characterSlot = 0;
     this.pendingCharacterId = null;
+    this.pendingStageId = null;
     this.panelWidth = 282;
   }
 
   create() {
+    playMenuMusic(this);
     this.#createBackdrop();
     this.ui = this.add.container(0, 0);
     this.keys = this.input.keyboard.addKeys({
@@ -363,9 +367,10 @@ export class MenuScene extends Phaser.Scene {
     return matchSetup;
   }
 
-  #startSelectedFight(stageId, cinematic = true) {
+  #startSelectedFight(stageId, cinematic = true, stageVariantId = 'classic') {
     this.scene.start(cinematic ? 'CinematicScene' : 'FightScene', {
       stageId,
+      stageVariantId,
       matchSetup: this.#getMatchSetup(),
     });
   }
@@ -401,6 +406,10 @@ export class MenuScene extends Phaser.Scene {
     if (this.page === 'training-colors') {
       if (this.matchSetup.versusMode === 'player-vs-ai') this.#showPlayerSide();
       else this.#moveSelectionBackToCharacters();
+      return;
+    }
+    if (this.page === 'stage-variants') {
+      this.#showStages();
       return;
     }
     if (this.page === 'stages') {
@@ -632,7 +641,8 @@ export class MenuScene extends Phaser.Scene {
         ? stage.name.toUpperCase() + ' · CALDERA ACTIVA'
         : stage.name.toUpperCase();
       this.#addButton(optionTitle, 150 + index * 10.4, () => {
-        this.#startSelectedFight(stage.id, true);
+        this.pendingStageId = stage.id;
+        this.#showStageVariants();
       }, {
         width: 300,
         fontSize: '7px',
@@ -645,6 +655,40 @@ export class MenuScene extends Phaser.Scene {
       else this.#moveSelectionBackToCharacters();
     }, { width: 150, fontSize: '8px' });
     this.#addFooter();
+  }
+
+  #showStageVariants() {
+    const stage = STAGES.find((entry) => entry.id === this.pendingStageId);
+    if (!stage) {
+      this.#showStages();
+      return;
+    }
+
+    this.page = 'stage-variants';
+    const variants = getStageVisualVariants(stage.id);
+    this.#beginPage('VARIANTES VISUALES', 390, 194);
+    this.#addText(stage.name.toUpperCase(), GAME_WIDTH / 2, 137, {
+      fontSize: '6px',
+      color: '#b7a9cb',
+    });
+
+    variants.forEach((variant, index) => {
+      const column = index % 2;
+      const row = Math.floor(index / 2);
+      this.#addButton(variant.label.toUpperCase(), 159 + row * 23, () => {
+        this.#startSelectedFight(stage.id, true, variant.id);
+      }, {
+        width: 174,
+        x: column === 0 ? 143 : 337,
+        fontSize: '5px',
+        height: 15,
+      });
+    });
+
+    this.#addButton('VOLVER', 239, () => this.#showStages(), {
+      width: 150,
+      fontSize: '8px',
+    });
   }
 
   #showControls() {

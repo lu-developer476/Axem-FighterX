@@ -15,8 +15,8 @@ import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { createStageTextures } from '../../infrastructure/graphics/StageTextureFactory.js';
 import { createAdditionalStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';
-import { createKenneyStageBackgrounds, KENNEY_STAGE_ATLAS_KEY } from '../../infrastructure/graphics/KenneyStageBackgrounds.js';
-import stageBackgroundAtlasUrl from '../../../art/source/environments/kenney-pixel-platformer/tilemap-backgrounds.png';
+import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
+import { createStageAssetTextures } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import whitePuffAtlasUrl from '../../../art/source/effects/kenney-smoke-particles/white-puff-atlas.png';
 import { registerCharacterAnimations } from '../animation/registerCharacterAnimations.js';
 import { registerFxAnimations } from '../animation/registerFxAnimations.js';
@@ -120,7 +120,8 @@ export class PreloadScene extends Phaser.Scene {
       );
     }
     this.load.image('title-art', import.meta.env.BASE_URL + 'generated/title.png');
-    this.load.image(KENNEY_STAGE_ATLAS_KEY, stageBackgroundAtlasUrl);
+    Object.values(STAGE_MAP_ASSETS).forEach(({ key, url }) => this.load.image(key, url));
+    Object.values(STAGE_TILESET_ASSETS).forEach(({ key, url }) => this.load.image(key, url));
     Object.values(KENNEY_FX).forEach(({ key, url }) => this.load.image(key, url));
     this.load.spritesheet('kenney-white-puff', whitePuffAtlasUrl, {
       frameWidth: 381,
@@ -131,7 +132,7 @@ export class PreloadScene extends Phaser.Scene {
   create() {
     createStageTextures(this);
     createAdditionalStageTextures(this);
-    createKenneyStageBackgrounds(this);
+    createStageAssetTextures(this);
     createFxTextures(this);
     registerFxAnimations(this);
     registerCharacterAnimations(this);

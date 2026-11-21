@@ -9,6 +9,10 @@ import {
 } from '../../infrastructure/graphics/StageTextureFactory.js';
 import { getStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';
 import { ambientAnimationKey, flameAnimationKey } from '../animation/registerFxAnimations.js';
+import {
+  getStageVisualVariant,
+  tileOverlayKeyForTileset,
+} from '../../infrastructure/assets/stageAssetManifest.js';
 
 const PILLAR_X = 20;
 const BARRIER_X = 26;
@@ -36,12 +40,15 @@ const STAGE_VISUALS = {
 /** Construye el escenario seleccionado o un fondo plano para el entrenamiento. */
 export class StageView {
   /** @param {Phaser.Scene} scene @param {string} [stageId] @param {{ backgroundColor?: string | null, cinematic?: boolean }} [options] */
-  constructor(scene, stageId = STAGE_IDS.RUINS, { backgroundColor = null, cinematic = false } = {}) {
+  constructor(scene, stageId = STAGE_IDS.RUINS, { backgroundColor = null, cinematic = false, variantId = 'classic' } = {}) {
     this.scene = scene;
     this.solidBackground = typeof backgroundColor === 'string' && /^#[\da-f]{6}$/i.test(backgroundColor)
       ? backgroundColor
       : null;
     this.parallaxLayers = [];
+    this.stageId = STAGE_VISUALS[stageId] ? stageId : STAGE_IDS.RUINS;
+    this.variant = getStageVisualVariant(this.stageId, variantId);
+    this.assetBackground = false;
 
     if (this.solidBackground) {
       const color = Number.parseInt(this.solidBackground.slice(1), 16);
@@ -52,9 +59,13 @@ export class StageView {
       return;
     }
 
-    this.stageId = STAGE_VISUALS[stageId] ? stageId : STAGE_IDS.RUINS;
     this.textures = getStageTextures(this.stageId);
     this.visuals = STAGE_VISUALS[this.stageId];
+
+    if (this.variant.backgroundKey) {
+      this.#createAssetBackground();
+      return;
+    }
 
     const layer = (key, factor, depth, x = 0, y = 0) => {
       const image = scene.add.image(x, y, key)
@@ -67,6 +78,7 @@ export class StageView {
 
     layer(this.textures.sky, 0, -100);
     layer(this.textures.far, PARALLAX.far, -90);
+    this.#addTilesetOverlay(-85, PARALLAX.mid);
     layer(this.textures.mid, PARALLAX.mid, -80);
     // Las cinemáticas priorizan lectura y composición: sin niebla móvil ni capa de ruido en primer plano.
     if (!cinematic) {
@@ -111,6 +123,48 @@ export class StageView {
     this.ambientObjects = [];
     this.#createAmbientObjects();
     this.warningMarker = null;
+  }
+
+  #createAssetBackground() {
+    const source = this.scene.textures.get(this.variant.backgroundKey).getSourceImage();
+    const scale = Math.max(ARENA.width / source.width, VIEW.height / source.height);
+    const displayWidth = Math.ceil(source.width * scale);
+    const displayHeight = Math.ceil(source.height * scale);
+    const x = Math.floor((ARENA.width - displayWidth) / 2);
+    const y = Math.floor((VIEW.height - displayHeight) / 2);
+    const background = this.scene.add.image(x, y, this.variant.backgroundKey)
+      .setOrigin(0, 0)
+      .setDisplaySize(displayWidth, displayHeight)
+      .setScrollFactor(0)
+      .setDepth(-100);
+    this.parallaxLayers.push({ image: background, factor: PARALLAX.far, originX: x });
+
+    if (this.variant.tint) {
+      const tint = this.scene.add.rectangle(0, 0, ARENA.width, VIEW.height, this.variant.tint, 0.055)
+        .setOrigin(0, 0)
+        .setScrollFactor(0)
+        .setDepth(-95);
+      this.parallaxLayers.push({ image: tint, factor: PARALLAX.far, originX: 0 });
+    }
+
+    this.#addTilesetOverlay(-90, PARALLAX.mid);
+    this.assetBackground = true;
+    this.barriers = [];
+    this.ambientObjects = [];
+    this.warningMarker = null;
+  }
+
+  #addTilesetOverlay(depth, factor) {
+    if (!this.variant.tilesetKey) return;
+    const key = tileOverlayKeyForTileset(this.variant.tilesetKey);
+    if (!key || !this.scene.textures.exists(key)) return;
+
+    const overlay = this.scene.add.image(0, 0, key)
+      .setOrigin(0, 0)
+      .setScrollFactor(0)
+      .setDepth(depth)
+      .setAlpha(this.variant.overlayAlpha ?? 0.28);
+    this.parallaxLayers.push({ image: overlay, factor, originX: 0 });
   }
 
   #createAmbientObjects() {
@@ -215,6 +269,7 @@ export class StageView {
     for (const { image, factor, originX } of this.parallaxLayers) {
       image.setX(Math.round(originX - scrollX * factor));
     }
+    if (this.assetBackground) return;
     if (this.fog) this.fog.tilePositionX = Math.round(timeMs * 0.012 + scrollX * 0.4);
     for (const object of this.ambientObjects) {
       const wave = Math.sin(timeMs * object.speed + object.phase);

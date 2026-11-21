@@ -12,6 +12,7 @@ import {
 } from '../../infrastructure/assets/assetManifest.js';
 import { GIF_ORIGIN_Y, spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
 import { shouldFlip } from '../views/orientation.js';
+import { playStageMusic } from '../../infrastructure/audio/GameMusic.js';
 
 const SPEAKERS = {
   violet: { name: 'AXEM VIOLET', color: '#d9a9ff', tint: 0xe6d4ff },
@@ -25,10 +26,12 @@ export class CinematicScene extends Phaser.Scene {
     this.lineIndex = 0;
     this.transitioning = false;
     this.matchSetup = {};
+    this.stageVariantId = 'classic';
   }
 
   init(data = {}) {
     this.stageId = data.stageId ?? STAGE_IDS.RUINS;
+    this.stageVariantId = data.stageVariantId ?? 'classic';
     this.stage = getStage(this.stageId);
     this.matchSetup = {
       ...(data.matchSetup ?? {}),
@@ -67,7 +70,11 @@ export class CinematicScene extends Phaser.Scene {
   }
 
   create() {
-    this.stageView = new StageView(this, this.stage.id, { cinematic: true });
+    playStageMusic(this, this.stage.id);
+    this.stageView = new StageView(this, this.stage.id, {
+      cinematic: true,
+      variantId: this.stageVariantId,
+    });
     this.cameras.main.setBounds(0, 0, 640, 270);
 
     const [leftSelection, rightSelection] = this.matchSetup.characters;
@@ -225,6 +232,7 @@ export class CinematicScene extends Phaser.Scene {
     this.transitioning = true;
     this.scene.start('FightScene', {
       stageId: this.stage.id,
+      stageVariantId: this.stageVariantId,
       matchSetup: this.matchSetup,
     });
   }

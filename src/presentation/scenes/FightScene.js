@@ -15,6 +15,7 @@ import { HudView } from '../views/HudView.js';
 import { PickupView } from '../views/PickupView.js';
 import { StageView } from '../views/StageView.js';
 import { PauseMenuView } from '../views/PauseMenuView.js';
+import { playStageMusic } from '../../infrastructure/audio/GameMusic.js';
 
 const CAMERA_FOLLOW_SPEED = 8;
 
@@ -25,6 +26,7 @@ export class FightScene extends Phaser.Scene {
 
   init(data = {}) {
     this.stageDefinition = getStage(data.stageId ?? STAGE_IDS.RUINS);
+    this.stageVariantId = data.stageVariantId ?? 'classic';
     this.matchSetup = {
       ...(data.matchSetup ?? {}),
       characters: [...(data.matchSetup?.characters ?? [])],
@@ -32,6 +34,7 @@ export class FightScene extends Phaser.Scene {
   }
 
   create() {
+    playStageMusic(this, this.stageDefinition.id);
     const matchArena = this.matchSetup.trainingBackgroundColor
       ? ARENA
       : getArenaForGroundDepthMode(this.stageDefinition.groundDepthMode);
@@ -83,6 +86,7 @@ export class FightScene extends Phaser.Scene {
 
     this.stage = new StageView(this, this.stageDefinition.id, {
       backgroundColor: this.matchSetup.trainingBackgroundColor ?? null,
+      variantId: this.stageVariantId,
     });
     this.pickupView = new PickupView(this);
     this.views = this.match.fighters.map((fighter) => new FighterView(this, fighter));

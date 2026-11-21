@@ -50,46 +50,57 @@ function detectCheckerboardColors(data, width, height) {
     add(width - 1, y);
   }
 
-  const borderPixels = Array.from(histogram.values()).reduce((sum, entry) => sum + entry.count, 0);
-  const dominant = Array.from(histogram.values())
-    .sort((left, right) => right.count - left.count)
-    .slice(0, 2)
-    .map((entry) => [
-      Math.round(entry.red / entry.count),
-      Math.round(entry.green / entry.count),
-      Math.round(entry.blue / entry.count),
-    ]);
-
-  if (dominant.length !== 2) {
-    throw new Error('No se encontraron dos colores de fondo en el contorno.');
+  const ranked = Array.from(histogram.values()).sort((left, right) => right.count - left.count);
+  const borderPixels = ranked.reduce((sum, entry) => sum + entry.count, 0);
+  const toColor = (entry) => [
+    Math.round(entry.red / entry.count),
+    Math.round(entry.green / entry.count),
+    Math.round(entry.blue / entry.count),
+  ];
+  const firstEntry = ranked[0];
+  if (!firstEntry || borderPixels === 0) {
+    throw new Error('No se pudieron analizar los píxeles del contorno.');
   }
 
-  const [first, second] = dominant;
-  const firstCoverage = histogram.get(
-    (first[0] >> 4) + ',' + (first[1] >> 4) + ',' + (first[2] >> 4),
-  )?.count ?? 0;
-  const secondCoverage = histogram.get(
-    (second[0] >> 4) + ',' + (second[1] >> 4) + ',' + (second[2] >> 4),
-  )?.count ?? 0;
+  const first = toColor(firstEntry);
+  const firstCoverage = firstEntry.count / borderPixels;
   const isNeutral = (color) => Math.max(...color) - Math.min(...color) <= 24;
-  const luminance = (color) => (color[0] + color[1] + color[2]) / 3;
-  const separation = colorDistance(first, second);
+  const isNearWhite = (color) => Math.min(...color) >= 232
+    && Math.max(...color) - Math.min(...color) <= 18;
 
+  // Algunas referencias nuevas llegan con fondo blanco uniforme en lugar de
+  // damero gris. Solo se acepta cuando domina claramente todo el contorno;
+  // el borrado posterior sigue limitado a los píxeles conectados al borde.
+  if (firstCoverage >= 0.65 && isNearWhite(first)) {
+    return { colors: [first], borderCoverage: firstCoverage, backgroundType: 'solid' };
+  }
+
+  const secondEntry = ranked[1];
+  if (!secondEntry) {
+    throw new Error('No se encontró un segundo color válido en el contorno.');
+  }
+  const second = toColor(secondEntry);
+  const secondCoverage = secondEntry.count / borderPixels;
+  const separation = colorDistance(first, second);
   if (
-    firstCoverage / borderPixels < 0.12 ||
-    secondCoverage / borderPixels < 0.12 ||
-    (firstCoverage + secondCoverage) / borderPixels < 0.55 ||
+    firstCoverage < 0.12 ||
+    secondCoverage < 0.12 ||
+    firstCoverage + secondCoverage < 0.55 ||
     !isNeutral(first) ||
     !isNeutral(second) ||
-    luminance(first) < 120 ||
-    luminance(second) < 120 ||
+    ((first[0] + first[1] + first[2]) / 3) < 120 ||
+    ((second[0] + second[1] + second[2]) / 3) < 120 ||
     separation < 12 ||
     separation > 110
   ) {
-    throw new Error('El borde no presenta un patrón de cuadrícula gris reconocible; no se modificó el sprite.');
+    throw new Error('El borde no presenta un fondo blanco uniforme ni un patrón de cuadrícula gris reconocible; no se modificó el sprite.');
   }
 
-  return { colors: dominant, borderCoverage: (firstCoverage + secondCoverage) / borderPixels };
+  return {
+    colors: [first, second],
+    borderCoverage: firstCoverage + secondCoverage,
+    backgroundType: 'checkerboard',
+  };
 }
 
 function removeCheckerboardBackground(data, width, height, colors) {
@@ -247,6 +258,7 @@ async function prepareReference({ file, label }) {
     label + ': ' + metadata.width + 'x' + metadata.height + ' -> ' +
     resultMetadata.width + 'x' + resultMetadata.height +
     '; fondo quitado: ' + removedPixels + ' px; borde suavizado: ' + softenedPixels +
+    '; tipo de fondo: ' + (backgroundColors.length === 1 ? 'blanco uniforme' : 'cuadrícula gris') +
     '; colores de fondo: ' + JSON.stringify(backgroundColors) +
     '; transparencia previa: ' + transparentPixels +
     '; margen transparente: ' + PADDING + ' px.',

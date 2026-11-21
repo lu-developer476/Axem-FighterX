@@ -87,13 +87,11 @@ function detectCheckerboardColors(data, width, height) {
   const first = toColor(firstEntry);
   const firstCoverage = firstEntry.count / borderPixels;
   const isNeutral = (color) => Math.max(...color) - Math.min(...color) <= 24;
-  const isNearWhite = (color) => Math.min(...color) >= 232
-    && Math.max(...color) - Math.min(...color) <= 18;
 
-  // Algunas referencias nuevas llegan con fondo blanco uniforme en lugar de
-  // damero gris. Solo se acepta cuando domina claramente todo el contorno;
-  // el borrado posterior sigue limitado a los píxeles conectados al borde.
-  if (firstCoverage >= 0.65 && isNearWhite(first)) {
+  // Las referencias pueden usar fondos lisos de distintos colores. Se acepta
+  // un color dominante solo si cubre claramente la mayor parte del contorno;
+  // el borrado sigue limitado a píxeles conectados al borde del lienzo.
+  if (firstCoverage >= 0.65) {
     return { colors: [first], borderCoverage: firstCoverage, backgroundType: 'solid' };
   }
 
@@ -115,7 +113,14 @@ function detectCheckerboardColors(data, width, height) {
     separation < 12 ||
     separation > 110
   ) {
-    throw new Error('El borde no presenta un fondo blanco uniforme ni un patrón de cuadrícula gris reconocible; no se modificó el sprite.');
+    const palette = ranked.slice(0, 5).map((entry) => ({
+      color: toColor(entry),
+      coverage: Number((entry.count / borderPixels).toFixed(3)),
+    }));
+    throw new Error(
+      'No se reconoció el fondo del contorno; no se modificó el sprite. Colores detectados: ' +
+      JSON.stringify(palette),
+    );
   }
 
   return {

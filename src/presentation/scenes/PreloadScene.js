@@ -11,6 +11,7 @@ import {
   maleAnimationUrl,
 } from '../../infrastructure/assets/assetManifest.js';
 import { GIF_ACTIONS, GIF_CELL } from '../../infrastructure/assets/characterAnimationData.js';
+import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { createStageTextures } from '../../infrastructure/graphics/StageTextureFactory.js';
 import { createAdditionalStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';
@@ -119,6 +120,7 @@ export class PreloadScene extends Phaser.Scene {
     }
     this.load.image('title-art', import.meta.env.BASE_URL + 'generated/title.png');
     this.load.image(KENNEY_STAGE_ATLAS_KEY, stageBackgroundAtlasUrl);
+    Object.values(KENNEY_FX).forEach(({ key, url }) => this.load.image(key, url));
   }
 
   create() {

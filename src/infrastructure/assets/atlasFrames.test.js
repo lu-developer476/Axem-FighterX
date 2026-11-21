@@ -249,7 +249,7 @@ describe('resultados por género y color', () => {
     const animations = {
       'battle-pose.gif': 21,
       'teleport.gif': 9,
-      'charge.gif': 3,
+      'charge.gif': 4,
       'idle.gif': 8,
     };
 
@@ -267,6 +267,89 @@ describe('resultados por género y color', () => {
     expect(defeated.width).toBe(150);
     expect(defeated.height).toBe(100);
     expect(defeated.hasAlpha).toBe(true);
+  });
+
+  it.each(COLORS)('termina charge %s con la última pose de group-09 y un aura visible', async (color) => {
+    const auraPath = fileURLToPath(new URL(
+      '../../../art/source/effects/soluna-software/aura38.webp',
+      import.meta.url,
+    ));
+    const auraMetadata = await sharp(auraPath).metadata();
+    expect(auraMetadata.width % 8).toBe(0);
+    expect(auraMetadata.height % 4).toBe(0);
+    expect(auraMetadata.hasAlpha).toBe(true);
+
+    const chargePath = resultsPath('male', color, 'charge.gif');
+    const chargeMetadata = await sharp(chargePath, { animated: true }).metadata();
+    expect(chargeMetadata.pages).toBe(4);
+    expect(chargeMetadata.width).toBe(150);
+    expect(chargeMetadata.pageHeight).toBe(100);
+    const delays = Array.isArray(chargeMetadata.delay)
+      ? chargeMetadata.delay
+      : [chargeMetadata.delay || 100];
+    expect(delays[delays.length - 1]).toBeGreaterThanOrEqual(800);
+
+    const sequenceIndex = JSON.parse(await readFile(
+      resultsPath('male', color, 'sequences', 'index.json'),
+      'utf8',
+    ));
+    const group09 = sequenceIndex.find((entry) => entry.id === 'group-09');
+    expect(group09.frameCount).toBe(5);
+    const sourceFrame = await sharp(resultsPath('male', color, 'sequences', 'group-09.png'))
+      .extract({
+        left: (group09.frameCount - 1) * group09.cellWidth,
+        top: 0,
+        width: group09.cellWidth,
+        height: group09.cellHeight,
+      })
+      .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 1 })
+      .png()
+      .toBuffer();
+    const sourceMetadata = await sharp(sourceFrame).metadata();
+    const width = Math.round(sourceMetadata.width * (78 / sourceMetadata.height));
+    const normalized = await sharp(sourceFrame)
+      .resize(width, 78, { fit: 'fill', kernel: 'nearest' })
+      .png()
+      .toBuffer();
+    const expectedLeft = Math.round((150 - width) / 2);
+    const expectedPose = await sharp({
+      create: {
+        width: 150,
+        height: 100,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      },
+    })
+      .composite([{ input: normalized, left: expectedLeft, top: 18 }])
+      .png()
+      .toBuffer();
+
+    const expectedRaw = await sharp(expectedPose).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const finalRaw = await sharp(chargePath, { page: 3, pages: 1 })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    let opaquePosePixels = 0;
+    let matchingPosePixels = 0;
+    let auraPixelsOutsidePose = 0;
+
+    for (let pixel = 0; pixel < expectedRaw.info.width * expectedRaw.info.height; pixel += 1) {
+      const offset = pixel * 4;
+      if (expectedRaw.data[offset + 3] > 220) {
+        opaquePosePixels += 1;
+        const close =
+          Math.abs(expectedRaw.data[offset] - finalRaw.data[offset]) <= 24 &&
+          Math.abs(expectedRaw.data[offset + 1] - finalRaw.data[offset + 1]) <= 24 &&
+          Math.abs(expectedRaw.data[offset + 2] - finalRaw.data[offset + 2]) <= 24;
+        if (finalRaw.data[offset + 3] > 200 && close) matchingPosePixels += 1;
+      } else if (finalRaw.data[offset + 3] > 36) {
+        auraPixelsOutsidePose += 1;
+      }
+    }
+
+    expect(opaquePosePixels).toBeGreaterThan(900);
+    expect(matchingPosePixels / opaquePosePixels).toBeGreaterThan(0.92);
+    expect(auraPixelsOutsidePose).toBeGreaterThan(500);
   });
 
   it.each(COLORS)('mantiene la escala estándar del personaje en los ocho cuadros de idle %s', async (color) => {

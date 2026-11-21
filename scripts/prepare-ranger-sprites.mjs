@@ -31,6 +31,11 @@ const MENU_POSE_REFERENCES = Object.freeze([
 ]);
 const TRANSPARENT = Object.freeze({ r: 0, g: 0, b: 0, alpha: 0 });
 const ATLAS_FRAMES_PATH = path.join(ROOT, 'src', 'infrastructure', 'assets', 'atlasFrames.json');
+const KI_AURA_SHEET_PATH = path.join(
+  ROOT, 'art', 'source', 'effects', 'soluna-software', 'aura38.webp',
+);
+const KI_AURA_GRID = Object.freeze({ columns: 8, rows: 4, frameIndex: 21 });
+const KI_AURA_HOLD_DELAY = 900;
 
 async function writeResult(gender, color, relativePath, buffer) {
   const target = path.join(RESULTS(gender, color), relativePath);
@@ -938,6 +943,87 @@ async function normalizeMaleActionFrame(input, addAura = false, targetHeight = n
     .toBuffer();
 }
 
+/**
+ * Compone el aura CC0 detrás de la última pose masculina de group-09.
+ * La pose original se conserva y se mantiene visible durante el cierre de carga.
+ */
+async function buildMaleKiAuraHoldFrame(color, sourceFrame) {
+  const metadata = await sharp(KI_AURA_SHEET_PATH).metadata();
+  const { columns, rows, frameIndex } = KI_AURA_GRID;
+  if (!metadata.width || !metadata.height ||
+      metadata.width % columns !== 0 || metadata.height % rows !== 0) {
+    throw new Error('Aura38.webp no coincide con la cuadrícula declarada de 8×4.');
+  }
+  if (frameIndex < 0 || frameIndex >= columns * rows) {
+    throw new Error('El índice del fotograma de Aura38 está fuera de la hoja.');
+  }
+
+  const cellWidth = metadata.width / columns;
+  const cellHeight = metadata.height / rows;
+  const auraCell = await sharp(KI_AURA_SHEET_PATH)
+    .extract({
+      left: (frameIndex % columns) * cellWidth,
+      top: Math.floor(frameIndex / columns) * cellHeight,
+      width: cellWidth,
+      height: cellHeight,
+    })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const tinted = Buffer.from(auraCell.data);
+  const palette = color === 'orange'
+    ? { r: 255, g: 150, b: 38 }
+    : { r: 174, g: 84, b: 255 };
+
+  for (let offset = 0; offset < tinted.length; offset += 4) {
+    const originalAlpha = tinted[offset + 3];
+    if (originalAlpha === 0) continue;
+    const brightness = Math.max(
+      tinted[offset],
+      tinted[offset + 1],
+      tinted[offset + 2],
+    ) / 255;
+    const energy = Math.pow(brightness, 0.82);
+    tinted[offset] = Math.round(palette.r * energy);
+    tinted[offset + 1] = Math.round(palette.g * energy);
+    tinted[offset + 2] = Math.round(palette.b * energy);
+    tinted[offset + 3] = Math.round(originalAlpha * 0.9);
+  }
+
+  const aura = await sharp(tinted, {
+    raw: {
+      width: auraCell.info.width,
+      height: auraCell.info.height,
+      channels: 4,
+    },
+  })
+    .resize(96, 96, { fit: 'fill', kernel: 'nearest' })
+    .png()
+    .toBuffer();
+
+  const heldPose = await normalizeMaleActionFrame(
+    sourceFrame.input,
+    false,
+    STANDARD_STANDING_HEIGHT,
+  );
+
+  return sharp({
+    create: {
+      width: ACTION_GIF_SIZE.width,
+      height: ACTION_GIF_SIZE.height,
+      channels: 4,
+      background: TRANSPARENT,
+    },
+  })
+    .composite([
+      { input: aura, left: 27, top: 0 },
+      { input: heldPose, left: 0, top: 0 },
+    ])
+    .png()
+    .toBuffer();
+}
+
 async function readMaleGifFrames(color, filename) {
   const file = RESULTS('male', color, filename);
   const metadata = await sharp(file, { animated: true }).metadata();
@@ -1068,7 +1154,14 @@ async function buildMaleSharedExtraGifs(color) {
   const charged = await Promise.all(
     chargeFrames.map((frame) => normalizeMaleActionFrame(frame.input, true, STANDARD_STANDING_HEIGHT, { auraColor })),
   );
-  await writeMaleActionGif(color, 'charge', charged, charged.map(() => 100));
+  const group09 = await extractMaleStripFrames(color, 'group-09', 5);
+  const heldKiPose = await buildMaleKiAuraHoldFrame(color, group09[group09.length - 1]);
+  await writeMaleActionGif(
+    color,
+    'charge',
+    [...charged, heldKiPose],
+    [...charged.map(() => 100), KI_AURA_HOLD_DELAY],
+  );
 
   await buildMaleIdleGif(color);
   await buildMaleCombatEnhancementGifs(color);

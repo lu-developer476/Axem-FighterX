@@ -64,10 +64,6 @@ function createRaceTextures(scene) {
   });
 }
 
-export function normalizeMotorcycleLane(lane) {
-  return clamp(Math.round(Number(lane) || 0), 0, MOTORCYCLE_LANE_COUNT - 1);
-}
-
 export class RaceScene extends Phaser.Scene {
   constructor() {
     super('RaceScene');

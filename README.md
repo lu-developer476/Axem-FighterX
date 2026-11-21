@@ -43,7 +43,7 @@ En los formatos normales, el menú permite elegir entre siete escenarios. Antes 
 | **Llanura de la torre rota** | Colinas abiertas, puente, cercas, rocas y torre de vigilancia |
 | **Fauces de obsidiana** | Boca de volcán activa con respiraderos rotativos y columnas de lava que dañan a los luchadores
 
-Los siete fondos, relieves, suelos, límites y detalles ambientales se generan como texturas pixel art por código. No requieren imágenes externas adicionales. El fondo de entrenamiento se dibuja como un único color plano y no carga capas ambientales.
+Los fondos ambientales de los siete escenarios usan capas de sprites pixel art del paquete [Pixel Platformer de Kenney](https://kenney.nl/assets/pixel-platformer), descargado e integrado localmente bajo licencia **CC0 1.0**. El atlas se aplica con filtrado de vecino más cercano y parallax; los suelos, límites y elementos propios de cada arena se conservan. La licencia y procedencia están documentadas en `art/source/environments/kenney-pixel-platformer/LICENSE.txt`. El fondo de entrenamiento sigue siendo un color plano y no carga capas ambientales.
 
 ## Nitidez y renderizado
 

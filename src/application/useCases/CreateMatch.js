@@ -1,8 +1,7 @@
 import { ARENA } from '../../domain/arena/arena.js';
 import { Match } from '../../domain/entities/Match.js';
 import { createFighter } from '../../domain/rangers/createFighter.js';
-
-const VALID_GENDERS = new Set(['male', 'female']);
+import { isAvailableRangerVariant } from '../../domain/rangers/rangerVariants.js';
 
 function normalizeSelection(selection, index) {
   if (

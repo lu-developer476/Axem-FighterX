@@ -4,13 +4,13 @@ import { createDefaultMatch } from './CreateMatch.js';
 describe('createDefaultMatch', () => {
   it('respeta las elecciones explícitas de Axem y género en ambos lados físicos', () => {
     const match = createDefaultMatch(Math.random, [
-      { id: 'orange', gender: 'female' },
-      { id: 'violet', gender: 'male' },
+      { id: 'orange', gender: 'male' },
+      { id: 'violet', gender: 'female' },
     ]);
 
     expect(match.fighters.map(({ id, gender }) => ({ id, gender }))).toEqual([
-      { id: 'orange', gender: 'female' },
-      { id: 'violet', gender: 'male' },
+      { id: 'orange', gender: 'male' },
+      { id: 'violet', gender: 'female' },
     ]);
   });
 

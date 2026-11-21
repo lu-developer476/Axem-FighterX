@@ -24,7 +24,7 @@ describe('Asignaciones independientes de J1 y J2', () => {
 
   it('permite que ambos jugadores elijan el mismo Axem y géneros distintos', () => {
     const sameAxem = {
-      J1: { id: 'orange', gender: 'female' },
+      J1: { id: 'orange', gender: 'male' },
       J2: { id: 'orange', gender: 'male' },
     };
     expect(getCharacterSelectionsByCorner(sameAxem, { J1: 'right', J2: 'left' }))

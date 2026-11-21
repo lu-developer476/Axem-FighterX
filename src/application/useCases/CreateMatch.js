@@ -1,7 +1,7 @@
 import { ARENA } from '../../domain/arena/arena.js';
 import { Match } from '../../domain/entities/Match.js';
 import { createFighter } from '../../domain/rangers/createFighter.js';
-import { isAllowedRangerVariant } from '../../infrastructure/assets/assetManifest.js';
+import { isAllowedRangerVariant } from '../../domain/rangers/rangerCatalog.js';
 
 function normalizeSelection(selection, index) {
   if (

@@ -1198,9 +1198,9 @@ async function buildGender(gender) {
       // El atlas Red trae ruido de compresión: con tolerancia 42 queda un halo verdoso.
       parts.push(await recolorAndKey(redReference, gender, targetHue, ATLAS_SOURCES.male.tolerance));
 
-      const run = await extractGifFrames(SOURCE('axem-ranger-run.gif'), gender, targetHue);
-      const bike = await extractGifFrames(SOURCE('axem-ranger-bike.gif'), gender, targetHue);
-      const doubleAxe = await extractGifFrames(SOURCE('axem-ranger-double-axe.gif'), gender, targetHue);
+      const run = await extractGifFrames(SOURCE('sprites', 'references', 'axem-red', 'axem-ranger-run.gif'), gender, targetHue);
+      const bike = await extractGifFrames(SOURCE('sprites', 'references', 'axem-red', 'axem-ranger-bike.gif'), gender, targetHue);
+      const doubleAxe = await extractGifFrames(SOURCE('sprites', 'references', 'axem-red', 'axem-ranger-double-axe.gif'), gender, targetHue);
       parts.push(await makeHorizontalStrip(run.frames, run.width, run.height));
       parts.push(await makeHorizontalStrip(bike.frames, bike.width, bike.height));
       parts.push(await makeHorizontalStrip(doubleAxe.frames, doubleAxe.width, doubleAxe.height));

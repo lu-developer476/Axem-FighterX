@@ -172,3 +172,27 @@ Requiere **Settings → Pages → Source: GitHub Actions**. Para correr la captu
 - **Escenarios:** cada mapa disponible se utiliza como fondo de combate y cada tileset genera un entorno procedural reproducible. Los nuevos recursos compatibles se incorporan automáticamente al selector.
 - **Música:** pistas WAV contextuales con carga diferida y reproducción en bucle.
 - **Efectos contextuales:** polvo y estela al hacer dash, nube de aterrizaje, chispas eléctricas, ráfagas de impacto, explosiones, humo, escombros y partículas que cambian según el material de cada escenario.
+
+## Variantes canónicas de Axem
+
+El catálogo de juego conserva únicamente **Axem Violeta femenino** y **Axem Naranja masculino**. La preparación de sprites, el preload y la selección de personajes generan/cargan solo esas combinaciones. Violeta utiliza su pose femenina y animación procedural de combate; Naranja conserva las hojas GIF masculinas. La moto de Violeta se compone con un sprite de vehículo propio para no volver a introducir el recurso masculino eliminado.
+
+## Carrera de motos
+
+La carrera de motos tiene cuatro carriles: J1 y tres rivales controlados por IA. Se puede cambiar de carril con las flechas arriba/abajo o W/S, acelerar con derecha/D, frenar con izquierda/A y usar nitro con espacio. Vallas, cajas y manchas de aceite se distribuyen por carril y penalizan a quien las golpea. El entorno utiliza capas de montañas, vegetación, arcén y pista con desplazamiento.
+
+## Música
+
+- Menú: `mecha-collection`.
+- Combates: `cathedral`.
+- Carrera de motos: `dark-music-final`.
+- Carrera terrestre: `slow-dark-music`.
+
+Los roles se asignan de forma explícita en `src/infrastructure/audio/GameMusic.js`; los archivos originales permanecen en la carpeta común de música para no duplicar audio.
+
+## Backend, SEO y seguridad
+
+- `GET /api/health` expone una comprobación mínima y sin secretos mediante Vercel Functions.
+- `index.html` declara metadatos SEO, Open Graph, Twitter Card y datos estructurados de VideoGame; `public/robots.txt` habilita rastreo.
+- `vercel.json` configura CSP y cabeceras HTTP de seguridad.
+- El alcance actual no requiere base de datos ni autenticación. La evolución segura prevista está documentada en `docs/SECURITY-ROADMAP.md`.

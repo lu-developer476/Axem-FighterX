@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "sourcePolicy": {
+    "directory": "references",
+    "treatment": "preserve-originals",
+    "description": "Los archivos de references son masters de origen; no se sobrescriben. Los generadores existentes los convierten a resultados transparentes."
+  },
+  "processedPolicy": {
+    "directory": "results",
+    "recursive": true,
+    "extensions": [
+      ".png",
+      ".gif"
+    ],
+    "requireAlpha": true,
+    "backgroundRemoval": {
+      "mode": "connected-border-color",
+      "tolerance": 28,
+      "minBorderCoverage": 0.22,
+      "preserveEnclosedPixels": true,
+      "failWhenOpaqueAndUnknown": true
+    },
+    "output": {
+      "preserveNativeDimensions": true,
+      "preserveAnimationFrames": true,
+      "preserveAnimationTiming": true
+    }
+  },
+  "pixelArt": {
+    "resizeKernel": "nearest",
+    "imageSmoothing": false,
+    "antialias": false,
+    "sharpen": false,
+    "preserveNativeResolution": true,
+    "description": "Contornos de píxel nítidos. No aplicar blur, sharpen ni interpolación bilineal."
+  }
+}

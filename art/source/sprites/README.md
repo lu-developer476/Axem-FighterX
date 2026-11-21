@@ -42,6 +42,19 @@ El `charge.gif` masculino conserva los tres cuadros de preparación y luego sost
 
 Los GIF masculinos de bicicleta y doble hacha conservan sus lienzos de **150 × 100 px**. Los 11 GIF base de cada variante masculina se generan desde las secuencias clasificadas; todos los GIF de acción usan lienzos de **150 × 100 px**, transparencia y escalado nearest-neighbor para conservar el pixel-art. El pivote de los pies se centra horizontalmente y mantiene una línea de suelo fija para evitar saltos entre fotogramas.
 
+
+## Regla global de transparencia y pixel art
+
+La política está centralizada en `processing-rules.json` y se aplica automáticamente a **todos los PNG y GIF dentro de `results/`**, de forma recursiva, cada vez que se ejecutan `npm run prepare:sprites`, `npm run dev`, `npm test` o `npm run build`.
+
+- **Fondo transparente:** se elimina únicamente el color uniforme (o casi uniforme) conectado al borde de cada imagen/cuadro. Los píxeles del mismo color encerrados dentro de la silueta se conservan. Si una imagen opaca no tiene un fondo reconocible, el proceso falla y exige una regla específica; no perfora ni adivina el fondo.
+- **Bordes nítidos:** se conserva el lienzo y la resolución originales. No se aplica blur ni sharpen artificial: ambos pueden deformar el pixel art o crear halos. La limpieza de halo se limita a la franja exterior del fondo eliminado.
+- **Escalado:** cuando otro generador necesita redimensionar, usa `nearest` (vecino más cercano), sin interpolación ni suavizado. No se reescala como parte de la normalización global.
+- **Animaciones:** los GIF se revisan cuadro por cuadro; al corregir el fondo se mantienen cantidad de cuadros, dimensiones y tiempos de reproducción.
+- **Validación futura:** cualquier PNG/GIF nuevo que se agregue a `results/` entra en la misma regla en la siguiente ejecución. Los originales de `references/` se preservan como masters y deben pasar por sus generadores antes de convertirse en sprites de juego.
+
+La configuración de Phaser ya refuerza el resultado con `pixelArt`, `antialias: false`, `roundPixels` y filtro `NEAREST` para las texturas que se cargan. Por eso el criterio visual es **píxel definido y borde limpio**, no bordes borrosos o suavizados por interpolación.
+
 ## El atlas no es una cuadrícula
 
 Ninguna hoja tiene filas de cuadros uniformes: cambian la cantidad, el ancho y la separación (por ejemplo, la distancia entre inicios de cuadro de `group-01` va de 27 a 38 px) y ambas traen ruido de compresión en el fondo. Por eso no se usa un paso fijo: cada cuadro tiene su propio rectángulo `[x, y, ancho, alto]`, ajustado a los píxeles del personaje.

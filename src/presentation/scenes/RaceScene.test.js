@@ -4,7 +4,7 @@ import {
   MOTORCYCLE_LANE_COUNT,
   MOTORCYCLE_RACE_OBSTACLES,
   normalizeMotorcycleLane,
-} from './RaceScene.js';
+} from '../../domain/race/motorcycleRaceRules.js';
 
 describe('Carrera de motos de cuatro carriles', () => {
   it('reserva cuatro carriles con profundidad visual creciente', () => {

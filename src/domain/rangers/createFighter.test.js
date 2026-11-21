@@ -58,6 +58,6 @@ describe('Variantes de género de los Axem Rangers', () => {
       { x: 120, y: 180 },
       1,
       'male',
-    )).toThrow('Variante de Axem Ranger no disponible');
+    )).toThrow('Variante de Axem no disponible');
   });
 });

@@ -39,7 +39,7 @@ describe('FighterAnimator', () => {
   });
 
   it('conserva la rotación procedural de KO para personajes sin pose masculina', () => {
-    const { animator, sprite } = createAnimator('orange', 'female');
+    const { animator, sprite } = createAnimator('violet', 'female');
     const pose = animator.update({
       state: 'ko',
       stateTimeMs: 200,
@@ -47,7 +47,7 @@ describe('FighterAnimator', () => {
       position: { z: 0 },
     });
 
-    expect(sprite.setTexture).toHaveBeenCalledWith('ranger-female-orange');
+    expect(sprite.setTexture).toHaveBeenCalledWith('ranger-female-violet');
     expect(pose.angle).toBeLessThan(0);
   });
 
@@ -61,9 +61,9 @@ describe('FighterAnimator', () => {
   });
 
   it('usa la hoja de idle del GIF en reposo, con el origen de las hojas GIF', () => {
-    const { animator, sprite } = createAnimator('violet', 'male', true);
+    const { animator, sprite } = createAnimator('orange', 'male', true);
     animator.update(fighter('idle'));
-    expect(sprite.play).toHaveBeenCalledWith('axem-violet-idle');
+    expect(sprite.play).toHaveBeenCalledWith('axem-orange-idle');
     expect(sprite.setOrigin.mock.calls.at(-1)[1]).toBeGreaterThan(1);
   });
 

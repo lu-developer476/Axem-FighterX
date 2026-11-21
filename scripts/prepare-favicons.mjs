@@ -1,4 +1,4 @@
-import { mkdir, rm, stat } from 'node:fs/promises';
+import { mkdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -80,6 +80,51 @@ async function generateGif() {
   return result;
 }
 
+// Cuadros PNG para animar el favicon por JavaScript en navegadores que no animan GIF
+// (Chrome, Edge). 150 cuadros serían excesivos: se muestrean unos pocos y se suman
+// los retardos del tramo que cada uno representa, para conservar la duración total.
+const framesDirectory = path.join(publicDirectory, 'favicon-frames');
+const sampledFrameCount = 15;
+
+async function generateFrames() {
+  const metadata = await sharp(gifSource, { animated: true, failOn: 'error' }).metadata();
+  const pages = metadata.pages ?? 0;
+  if (pages < 2) {
+    throw new Error('art/source/favicon.gif must have at least two frames to build animation frames.');
+  }
+
+  const delays = Array.isArray(metadata.delay) && metadata.delay.length === pages
+    ? metadata.delay
+    : new Array(pages).fill(40);
+  const count = Math.min(sampledFrameCount, pages);
+  const step = pages / count;
+
+  await rm(framesDirectory, { recursive: true, force: true });
+  await mkdir(framesDirectory, { recursive: true });
+
+  const files = [];
+  const frameDelays = [];
+  for (let i = 0; i < count; i += 1) {
+    const start = Math.floor(i * step);
+    const end = i === count - 1 ? pages : Math.floor((i + 1) * step);
+    const name = `frame-${String(i).padStart(2, '0')}.png`;
+
+    await sharp(gifSource, { page: start, failOn: 'error' })
+      .resize(resizeOptions)
+      .png({ compressionLevel: 9, effort: 10, palette: true, quality: 100 })
+      .toFile(path.join(framesDirectory, name));
+
+    files.push(name);
+    frameDelays.push(delays.slice(start, end).reduce((sum, ms) => sum + (ms || 40), 0));
+  }
+
+  await writeFile(
+    path.join(framesDirectory, 'manifest.json'),
+    JSON.stringify({ frames: files, delays: frameDelays }),
+  );
+  return { count: files.length };
+}
+
 async function main() {
   await mkdir(publicDirectory, { recursive: true });
 
@@ -95,6 +140,16 @@ async function main() {
     await rm(gifOutput, { force: true });
     const reason = error instanceof Error ? error.message : String(error);
     console.warn(`Animated favicon unavailable; using PNG fallback. ${reason}`);
+  }
+
+  try {
+    const frames = await generateFrames();
+    console.log(`Favicon animation frames generated: ${frames.count}.`);
+  } catch (error) {
+    // Sin cuadros, el animador no se activa y queda el favicon estático.
+    await rm(framesDirectory, { recursive: true, force: true });
+    const reason = error instanceof Error ? error.message : String(error);
+    console.warn(`Favicon animation frames unavailable. ${reason}`);
   }
 
   const pngFile = await stat(pngOutput);

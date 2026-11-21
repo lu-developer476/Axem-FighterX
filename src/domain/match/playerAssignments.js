@@ -1,9 +1,10 @@
+import { isAllowedRangerVariant } from '../../infrastructure/assets/assetManifest.js';
+
 /**
  * Asignaciones estables de los dos participantes humanos.
  * El jugador conserva su personaje y su esquema de teclado al cambiar de esquina.
  */
 const VALID_SIDES = new Set(['left', 'right']);
-import { isAllowedRangerVariant } from '../../infrastructure/assets/assetManifest.js';
 
 export function getPlayersByStartCorner(playerSides) {
   const j1Side = playerSides?.J1;

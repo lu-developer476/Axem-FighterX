@@ -1,14 +1,14 @@
 import { ARENA } from '../../domain/arena/arena.js';
 import { Match } from '../../domain/entities/Match.js';
 import { createFighter } from '../../domain/rangers/createFighter.js';
-import { isAllowedRangerVariant } from '../../domain/rangers/rangerCatalog.js';
+import { isAvailableRangerVariant } from '../../domain/rangers/rangerVariants.js';
 
 function normalizeSelection(selection, index) {
   if (
     !selection ||
     typeof selection !== 'object' ||
     typeof selection.id !== 'string' ||
-    !isAllowedRangerVariant(selection.id, selection.gender)
+    !isAvailableRangerVariant(selection.id, selection.gender)
   ) {
     throw new Error(`El personaje ${index + 1} debe tener una variante disponible de Axem seleccionada.`);
   }

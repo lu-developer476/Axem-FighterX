@@ -1,4 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+// Phaser consulta window al importarse; en estas pruebas se aísla JustDown.
+vi.mock('phaser', () => ({
+  default: {
+    Input: {
+      Keyboard: {
+        JustDown: (key) => {
+          const justDown = Boolean(key._justDown);
+          key._justDown = false;
+          return justDown;
+        },
+      },
+    },
+  },
+}));
 import { KEYMAPS } from './keyMaps.js';
 import { PhaserKeyboardInput } from './PhaserKeyboardInput.js';
 
@@ -91,7 +106,38 @@ describe('Controles de teclado', () => {
     }
   });
 
-  it('no repite teclas dentro de cada esquema', () => {
+  it('conecta hachazo, teletransporte, dash, bloqueo, esquiva y especial en cada esquema', () => {
+    const createScene = () => ({
+      input: {
+        keyboard: {
+          addKeys: (definitions) => Object.fromEntries(
+            Object.keys(definitions).map((name) => [name, { isDown: false, _justDown: false }]),
+          ),
+        },
+      },
+    });
+
+    for (const keymap of Object.values(KEYMAPS)) {
+      const input = new PhaserKeyboardInput(createScene(), keymap);
+      input.keys.attack._justDown = true;
+      input.keys.teleport._justDown = true;
+      input.keys.dash._justDown = true;
+      input.keys.block.isDown = true;
+      input.keys.dodge._justDown = true;
+      input.keys.specialAttack._justDown = true;
+
+      expect(input.readIntent()).toMatchObject({
+        attack: true,
+        teleport: true,
+        dash: true,
+        block: true,
+        dodge: true,
+        specialAttack: true,
+      });
+    }
+  });
+
+  it('no repite teclas dentro de cada esquema', () =>
     for (const keymap of Object.values(KEYMAPS)) {
       const keys = Object.values(keymap);
       expect(new Set(keys).size).toBe(keys.length);

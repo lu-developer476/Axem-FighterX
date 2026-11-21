@@ -4,6 +4,8 @@ import {
   getMenuMusicTrack,
   getStageMusicTrack,
   MUSIC_TRACKS,
+  MUSIC_ROLES,
+  selectMusicForMode,
   selectMenuMusicTrack,
   selectPreferredAudioSource,
   selectStageMusicTrack,
@@ -16,6 +18,18 @@ describe('Descubrimiento automático de música', () => {
     expect(MUSIC_TRACKS.every(({ url, id }) => typeof url === 'string' && id.startsWith('music-'))).toBe(true);
     expect(getMenuMusicTrack()).not.toBe(null);
     expect(getStageMusicTrack(STAGES[0].id)).not.toBe(null);
+  });
+
+  it('asigna una pista estable a menú, combates y cada carrera', () => {
+    expect(MUSIC_ROLES).toEqual({
+      menu: 'mecha-collection',
+      combat: 'cathedral',
+      motorcycleRace: 'dark-music-final',
+      landRace: 'slow-dark-music',
+    });
+    for (const role of Object.keys(MUSIC_ROLES)) {
+      expect(selectMusicForMode(role)?.stem).toBe(MUSIC_ROLES[role]);
+    }
   });
 
   it('prefiere OGG y conserva WAV como alternativa compatible', () => {

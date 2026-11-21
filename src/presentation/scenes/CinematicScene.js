@@ -7,8 +7,8 @@ import { StageView } from '../views/StageView.js';
 import {
   maleAnimationKey,
   spriteKeyFor,
-  isAllowedRangerVariant,
 } from '../../infrastructure/assets/assetManifest.js';
+import { isAllowedRangerVariant } from '../../domain/rangers/rangerCatalog.js';
 import { GIF_ORIGIN_Y, spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
 import { shouldFlip } from '../views/orientation.js';
 import { playStageMusic } from '../../infrastructure/audio/GameMusic.js';

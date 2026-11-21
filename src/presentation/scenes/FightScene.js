@@ -3,6 +3,7 @@ import { GAME_WIDTH } from '../../config/gameConfig.js';
 import { ARENA, getArenaForGroundDepthMode } from '../../domain/arena/arena.js';
 import { DEFAULT_STAGE_ID, getStage } from '../../infrastructure/assets/stageAssetManifest.js';
 import { getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
+import { getPlayersByStartCorner } from '../../domain/match/playerAssignments.js';
 import { RoundSeries } from '../../domain/match/RoundSeries.js';
 import { createDefaultMatch } from '../../application/useCases/CreateMatch.js';
 import { UpdateMatch } from '../../application/useCases/UpdateMatch.js';
@@ -87,11 +88,16 @@ export class FightScene extends Phaser.Scene {
       case 'ai-vs-ai':
         inputs = [aiOne(), aiTwo()];
         break;
-      case 'player-vs-player':
-        inputs = this.matchSetup.playerSides.J1 === 'left'
-          ? [playerOne(), playerTwo()]
-          : [playerTwo(), playerOne()];
+      case 'player-vs-player': {
+        // Cada esquema de teclado sigue a su jugador, sin importar la esquina.
+        const controllersByPlayer = {
+          J1: playerOne(),
+          J2: playerTwo(),
+        };
+        inputs = getPlayersByStartCorner(this.matchSetup.playerSides)
+          .map((player) => controllersByPlayer[player]);
         break;
+      }
       default:
         inputs = [playerOne(), playerTwo()];
         break;

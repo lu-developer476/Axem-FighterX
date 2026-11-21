@@ -39,7 +39,7 @@ export const animationKey = (rangerId, state) => rangerId + ':' + state;
 export const GIF_ACTIONS = Object.freeze([
   'idle', 'dash', 'punch-01', 'punch-02', 'punch-03', 'hit', 'hurt',
   'jump', 'teleport', 'charge', 'battle-pose', 'pose',
-  'guard', 'guard-hit', 'roll', 'land', 'special-attack', 'victory', 'ko',
+  'guard', 'roll', 'ko',
 ]);
 export const GIF_CELL = Object.freeze({ width: 86, height: 57 });
 /**

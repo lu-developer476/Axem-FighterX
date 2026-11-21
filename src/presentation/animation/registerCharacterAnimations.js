@@ -100,11 +100,7 @@ function registerGifAnimations(scene, rangerId) {
 
   define('idle', { frameRate: 7, repeat: -1 });
   define('guard', { frameRate: 8, repeat: -1 });
-  define('guard-hit', { duration: TIMINGS.blockHitMs, repeat: 0 });
   define('roll', { duration: DODGE.durationMs, repeat: 0 });
-  define('land', { duration: TIMINGS.landMs, repeat: 0 });
-  define('special-attack', { duration: specialAttackTotalMs(), repeat: 0 });
-  define('victory', { duration: TIMINGS.victoryAnimationMs, repeat: 0 });
   define('ko', { duration: TIMINGS.koAnimationMs, repeat: 0 });
   define('charge', { frameRate: 10, repeat: -1 });
   define('pose', { frameRate: 8, repeat: -1 });

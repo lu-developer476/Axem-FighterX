@@ -869,7 +869,7 @@ async function buildMaleGroup16Sequence(color, frames) {
 const GAME_GIF_ACTIONS = Object.freeze([
   'idle', 'dash', 'punch-01', 'punch-02', 'punch-03', 'hit', 'hurt',
   'jump', 'teleport', 'charge', 'battle-pose', 'pose',
-  'guard', 'guard-hit', 'roll', 'land', 'special-attack', 'victory', 'ko',
+  'guard', 'roll', 'ko',
 ]);
 
 /**
@@ -1000,14 +1000,8 @@ async function buildMaleCombatEnhancementGifs(color) {
   const guardFrames = battlePose.frames.slice(-Math.min(6, battlePose.frames.length));
   await writeMaleActionGif(color, 'guard', guardFrames, guardFrames.map(() => 135));
 
-  const blockHitFrames = [
-    ...battlePose.frames.slice(-3),
-    ...hurt.frames.slice(0, 2),
-    ...battlePose.frames.slice(-2),
-  ];
-  await writeMaleActionGif(color, 'guard-hit', blockHitFrames, blockHitFrames.map(() => 85));
-
-  const rollAngles = [-8, -24, -43, -62, -78, -54, -28, -6];
+  // La rodada recorre una vuelta completa: el cuerpo pasa por 360° en el eje Z.
+  const rollAngles = [0, 45, 90, 135, 180, 225, 270, 315, 360];
   const rollFrames = await Promise.all(rollAngles.map((angle, index) => {
     const source = dash.frames[Math.round(index * (dash.frames.length - 1) / (rollAngles.length - 1))];
     return transformMaleActionFrame(source, {
@@ -1019,36 +1013,10 @@ async function buildMaleCombatEnhancementGifs(color) {
   }));
   await writeMaleActionGif(color, 'roll', rollFrames, rollFrames.map(() => 45));
 
-  const landingSource = jump.frames.slice(-4);
-  const landScales = [
-    { scaleX: 1.02, scaleY: 0.78, offsetY: 0 },
-    { scaleX: 1.12, scaleY: 0.72, offsetY: 1 },
-    { scaleX: 1.08, scaleY: 0.86, offsetY: 0 },
-    { scaleX: 1, scaleY: 1, offsetY: 0 },
-  ];
-  const landFrames = await Promise.all(landingSource.map((frame, index) =>
-    transformMaleActionFrame(frame, landScales[index]),
-  ));
-  await writeMaleActionGif(color, 'land', landFrames, [65, 75, 90, 110]);
-
-  const specialFrames = [
-    ...battlePose.frames.slice(-3),
-    ...doubleAxe.frames,
-    ...battlePose.frames.slice(-2),
-  ];
-  await writeMaleActionGif(color, 'special-attack', specialFrames, specialFrames.map((_, index) =>
-    index < 3 ? 100 : index < specialFrames.length - 2 ? 75 : 115,
-  ));
-
-  const victoryFrames = [
-    ...battlePose.frames.slice(-4),
-    ...idle.frames.slice(0, Math.min(3, idle.frames.length)),
-  ];
-  await writeMaleActionGif(color, 'victory', victoryFrames, victoryFrames.map((_, index) =>
-    index < 4 ? 115 : 180,
-  ));
-
+  // La pose KO se refleja horizontalmente para mantener la misma orientación
+  // que los cuadros de impacto: ambos terminan mirando hacia la derecha.
   const defeatedFrame = await sharp(RESULTS('male', color, 'defeated.png'))
+    .flop()
     .png()
     .toBuffer();
   const koFrames = [...hurt.frames.slice(0, 2), defeatedFrame, defeatedFrame];

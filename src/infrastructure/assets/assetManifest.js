@@ -1,7 +1,7 @@
-export const RANGER_GENDER_BY_ID = Object.freeze({ violet: 'female', orange: 'male' });
+import { allowedGenderFor, isAllowedRangerVariant } from '../../domain/rangers/rangerCatalog.js';
+export { allowedGenderFor, isAllowedRangerVariant };
+
 export const DEFAULT_RANGER_GENDER = 'male';
-export const allowedGenderFor = (rangerId) => RANGER_GENDER_BY_ID[rangerId] ?? null;
-export const isAllowedRangerVariant = (rangerId, gender) => allowedGenderFor(rangerId) === gender;
 
 export const spriteKeyFor = (rangerId, gender = DEFAULT_RANGER_GENDER) =>
   'ranger-' + gender + '-' + rangerId;

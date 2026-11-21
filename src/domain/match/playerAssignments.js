@@ -1,4 +1,4 @@
-import { isAllowedRangerVariant } from '../rangers/rangerCatalog.js';
+import { isAvailableRangerVariant } from '../rangers/rangerVariants.js';
 
 /**
  * Asignaciones estables de los dos participantes humanos.
@@ -31,7 +31,7 @@ export function getCharacterSelectionsByCorner(playerCharacters, playerSides) {
     if (
       !selection
       || typeof selection.id !== 'string'
-      || !isAllowedRangerVariant(selection.id, selection.gender)
+      || !isAvailableRangerVariant(selection.id, selection.gender)
     ) {
       throw new Error(`${player} debe elegir una variante disponible de Axem antes de iniciar.`);
     }

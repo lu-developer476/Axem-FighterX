@@ -95,10 +95,10 @@ function isMenuTrack(track) {
 }
 
 export const MUSIC_ROLES = Object.freeze({
-  menu: 'mecha-collection',
-  combat: 'cathedral',
-  motorcycleRace: 'dark-music-final',
-  landRace: 'slow-dark-music',
+  menu: 'menu--cathedral',
+  combat: 'combat--dark-music-final',
+  motorcycleRace: 'race--mecha-collection',
+  landRace: 'race--slow-dark-music',
 });
 
 export function selectMusicForMode(mode, tracks = MUSIC_TRACKS) {

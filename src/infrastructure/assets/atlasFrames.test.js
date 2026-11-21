@@ -249,7 +249,7 @@ describe('resultados por género y color', () => {
     const animations = {
       'battle-pose.gif': 21,
       'teleport.gif': 9,
-      'charge.gif': 4,
+      'charge.gif': 7,
       'idle.gif': 8,
     };
 
@@ -269,30 +269,30 @@ describe('resultados por género y color', () => {
     expect(defeated.hasAlpha).toBe(true);
   });
 
-  it.each(COLORS)('termina charge %s con la última pose de group-09 y un aura visible', async (color) => {
+  it.each(COLORS)('termina charge %s sosteniendo la última pose de group-09 con aura Super Saiyan', async (color) => {
     const auraPath = fileURLToPath(new URL(
-      '../../../art/source/effects/soluna-software/aura38.webp',
+      '../../../art/source/effects/dragon-ball-style/super-saiyan-aura.svg',
       import.meta.url,
     ));
     const auraMetadata = await sharp(auraPath).metadata();
-    expect(auraMetadata.width % 8).toBe(0);
-    expect(auraMetadata.height % 4).toBe(0);
+    expect(auraMetadata.width).toBe(256);
+    expect(auraMetadata.height).toBe(256);
     expect(auraMetadata.hasAlpha).toBe(true);
 
     const chargePath = resultsPath('male', color, 'charge.gif');
     const chargeMetadata = await sharp(chargePath, { animated: true }).metadata();
-    expect(chargeMetadata.pages).toBe(4);
+    expect(chargeMetadata.pages).toBe(7);
     expect(chargeMetadata.width).toBe(150);
     expect(chargeMetadata.pageHeight).toBe(100);
     const delays = Array.isArray(chargeMetadata.delay)
       ? chargeMetadata.delay
       : [chargeMetadata.delay || 100];
-    expect(delays[delays.length - 1]).toBeGreaterThanOrEqual(800);
+    expect(delays).toHaveLength(7);
+    expect(delays.slice(3).every((delay) => delay >= 160)).toBe(true);
 
     const group09 = atlasFrames.male.groups.find((group) => group.id === 'group-09');
     const finalSourceFrame = group09.frames[group09.frames.length - 1];
     expect(group09.frames).toHaveLength(5);
-    // Extrae el mismo sprite desde el atlas fuente recoloreado, sin recortar la última celda del strip.
     const sourceFrame = await sharp(resultsPath('male', color, 'spritesheet.png'))
       .extract({
         left: finalSourceFrame.x,
@@ -323,57 +323,64 @@ describe('resultados por género y color', () => {
       .toBuffer();
 
     const expectedRaw = await sharp(expectedPose).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-    const finalRaw = await sharp(chargePath, { page: 3, pages: 1 })
-      .ensureAlpha()
-      .raw()
-      .toBuffer({ resolveWithObject: true });
     const expectedMask = new Uint8Array(expectedRaw.info.width * expectedRaw.info.height);
-    const finalMask = new Uint8Array(finalRaw.info.width * finalRaw.info.height);
     let opaquePosePixels = 0;
-
     for (let pixel = 0; pixel < expectedMask.length; pixel += 1) {
       expectedMask[pixel] = expectedRaw.data[pixel * 4 + 3] > 220 ? 1 : 0;
-      finalMask[pixel] = finalRaw.data[pixel * 4 + 3] > 200 ? 1 : 0;
       if (expectedMask[pixel]) opaquePosePixels += 1;
     }
+    expect(opaquePosePixels).toBeGreaterThan(900);
 
-    let bestPoseOverlap = 0;
-    let bestPoseMask = new Uint8Array(expectedMask.length);
-    for (let offsetY = -8; offsetY <= 8; offsetY += 1) {
-      for (let offsetX = -8; offsetX <= 8; offsetX += 1) {
-        const shiftedMask = new Uint8Array(expectedMask.length);
-        let overlap = 0;
-        for (let y = 0; y < 100; y += 1) {
-          for (let x = 0; x < 150; x += 1) {
-            const sourceX = x - offsetX;
-            const sourceY = y - offsetY;
-            if (sourceX < 0 || sourceX >= 150 || sourceY < 0 || sourceY >= 100) continue;
-            const sourceIndex = sourceY * 150 + sourceX;
-            const targetIndex = y * 150 + x;
-            if (expectedMask[sourceIndex]) {
-              shiftedMask[targetIndex] = 1;
-              if (finalMask[targetIndex]) overlap += 1;
+    for (let page = 3; page < 7; page += 1) {
+      const finalRaw = await sharp(chargePath, { page, pages: 1 })
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      const finalMask = new Uint8Array(finalRaw.info.width * finalRaw.info.height);
+      for (let pixel = 0; pixel < finalMask.length; pixel += 1) {
+        finalMask[pixel] = finalRaw.data[pixel * 4 + 3] > 200 ? 1 : 0;
+      }
+
+      let bestPoseOverlap = 0;
+      let bestPoseMask = new Uint8Array(expectedMask.length);
+      for (let offsetY = -8; offsetY <= 8; offsetY += 1) {
+        for (let offsetX = -8; offsetX <= 8; offsetX += 1) {
+          const shiftedMask = new Uint8Array(expectedMask.length);
+          let overlap = 0;
+          for (let y = 0; y < 100; y += 1) {
+            for (let x = 0; x < 150; x += 1) {
+              const sourceX = x - offsetX;
+              const sourceY = y - offsetY;
+              if (sourceX < 0 || sourceX >= 150 || sourceY < 0 || sourceY >= 100) continue;
+              const sourceIndex = sourceY * 150 + sourceX;
+              const targetIndex = y * 150 + x;
+              if (expectedMask[sourceIndex]) {
+                shiftedMask[targetIndex] = 1;
+                if (finalMask[targetIndex]) overlap += 1;
+              }
             }
           }
-        }
-        if (overlap > bestPoseOverlap) {
-          bestPoseOverlap = overlap;
-          bestPoseMask = shiftedMask;
+          if (overlap > bestPoseOverlap) {
+            bestPoseOverlap = overlap;
+            bestPoseMask = shiftedMask;
+          }
         }
       }
-    }
 
-    let auraPixelsOutsidePose = 0;
-    for (let pixel = 0; pixel < finalMask.length; pixel += 1) {
-      if (bestPoseMask[pixel] === 0 && finalRaw.data[pixel * 4 + 3] > 36) {
-        auraPixelsOutsidePose += 1;
+      let auraPixelsOutsidePose = 0;
+      for (let pixel = 0; pixel < finalMask.length; pixel += 1) {
+        if (bestPoseMask[pixel] === 0 && finalRaw.data[pixel * 4 + 3] > 36) {
+          auraPixelsOutsidePose += 1;
+        }
       }
-    }
 
-    expect(opaquePosePixels).toBeGreaterThan(900);
-    expect(bestPoseOverlap / opaquePosePixels).toBeGreaterThan(0.9);
-    expect(auraPixelsOutsidePose).toBeGreaterThan(500);
+      expect(bestPoseOverlap / opaquePosePixels, color + '/frame-' + page)
+        .toBeGreaterThan(0.9);
+      expect(auraPixelsOutsidePose, color + '/frame-' + page)
+        .toBeGreaterThan(500);
+    }
   });
+
 
   it.each(COLORS)('mantiene la escala estándar del personaje en los ocho cuadros de idle %s', async (color) => {
     const file = resultsPath('male', color, 'idle.gif');

@@ -32,10 +32,10 @@ const MENU_POSE_REFERENCES = Object.freeze([
 const TRANSPARENT = Object.freeze({ r: 0, g: 0, b: 0, alpha: 0 });
 const ATLAS_FRAMES_PATH = path.join(ROOT, 'src', 'infrastructure', 'assets', 'atlasFrames.json');
 const KI_AURA_SHEET_PATH = path.join(
-  ROOT, 'art', 'source', 'effects', 'soluna-software', 'aura38.webp',
+  ROOT, 'art', 'source', 'effects', 'dragon-ball-style', 'super-saiyan-aura.svg',
 );
-const KI_AURA_GRID = Object.freeze({ columns: 8, rows: 4, frameIndex: 21 });
-const KI_AURA_HOLD_DELAY = 900;
+const KI_AURA_GRID = Object.freeze({ columns: 2, rows: 2, cellWidth: 128, cellHeight: 128 });
+const KI_AURA_HOLD_DELAY = 180;
 
 async function writeResult(gender, color, relativePath, buffer) {
   const target = path.join(RESULTS(gender, color), relativePath);
@@ -947,85 +947,55 @@ async function normalizeMaleActionFrame(input, addAura = false, targetHeight = n
  * Compone el aura CC0 detrás de la última pose masculina de group-09.
  * La pose original se conserva y se mantiene visible durante el cierre de carga.
  */
-async function buildMaleKiAuraHoldFrame(color, sourceFrame) {
+async function buildMaleKiAuraHoldFrames(sourceFrame) {
   const metadata = await sharp(KI_AURA_SHEET_PATH).metadata();
-  const { columns, rows, frameIndex } = KI_AURA_GRID;
-  if (!metadata.width || !metadata.height ||
-      metadata.width % columns !== 0 || metadata.height % rows !== 0) {
-    throw new Error('Aura38.webp no coincide con la cuadrícula declarada de 8×4.');
+  const { columns, rows, cellWidth, cellHeight } = KI_AURA_GRID;
+  if (metadata.width !== columns * cellWidth || metadata.height !== rows * cellHeight) {
+    throw new Error('La hoja de aura Super Saiyan debe medir 256×256 px en una cuadrícula 2×2.');
   }
-  if (frameIndex < 0 || frameIndex >= columns * rows) {
-    throw new Error('El índice del fotograma de Aura38 está fuera de la hoja.');
-  }
-
-  const cellWidth = metadata.width / columns;
-  const cellHeight = metadata.height / rows;
-  const auraCell = await sharp(KI_AURA_SHEET_PATH)
-    .extract({
-      left: (frameIndex % columns) * cellWidth,
-      top: Math.floor(frameIndex / columns) * cellHeight,
-      width: cellWidth,
-      height: cellHeight,
-    })
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-
-  const tinted = Buffer.from(auraCell.data);
-  const palette = color === 'orange'
-    ? { r: 255, g: 150, b: 38 }
-    : { r: 174, g: 84, b: 255 };
-
-  for (let offset = 0; offset < tinted.length; offset += 4) {
-    const originalAlpha = tinted[offset + 3];
-    if (originalAlpha === 0) continue;
-    const brightness = Math.max(
-      tinted[offset],
-      tinted[offset + 1],
-      tinted[offset + 2],
-    ) / 255;
-    const energy = Math.pow(brightness, 0.82);
-    tinted[offset] = Math.round(palette.r * energy);
-    tinted[offset + 1] = Math.round(palette.g * energy);
-    tinted[offset + 2] = Math.round(palette.b * energy);
-    tinted[offset + 3] = Math.round(originalAlpha * 0.9);
+  if (!metadata.hasAlpha) {
+    throw new Error('La hoja de aura Super Saiyan debe conservar transparencia.');
   }
 
-  const aura = await sharp(tinted, {
-    raw: {
-      width: auraCell.info.width,
-      height: auraCell.info.height,
-      channels: 4,
-    },
-  })
-    .resize(128, 128, { fit: 'fill', kernel: 'nearest' })
-    .extract({ left: 0, top: 14, width: 128, height: 100 })
-    .png()
-    .toBuffer();
-
-  // El glow se construye desde la misma silueta de group-09 y el Aura38 queda detrás.
   const heldPose = await normalizeMaleActionFrame(
     sourceFrame.input,
-    true,
+    false,
     STANDARD_STANDING_HEIGHT,
-    { auraColor: palette },
   );
+  const frames = [];
 
-  return sharp({
-    create: {
-      width: ACTION_GIF_SIZE.width,
-      height: ACTION_GIF_SIZE.height,
-      channels: 4,
-      background: TRANSPARENT,
-    },
-  })
-    .composite([
-      { input: aura, left: 11, top: 0 },
-      { input: heldPose, left: 0, top: 0 },
-    ])
-    .png()
-    .toBuffer();
+  for (let frameIndex = 0; frameIndex < columns * rows; frameIndex += 1) {
+    const aura = await sharp(KI_AURA_SHEET_PATH)
+      .extract({
+        left: (frameIndex % columns) * cellWidth,
+        top: Math.floor(frameIndex / columns) * cellHeight,
+        width: cellWidth,
+        height: cellHeight,
+      })
+      .png()
+      .toBuffer();
+
+    const heldKiFrame = await sharp({
+      create: {
+        width: ACTION_GIF_SIZE.width,
+        height: ACTION_GIF_SIZE.height,
+        channels: 4,
+        background: TRANSPARENT,
+      },
+    })
+      .composite([
+        { input: await sharp(aura).resize(110, 110, { fit: 'fill', kernel: 'nearest' }).extract({ left: 0, top: 5, width: 110, height: 100 }).png().toBuffer(), left: 20, top: 0 },
+        { input: heldPose, left: 0, top: 0 },
+      ])
+      .png()
+      .toBuffer();
+
+    frames.push(heldKiFrame);
+  }
+
+  return frames;
 }
+
 
 async function readMaleGifFrames(color, filename) {
   const file = RESULTS('male', color, filename);
@@ -1151,19 +1121,19 @@ async function buildMaleSharedExtraGifs(color) {
     [...teleport.delays, ...teleportTail.map(() => 100)],
   );
 
-  const auraColor = color === 'orange'
-    ? { r: 255, g: 140, b: 40 }
-    : { r: 195, g: 70, b: 255 };
   const charged = await Promise.all(
-    chargeFrames.map((frame) => normalizeMaleActionFrame(frame.input, true, STANDARD_STANDING_HEIGHT, { auraColor })),
+    chargeFrames.map((frame) => normalizeMaleActionFrame(frame.input, false, STANDARD_STANDING_HEIGHT)),
   );
   const group09 = await extractMaleStripFrames(color, 'group-09', 5);
-  const heldKiPose = await buildMaleKiAuraHoldFrame(color, group09[group09.length - 1]);
+  const heldKiFrames = await buildMaleKiAuraHoldFrames(group09[group09.length - 1]);
   await writeMaleActionGif(
     color,
     'charge',
-    [...charged, heldKiPose],
-    [...charged.map(() => 100), KI_AURA_HOLD_DELAY],
+    [...charged, ...heldKiFrames],
+    [
+      ...charged.map(() => 100),
+      ...heldKiFrames.map(() => KI_AURA_HOLD_DELAY),
+    ],
   );
 
   await buildMaleIdleGif(color);

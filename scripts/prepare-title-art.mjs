@@ -16,26 +16,67 @@ async function main() {
     .raw()
     .toBuffer({ resolveWithObject: true });
   const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
-  const result = removeSpriteBackground({ data: pixels, width: info.width, height: info.height }, {
-    tolerance: 48,
-    minBorderCoverage: 0.05,
-  });
-  if (!result.backgroundColor || result.removedPixels < info.width * info.height * 0.05) {
-    throw new Error('No se detectó un fondo uniforme conectado al borde de title.png.');
+
+  // Si el original ya contiene transparencia, conservarla y evitar volver a
+  // aplicar el recorte de fondo en ejecuciones posteriores del pipeline.
+  let transparentPixels = 0;
+  for (let offset = 3; offset < pixels.length; offset += 4) {
+    if (pixels[offset] < 255) transparentPixels += 1;
   }
-  const transparent = await sharp(Buffer.from(pixels), {
+
+  let removedPixels = 0;
+  if (transparentPixels === 0) {
+    const result = removeSpriteBackground(
+      { data: pixels, width: info.width, height: info.height },
+      {
+        // El fondo es negro; una tolerancia baja conserva mejor el resplandor rojo.
+        tolerance: 18,
+        minBorderCoverage: 0.05,
+      },
+    );
+    if (!result.backgroundColor || result.removedPixels < info.width * info.height * 0.02) {
+      throw new Error('No se detectó suficiente fondo negro conectado al borde de title.png.');
+    }
+    removedPixels = result.removedPixels;
+  }
+
+  // Elimina el lienzo vacío y deja solo un margen transparente uniforme de 8 px.
+  const cropped = await sharp(Buffer.from(pixels), {
     raw: { width: info.width, height: info.height, channels: 4 },
   })
     .trim({ background: TRANSPARENT, threshold: 1 })
+    .extend({
+      top: 8,
+      bottom: 8,
+      left: 8,
+      right: 8,
+      background: TRANSPARENT,
+    })
+    .png({ compressionLevel: 9, effort: 10 })
+    .toBuffer();
+
+  const croppedMetadata = await sharp(cropped).metadata();
+  if (!croppedMetadata.width || !croppedMetadata.height) {
+    throw new Error('El recorte de title.png produjo un lienzo vacío.');
+  }
+
+  // title.png es el asset fuente: versionar aquí la versión transparente y recortada.
+  await fs.writeFile(SOURCE, cropped);
+
+  const output = await sharp(cropped)
     .resize({ ...MAX_SIZE, fit: 'contain', kernel: 'nearest', background: TRANSPARENT })
     .png({ compressionLevel: 9, effort: 10, palette: true, quality: 100 })
     .toBuffer();
   await fs.mkdir(path.dirname(OUTPUT), { recursive: true });
-  await fs.writeFile(OUTPUT, transparent);
-  const metadata = await sharp(transparent).metadata();
-  console.log('Título transparente generado: ' + metadata.width + 'x' + metadata.height +
-    ' (' + Math.round(transparent.length / 1024) + ' KB); ' + result.removedPixels +
-    ' píxeles de fondo eliminados.');
+  await fs.writeFile(OUTPUT, output);
+
+  const outputMetadata = await sharp(output).metadata();
+  console.log(
+    'Título transparente generado: fuente ' + croppedMetadata.width + 'x' + croppedMetadata.height +
+    ', salida ' + outputMetadata.width + 'x' + outputMetadata.height +
+    ' (' + Math.round(output.length / 1024) + ' KB); ' + removedPixels +
+    ' píxeles de fondo eliminados; margen transparente de 8 px.',
+  );
 }
 main().catch((error) => {
   console.error('No se pudo preparar title.png:', error);

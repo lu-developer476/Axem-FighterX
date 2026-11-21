@@ -4,7 +4,7 @@ import { DEFAULT_STAGE_ID, STAGES } from '../../infrastructure/assets/stageAsset
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { getCharacterSelectionsByCorner } from '../../domain/match/playerAssignments.js';
-import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
+import { maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playMenuMusic } from '../../infrastructure/audio/GameMusic.js';
 import { contentWidth, insetSize, mapPanelY, UI_SPACING } from '../views/uiLayout.js';
 
@@ -527,23 +527,14 @@ export class MenuScene extends Phaser.Scene {
       this.#showCharacterModal();
       return;
     }
-
+    const rangerId = this.pendingCharacterId;
+    const gender = rangerId === RANGER_IDS.VIOLET ? 'female' : 'male';
     this.page = 'character-gender';
-    this.#beginCharacterModal('SELECCIONAR GÉNERO');
-    this.#addButton('MASCULINO', 181, () => {
-      this.#selectCharacter(this.pendingCharacterId, 'male');
-    }, {
-      width: 154,
-      x: 160,
-      fontSize: '7px',
-    });
-    this.#addButton('FEMENINO', 181, () => {
-      this.#selectCharacter(this.pendingCharacterId, 'female');
-    }, {
-      width: 154,
-      x: 320,
-      fontSize: '7px',
-    });
+    this.#beginCharacterModal('VARIANTE DISPONIBLE');
+    this.#addButton(gender === 'female' ? 'AXEM VIOLETA · FEMENINO' : 'AXEM NARANJA · MASCULINO',
+      181, () => this.#selectCharacter(rangerId, gender), {
+        width: 190, fontSize: '7px',
+      });
   }
 
   #selectCharacter(rangerId, gender) {

@@ -43,6 +43,16 @@ async function writeResult(gender, color, relativePath, buffer) {
   console.log('Generado ' + path.relative(ROOT, target));
 }
 
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
+}
+
 /**
  * Una tira por grupo de cuadros de la hoja masculina. Todas las celdas de una
  * tira miden lo mismo y los pies quedan sobre la misma línea, de modo que Violet
@@ -1223,11 +1233,14 @@ async function buildGender(gender) {
 
       for (const file of files) {
         const outputName = file.replace(/^axem-pink-/, '');
+        const preservedPath = path.join(RESULTS(gender, color), outputName);
+        const hasPreservedPalette = FEMALE_PRESERVED_PALETTE_ASSETS.has(outputName)
+          && await fileExists(preservedPath);
         let corrected;
-        if (FEMALE_PRESERVED_PALETTE_ASSETS.has(outputName)) {
-          // Estas tres imágenes fueron ajustadas manualmente y están versionadas.
-          // No se recalculan desde la referencia porque eso revierte las paletas.
-          const preservedPath = path.join(RESULTS(gender, color), outputName);
+
+        if (hasPreservedPalette) {
+          // Conserva la corrección manual cuando el archivo sigue versionado.
+          // Si se elimina, se reconstruye desde la referencia original en este build.
           corrected = await fs.readFile(preservedPath);
           console.log('Se conserva la paleta femenina ajustada: ' + path.relative(ROOT, preservedPath));
         } else if (file === 'axem-pink-pose.png') {
@@ -1241,8 +1254,9 @@ async function buildGender(gender) {
           );
           corrected = await harmonizeFemalePalette(recolored);
         }
+
         parts.push(corrected);
-        if (!FEMALE_PRESERVED_PALETTE_ASSETS.has(outputName)) {
+        if (!hasPreservedPalette) {
           await writeResult(gender, color, outputName, corrected);
         }
       }

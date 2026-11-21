@@ -33,7 +33,7 @@ results/
 
 Los retratos laterales del menú se generan directamente desde la referencia original `references/axem-red/axem-red-spritesheet.png`; no se necesita una vista previa duplicada en `results/male/`. El recoloreado del cabello recorre cada componente rubio de todas las poses, incluso cuando está separado del casco o la cara, para evitar que queden mechones originales sin procesar.
 
-Las salidas femeninas `spritesheet.png`, `battle-pose.png` y `levitate.png` de Orange y Violet contienen ajustes manuales de paleta. Se conservan desde el repositorio durante `prepare:sprites`, `pretest` y `prebuild` para impedir que la regeneración automática desde Axem Pink sobrescriba esas correcciones. La pose femenina `pose.png` continúa generándose desde su imagen canónica versionada.
+Las salidas femeninas `spritesheet.png`, `battle-pose.png` y `levitate.png` pueden conservar correcciones manuales de paleta cuando sus archivos están presentes en `results/female/{orange,violet}/`. `prepare:sprites`, `pretest` y `prebuild` preservan esas versiones existentes. Si alguno se elimina, el generador lo reconstruye desde la referencia original de Axem Pink y vuelve a escribirlo; la ausencia de una salida opcional nunca debe interrumpir la preparación del proyecto. La pose femenina `pose.png` se genera desde su imagen canónica versionada.
 
 Los GIF masculinos de bicicleta y doble hacha conservan sus lienzos de **150 × 100 px**. Los 11 GIF base de cada variante masculina se generan desde las secuencias clasificadas; todos los GIF de acción usan lienzos de **150 × 100 px**, transparencia y escalado nearest-neighbor para conservar el pixel-art. El pivote de los pies se centra horizontalmente y mantiene una línea de suelo fija para evitar saltos entre fotogramas.
 

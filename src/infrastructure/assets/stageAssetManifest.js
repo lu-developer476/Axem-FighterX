@@ -1,19 +1,16 @@
-import { STAGE_IDS } from '../../domain/arena/stageCatalog.js';
-
 const MAP_MODULES = import.meta.glob(
-  '../../../art/source/environments/maps/*.{png,webp,jpg,jpeg}',
+  '../../../art/source/environments/maps/**/*.{png,webp,jpg,jpeg}',
   { eager: true, query: '?url', import: 'default' },
 );
 const TILESET_MODULES = import.meta.glob(
-  '../../../art/source/environments/maps/tilesets/*.{png,webp,jpg,jpeg}',
+  '../../../art/source/environments/maps/tilesets/**/*.{png,webp,jpg,jpeg}',
   { eager: true, query: '?url', import: 'default' },
 );
 const TILESET_METADATA_MODULES = import.meta.glob(
-  '../../../art/source/environments/maps/tilesets/*.json',
+  '../../../art/source/environments/maps/tilesets/**/*.json',
   { eager: true, import: 'default' },
 );
 
-const STAGE_IDS_LIST = Object.values(STAGE_IDS);
 const IMAGE_PRIORITY = Object.freeze({ png: 0, webp: 1, jpg: 2, jpeg: 3 });
 
 export function slugifyAssetName(value = '') {
@@ -70,38 +67,15 @@ function collectImageFiles(modules, keyPrefix) {
     .sort((a, b) => a.stem.localeCompare(b.stem));
 }
 
-/** A map can be scoped with a filename prefix: <stage-id>--<variant-name>. */
-export function stageScopeForMapName(filename) {
-  const rawStem = fileParts(filename).stem.toLowerCase();
-  const stageId = STAGE_IDS_LIST.find((id) => rawStem.startsWith(slugifyAssetName(id) + '--'));
-  if (!stageId) return null;
-  const prefix = slugifyAssetName(stageId) + '--';
-  return {
-    stageId,
-    variantName: slugifyAssetName(rawStem.slice(prefix.length)),
-  };
-}
-
-const mapFiles = collectImageFiles(MAP_MODULES, 'stage-map-');
-export const STAGE_MAP_ASSETS = Object.freeze(mapFiles.map((asset) => {
-  const scope = stageScopeForMapName(asset.filename);
-  const labelStem = scope?.variantName || asset.stem;
-  return Object.freeze({
-    ...asset,
-    id: asset.stem,
-    label: displayName(labelStem),
-    stageId: scope?.stageId ?? null,
-  });
-}));
-
-function stableSeed(value) {
-  let hash = 2166136261;
-  for (const character of value) {
-    hash ^= character.charCodeAt(0);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-}
+const mapFiles = collectImageFiles(
+  Object.fromEntries(Object.entries(MAP_MODULES).filter(([path]) => !path.includes('/maps/tilesets/'))),
+  'stage-map-',
+);
+export const STAGE_MAP_ASSETS = Object.freeze(mapFiles.map((asset) => Object.freeze({
+  ...asset,
+  id: asset.stem,
+  label: displayName(asset.stem),
+})));
 
 const tilesetFiles = collectImageFiles(TILESET_MODULES, 'stage-tileset-');
 export const STAGE_TILESET_ASSETS = Object.freeze(tilesetFiles.map((asset) => {
@@ -124,43 +98,81 @@ export const STAGE_TILESET_ASSETS = Object.freeze(tilesetFiles.map((asset) => {
   });
 }));
 
+function stableSeed(value) {
+  let hash = 2166136261;
+  for (const character of value) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
 export function proceduralTextureKeyForTileset(tilesetKey) {
   return 'stage-procedural-' + String(tilesetKey).replace(/^stage-tileset-/, '');
 }
 
-const CLASSIC_VARIANT = Object.freeze({
-  id: 'classic',
-  label: 'Diseño original',
-  kind: 'classic',
-  backgroundKey: null,
-  proceduralKey: null,
+const lines = (...entries) => Object.freeze(entries.map(([speaker, text]) => Object.freeze({ speaker, text })));
+
+const RESULT_DIALOGUE = Object.freeze({
+  violetWins: lines(
+    ['violet', 'Leí mejor el espacio y encontré el momento para cerrar el combate.'],
+    ['orange', 'Me concentré demasiado en atacar y dejé de prestar atención al terreno.'],
+  ),
+  orangeWins: lines(
+    ['orange', 'Aproveché el espacio disponible y no te dejé recuperar la posición.'],
+    ['violet', 'Vi tarde el cambio de distancia. La próxima vez voy a anticiparlo.'],
+  ),
+  draw: lines(
+    ['violet', 'Ninguno consiguió una ventaja definitiva en este terreno.'],
+    ['orange', 'Volvamos a intentarlo. Ya sabemos un poco más sobre el espacio disponible.'],
+  ),
 });
 
-export function getStageVisualVariants(stageId) {
-  const maps = STAGE_MAP_ASSETS
-    .filter((asset) => !asset.stageId || asset.stageId === stageId)
-    .map((asset) => Object.freeze({
-      id: 'map-' + asset.id,
-      label: 'Mapa · ' + asset.label,
-      kind: 'map',
-      backgroundKey: asset.key,
-      proceduralKey: null,
-      sourceId: asset.id,
-    }));
-
-  const generated = STAGE_TILESET_ASSETS.map((asset) => Object.freeze({
-    id: 'procedural-' + asset.id,
-    label: 'Procedural · ' + asset.label,
-    kind: 'procedural',
-    backgroundKey: null,
-    proceduralKey: proceduralTextureKeyForTileset(asset.key),
-    tilesetKey: asset.key,
-    sourceId: asset.id,
-  }));
-
-  return Object.freeze([CLASSIC_VARIANT, ...maps, ...generated]);
+function createStageDialogue(name, filename, kind) {
+  const sourceDescription = kind === 'map' ? 'mapa' : 'tileset';
+  return lines(
+    ['violet', `El archivo ${filename} define esta zona. El registro la identifica como ${name}.`],
+    ['orange', `Entonces usemos el terreno tal como está representado, sin asumir que el fondo cambia las reglas.`],
+    ['violet', 'Revisá las distancias y mantené la vista en el rival. No conocemos todos los puntos de referencia.'],
+    ['orange', `La configuración llegó desde un ${sourceDescription} del proyecto. El combate sigue las mismas reglas.`],
+    ['violet', 'Entendido. Nada de confiarse por conocer el dibujo; primero vamos a medir el espacio.'],
+    ['orange', 'Cuando quieras. El escenario está cargado y podemos empezar.'],
+  );
 }
 
-export function getStageVisualVariant(stageId, variantId = 'classic') {
-  return getStageVisualVariants(stageId).find((entry) => entry.id === variantId) ?? CLASSIC_VARIANT;
+function createStage(asset, kind) {
+  const isMap = kind === 'map';
+  const id = isMap ? asset.id : 'tileset-' + asset.id;
+  const name = isMap ? asset.label : asset.label + ' · Tileset';
+  return Object.freeze({
+    id,
+    name,
+    kind,
+    assetFilename: asset.filename,
+    tagline: isMap ? 'Mapa incorporado al proyecto' : 'Entorno generado desde un tileset del proyecto',
+    location: isMap ? 'MAPA DEL PROYECTO' : 'TILESET DEL PROYECTO',
+    description: isMap
+      ? `Escenario cargado directamente desde ${asset.filename}.`
+      : `Escenario procedural reproducible generado a partir de ${asset.filename}.`,
+    groundDepthMode: 'free',
+    backgroundKey: isMap ? asset.key : null,
+    proceduralKey: isMap ? null : proceduralTextureKeyForTileset(asset.key),
+    dialogue: createStageDialogue(name, asset.filename, kind),
+    resultDialogue: RESULT_DIALOGUE,
+  });
+}
+
+/**
+ * La carpeta de mapas y la carpeta de tilesets son la única fuente del catálogo.
+ * Vite descubre sus archivos durante el build; no hay que registrar escenarios a mano.
+ */
+export const STAGES = Object.freeze([
+  ...STAGE_MAP_ASSETS.map((asset) => createStage(asset, 'map')),
+  ...STAGE_TILESET_ASSETS.map((asset) => createStage(asset, 'tileset')),
+]);
+
+export const DEFAULT_STAGE_ID = STAGES[0]?.id ?? null;
+
+export function getStage(stageId) {
+  return STAGES.find((stage) => stage.id === stageId) ?? STAGES[0] ?? null;
 }

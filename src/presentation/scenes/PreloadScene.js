@@ -13,8 +13,6 @@ import {
 import { GIF_ACTIONS, GIF_CELL } from '../../infrastructure/assets/characterAnimationData.js';
 import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
-import { createStageTextures } from '../../infrastructure/graphics/StageTextureFactory.js';
-import { createAdditionalStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';
 import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { createStageAssetTextures } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import whitePuffAtlasUrl from '../../../art/source/effects/kenney-smoke-particles/white-puff-atlas.png';
@@ -130,8 +128,6 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create() {
-    createStageTextures(this);
-    createAdditionalStageTextures(this);
     createStageAssetTextures(this);
     createFxTextures(this);
     registerFxAnimations(this);

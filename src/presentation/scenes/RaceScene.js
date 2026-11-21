@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
-import { STAGE_IDS } from '../../domain/arena/stageCatalog.js';
+import { DEFAULT_STAGE_ID } from '../../infrastructure/assets/stageAssetManifest.js';
 import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
 import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
 import { StageView } from '../views/StageView.js';
@@ -18,7 +18,7 @@ export class RaceScene extends Phaser.Scene {
   }
 
   create() {
-    this.stage = new StageView(this, STAGE_IDS.MEADOW, { cinematic: true });
+    this.stage = new StageView(this, DEFAULT_STAGE_ID);
     this.distance = 0;
     this.rivalDistance = 0;
     this.boost = 100;

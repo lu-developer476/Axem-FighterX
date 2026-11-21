@@ -228,13 +228,16 @@ await wait(150);
 // Comprueba la carrera de motos: cuatro carriles, tres IA, obstáculos y nitro.
 await tap('ArrowDown'); // Menú → CARRERA AXEM
 await tap('Enter');
+await tap('ArrowRight'); // J1 elige Axem Naranja masculino
+await shot('30-seleccion-axem-carrera-motos');
+await tap('Enter'); // Confirmar personaje elegido
 await wait(3200); // Cuenta regresiva
 await hold('ArrowRight', 900); // Acelerar
 await tap('ArrowDown'); // Cambiar al carril inferior
 await hold('Space', 700); // Nitro
 await tap('ArrowUp'); // Volver al carril superior
 await hold('ArrowRight', 700);
-await shot('30-carrera-motos-cuatro-carriles');
+await shot('31-carrera-motos-cuatro-carriles');
 await tap('Escape');
 await wait(150);
 

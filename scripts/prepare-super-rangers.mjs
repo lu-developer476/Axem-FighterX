@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const PADDING = 4;
+const PADDING = 4; // Margen mínimo uniforme tras eliminar la cuadrícula falsa de transparencia.
 const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
 const REFERENCES = Object.freeze([
   {

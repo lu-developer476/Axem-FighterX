@@ -37,6 +37,19 @@ export class FightScene extends Phaser.Scene {
     const matchArena = this.matchSetup.trainingBackgroundColor
       ? ARENA
       : getArenaForGroundDepthMode(this.stageDefinition.groundDepthMode);
+    const versus = getVersusMode(this.matchSetup.versusMode);
+
+    if (versus.id === 'player-vs-player') {
+      const sides = this.matchSetup.playerSides;
+      if (!sides || !['left', 'right'].includes(sides.J1) ||
+        !['left', 'right'].includes(sides.J2) || sides.J1 === sides.J2) {
+        throw new Error('J1 y J2 deben elegir esquinas opuestas antes de iniciar el combate.');
+      }
+    }
+    if (versus.id === 'player-vs-ai' && !['J1', 'J2'].includes(this.matchSetup.playerSide)) {
+      throw new Error('El jugador debe elegir su esquema de controles y esquina antes de iniciar el combate.');
+    }
+
     this.match = createDefaultMatch(
       Math.random,
       this.matchSetup.characters,
@@ -44,7 +57,6 @@ export class FightScene extends Phaser.Scene {
       this.stageDefinition.hazards ?? null,
     );
     const [leftFighter, rightFighter] = this.match.fighters;
-    const versus = getVersusMode(this.matchSetup.versusMode);
     const combat = getCombatMode(this.matchSetup.combatMode);
     this.roundSeries = combat.rounds > 1 ? new RoundSeries(combat.rounds) : null;
     this.pendingNextRound = false;
@@ -76,6 +88,10 @@ export class FightScene extends Phaser.Scene {
         inputs = [aiOne(), aiTwo()];
         break;
       case 'player-vs-player':
+        inputs = this.matchSetup.playerSides.J1 === 'left'
+          ? [playerOne(), playerTwo()]
+          : [playerTwo(), playerOne()];
+        break;
       default:
         inputs = [playerOne(), playerTwo()];
         break;

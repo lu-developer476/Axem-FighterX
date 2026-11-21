@@ -359,8 +359,13 @@ export class MenuScene extends Phaser.Scene {
     const matchSetup = {
       ...this.matchSetup,
       characters: [...(this.matchSetup.characters ?? [])],
+      playerSides: this.matchSetup.playerSides ? { ...this.matchSetup.playerSides } : undefined,
     };
+
     if (matchSetup.versusMode === 'player-vs-ai' && matchSetup.playerSide === 'J2') {
+      matchSetup.characters.reverse();
+    }
+    if (matchSetup.versusMode === 'player-vs-player' && matchSetup.playerSides?.J1 === 'right') {
       matchSetup.characters.reverse();
     }
     return matchSetup;
@@ -379,6 +384,19 @@ export class MenuScene extends Phaser.Scene {
     this.#showCharacterModal();
   }
 
+  #showPreviousConfiguration() {
+    if (this.matchSetup.versusMode === 'player-vs-ai') {
+      this.#showPlayerSide();
+      return;
+    }
+    if (this.matchSetup.versusMode === 'player-vs-player') {
+      this.#showPlayerCorners();
+      return;
+    }
+    this.characterSlot = Math.max(0, getVersusMode(this.matchSetup.versusMode).characterSlots - 1);
+    this.#showCharacterModal();
+  }
+
   #goBack() {
     if (this.page === 'versus') {
       this.#showHome();
@@ -394,16 +412,25 @@ export class MenuScene extends Phaser.Scene {
       return;
     }
     if (this.page === 'characters') {
-      this.#showCombatModes();
+      if (this.characterSlot > 0) {
+        this.characterSlot -= 1;
+        this.#showCharacterModal();
+      } else {
+        this.#showCombatModes();
+      }
       return;
     }
     if (this.page === 'player-side') {
       this.#moveSelectionBackToCharacters();
       return;
     }
+    if (this.page === 'player-corners') {
+      this.characterSlot = 1;
+      this.#showCharacterModal();
+      return;
+    }
     if (this.page === 'training-colors') {
-      if (this.matchSetup.versusMode === 'player-vs-ai') this.#showPlayerSide();
-      else this.#moveSelectionBackToCharacters();
+      this.#showPreviousConfiguration();
       return;
     }
     if (this.page === 'stage-variants') {
@@ -411,9 +438,7 @@ export class MenuScene extends Phaser.Scene {
       return;
     }
     if (this.page === 'stages') {
-      const mode = getVersusMode(this.matchSetup.versusMode);
-      this.characterSlot = Math.max(0, mode.characterSlots - 1);
-      this.#showCharacterModal();
+      this.#showPreviousConfiguration();
       return;
     }
     this.#showHome();
@@ -434,7 +459,7 @@ export class MenuScene extends Phaser.Scene {
 
   #showVersusModes() {
     this.page = 'versus';
-    this.matchSetup = { characters: [], playerSide: 'J1' };
+    this.matchSetup = { characters: [], playerSide: null, playerSides: null };
     this.#beginPage('COMBATE', 330, 168);
 
     VERSUS_MODES.forEach((mode, index) => {
@@ -525,8 +550,15 @@ export class MenuScene extends Phaser.Scene {
         gender,
       };
       this.matchSetup.playerCharacter = rangerId;
-      this.matchSetup.playerSide = 'J1';
+      this.matchSetup.playerSide = null;
       this.#showPlayerSide();
+      return;
+    }
+
+    if (mode.id === 'player-vs-player') {
+      this.matchSetup.playerSides = { J1: null, J2: null };
+      this.matchSetup.playerSidesError = null;
+      this.#showPlayerCorners();
       return;
     }
 
@@ -535,23 +567,88 @@ export class MenuScene extends Phaser.Scene {
 
   #showPlayerSide() {
     this.page = 'player-side';
-    this.#beginPage('ESQUINA INICIAL', 390, 132);
-    this.#addButton('JUGADOR 1 · IZQUIERDA', 158, () => {
+    this.#beginPage('ESQUINA DEL JUGADOR HUMANO', 400, 178);
+    this.#addText('ELEGÍ TANTO EL LADO COMO EL ESQUEMA DE TECLAS', 143, {
+      fontSize: '6px',
+      color: '#b7a9cb',
+    });
+    this.#addButton((this.matchSetup.playerSide === 'J1' ? '✓ ' : '') + 'J1 · IZQUIERDA · TECLAS A/D/W/S', 169, () => {
       this.matchSetup.playerSide = 'J1';
+      this.matchSetup.playerSideError = null;
       this.#showPlayerSide();
-    }, { width: 142, x: 160, fontSize: '7px' });
-    this.#addButton('JUGADOR 2 · DERECHA', 158, () => {
+    }, { width: 320, fontSize: '6px' });
+    this.#addButton((this.matchSetup.playerSide === 'J2' ? '✓ ' : '') + 'J2 · DERECHA · TECLAS DE FLECHAS', 192, () => {
       this.matchSetup.playerSide = 'J2';
+      this.matchSetup.playerSideError = null;
       this.#showPlayerSide();
-    }, { width: 142, x: 320, fontSize: '7px' });
-    this.#addButton('CONTINUAR', 192, () => this.#showNextConfiguration(), {
-      width: 174,
-      fontSize: '7px',
+    }, { width: 320, fontSize: '6px' });
+    if (this.matchSetup.playerSideError) {
+      this.#addText(this.matchSetup.playerSideError, 211, { fontSize: '6px', color: '#ff9b9b' });
+    } else {
+      this.#addText('LA IA OCUPARÁ LA ESQUINA CONTRARIA', 211, { fontSize: '6px', color: '#aaa0bd' });
+    }
+    this.#addButton('VOLVER', 232, () => this.#moveSelectionBackToCharacters(), {
+      width: 120, x: 145, fontSize: '7px',
     });
-    this.#addButton('VOLVER', 219, () => this.#moveSelectionBackToCharacters(), {
-      width: 120,
-      fontSize: '7px',
-    });
+    this.#addButton('CONTINUAR', 232, () => {
+      if (!this.matchSetup.playerSide) {
+        this.matchSetup.playerSideError = 'SELECCIONÁ J1 O J2 ANTES DE CONTINUAR';
+        this.#showPlayerSide();
+        return;
+      }
+      this.#showNextConfiguration();
+    }, { width: 132, x: 335, fontSize: '7px' });
+  }
+
+  #showPlayerCorners() {
+    this.page = 'player-corners';
+    const sides = this.matchSetup.playerSides ?? { J1: null, J2: null };
+    this.#beginPage('ESQUINAS DE INICIO', 430, 214);
+
+    this.#addText('JUGADOR 1', 142, { fontSize: '7px', color: '#d9a9ff' });
+    this.#addButton((sides.J1 === 'left' ? '✓ ' : '') + 'IZQUIERDA', 160, () => {
+      this.#setPlayerCorner('J1', 'left');
+    }, { width: 136, x: 160, fontSize: '7px' });
+    this.#addButton((sides.J1 === 'right' ? '✓ ' : '') + 'DERECHA', 160, () => {
+      this.#setPlayerCorner('J1', 'right');
+    }, { width: 136, x: 320, fontSize: '7px' });
+
+    this.#addText('JUGADOR 2', 188, { fontSize: '7px', color: '#ffc17e' });
+    this.#addButton((sides.J2 === 'left' ? '✓ ' : '') + 'IZQUIERDA', 206, () => {
+      this.#setPlayerCorner('J2', 'left');
+    }, { width: 136, x: 160, fontSize: '7px' });
+    this.#addButton((sides.J2 === 'right' ? '✓ ' : '') + 'DERECHA', 206, () => {
+      this.#setPlayerCorner('J2', 'right');
+    }, { width: 136, x: 320, fontSize: '7px' });
+
+    this.#addText(
+      this.matchSetup.playerSidesError ?? 'CADA JUGADOR ELIGE SU ESQUINA; DEBEN SER DISTINTAS',
+      222,
+      { fontSize: '5px', color: this.matchSetup.playerSidesError ? '#ff9b9b' : '#aaa0bd' },
+    );
+    this.#addButton('VOLVER A PERSONAJES', 239, () => {
+      this.characterSlot = 1;
+      this.#showCharacterModal();
+    }, { width: 180, x: 150, fontSize: '6px' });
+    this.#addButton('CONTINUAR', 239, () => {
+      const { J1, J2 } = this.matchSetup.playerSides ?? {};
+      if (!J1 || !J2 || J1 === J2) {
+        this.matchSetup.playerSidesError = 'AMBOS DEBEN ELEGIR LADOS OPUESTOS';
+        this.#showPlayerCorners();
+        return;
+      }
+      this.matchSetup.playerSidesError = null;
+      this.#showNextConfiguration();
+    }, { width: 132, x: 350, fontSize: '7px' });
+  }
+
+  #setPlayerCorner(player, side) {
+    this.matchSetup.playerSides = {
+      ...(this.matchSetup.playerSides ?? {}),
+      [player]: side,
+    };
+    this.matchSetup.playerSidesError = null;
+    this.#showPlayerCorners();
   }
 
   #showNextConfiguration() {
@@ -584,10 +681,9 @@ export class MenuScene extends Phaser.Scene {
       width: 170,
       fontSize: '7px',
     });
-    this.#addButton('VOLVER', 228, () => {
-      if (this.matchSetup.versusMode === 'player-vs-ai') this.#showPlayerSide();
-      else this.#moveSelectionBackToCharacters();
-    }, { width: 112, x: 150, fontSize: '7px' });
+    this.#addButton('VOLVER', 228, () => this.#showPreviousConfiguration(), {
+      width: 112, x: 150, fontSize: '7px',
+    });
     this.#addButton('COMENZAR', 228, () => this.#startSelectedFight(DEFAULT_STAGE_ID, false), {
       width: 150,
       x: 320,
@@ -670,10 +766,9 @@ export class MenuScene extends Phaser.Scene {
         height: 13,
       });
     }
-    this.#addButton('VOLVER', 239, () => {
-      if (this.matchSetup.versusMode === 'player-vs-ai') this.#showPlayerSide();
-      else this.#moveSelectionBackToCharacters();
-    }, { width: 92, x: 240, fontSize: '6px', height: 13 });
+    this.#addButton('VOLVER', 239, () => this.#showPreviousConfiguration(), {
+      width: 92, x: 240, fontSize: '6px', height: 13,
+    });
     if (this.stagePage < pageCount - 1) {
       this.#addButton('SIGUIENTE', 239, () => this.#showStages(this.stagePage + 1), {
         width: 92,
@@ -687,32 +782,34 @@ export class MenuScene extends Phaser.Scene {
 
   #showControls() {
     this.page = 'controls';
-    this.#beginPage('TUTORIAL', 390, 172);
-    this.#addText('JUGADOR 1', GAME_WIDTH / 2, 143, {
+    this.#beginPage('TUTORIAL', 430, 214);
+    this.#addText('JUGADOR 1', GAME_WIDTH / 2, 140, {
       fontSize: '7px',
       color: '#d9a9ff',
     });
-    this.#addText('Movimiento A/D · Vuelo Q asciende · E desciende', GAME_WIDTH / 2, 157, {
-      fontSize: '6px',
+    this.#addText('TERRESTRE · IZQUIERDA A · DERECHA D · ARRIBA W · ABAJO S', GAME_WIDTH / 2, 153, {
+      fontSize: '5px',
     });
-    this.#addText('Ataque F · Teletransporte G', GAME_WIDTH / 2, 168, {
-      fontSize: '6px',
+    this.#addText('VUELO · SUBIR Q · BAJAR E · HACHazo F · TELETRANSPORTE G', GAME_WIDTH / 2, 166, {
+      fontSize: '5px',
     });
-    this.#addText('JUGADOR 2', GAME_WIDTH / 2, 183, {
+    this.#addText('DASH C · BLOQUEAR V · ESQUIVAR X · ATAQUE ESPECIAL Z', GAME_WIDTH / 2, 179, {
+      fontSize: '5px',
+    });
+    this.#addText('JUGADOR 2', GAME_WIDTH / 2, 192, {
       fontSize: '7px',
       color: '#ffc17e',
     });
-    this.#addText('Terreno ←/→/↑/↓ · Vuelo I asciende · O desciende', GAME_WIDTH / 2, 197, {
-      fontSize: '6px',
+    this.#addText('TERRESTRE · IZQUIERDA ← · DERECHA → · ARRIBA ↑ · ABAJO ↓', GAME_WIDTH / 2, 205, {
+      fontSize: '5px',
     });
-    this.#addText('Ataque L · Teletransporte K · Dash H', GAME_WIDTH / 2, 208, {
-      fontSize: '6px',
+    this.#addText('VUELO · SUBIR I · BAJAR O · HACHazo L · TELETRANSPORTE K', GAME_WIDTH / 2, 218, {
+      fontSize: '5px',
     });
-    this.#addText('R · REINICIAR COMBATE   ESC · VOLVER / SALIR', GAME_WIDTH / 2, 223, {
-      fontSize: '6px',
-      color: '#aaa0bd',
+    this.#addText('DASH H · BLOQUEAR N · ESQUIVAR J · ATAQUE ESPECIAL M', GAME_WIDTH / 2, 231, {
+      fontSize: '5px',
     });
-    this.#addButton('VOLVER', 239, () => this.#showHome());
+    this.#addButton('VOLVER', 245, () => this.#showHome());
     this.#addFooter();
   }
 

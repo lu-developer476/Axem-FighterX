@@ -1,13 +1,13 @@
 /**
- * Controles de los dos jugadores.
- * X/Y recorren el terreno; Z es exclusivamente la altura de vuelo.
+ * Controles independientes de J1 y J2.
+ * UP/DOWN recorren el terreno; ASCEND/DESCEND controlan la altura de vuelo.
  */
 export const KEYMAPS = Object.freeze({
   PLAYER_1: Object.freeze({
     left: 'A',
     right: 'D',
-    forward: 'W',
-    backward: 'S',
+    up: 'W',
+    down: 'S',
     ascend: 'Q',
     descend: 'E',
     attack: 'F',
@@ -20,8 +20,8 @@ export const KEYMAPS = Object.freeze({
   PLAYER_2: Object.freeze({
     left: 'LEFT',
     right: 'RIGHT',
-    forward: 'UP',
-    backward: 'DOWN',
+    up: 'UP',
+    down: 'DOWN',
     ascend: 'I',
     descend: 'O',
     attack: 'L',

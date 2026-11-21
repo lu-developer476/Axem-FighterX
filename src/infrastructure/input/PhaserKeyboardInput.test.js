@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { KEYMAPS } from './keyMaps.js';
 
 describe('Controles de teclado', () => {
-  it('asigna a J1 movimiento terrestre A/D/W/S, vuelo Q/E, ataque F y teletransporte G', () => {
+  it('asigna a J1 el movimiento terrestre A/D/W/S y el vuelo Q/E', () => {
     expect(KEYMAPS.PLAYER_1).toEqual({
       left: 'A',
       right: 'D',
-      forward: 'W',
-      backward: 'S',
+      up: 'W',
+      down: 'S',
       ascend: 'Q',
       descend: 'E',
       attack: 'F',
@@ -19,12 +19,12 @@ describe('Controles de teclado', () => {
     });
   });
 
-  it('asigna a J2 terreno con las flechas, vuelo I/O, ataque L, teletransporte K y dash H', () => {
+  it('asigna a J2 el movimiento terrestre con flechas y el vuelo I/O', () => {
     expect(KEYMAPS.PLAYER_2).toEqual({
       left: 'LEFT',
       right: 'RIGHT',
-      forward: 'UP',
-      backward: 'DOWN',
+      up: 'UP',
+      down: 'DOWN',
       ascend: 'I',
       descend: 'O',
       attack: 'L',
@@ -36,8 +36,17 @@ describe('Controles de teclado', () => {
     });
   });
 
-  it('no repite ninguna tecla dentro de los controles de J2', () => {
-    const keys = Object.values(KEYMAPS.PLAYER_2);
-    expect(new Set(keys).size).toBe(keys.length);
+  it('mantiene las teclas de terreno y vuelo como acciones independientes', () => {
+    expect(KEYMAPS.PLAYER_1.up).not.toBe(KEYMAPS.PLAYER_1.ascend);
+    expect(KEYMAPS.PLAYER_1.down).not.toBe(KEYMAPS.PLAYER_1.descend);
+    expect(KEYMAPS.PLAYER_2.up).not.toBe(KEYMAPS.PLAYER_2.ascend);
+    expect(KEYMAPS.PLAYER_2.down).not.toBe(KEYMAPS.PLAYER_2.descend);
+  });
+
+  it('no repite teclas dentro de cada esquema', () => {
+    for (const keymap of Object.values(KEYMAPS)) {
+      const keys = Object.values(keymap);
+      expect(new Set(keys).size).toBe(keys.length);
+    }
   });
 });

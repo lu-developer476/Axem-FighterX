@@ -8,14 +8,14 @@ import { KEYMAPS } from './keyMaps.js';
 export class PhaserKeyboardInput {
   /**
    * @param {Phaser.Scene} scene
-   * @param {{ left: string, right: string, forward: string, backward: string, ascend: string, descend: string, attack: string, teleport: string }} keyNames
+   * @param {{ left: string, right: string, up: string, down: string, ascend: string, descend: string, attack: string, teleport: string }} keyNames
    */
   constructor(scene, keyNames) {
     this.keys = scene.input.keyboard.addKeys({
       left: keyNames.left,
       right: keyNames.right,
-      forward: keyNames.forward,
-      backward: keyNames.backward,
+      up: keyNames.up,
+      down: keyNames.down,
       ascend: keyNames.ascend,
       descend: keyNames.descend,
       attack: keyNames.attack,
@@ -29,10 +29,10 @@ export class PhaserKeyboardInput {
 
   /** @returns {import('../../application/ports/InputPort.js').PlayerIntent} */
   readIntent() {
-    const { left, right, forward, backward, attack, teleport, dash, block, dodge, specialAttack, ascend, descend } = this.keys;
+    const { left, right, up, down, attack, teleport, dash, block, dodge, specialAttack, ascend, descend } = this.keys;
     return {
       x: Number(right.isDown) - Number(left.isDown),
-      y: Number(backward.isDown) - Number(forward.isDown),
+      y: Number(down.isDown) - Number(up.isDown),
       z: Number(ascend.isDown) - Number(descend.isDown),
       attack: Phaser.Input.Keyboard.JustDown(attack),
       specialAttack: Phaser.Input.Keyboard.JustDown(specialAttack),

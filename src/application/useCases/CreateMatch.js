@@ -1,35 +1,34 @@
 import { ARENA } from '../../domain/arena/arena.js';
 import { Match } from '../../domain/entities/Match.js';
-import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { createFighter } from '../../domain/rangers/createFighter.js';
 
-const DEFAULT_GENDER = 'male';
+const VALID_GENDERS = new Set(['male', 'female']);
 
-function normalizeSelection(selection, fallbackId) {
-  if (typeof selection === 'string') {
-    return { id: selection, gender: DEFAULT_GENDER };
+function normalizeSelection(selection, index) {
+  if (
+    !selection ||
+    typeof selection !== 'object' ||
+    typeof selection.id !== 'string' ||
+    !VALID_GENDERS.has(selection.gender)
+  ) {
+    throw new Error(`El personaje ${index + 1} debe tener Axem y género seleccionados.`);
   }
 
-  if (selection && typeof selection === 'object') {
-    return {
-      id: selection.id ?? fallbackId,
-      gender: selection.gender ?? DEFAULT_GENDER,
-    };
-  }
-
-  return { id: fallbackId, gender: DEFAULT_GENDER };
+  return { id: selection.id, gender: selection.gender };
 }
 
-/** Caso de uso: arma el combate con los dos personajes elegidos en el menú. */
+/** Caso de uso: arma el combate con las dos selecciones explícitas del menú. */
 export function createDefaultMatch(
   rng = Math.random,
-  characterSelections = [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE],
+  characterSelections,
   arena = ARENA,
   hazards = null,
 ) {
-  const [leftSelection, rightSelection] = characterSelections ?? [];
-  const leftConfig = normalizeSelection(leftSelection, RANGER_IDS.VIOLET);
-  const rightConfig = normalizeSelection(rightSelection, RANGER_IDS.ORANGE);
+  if (!Array.isArray(characterSelections) || characterSelections.length !== 2) {
+    throw new Error('El combate requiere dos selecciones explícitas de personaje y género.');
+  }
+
+  const [leftConfig, rightConfig] = characterSelections.map(normalizeSelection);
   const left = createFighter(
     leftConfig.id,
     { x: ARENA.spawnLeftX, y: ARENA.groundY },

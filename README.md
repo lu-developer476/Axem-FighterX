@@ -14,20 +14,20 @@ npm run preview  # sirve dist/ localmente
 
 Controles:
 
-| | Terreno | Vuelo | Hachazo | Teletransporte | Dash |
-|---|---|---|---|---|---|
-| **J1** Axem Violet | `A` / `D` / `W` / `S` | `Q` / `E` | `F` | `G` | `C` |
-| **J2** Axem Orange | `←` / `→` / `↑` / `↓` | `I` / `O` | `L` | `K` | `H` |
+| Jugador | Movimiento terrestre | Vuelo | Movimientos |
+|---|---|---|---|
+| **J1** | Izquierda `A` · Derecha `D` · Arriba `W` · Abajo `S` | Subir `Q` · Bajar `E` | Hachazo `F` · Teletransporte `G` · Dash `C` · Bloquear `V` · Esquivar `X` · Especial `Z` |
+| **J2** | Izquierda `←` · Derecha `→` · Arriba `↑` · Abajo `↓` | Subir `I` · Bajar `O` | Hachazo `L` · Teletransporte `K` · Dash `H` · Bloquear `N` · Esquivar `J` · Especial `M` |
 
 `P` o el botón `[ P ] PAUSA` abre el menú de pausa durante el combate. Desde allí podés continuar, consultar los controles o volver al menú principal. Los controles quedan ocultos mientras jugás. `R` reinicia la serie completa. `ESC` vuelve al menú desde el combate. Cada personaje apunta hacia donde se movió por última vez.
 
 ## Flujo de selección de partida
 
-Desde **JUGAR** se elige el tipo de enfrentamiento (**Jugador vs IA**, **Jugador vs Jugador** o **IA vs IA**) y luego el formato (**Definitivo**, **2 rondas**, **5 rondas** o **Entrenamiento**). En **Jugador vs IA**, después de elegir personaje se puede jugar como **J1 desde el lado izquierdo** o **J2 desde el lado derecho**; el rival controlado por IA ocupa el lado contrario y se usan las teclas correspondientes al jugador elegido.
+Desde **JUGAR** se elige el tipo de enfrentamiento (**Jugador vs IA**, **Jugador vs Jugador** o **IA vs IA**) y luego el formato (**Definitivo**, **2 rondas**, **5 rondas** o **Entrenamiento**). En **Jugador vs Jugador**, cada participante elige de manera independiente su Axem, género y esquina inicial; ambos deben escoger lados opuestos. Los controles J1/J2 siguen a cada jugador aunque empiece desde la izquierda o la derecha: no existe una asociación fija entre un color Axem y un número de jugador. En **Jugador vs IA**, se elige Axem y género para el jugador humano, además de si utiliza el esquema J1 desde la izquierda o J2 desde la derecha; la IA ocupa el lado contrario.
 
 Los formatos respetan la cantidad total indicada: **Definitivo** disputa una ronda, **2 Rondas** disputa exactamente dos y **5 Rondas** disputa exactamente cinco. Entre rondas se muestra el marcador y se espera que el jugador pulse `ENTER` o `ESPACIO` para continuar. Al finalizar la cantidad prevista, gana quien haya obtenido más rondas; un empate en el marcador termina en empate. `ENTRENAMIENTO` permite elegir un fondo completamente sólido, con colores predefinidos o un selector de color personalizado.
 
-En cada selección se elige primero el color (**Axem Naranja** o **Axem Violeta**) y luego el género (**masculino** o **femenino**), sin retratos ni descripciones físicas previas. En los enfrentamientos de dos participantes se solicitan dos selecciones; en **Jugador vs IA**, el rival recibe automáticamente el personaje restante.
+Cada selección humana o de IA solicita primero el color (**Axem Naranja** o **Axem Violeta**) y luego el género (**masculino** o **femenino**), sin retratos ni descripciones físicas previas. En **Jugador vs Jugador**, J1 y J2 hacen ambas selecciones por separado y luego configuran sus esquinas. En **Jugador vs IA**, la IA recibe el color opuesto al elegido por el jugador y conserva el género seleccionado para el enfrentamiento.
 
 ## Escenarios y cinemáticas
 
@@ -95,9 +95,10 @@ Para cambiar el control (gamepad, táctil), basta con otro adaptador que impleme
 ## Variantes de género y atlas de sprites
 
 Cada color jugable (Violet y Orange) tiene variante masculina y femenina. El menú permite elegir
-las cuatro combinaciones; en Jugador vs IA, la IA recibe automáticamente el color opuesto con el
-mismo género. La identidad de combate sigue siendo Violet/Orange, mientras que el género se
-transporta como configuración visual independiente.
+las cuatro combinaciones de forma independiente para cada participante. En Jugador vs Jugador no
+hay colores asociados automáticamente a J1 o J2: cada uno conserva su selección y su esquema de
+teclas, sin importar la esquina elegida. En Jugador vs IA, la IA recibe el color opuesto y el género
+del personaje seleccionado por el jugador.
 
 Las referencias masculinas usan los materiales disponibles de Axem Red:
 `art/source/sprites/references/axem-red/preview.png`,

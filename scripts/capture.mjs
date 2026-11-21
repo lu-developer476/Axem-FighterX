@@ -48,15 +48,20 @@ await tap('ArrowDown'); // Jugador vs Jugador
 await tap('Enter');
 await tap('Enter'); // Definitivo → primer selector
 await shot('02-modal-seleccion-personaje');
-await tap('Enter'); // Axem Violet → segundo selector
+await tap('Enter'); // J1 elige género
+await tap('Enter'); // J1 confirma género → selector de J2
 await wait(120);
 await shot('03-modal-segundo-personaje');
 await tap('ArrowDown');
-await tap('Enter'); // Axem Orange → selección de escenario
-await tap('Escape'); // Escenario → selector del segundo personaje
-await tap('Escape'); // Personajes → formatos
-await tap('Escape'); // Formatos → tipo de enfrentamiento
-await tap('Escape'); // Tipo de enfrentamiento → inicio
+await tap('Enter'); // J2 elige Axem
+await tap('Enter'); // J2 elige género → selección de esquinas
+await shot('03b-modal-esquinas');
+await tap('Enter'); // J1 elige la esquina izquierda
+for (let down = 0; down < 3; down++) await tap('ArrowDown');
+await tap('Enter'); // J2 elige la esquina derecha
+for (let down = 0; down < 5; down++) await tap('ArrowDown');
+await tap('Enter'); // Confirmar ambas esquinas → escenarios
+for (let back = 0; back < 6; back++) await tap('Escape'); // Regresar al inicio
 
 // Comprueba también el modal de dos participantes para IA vs IA.
 await tap('Enter');
@@ -68,11 +73,13 @@ await shot('04-modal-ia-uno');
 await tap('Enter'); // Primer personaje → segundo selector
 await shot('05-modal-ia-dos');
 await tap('ArrowDown');
-await tap('Enter'); // Segundo personaje → escenarios
-await tap('Escape');
-await tap('Escape');
-await tap('Escape');
-await tap('Escape');
+await tap('Enter'); // Segundo Axem
+await tap('Enter'); // Segundo género → escenarios
+await tap('Escape'); // Escenario → segundo personaje
+await tap('Escape'); // Segundo personaje → primero
+await tap('Escape'); // Primer personaje → formato
+await tap('Escape'); // Formato → tipo de enfrentamiento
+await tap('Escape'); // Tipo de enfrentamiento → inicio
 
 // Recorre los cuatro escenarios con diferentes formatos de combate.
 const stageShots = [
@@ -92,13 +99,11 @@ for (let index = 0; index < stageShots.length; index++) {
   for (let down = 0; down < combatModeIndex; down++) await tap('ArrowDown');
   await tap('Enter'); // Formato → modal de personajes
   if (index === 0) await shot('27-modal-jugador-vs-ia');
-  await tap('Enter'); // Elegir personaje; el rival recibe el otro ranger
-  if (index === 0) {
-    await tap('Enter'); // MASCULINO: primera opción del selector de género
-  }
-  await tap('ArrowDown');
-  await tap('ArrowDown');
-  await tap('Enter'); // Confirmar el lado elegido y abrir la selección de escenario
+  await tap('Enter'); // Elegir Axem
+  await tap('Enter'); // Elegir género
+  await tap('Enter'); // Elegir controles J1 y esquina izquierda
+  for (let down = 0; down < 3; down++) await tap('ArrowDown');
+  await tap('Enter'); // Confirmar controles y abrir la selección de escenario
   for (let down = 0; down < index; down++) await tap('ArrowDown');
   await tap('Enter'); // Escenario → cinemática
   await wait(450);
@@ -119,9 +124,10 @@ await tap('ArrowDown');
 await tap('ArrowDown');
 await tap('ArrowDown');
 await tap('Enter'); // Entrenamiento → selección de personaje
-await tap('Enter'); // Elegir personaje → elección de lado
-await tap('ArrowDown');
-await tap('ArrowDown');
+await tap('Enter'); // Elegir Axem → género
+await tap('Enter'); // Elegir género → esquina y teclado
+await tap('Enter'); // Elegir J1 / izquierda
+for (let down = 0; down < 3; down++) await tap('ArrowDown');
 await tap('Enter'); // Continuar → paleta de entrenamiento
 await shot('10-entrenamiento-colores');
 for (let down = 0; down < 12; down++) await tap('ArrowDown');
@@ -132,14 +138,15 @@ await tap('Escape'); // Entrenamiento → menú
 await wait(180);
 
 // Inicia una partida completa en Ruinas de medianoche.
-await tap('Enter');
-await tap('Enter');
-await tap('Enter');
-await tap('Enter');
-await tap('ArrowDown'); // J1 predeterminado: continuar desde la elección de lado
-await tap('ArrowDown');
-await tap('Enter');
-await tap('Enter');
+await tap('Enter'); // Inicio → enfrentamiento
+await tap('Enter'); // Jugador vs IA
+await tap('Enter'); // Definitivo
+await tap('Enter'); // Elegir Axem
+await tap('Enter'); // Elegir género
+await tap('Enter'); // Elegir J1 / izquierda
+for (let down = 0; down < 3; down++) await tap('ArrowDown');
+await tap('Enter'); // Continuar → escenarios
+await tap('Enter'); // Elegir primer escenario
 await wait(450);
 await shot('12-cinematica-dialogo');
 for (let line = 0; line < 7; line++) {

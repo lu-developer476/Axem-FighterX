@@ -29,20 +29,20 @@ export class PauseMenuView {
   showControls() {
     this.showingControls = true;
     this.#beginPanel('TUTORIAL', 250);
-    this.#addText('JUGADOR 1 · A/D/W/S TERRENO · Q/E VUELO', 76, {
-      fontSize: '9px',
-      color: '#d9a9ff',
-    });
-    this.#addText('J1 · ATAQUE F · TELETRANSPORTE G · DASH C · BLOQUEO V · ESQUIVA X · ESPECIAL Z', 96, {
+    this.#addText('J1 · TERRENO ← A · → D · ↑ W · ↓ S · VUELO SUBIR Q / BAJAR E', 76, {
       fontSize: '8px',
       color: '#d9a9ff',
     });
-    this.#addText('JUGADOR 2 · ←/→/↑/↓ TERRENO · I/O VUELO', 116, {
-      fontSize: '9px',
+    this.#addText('J1 · HACHazo F · TELETRANSPORTE G · DASH C · BLOQUEO V · ESQUIVA X · ESPECIAL Z', 96, {
+      fontSize: '7px',
+      color: '#d9a9ff',
+    });
+    this.#addText('J2 · TERRENO IZQ ← · DER → · ARRIBA ↑ · ABAJO ↓ · VUELO SUBIR I / BAJAR O', 116, {
+      fontSize: '7px',
       color: '#ffc17e',
     });
-    this.#addText('J2 · ATAQUE L · TELETRANSPORTE K · DASH H · BLOQUEO N · ESQUIVA J · ESPECIAL M', 136, {
-      fontSize: '8px',
+    this.#addText('J2 · HACHazo L · TELETRANSPORTE K · DASH H · BLOQUEO N · ESQUIVA J · ESPECIAL M', 136, {
+      fontSize: '7px',
       color: '#ffc17e',
     });
     this.#addText('OBJETOS · VIDA · FURIA · RAPIDEZ · ESCUDO', 164, {

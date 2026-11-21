@@ -4,9 +4,7 @@ import { ARENA } from '../../domain/arena/arena.js';
 import { contentWidth, insetSize } from '../views/uiLayout.js';
 import { DEFAULT_STAGE_ID, getStage } from '../../infrastructure/assets/stageAssetManifest.js';
 import { StageView } from '../views/StageView.js';
-import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import {
-  DEFAULT_RANGER_GENDER,
   maleAnimationKey,
   spriteKeyFor,
 } from '../../infrastructure/assets/assetManifest.js';
@@ -75,17 +73,18 @@ export class CinematicScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, 640, 270);
 
     const [leftSelection, rightSelection] = this.matchSetup.characters;
-    const normalizeCharacter = (selection, fallbackId) => {
-      if (typeof selection === 'string') {
-        return { id: selection, gender: DEFAULT_RANGER_GENDER };
+    const normalizeCharacter = (selection) => {
+      if (
+        !selection ||
+        typeof selection.id !== 'string' ||
+        !['male', 'female'].includes(selection.gender)
+      ) {
+        throw new Error('La cinemática requiere las dos selecciones explícitas de Axem y género.');
       }
-      return {
-        id: selection?.id ?? fallbackId,
-        gender: selection?.gender ?? DEFAULT_RANGER_GENDER,
-      };
+      return { id: selection.id, gender: selection.gender };
     };
-    const left = normalizeCharacter(leftSelection, RANGER_IDS.VIOLET);
-    const right = normalizeCharacter(rightSelection, RANGER_IDS.ORANGE);
+    const left = normalizeCharacter(leftSelection);
+    const right = normalizeCharacter(rightSelection);
 
     this.leftCharacter = left;
     this.rightCharacter = right;

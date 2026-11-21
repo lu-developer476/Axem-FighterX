@@ -88,7 +88,7 @@ export class RaceScene extends Phaser.Scene {
     this.finished = false;
     this.trackOffset = 0;
     this.sceneryOffset = 0;
-    this.obstacles = MOTORCYCLE_RACE_OBSTACLES.map((item) => ({ ...item, resolved: false }));
+    this.obstacles = MOTORCYCLE_RACE_OBSTACLES.map((item) => ({ ...item, resolved: false, hitRacers: new Set() }));
     this.keys = this.input.keyboard.addKeys({
       left: Phaser.Input.Keyboard.KeyCodes.LEFT,
       right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
@@ -123,6 +123,8 @@ export class RaceScene extends Phaser.Scene {
     this.status = this.#text('3', GAME_WIDTH / 2, 112, '#fff0c9', 25);
     this.instructions = this.#text('↑ / ↓ CAMBIAR CARRIL · → / D ACELERAR · ← / A FRENAR · ESPACIO NITRO',
       GAME_WIDTH / 2, GAME_HEIGHT - 7, '#f0dfc2', 5);
+    this.distanceLabel = this.#text('J1 · 0 M', 63, 18, '#e7dcff', 5);
+    this.nitroLabel = this.#text('NITRO', GAME_WIDTH - 48, 8, '#a8e8ff', 4);
     this.#drawHud();
   }
 
@@ -154,6 +156,8 @@ export class RaceScene extends Phaser.Scene {
       this.#changeLane(this.player, 1);
     }
 
+    this.player.laneSwitchMs = Math.max(0, this.player.laneSwitchMs - delta);
+    if (this.player.laneSwitchMs === 0) this.player.lane = this.player.targetLane;
     const frame = Math.min(delta, 50) / 1000;
     const targetSpeed = 205 + (accelerate ? 105 : 0) - (brake ? 92 : 0) + (boosting ? 105 : 0);
     this.speed = Phaser.Math.Linear(this.speed, clamp(targetSpeed, 85, 410), Math.min(1, frame * 3.2));
@@ -169,7 +173,7 @@ export class RaceScene extends Phaser.Scene {
     this.#syncRacers(time);
     this.#drawHud();
 
-    if (this.distance >= RACE_DISTANCE) {
+    if (this.racers.some((racer) => racer.distance >= RACE_DISTANCE)) {
       const sorted = [...this.racers].sort((a, b) => b.distance - a.distance);
       this.#finish(sorted[0] === this.player);
     }
@@ -211,6 +215,7 @@ export class RaceScene extends Phaser.Scene {
         this.#changeLane(racer, racer.lane === 3 ? -1 : 1);
       }
       if (racer.stunMs > 0) racer.stunMs = Math.max(0, racer.stunMs - frame * 1000);
+      if (racer.laneSwitchMs === 0) racer.lane = racer.targetLane;
       const y = Phaser.Math.Linear(MOTORCYCLE_LANE_BASELINES[racer.lane],
         MOTORCYCLE_LANE_BASELINES[racer.targetLane], 1 - racer.laneSwitchMs / LANE_SWITCH_MS);
       racer.sprite.y = y;
@@ -220,25 +225,24 @@ export class RaceScene extends Phaser.Scene {
 
   #updateObstacles(frame) {
     this.obstacles.forEach((obstacle, index) => {
-      const screenX = GAME_WIDTH + 24 - (obstacle.distance - this.distance) * 0.19;
+      const screenX = PLAYER_X + (obstacle.distance - this.distance) * 0.19;
       const y = MOTORCYCLE_LANE_BASELINES[obstacle.lane] + 3;
       const sprite = this.obstacleSprites[index];
       sprite.setPosition(screenX, y).setScale(MOTORCYCLE_LANE_SCALES[obstacle.lane]);
-      if (obstacle.resolved || screenX < -30) {
+      if (screenX < -30) {
         sprite.setVisible(false);
         obstacle.resolved = true;
         return;
       }
       sprite.setVisible(true);
       for (const racer of this.racers) {
-        if (racer.crashed || racer.lane !== obstacle.lane) continue;
+        if (racer.crashed || racer.lane !== obstacle.lane || obstacle.hitRacers.has(racer.label)) continue;
         const racerX = racer.isPlayer ? PLAYER_X : OPPONENT_X;
         if (Math.abs(screenX - racerX) < (obstacle.kind === 'oil' ? 18 : 20)) {
           racer.stunMs = 720;
           if (racer.isPlayer) this.boost = Math.max(0, this.boost - 22);
           racer.distance -= 20;
-          obstacle.resolved = true;
-          sprite.setVisible(false);
+          obstacle.hitRacers.add(racer.label);
         }
       }
     });
@@ -321,8 +325,7 @@ export class RaceScene extends Phaser.Scene {
     this.hud.fillStyle(0x9b85d1, 1).fillRect(17, 27, 132 * clamp(this.distance / RACE_DISTANCE, 0, 1), 2);
     this.hud.fillStyle(0x172033, 1).fillRect(GAME_WIDTH - 76, 12, 56, 5);
     this.hud.fillStyle(0x78c9e8, 1).fillRect(GAME_WIDTH - 75, 13, 54 * this.boost / 100, 3);
-    this.#text('J1 · ' + Math.floor(this.distance) + ' M', 63, 18, '#e7dcff', 5);
-    this.#text('NITRO', GAME_WIDTH - 48, 8, '#a8e8ff', 4);
+    this.distanceLabel.setText('J1 · ' + Math.floor(this.distance) + ' M');
   }
 
   #finish(playerWon) {

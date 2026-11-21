@@ -4,7 +4,7 @@ import { DEFAULT_STAGE_ID, STAGES } from '../../infrastructure/assets/stageAsset
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { getCharacterSelectionsByCorner } from '../../domain/match/playerAssignments.js';
-import { maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
+import { allowedGenderFor, maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playMenuMusic } from '../../infrastructure/audio/GameMusic.js';
 import { contentWidth, insetSize, mapPanelY, UI_SPACING } from '../views/uiLayout.js';
 
@@ -560,7 +560,7 @@ export class MenuScene extends Phaser.Scene {
     if (mode.characterSlots === 1) {
       this.matchSetup.characters[1] = {
         id: RANGER_ORDER.find((id) => id !== rangerId),
-        gender,
+        gender: allowedGenderFor(RANGER_ORDER.find((id) => id !== rangerId)),
       };
       this.matchSetup.playerCharacter = rangerId;
       this.matchSetup.playerSide = null;

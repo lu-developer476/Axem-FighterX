@@ -289,18 +289,16 @@ describe('resultados por género y color', () => {
       : [chargeMetadata.delay || 100];
     expect(delays[delays.length - 1]).toBeGreaterThanOrEqual(800);
 
-    const sequenceIndex = JSON.parse(await readFile(
-      resultsPath('male', color, 'sequences', 'index.json'),
-      'utf8',
-    ));
-    const group09 = sequenceIndex.find((entry) => entry.id === 'group-09');
-    expect(group09.frameCount).toBe(5);
-    const sourceFrame = await sharp(resultsPath('male', color, 'sequences', 'group-09.png'))
+    const group09 = atlasFrames.male.groups.find((group) => group.id === 'group-09');
+    const finalSourceFrame = group09.frames[group09.frames.length - 1];
+    expect(group09.frames).toHaveLength(5);
+    // Extrae el mismo sprite desde el atlas fuente recoloreado, sin recortar la última celda del strip.
+    const sourceFrame = await sharp(resultsPath('male', color, 'spritesheet.png'))
       .extract({
-        left: (group09.frameCount - 1) * group09.cellWidth,
-        top: 0,
-        width: group09.cellWidth,
-        height: group09.cellHeight,
+        left: finalSourceFrame.x,
+        top: finalSourceFrame.y,
+        width: finalSourceFrame.w,
+        height: finalSourceFrame.h,
       })
       .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 1 })
       .png()

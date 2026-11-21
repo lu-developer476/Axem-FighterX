@@ -1,10 +1,10 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { DEFAULT_STAGE_ID, STAGES } from '../../infrastructure/assets/stageAssetManifest.js';
-import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
+import { RANGER_IDS, allowedGenderFor } from '../../domain/rangers/rangerCatalog.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { getCharacterSelectionsByCorner } from '../../domain/match/playerAssignments.js';
-import { allowedGenderFor, maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
+import { maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playMenuMusic } from '../../infrastructure/audio/GameMusic.js';
 import { contentWidth, insetSize, mapPanelY, UI_SPACING } from '../views/uiLayout.js';
 

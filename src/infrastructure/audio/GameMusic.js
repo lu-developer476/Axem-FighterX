@@ -94,10 +94,22 @@ function isMenuTrack(track) {
   return track.stem === 'menu' || track.stem.startsWith('menu--');
 }
 
+export const MUSIC_ROLES = Object.freeze({
+  menu: 'mecha-collection',
+  combat: 'cathedral',
+  motorcycleRace: 'dark-music-final',
+  landRace: 'slow-dark-music',
+});
+
+export function selectMusicForMode(mode, tracks = MUSIC_TRACKS) {
+  const stem = MUSIC_ROLES[mode];
+  return tracks.find((track) => track.stem === stem) ?? null;
+}
+
 export function selectMenuMusicTrack(tracks = MUSIC_TRACKS) {
   const explicit = tracks.filter(isMenuTrack).sort((a, b) => a.stem.localeCompare(b.stem));
   if (explicit.length) return explicit[0];
-  return tracks.find((track) => track.stem === 'mecha-collection') ?? tracks[0] ?? null;
+  return selectMusicForMode('menu', tracks) ?? tracks[0] ?? null;
 }
 
 export function selectStageMusicTrack(stageId, tracks = MUSIC_TRACKS) {
@@ -180,5 +192,10 @@ export function playMenuMusic(scene) {
 }
 
 export function playStageMusic(scene, stageId) {
-  playMusic(scene, getStageMusicTrack(stageId));
+  const explicitCombatTrack = selectMusicForMode('combat');
+  playMusic(scene, explicitCombatTrack?.id ?? getStageMusicTrack(stageId));
+}
+
+export function playRaceMusic(scene, mode = 'motorcycleRace') {
+  playMusic(scene, selectMusicForMode(mode)?.id ?? getMenuMusicTrack());
 }

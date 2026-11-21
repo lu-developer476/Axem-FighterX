@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import { allowedGenderFor, isAllowedRangerVariant } from '../../domain/rangers/rangerCatalog.js';
+import { genderForRanger, isAvailableRangerVariant } from '../../domain/rangers/rangerVariants.js';
 
 const variants = Object.freeze([
   { id: 'violet', gender: 'female' },
@@ -13,9 +13,9 @@ const generatedSpritePath = ({ id, gender }) =>
 
 describe('Variantes canónicas de Axem Rangers', () => {
   it('solo mantiene Axem Violeta femenino y Axem Naranja masculino', () => {
-    expect(allowedGenderFor('violet')).toBe('female');
-    expect(allowedGenderFor('orange')).toBe('male');
-    expect(isAllowedRangerVariant('violet', 'male')).toBe(false);
+    expect(genderForRanger('violet')).toBe('female');
+    expect(genderForRanger('orange')).toBe('male');
+    expect(isAvailableRangerVariant('violet', 'male')).toBe(false);
     expect(isAllowedRangerVariant('orange', 'female')).toBe(false);
   });
 

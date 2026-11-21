@@ -1,4 +1,4 @@
-import { isAllowedRangerVariant } from '../../infrastructure/assets/assetManifest.js';
+import { isAllowedRangerVariant } from '../rangers/rangerCatalog.js';
 
 /**
  * Asignaciones estables de los dos participantes humanos.

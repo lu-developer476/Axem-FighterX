@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
-import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
+import { maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
+import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
 
 const FINISH_DISTANCE = 1200;
 const TRACK_START_X = 62;
@@ -120,6 +121,7 @@ export class LandRaceScene extends Phaser.Scene {
   }
 
   create() {
+    playRaceMusic(this, 'landRace');
     createLandRaceTextures(this);
     this.#drawStadium();
 
@@ -252,7 +254,7 @@ export class LandRaceScene extends Phaser.Scene {
   }
 
   #createRacer(rangerId, laneY, isPlayer) {
-    const idleKey = maleAnimationKey(rangerId, 'idle');
+    const idleKey = rangerId === RANGER_IDS.VIOLET ? spriteKeyFor(rangerId, 'female') : maleAnimationKey(rangerId, 'idle');
     const sprite = this.add.sprite(TRACK_START_X, laneY + RUNNER_FOOT_OFFSET, idleKey)
       .setOrigin(0.5, 1)
       .setDepth(42);
@@ -299,9 +301,12 @@ export class LandRaceScene extends Phaser.Scene {
 
   #setMode(racer, mode) {
     if (racer.mode === mode) return;
+    const isFemaleViolet = racer.rangerId === RANGER_IDS.VIOLET;
     const animationKey = maleAnimationKey(racer.rangerId, mode);
-    const fallbackKey = maleAnimationKey(racer.rangerId, 'idle');
-    const selectedKey = this.anims.exists(animationKey) ? animationKey : fallbackKey;
+    const fallbackKey = isFemaleViolet
+      ? spriteKeyFor(racer.rangerId, 'female')
+      : maleAnimationKey(racer.rangerId, 'idle');
+    const selectedKey = !isFemaleViolet && this.anims.exists(animationKey) ? animationKey : fallbackKey;
     racer.sprite.play(selectedKey, true);
     const usesRunSheet = mode === 'run' || mode === 'walk';
     const scale = usesRunSheet ? 0.68 : 1;

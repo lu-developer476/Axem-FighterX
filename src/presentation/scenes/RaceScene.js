@@ -2,10 +2,8 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
-import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
 import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
 import {
-  MOTORCYCLE_LANE_COUNT,
   MOTORCYCLE_LANE_BASELINES,
   MOTORCYCLE_LANE_SCALES,
   MOTORCYCLE_RACE_OBSTACLES,

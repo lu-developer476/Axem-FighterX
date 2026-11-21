@@ -9,10 +9,7 @@ import {
 } from '../../infrastructure/graphics/StageTextureFactory.js';
 import { getStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';
 import { ambientAnimationKey, flameAnimationKey } from '../animation/registerFxAnimations.js';
-import {
-  getStageVisualVariant,
-  tileOverlayKeyForTileset,
-} from '../../infrastructure/assets/stageAssetManifest.js';
+import { getStageVisualVariant } from '../../infrastructure/assets/stageAssetManifest.js';
 
 const PILLAR_X = 20;
 const BARRIER_X = 26;
@@ -62,7 +59,7 @@ export class StageView {
     this.textures = getStageTextures(this.stageId);
     this.visuals = STAGE_VISUALS[this.stageId];
 
-    if (this.variant.backgroundKey) {
+    if (this.variant.backgroundKey || this.variant.proceduralKey) {
       this.#createAssetBackground();
       return;
     }
@@ -78,7 +75,6 @@ export class StageView {
 
     layer(this.textures.sky, 0, -100);
     layer(this.textures.far, PARALLAX.far, -90);
-    this.#addTilesetOverlay(-85, PARALLAX.mid);
     layer(this.textures.mid, PARALLAX.mid, -80);
     // Las cinemáticas priorizan lectura y composición: sin niebla móvil ni capa de ruido en primer plano.
     if (!cinematic) {
@@ -126,13 +122,14 @@ export class StageView {
   }
 
   #createAssetBackground() {
-    const source = this.scene.textures.get(this.variant.backgroundKey).getSourceImage();
+    const textureKey = this.variant.backgroundKey ?? this.variant.proceduralKey;
+    const source = this.scene.textures.get(textureKey).getSourceImage();
     const scale = Math.max(ARENA.width / source.width, VIEW.height / source.height);
     const displayWidth = Math.ceil(source.width * scale);
     const displayHeight = Math.ceil(source.height * scale);
     const x = Math.floor((ARENA.width - displayWidth) / 2);
     const y = Math.floor((VIEW.height - displayHeight) / 2);
-    const background = this.scene.add.image(x, y, this.variant.backgroundKey)
+    const background = this.scene.add.image(x, y, textureKey)
       .setOrigin(0, 0)
       .setDisplaySize(displayWidth, displayHeight)
       .setScrollFactor(0)
@@ -147,24 +144,10 @@ export class StageView {
       this.parallaxLayers.push({ image: tint, factor: PARALLAX.far, originX: 0 });
     }
 
-    this.#addTilesetOverlay(-90, PARALLAX.mid);
     this.assetBackground = true;
     this.barriers = [];
     this.ambientObjects = [];
     this.warningMarker = null;
-  }
-
-  #addTilesetOverlay(depth, factor) {
-    if (!this.variant.tilesetKey) return;
-    const key = tileOverlayKeyForTileset(this.variant.tilesetKey);
-    if (!key || !this.scene.textures.exists(key)) return;
-
-    const overlay = this.scene.add.image(0, 0, key)
-      .setOrigin(0, 0)
-      .setScrollFactor(0)
-      .setDepth(depth)
-      .setAlpha(this.variant.overlayAlpha ?? 0.28);
-    this.parallaxLayers.push({ image: overlay, factor, originX: 0 });
   }
 
   #createAmbientObjects() {

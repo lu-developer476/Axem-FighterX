@@ -1,101 +1,166 @@
 import { STAGE_IDS } from '../../domain/arena/stageCatalog.js';
 
-import castleMapUrl from '../../../art/source/environments/maps/castle.png';
-import caveOneMapUrl from '../../../art/source/environments/maps/cave-1.png';
-import caveTwoMapUrl from '../../../art/source/environments/maps/cave-2.png';
-import practiceZoneMapUrl from '../../../art/source/environments/maps/practice-zone.png';
-import sideScrollOneMapUrl from '../../../art/source/environments/maps/sidescroll-1.png';
-import sideScrollTwoMapUrl from '../../../art/source/environments/maps/sidescroll-2.png';
-import sideScrollThreeMapUrl from '../../../art/source/environments/maps/sidescroll-3.png';
-import sideScrollFourMapUrl from '../../../art/source/environments/maps/sidescroll-4.png';
+const MAP_MODULES = import.meta.glob(
+  '../../../art/source/environments/maps/*.{png,webp,jpg,jpeg}',
+  { eager: true, query: '?url', import: 'default' },
+);
+const TILESET_MODULES = import.meta.glob(
+  '../../../art/source/environments/maps/tilesets/*.{png,webp,jpg,jpeg}',
+  { eager: true, query: '?url', import: 'default' },
+);
+const TILESET_METADATA_MODULES = import.meta.glob(
+  '../../../art/source/environments/maps/tilesets/*.json',
+  { eager: true, import: 'default' },
+);
 
-import caveOneTilesetUrl from '../../../art/source/environments/maps/tilesets/cave1-tileset.png';
-import caveTwoTilesetUrl from '../../../art/source/environments/maps/tilesets/cave2-tileset.png';
-import darknessTilesetUrl from '../../../art/source/environments/maps/tilesets/darknes-tileset.png';
-import sideScrollTilesetUrl from '../../../art/source/environments/maps/tilesets/sidescroll-tileset.png';
-import spaceMercTilesetUrl from '../../../art/source/environments/maps/tilesets/space-merc-tileset.png';
+const STAGE_IDS_LIST = Object.values(STAGE_IDS);
+const IMAGE_PRIORITY = Object.freeze({ png: 0, webp: 1, jpg: 2, jpeg: 3 });
 
-const mapAsset = (name, url) => Object.freeze({ key: 'stage-map-' + name, url });
-const tilesetAsset = (name, url, seed) => Object.freeze({
-  key: 'stage-tileset-' + name,
-  url,
-  cellSize: 32,
-  seed,
-});
+export function slugifyAssetName(value = '') {
+  return String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
 
-export const STAGE_MAP_ASSETS = Object.freeze({
-  castle: mapAsset('castle', castleMapUrl),
-  caveOne: mapAsset('cave-one', caveOneMapUrl),
-  caveTwo: mapAsset('cave-two', caveTwoMapUrl),
-  practiceZone: mapAsset('practice-zone', practiceZoneMapUrl),
-  sideScrollOne: mapAsset('sidescroll-one', sideScrollOneMapUrl),
-  sideScrollTwo: mapAsset('sidescroll-two', sideScrollTwoMapUrl),
-  sideScrollThree: mapAsset('sidescroll-three', sideScrollThreeMapUrl),
-  sideScrollFour: mapAsset('sidescroll-four', sideScrollFourMapUrl),
-});
+function fileParts(path) {
+  const filename = path.split('/').pop() ?? path;
+  const dot = filename.lastIndexOf('.');
+  return {
+    filename,
+    stem: dot > 0 ? filename.slice(0, dot) : filename,
+    extension: dot > 0 ? filename.slice(dot + 1).toLowerCase() : '',
+  };
+}
 
-export const STAGE_TILESET_ASSETS = Object.freeze({
-  caveOne: tilesetAsset('cave-one', caveOneTilesetUrl, 17),
-  caveTwo: tilesetAsset('cave-two', caveTwoTilesetUrl, 29),
-  darkness: tilesetAsset('darkness', darknessTilesetUrl, 43),
-  sideScroll: tilesetAsset('sidescroll', sideScrollTilesetUrl, 61),
-  spaceMerc: tilesetAsset('space-merc', spaceMercTilesetUrl, 83),
-});
+function displayName(value) {
+  return String(value)
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
 
-const variant = (id, label, background, tileset, tint, overlayAlpha = 0.3) => Object.freeze({
-  id,
-  label,
-  backgroundKey: background ? background.key : null,
-  tilesetKey: tileset ? tileset.key : null,
-  tint: tint ?? null,
-  overlayAlpha,
-});
+function collectImageFiles(modules, keyPrefix) {
+  const grouped = new Map();
+  for (const [path, url] of Object.entries(modules)) {
+    const parts = fileParts(path);
+    const stem = slugifyAssetName(parts.stem);
+    if (!stem || typeof url !== 'string') continue;
+    const entries = grouped.get(stem) ?? [];
+    entries.push({ path, url, ...parts, stem });
+    grouped.set(stem, entries);
+  }
 
-export const STAGE_VISUAL_VARIANTS = Object.freeze({
-  [STAGE_IDS.RUINS]: Object.freeze([
-    variant('castle-hall', 'Castillo en ruinas', STAGE_MAP_ASSETS.sideScrollTwo, STAGE_TILESET_ASSETS.sideScroll, 0x8a9ab8, 0.22),
-    variant('broken-tower', 'Torre derruida', STAGE_MAP_ASSETS.sideScrollThree, STAGE_TILESET_ASSETS.sideScroll, 0x9da9bf, 0.22),
-    variant('northern-wall', 'Muralla nevada', STAGE_MAP_ASSETS.sideScrollFour, STAGE_TILESET_ASSETS.sideScroll, 0xb7cce0, 0.2),
-  ]),
-  [STAGE_IDS.VOLCANO]: Object.freeze([
-    variant('basalt-gallery', 'Galería de basalto', STAGE_MAP_ASSETS.caveOne, STAGE_TILESET_ASSETS.caveOne, 0x6f8292, 0.2),
-  ]),
-  [STAGE_IDS.FOREST]: Object.freeze([
-    variant('frozen-woods', 'Bosque de montaña', STAGE_MAP_ASSETS.sideScrollOne, STAGE_TILESET_ASSETS.sideScroll, 0x9cb8c5, 0.2),
-  ]),
-  [STAGE_IDS.SANCTUARY]: Object.freeze([
-    variant('forgotten-castle', 'Castillo olvidado', STAGE_MAP_ASSETS.castle, STAGE_TILESET_ASSETS.caveOne, 0x9c7b63, 0.22),
-  ]),
-  [STAGE_IDS.DOWNTOWN]: Object.freeze([
-    variant('industrial-complex', 'Complejo industrial', null, STAGE_TILESET_ASSETS.darkness, 0x2b7182, 0.38),
-  ]),
-  [STAGE_IDS.MEADOW]: Object.freeze([
-    variant('retro-practice', 'Zona de práctica retro', STAGE_MAP_ASSETS.practiceZone, STAGE_TILESET_ASSETS.spaceMerc, 0x6576e4, 0.2),
-  ]),
-  [STAGE_IDS.VOLCANO_MOUTH]: Object.freeze([
-    variant('deep-cavern', 'Caverna profunda', STAGE_MAP_ASSETS.caveTwo, STAGE_TILESET_ASSETS.caveTwo, 0x514b61, 0.22),
-  ]),
-});
+  return [...grouped.entries()]
+    .map(([stem, entries]) => {
+      entries.sort((a, b) =>
+        (IMAGE_PRIORITY[a.extension] ?? 99) - (IMAGE_PRIORITY[b.extension] ?? 99),
+      );
+      const selected = entries[0];
+      return {
+        stem,
+        filename: selected.filename,
+        extension: selected.extension,
+        url: selected.url,
+        key: keyPrefix + stem,
+      };
+    })
+    .sort((a, b) => a.stem.localeCompare(b.stem));
+}
+
+/** A map can be scoped with a filename prefix: <stage-id>--<variant-name>. */
+export function stageScopeForMapName(filename) {
+  const rawStem = fileParts(filename).stem.toLowerCase();
+  const stageId = STAGE_IDS_LIST.find((id) => rawStem.startsWith(slugifyAssetName(id) + '--'));
+  if (!stageId) return null;
+  const prefix = slugifyAssetName(stageId) + '--';
+  return {
+    stageId,
+    variantName: slugifyAssetName(rawStem.slice(prefix.length)),
+  };
+}
+
+const mapFiles = collectImageFiles(MAP_MODULES, 'stage-map-');
+export const STAGE_MAP_ASSETS = Object.freeze(mapFiles.map((asset) => {
+  const scope = stageScopeForMapName(asset.filename);
+  const labelStem = scope?.variantName || asset.stem;
+  return Object.freeze({
+    ...asset,
+    id: asset.stem,
+    label: displayName(labelStem),
+    stageId: scope?.stageId ?? null,
+  });
+}));
+
+function stableSeed(value) {
+  let hash = 2166136261;
+  for (const character of value) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+const tilesetFiles = collectImageFiles(TILESET_MODULES, 'stage-tileset-');
+export const STAGE_TILESET_ASSETS = Object.freeze(tilesetFiles.map((asset) => {
+  const selectedPath = Object.entries(TILESET_MODULES)
+    .find(([, url]) => url === asset.url)?.[0] ?? '';
+  const metadataPath = selectedPath.replace(/\.[^.]+$/, '.json');
+  const metadata = TILESET_METADATA_MODULES[metadataPath] ?? {};
+  const tileSize = Number(metadata.tileSize) || 32;
+
+  return Object.freeze({
+    ...asset,
+    id: asset.stem,
+    label: displayName(asset.stem),
+    tileWidth: Math.max(4, Number(metadata.tileWidth) || tileSize),
+    tileHeight: Math.max(4, Number(metadata.tileHeight) || tileSize),
+    margin: Math.max(0, Number(metadata.margin) || 0),
+    spacing: Math.max(0, Number(metadata.spacing) || 0),
+    seed: Number.isFinite(Number(metadata.seed)) ? Number(metadata.seed) : stableSeed(asset.stem),
+    backgroundColor: typeof metadata.backgroundColor === 'string' ? metadata.backgroundColor : 'auto',
+  });
+}));
+
+export function proceduralTextureKeyForTileset(tilesetKey) {
+  return 'stage-procedural-' + String(tilesetKey).replace(/^stage-tileset-/, '');
+}
 
 const CLASSIC_VARIANT = Object.freeze({
   id: 'classic',
   label: 'Diseño original',
+  kind: 'classic',
   backgroundKey: null,
-  tilesetKey: null,
-  tint: null,
-  overlayAlpha: 0,
+  proceduralKey: null,
 });
 
 export function getStageVisualVariants(stageId) {
-  return Object.freeze([CLASSIC_VARIANT, ...(STAGE_VISUAL_VARIANTS[stageId] ?? [])]);
+  const maps = STAGE_MAP_ASSETS
+    .filter((asset) => !asset.stageId || asset.stageId === stageId)
+    .map((asset) => Object.freeze({
+      id: 'map-' + asset.id,
+      label: 'Mapa · ' + asset.label,
+      kind: 'map',
+      backgroundKey: asset.key,
+      proceduralKey: null,
+      sourceId: asset.id,
+    }));
+
+  const generated = STAGE_TILESET_ASSETS.map((asset) => Object.freeze({
+    id: 'procedural-' + asset.id,
+    label: 'Procedural · ' + asset.label,
+    kind: 'procedural',
+    backgroundKey: null,
+    proceduralKey: proceduralTextureKeyForTileset(asset.key),
+    tilesetKey: asset.key,
+    sourceId: asset.id,
+  }));
+
+  return Object.freeze([CLASSIC_VARIANT, ...maps, ...generated]);
 }
 
 export function getStageVisualVariant(stageId, variantId = 'classic') {
   return getStageVisualVariants(stageId).find((entry) => entry.id === variantId) ?? CLASSIC_VARIANT;
-}
-
-export function tileOverlayKeyForTileset(tilesetKey) {
-  return tilesetKey
-    ? tilesetKey.replace('stage-tileset-', 'stage-tileset-overlay-')
-    : null;
 }

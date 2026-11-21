@@ -222,8 +222,8 @@ describe('resultados por género y color', () => {
 
     for (const [gender, list] of Object.entries(files)) {
       for (const file of list) {
-        // Los dos PNG canónicos de pose femenina tienen máscaras alfa propias.
-        if (gender === 'female' && file === 'pose.png') continue;
+        // Las poses femeninas pose y levitate pueden tener siluetas propias por color.
+        if (gender === 'female' && ['pose.png', 'levitate.png'].includes(file)) continue;
         const violet = await alphaOf(resultsPath(gender, 'violet', file));
         const orange = await alphaOf(resultsPath(gender, 'orange', file));
         expect(orange.width).toBe(violet.width);

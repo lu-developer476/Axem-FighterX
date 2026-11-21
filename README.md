@@ -44,13 +44,13 @@ En los formatos normales, el menú permite elegir entre ocho escenarios. Antes d
 | **Fauces de obsidiana** | Boca de volcán activa con respiraderos rotativos y columnas de lava que dañan a los luchadores |
 | **Isla de Yoshi** | Isla tropical con playas, palmeras inclinadas, muelle de tablones y mar abierto; la marea y un acantilado inestable anticipan que la isla se desvanece |
 
-Los ocho escenarios base conservan sus fondos procedurales con parallax. Al elegir una arena también se puede seleccionar una variante visual construida con los mapas y tilesets locales de `art/source/environments/maps/`. Las variantes son visuales: no alteran las hitboxes, el suelo ni las reglas del combate.
+Los ocho escenarios predeterminados continúan definidos por el catálogo del dominio y se cargan automáticamente. Los fondos de `art/source/environments/maps/` se descubren en el build y quedan disponibles como variantes visuales; los archivos con prefijo `<stage-id>--` se restringen a ese escenario y los nombres sin prefijo son globales. Los tilesets dentro de `maps/tilesets/` se procesan para generar fondos procedurales reproducibles. Estas variantes no alteran hitboxes, el plano del suelo ni las reglas de combate.
 
-### Variantes de escenario y música
+### Recursos automáticos de mapas, tilesets y música
 
-Las imágenes completas `castle.png`, `cave-1.png`, `cave-2.png`, `practice-zone.png` y `sidescroll-1.png` a `sidescroll-4.png` se usan como fondos alternativos, preservando su proporción y el filtrado pixel art. Los cinco tilesets (`cave1`, `cave2`, `darknes`, `sidescroll` y `space-merc`) se muestrean para crear capas decorativas transparentes. Un tileset reúne piezas gráficas reutilizables: bloques, paredes, rocas, plataformas y otros elementos que pueden recombinarse para formar distintos mapas. En esta integración se usan como textura ambiental; no se generan nuevas plataformas ni colisiones.
+El descubrimiento usa `import.meta.glob` de Vite: al incorporar un archivo compatible y ejecutar el siguiente build, aparece sin modificar manifiestos ni código. Los mapas admiten PNG, WebP, JPG y JPEG. Cada tileset genera una variante ambiental mediante composición determinista de sus celdas; el tamaño predeterminado es 32×32 y se puede sobrescribir con un JSON del mismo nombre base. Las piezas generadas son decoración, no plataformas ni colisiones.
 
-Las cuatro pistas WAV de `art/source/effects/music/` se asignan por contexto al menú y a las familias de escenarios. El reproductor carga de manera diferida la pista necesaria y la reproduce en bucle; no descarga las cuatro pistas al iniciar el juego. El navegador puede esperar a la primera interacción del jugador antes de habilitar el audio. El fondo de entrenamiento sigue siendo un color plano y no carga capas ambientales.
+La música también se descubre automáticamente en `art/source/effects/music/`. Se admiten OGG, MP3, WAV, M4A, AAC y WebM. Si hay varias codificaciones con el mismo nombre base, se prioriza OGG y se utiliza otra compatible cuando el navegador no puede reproducirlo. `menu.ogg` se reserva para el menú; `<stage-id>--<nombre>.ogg` identifica música de un escenario; las pistas sin etiqueta alimentan una rotación global determinista. La reproducción es en bucle, bajo demanda y sujeta a la política de interacción del navegador. El modo entrenamiento conserva su fondo sólido.
 
 ## Nitidez y renderizado
 

@@ -657,7 +657,7 @@ export class MenuScene extends Phaser.Scene {
     this.#addFooter();
   }
 
-  #showStageVariants() {
+  #showStageVariants(page = 0) {
     const stage = STAGES.find((entry) => entry.id === this.pendingStageId);
     if (!stage) {
       this.#showStages();
@@ -666,29 +666,59 @@ export class MenuScene extends Phaser.Scene {
 
     this.page = 'stage-variants';
     const variants = getStageVisualVariants(stage.id);
+    const pageSize = 8;
+    const pageCount = Math.max(1, Math.ceil(variants.length / pageSize));
+    this.stageVariantPage = Math.max(0, Math.min(page, pageCount - 1));
+    const pageStart = this.stageVariantPage * pageSize;
+    const visibleVariants = variants.slice(pageStart, pageStart + pageSize);
+
     this.#beginPage('VARIANTES VISUALES', 390, 194);
     this.#addText(stage.name.toUpperCase(), GAME_WIDTH / 2, 137, {
       fontSize: '6px',
       color: '#b7a9cb',
     });
+    this.#addText(
+      'PÁGINA ' + (this.stageVariantPage + 1) + ' / ' + pageCount,
+      GAME_WIDTH / 2,
+      147,
+      { fontSize: '5px', color: '#9185aa' },
+    );
 
-    variants.forEach((variant, index) => {
+    visibleVariants.forEach((variant, index) => {
       const column = index % 2;
       const row = Math.floor(index / 2);
-      this.#addButton(variant.label.toUpperCase(), 159 + row * 23, () => {
+      this.#addButton(variant.label.toUpperCase(), 160 + row * 18, () => {
         this.#startSelectedFight(stage.id, true, variant.id);
       }, {
         width: 174,
         x: column === 0 ? 143 : 337,
         fontSize: '5px',
-        height: 15,
+        height: 14,
       });
     });
 
+    if (this.stageVariantPage > 0) {
+      this.#addButton('ANTERIOR', 239, () => this.#showStageVariants(this.stageVariantPage - 1), {
+        width: 92,
+        x: 92,
+        fontSize: '5px',
+        height: 13,
+      });
+    }
     this.#addButton('VOLVER', 239, () => this.#showStages(), {
-      width: 150,
-      fontSize: '8px',
+      width: 92,
+      x: 240,
+      fontSize: '6px',
+      height: 13,
     });
+    if (this.stageVariantPage < pageCount - 1) {
+      this.#addButton('SIGUIENTE', 239, () => this.#showStageVariants(this.stageVariantPage + 1), {
+        width: 92,
+        x: 388,
+        fontSize: '5px',
+        height: 13,
+      });
+    }
   }
 
   #showControls() {

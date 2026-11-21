@@ -259,7 +259,7 @@ export class FxDirector {
   }
 
   #stepParticles(x, y) {
-    if (this.stageId === STAGE_IDS.FOREST || this.stageId === STAGE_IDS.MEADOW) {
+    if (this.stageId === STAGE_IDS.FOREST || this.stageId === STAGE_IDS.MEADOW || this.stageId === STAGE_IDS.YOSHI_ISLAND) {
       this.#scatter(x, y, 2, FX_PARTICLES.leaf, 0x9fda76, 1);
     } else if (this.stageId === STAGE_IDS.VOLCANO || this.stageId === STAGE_IDS.VOLCANO_MOUTH) {
       this.#scatter(x, y, 2, FX_PARTICLES.ember, 0xff9b43, 1);

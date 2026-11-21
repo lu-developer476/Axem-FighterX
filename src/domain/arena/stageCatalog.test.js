@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getStage, STAGES, STAGE_IDS } from './stageCatalog.js';
 
 describe('Catálogo de escenarios', () => {
-  it('incluye las siete zonas seleccionables', () => {
+  it('incluye las ocho zonas seleccionables', () => {
     expect(STAGES.map((stage) => stage.id)).toEqual([
       STAGE_IDS.RUINS,
       STAGE_IDS.VOLCANO,
@@ -11,7 +11,15 @@ describe('Catálogo de escenarios', () => {
       STAGE_IDS.DOWNTOWN,
       STAGE_IDS.MEADOW,
       STAGE_IDS.VOLCANO_MOUTH,
+      STAGE_IDS.YOSHI_ISLAND,
     ]);
+  });
+
+  it('suma la Isla de Yoshi como escenario de profundidad libre y sin peligros activos', () => {
+    const island = getStage(STAGE_IDS.YOSHI_ISLAND);
+    expect(island.name).toBe('Isla de Yoshi');
+    expect(island.groundDepthMode).toBe('free');
+    expect(island.hazards).toBeUndefined();
   });
 
   it('distingue escenarios lineales de espacios con profundidad libre', () => {
@@ -23,6 +31,7 @@ describe('Catálogo de escenarios', () => {
       [STAGE_IDS.DOWNTOWN]: 'free',
       [STAGE_IDS.MEADOW]: 'free',
       [STAGE_IDS.VOLCANO_MOUTH]: 'free',
+      [STAGE_IDS.YOSHI_ISLAND]: 'free',
     });
   });
 
@@ -51,6 +60,7 @@ describe('Catálogo de escenarios', () => {
       [STAGE_IDS.DOWNTOWN]: ['avenida', 'hidrante', 'persiana', 'patrullero'],
       [STAGE_IDS.MEADOW]: ['puente', 'torre', 'cerca', 'loma'],
       [STAGE_IDS.VOLCANO_MOUTH]: ['respiradero', 'lava', 'ceniza', 'cráter'],
+      [STAGE_IDS.YOSHI_ISLAND]: ['isla', 'palmeras', 'marea', 'acantilado'],
     };
 
     for (const stage of STAGES) {

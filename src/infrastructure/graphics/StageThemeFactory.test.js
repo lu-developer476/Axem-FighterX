@@ -17,14 +17,14 @@ describe('Texturas por escenario', () => {
     expect(STAGE_TEXTURES.ambient(0)).not.toBe(STAGE_TEXTURES.ambient(1));
   });
 
-  it('mantiene una textura de suelo para cada uno de los siete escenarios', () => {
-    expect(STAGES).toHaveLength(7);
+  it('mantiene una textura de suelo para cada uno de los ocho escenarios', () => {
+    expect(STAGES).toHaveLength(8);
     const floors = STAGES.map((stage) => getStageTextures(stage.id).floor);
     expect(floors).toHaveLength(STAGES.length);
     expect(floors.every((floor) => typeof floor === 'string')).toBe(true);
   });
 
-  it('asigna claves independientes a los tres escenarios nuevos', () => {
+  it('asigna claves independientes a los escenarios adicionales', () => {
     const ids = [
       STAGE_IDS.VOLCANO,
       STAGE_IDS.FOREST,
@@ -32,6 +32,7 @@ describe('Texturas por escenario', () => {
       STAGE_IDS.DOWNTOWN,
       STAGE_IDS.MEADOW,
       STAGE_IDS.VOLCANO_MOUTH,
+      STAGE_IDS.YOSHI_ISLAND,
     ];
     const backgrounds = ids.map((id) => getStageTextures(id));
 

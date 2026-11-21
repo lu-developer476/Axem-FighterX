@@ -37,11 +37,11 @@ export class PauseMenuView {
       fontSize: '8px',
       color: '#d9a9ff',
     });
-    this.#addText('JUGADOR 2 · ←/→/I/O TERRENO · ↑/↓ VUELO', 116, {
+    this.#addText('JUGADOR 2 · ←/→/↑/↓ TERRENO · I/O VUELO', 116, {
       fontSize: '9px',
       color: '#ffc17e',
     });
-    this.#addText('J2 · ATAQUE L · TELETRANSPORTE K · DASH M · BLOQUEO N · ESQUIVA J · ESPECIAL H', 136, {
+    this.#addText('J2 · ATAQUE L · TELETRANSPORTE K · DASH H · BLOQUEO N · ESQUIVA J · ESPECIAL M', 136, {
       fontSize: '8px',
       color: '#ffc17e',
     });

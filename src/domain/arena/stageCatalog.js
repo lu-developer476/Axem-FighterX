@@ -6,6 +6,7 @@ export const STAGE_IDS = Object.freeze({
   DOWNTOWN: 'downtown-ruins',
   MEADOW: 'meadow-outskirts',
   VOLCANO_MOUTH: 'obsidian-maw',
+  YOSHI_ISLAND: 'yoshis-island',
 });
 
 const lines = (...entries) => Object.freeze(entries.map(([speaker, text]) => Object.freeze({ speaker, text })));
@@ -237,6 +238,37 @@ export const STAGES = Object.freeze([
       draw: lines(
         ['violet', 'La cornisa se abrió en tres partes. Ya no queda suelo firme junto al cráter.'],
         ['orange', 'Basta. Si vuelve a escupir lava, no va a quedar nadie para contarlo.'],
+      ),
+    }),
+  }),
+  Object.freeze({
+    id: STAGE_IDS.YOSHI_ISLAND,
+    name: 'Isla de Yoshi',
+    tagline: 'Una isla tropical que se desvanece bajo el cielo abierto',
+    location: 'Yoshi\'s Island · Mar abierto',
+    description: 'Una isla de playas claras, palmeras inclinadas y un muelle de tablones. La marea se come la orilla y algo bajo el acantilado amenaza con partirla en pedazos.',
+    groundDepthMode: 'free',
+    dialogue: lines(
+      ['violet', 'La isla se ve entera desde acá, pero la arena de la orilla ya está cediendo.'],
+      ['orange', 'Es la marea. Cada ola se lleva un pedazo de playa y no lo devuelve.'],
+      ['violet', 'Las palmeras de la punta están inclinadas hacia el mar. Alguien las debilitó.'],
+      ['orange', 'No fue el viento. Las raíces están cortadas a ras y la savia todavía está fresca.'],
+      ['violet', 'Entonces esta isla no se hunde sola. Hay algo debajo del acantilado.'],
+      ['orange', 'Escucho un zumbido metálico bajo el agua. Cada vez más cerca.'],
+      ['violet', 'Si la isla se parte, peleamos mientras quede suelo. Después vemos cómo salir.'],
+    ),
+    resultDialogue: Object.freeze({
+      violetWins: lines(
+        ['violet', 'Te quedaste en la orilla cuando subió la marea. La arena no sostuvo tu apoyo.'],
+        ['orange', 'Miré la palmera caída y no el agua. Cuando reaccioné ya no tenía suelo.'],
+      ),
+      orangeWins: lines(
+        ['orange', 'Te llevé hacia el acantilado y la ola cortó tu retirada por el muelle.'],
+        ['violet', 'Contaba las grietas de la isla en vez de mirarte a vos. Error mío.'],
+      ),
+      draw: lines(
+        ['violet', 'La playa se partió entre los dos y cada uno quedó en un trozo distinto.'],
+        ['orange', 'Mejor así. Un golpe más y el mar nos lleva junto con la isla.'],
       ),
     }),
   }),

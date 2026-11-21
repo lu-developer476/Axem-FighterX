@@ -101,6 +101,22 @@ const THEMES = Object.freeze({
     barrier: '#ff7440',
     haze: '#d65a37',
   },
+  [STAGE_IDS.YOSHI_ISLAND]: {
+    sky: ['#4fb3f0', '#74c9f5', '#a4def7', '#d3f1f2', '#f6efc0'],
+    far: '#2f93bd',
+    farLight: '#6fd0dc',
+    mid: '#2f8a52',
+    midLight: '#6cc26a',
+    near: '#1f6a45',
+    accent: '#ffe27a',
+    floor: '#b98d55',
+    tile: '#d8b673',
+    tileLight: '#f3dc9c',
+    wall: '#8a6a45',
+    pillar: '#a47c4c',
+    barrier: '#bfeaf0',
+    haze: '#e8f8f2',
+  },
 });
 
 const makeKeys = (id) => ({
@@ -174,6 +190,15 @@ function drawStageAmbient(ctx, frame, palette, stageId) {
     rect(ctx, palette.accent, 7, 15, 5, 2);
     return;
   }
+  if (stageId === STAGE_IDS.YOSHI_ISLAND) {
+    // Gaviota en vuelo: las alas suben y bajan con el cuadro.
+    const lift = pulse ? 3 : 0;
+    rect(ctx, '#f7fbff', 4, 9 - lift, 6, 2);
+    rect(ctx, '#f7fbff', 14, 9 - lift, 6, 2);
+    rect(ctx, '#dbe8f0', 10, 10, 4, 3);
+    rect(ctx, palette.accent, 12, 13, 2, 1);
+    return;
+  }
   if (stageId === STAGE_IDS.MEADOW) {
     rect(ctx, palette.near, 8 + frame, 10 - (frame % 2), 9, 3);
     rect(ctx, palette.accent, 10 + frame, 7, 5, 3);
@@ -201,6 +226,14 @@ function drawSky(ctx, width, height, palette, stageId) {
     drawHalo(ctx, 378, 56, 22, '#fff0a6');
     for (const [x, y] of [[54, 54], [132, 82], [286, 46], [438, 73]]) {
       drawPixelCloud(ctx, x, y, '#f7fbec');
+    }
+    return;
+  }
+
+  if (stageId === STAGE_IDS.YOSHI_ISLAND) {
+    drawHalo(ctx, 394, 52, 20, '#fff2a8');
+    for (const [x, y] of [[40, 48], [150, 76], [262, 40], [452, 82]]) {
+      drawPixelCloud(ctx, x, y, '#fbfdf4');
     }
     return;
   }
@@ -252,6 +285,24 @@ function drawHalo(ctx, cx, cy, radius, color) {
 }
 
 function drawFar(ctx, width, height, palette, stageId) {
+  if (stageId === STAGE_IDS.YOSHI_ISLAND) {
+    // Mar abierto hasta el horizonte, con crestas de espuma e islotes lejanos.
+    rect(ctx, palette.far, 0, 178, width, height - 178);
+    for (let y = 182; y < 208; y += 5) {
+      for (let x = Math.round(hash2(y, 3, 9) * 20); x < width; x += 28) {
+        rect(ctx, palette.farLight, x, y, 10, 1);
+      }
+    }
+    for (let x = 36; x < width; x += 176) {
+      const span = 38 + Math.round(hash2(x, 6, 14) * 16);
+      rect(ctx, '#3a8f63', x, 170, span, 9);
+      rect(ctx, '#58b06a', x + 6, 164, span - 14, 7);
+      rect(ctx, '#2b6d4a', x + span / 2, 156, 2, 10);
+      rect(ctx, '#58b06a', x + span / 2 - 5, 154, 12, 2);
+    }
+    return;
+  }
+
   if (stageId === STAGE_IDS.MEADOW) {
     drawRollingHill(ctx, width, height, 192, 48, 0.026, palette.far);
     drawRollingHill(ctx, width, height, 205, 26, 0.041, palette.farLight);
@@ -332,6 +383,19 @@ function drawFar(ctx, width, height, palette, stageId) {
 }
 
 function drawMid(ctx, width, height, palette, stageId) {
+  if (stageId === STAGE_IDS.YOSHI_ISLAND) {
+    drawRollingHill(ctx, width, height, 186, 12, 0.047, palette.mid);
+    drawRollingHill(ctx, width, height, 198, 8, 0.071, palette.midLight);
+    // Palmeras inclinadas hacia el mar y un muelle de tablones sobre el agua.
+    for (let x = 34; x < width; x += 118) {
+      drawPalm(ctx, x, 192, 54 + Math.round(hash2(x, 5, 21) * 22), '#7a4d2b', palette.mid, palette.midLight);
+    }
+    rect(ctx, '#7a5a38', 300, 188, 96, 4);
+    rect(ctx, '#b38a55', 300, 192, 96, 3);
+    for (let x = 304; x < 396; x += 12) rect(ctx, '#4e392a', x, 192, 3, 14);
+    return;
+  }
+
   if (stageId === STAGE_IDS.DOWNTOWN) {
     const stores = [
       { x: 8, width: 96, color: '#70413f', sign: '#f0c875' },
@@ -463,6 +527,20 @@ function drawMid(ctx, width, height, palette, stageId) {
   }
 }
 
+function drawPalm(ctx, x, baseY, trunkHeight, trunkColor, leafColor, leafLight) {
+  for (let i = 0; i < trunkHeight; i += 3) {
+    rect(ctx, trunkColor, x + Math.round(Math.sin(i / 14) * 3), baseY - i, 4, 3);
+  }
+  const topX = x + Math.round(Math.sin(trunkHeight / 14) * 3) + 2;
+  const topY = baseY - trunkHeight;
+  for (const [dx, dy, w] of [[-18, 2, 16], [-10, -4, 12], [3, -5, 14], [8, 2, 18], [-3, -9, 8]]) {
+    rect(ctx, leafColor, topX + dx, topY + dy, w, 3);
+    rect(ctx, leafLight, topX + dx + 2, topY + dy, Math.max(2, w - 6), 1);
+  }
+  rect(ctx, '#7a4d2b', topX - 2, topY + 3, 3, 3);
+  rect(ctx, '#7a4d2b', topX + 2, topY + 4, 3, 3);
+}
+
 function drawRollingHill(ctx, width, height, base, amplitude, frequency, color) {
   for (let x = 0; x < width; x += 2) {
     const ridge = base - Math.round(Math.sin(x * frequency) * amplitude
@@ -485,6 +563,24 @@ function drawCanopy(ctx, cx, cy, radius, color) {
 }
 
 function drawNear(ctx, width, height, palette, stageId) {
+  if (stageId === STAGE_IDS.YOSHI_ISLAND) {
+    const base = ARENA.groundY - 4;
+    // Rocas de la orilla, caracolas y matas de hierba con flores.
+    for (let x = 18; x < width; x += 54) {
+      const rockHeight = 7 + Math.round(hash2(x, 3, 38) * 10);
+      rect(ctx, palette.near, x, base - rockHeight, 16, rockHeight);
+      rect(ctx, palette.midLight, x + 2, base - rockHeight, 9, 2);
+      rect(ctx, '#f7ecd0', x + 20, base - 4, 5, 4);
+      rect(ctx, '#e9a3a0', x + 22, base - 3, 2, 2);
+    }
+    for (let x = 6; x < width; x += 38) {
+      const stem = 5 + Math.round(hash2(x, 2, 51) * 7);
+      rect(ctx, palette.near, x + 9, base - stem, 1, stem);
+      rect(ctx, hash2(x, 8, 6) > 0.5 ? '#fff2a0' : '#f4a6b8', x + 7, base - stem - 3, 5, 3);
+    }
+    return;
+  }
+
   if (stageId === STAGE_IDS.DOWNTOWN) {
     const base = ARENA.groundY - 3;
     // Auto abandonado: carrocería abollada, ruedas y parabrisas roto.
@@ -595,6 +691,18 @@ function drawFloor(ctx, width, height, palette, stageId) {
     }
     rect(ctx, '#e7d6ad', 18, 12, 34, 1);
     rect(ctx, '#242730', 72, 8, 14, 2);
+    return;
+  }
+
+  if (stageId === STAGE_IDS.YOSHI_ISLAND) {
+    // Arena clara con borde de pasto y tierra húmeda debajo de la superficie transitable.
+    rect(ctx, '#f2dc9a', 0, 0, width, FLOOR_SURFACE_HEIGHT);
+    rect(ctx, '#fff1bd', 0, 0, width, 2);
+    rect(ctx, '#c79a5a', 0, 5, width, FLOOR_SURFACE_HEIGHT - 5);
+    for (let x = 0; x < width; x += 14) {
+      rect(ctx, '#e4c27a', x + 3, 2 + Math.round(hash2(x, 7, 5) * 4), 5, 1);
+      if (x % 28 === 0) rect(ctx, '#79c25e', x, 0, 3, 2);
+    }
     return;
   }
 

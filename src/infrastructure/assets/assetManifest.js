@@ -3,14 +3,14 @@ export { allowedGenderFor, isAllowedRangerVariant };
 
 export const DEFAULT_RANGER_GENDER = 'male';
 
-export const spriteKeyFor = (rangerId, gender = DEFAULT_RANGER_GENDER) =>
+export const spriteKeyFor = (rangerId, gender = allowedGenderFor(rangerId) ?? DEFAULT_RANGER_GENDER) =>
   'ranger-' + gender + '-' + rangerId;
 
-export const spriteUrlFor = (rangerId, gender = DEFAULT_RANGER_GENDER) =>
+export const spriteUrlFor = (rangerId, gender = allowedGenderFor(rangerId) ?? DEFAULT_RANGER_GENDER) =>
   import.meta.env.BASE_URL + 'generated/ranger-' + gender + '-' + rangerId + '.png';
 
 /** Reservado para futuras hojas de animación registradas por estado. */
-export const sheetTextureKey = (rangerId, state, gender = DEFAULT_RANGER_GENDER) =>
+export const sheetTextureKey = (rangerId, state, gender = allowedGenderFor(rangerId) ?? DEFAULT_RANGER_GENDER) =>
   'motion-' + gender + '-' + rangerId + '-' + state;
 
 /** Texturas laterales del menú: poses masculinas extraídas de Axem Red. */

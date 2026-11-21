@@ -179,7 +179,7 @@ El catálogo de juego conserva únicamente **Axem Violeta femenino** y **Axem Na
 
 ## Carrera de motos
 
-La carrera de motos tiene cuatro carriles: J1 y tres rivales controlados por IA. Se puede cambiar de carril con las flechas arriba/abajo o W/S, acelerar con derecha/D, frenar con izquierda/A y usar nitro con espacio. Vallas, cajas y manchas de aceite se distribuyen por carril y penalizan a quien las golpea. El entorno utiliza capas de montañas, vegetación, arcén y pista con desplazamiento.
+La carrera de motos tiene cuatro carriles: J1 y tres rivales controlados por IA. Antes de largar, J1 elige entre Axem Violeta femenino y Axem Naranja masculino; las IA usan la variante opuesta. Se puede cambiar de carril con las flechas arriba/abajo o W/S, acelerar con derecha/D, frenar con izquierda/A y usar nitro con espacio. Vallas, cajas y manchas de aceite se distribuyen por carril y penalizan a quien las golpea. El entorno utiliza capas de montañas, vegetación, arcén y pista con desplazamiento.
 
 ## Música
 

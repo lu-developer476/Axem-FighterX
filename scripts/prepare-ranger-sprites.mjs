@@ -18,11 +18,7 @@ const PALETTE_SOURCES = Object.freeze({
 // Estas salidas femeninas contienen correcciones manuales de paleta validadas.
 // Se preservan desde el repositorio para que pretest/prebuild no las regenere
 // desde Axem Pink y sobrescriba los ajustes de Orange y Violet.
-const FEMALE_PRESERVED_PALETTE_ASSETS = new Set([
-  'spritesheet.png',
-  'battle-pose.png',
-  'levitate.png',
-]);
+const FEMALE_PRESERVED_PALETTE_ASSETS = new Set(['spritesheet.png']);
 const BASE_SIZE = Object.freeze({ width: 53, height: 83 });
 const ACTION_GIF_SIZE = Object.freeze({ width: 150, height: 100 });
 const SEQUENCE_GIF_SCALE = 1.75;
@@ -88,6 +84,57 @@ async function writeMaleSequences(color, recoloredSheet, groups) {
   }
   await writeResult('male', color, path.join('sequences', 'index.json'), Buffer.from(JSON.stringify(index, null, 1) + '\n'));
   return index;
+}
+
+
+/**
+ * Exporta las siete franjas de Axem Pink sin convertirlas en animaciones
+ * artificiales: cada PNG conserva el ancho completo del atlas y todos los
+ * píxeles comprendidos entre los extremos de sus regiones asignadas.
+ */
+async function writeFemaleSequences(color, recoloredSheet, groups, regions) {
+  const regionByIndex = new Map(regions.map((region) => [region.index, region]));
+  const index = [];
+
+  for (const group of groups) {
+    const [left, top, width, height] = group.bounds;
+    const rowImage = await sharp(recoloredSheet)
+      .extract({ left, top, width, height })
+      .png()
+      .toBuffer();
+    await writeResult('female', color, path.join('sequences', group.id + '.png'), rowImage);
+
+    const groupRegions = group.regionIndices.map((regionIndex) => {
+      const region = regionByIndex.get(regionIndex);
+      if (!region) throw new Error('No existe la región femenina ' + regionIndex + ' de ' + group.id);
+      return {
+        index: region.index,
+        bounds: [region.x, region.y, region.w, region.h],
+        kind: region.kind,
+        ...(region.review ? { review: region.review } : {}),
+      };
+    });
+
+    index.push({
+      id: group.id,
+      role: 'row',
+      row: group.row,
+      file: group.id + '.png',
+      sourceBounds: group.bounds,
+      regionCount: group.regionCount,
+      characterCount: group.characterCount,
+      otherCount: group.otherCount,
+      reviewCount: group.reviewCount,
+      regions: groupRegions,
+    });
+  }
+
+  await writeResult(
+    'female',
+    color,
+    path.join('sequences', 'index.json'),
+    Buffer.from(JSON.stringify(index, null, 1) + '\n'),
+  );
 }
 
 function hueMatches(hue, ranges) {
@@ -1222,8 +1269,6 @@ async function buildGender(gender) {
       const files = [
         'axem-pink-spritesheet.png',
         'axem-pink-pose.png',
-        'axem-pink-battle-pose.png',
-        'axem-pink-levitate.png',
       ];
       const canonicalPosePath = path.join(
         RESULTS(gender),
@@ -1264,6 +1309,8 @@ async function buildGender(gender) {
     }
 
     if (gender === 'female') {
+      const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
+      await writeFemaleSequences(color, parts[0], manifest.female.groups, manifest.female.regions);
       console.log(
         'Se conserva la imagen canónica femenina: ' +
         path.relative(ROOT, RESULTS(gender, 'axem-ranger-' + color + '.png'))

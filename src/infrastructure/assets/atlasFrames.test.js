@@ -64,8 +64,8 @@ describe('cuadros de la hoja masculina (Axem Red)', () => {
   });
 });
 
-describe('regiones de la hoja femenina (Axem Pink)', () => {
-  const { regions, width, height } = atlasFrames.female;
+describe('regiones y grupos de la hoja femenina (Axem Pink)', () => {
+  const { regions, groups, width, height } = atlasFrames.female;
 
   it('separa los personajes de efectos, íconos y siluetas', () => {
     const characters = regions.filter((region) => region.kind === 'character');
@@ -77,6 +77,28 @@ describe('regiones de la hoja femenina (Axem Pink)', () => {
     for (const region of regions) {
       expect(region.x + region.w).toBeLessThanOrEqual(width);
       expect(region.y + region.h).toBeLessThanOrEqual(height);
+    }
+  });
+
+  it('agrupa las siete franjas y asigna las 116 regiones una sola vez', () => {
+    expect(groups.map((group) => group.regionCount)).toEqual([12, 20, 18, 17, 20, 23, 6]);
+    expect(groups.map((group) => group.characterCount)).toEqual([11, 14, 15, 16, 18, 10, 0]);
+    const indices = groups.flatMap((group) => group.regionIndices);
+    expect(indices).toHaveLength(regions.length);
+    expect(new Set(indices).size).toBe(regions.length);
+    expect([...indices].sort((a, b) => a - b)).toEqual(regions.map((region) => region.index));
+  });
+
+  it('amplía los recortes para conservar completas las regiones asignadas', () => {
+    for (const group of groups) {
+      const [left, top, groupWidth, groupHeight] = group.bounds;
+      expect(left).toBe(0);
+      expect(groupWidth).toBe(width);
+      for (const regionIndex of group.regionIndices) {
+        const region = regions.find((candidate) => candidate.index === regionIndex);
+        expect(region.y).toBeGreaterThanOrEqual(top);
+        expect(region.y + region.h).toBeLessThanOrEqual(top + groupHeight);
+      }
     }
   });
 
@@ -103,6 +125,23 @@ describe('resultados por género y color', () => {
         const metadata = await sharp(resultsPath('male', color, 'sequences', entry.file)).metadata();
         expect(metadata.width).toBe(entry.cellWidth * entry.frameCount);
         expect(metadata.height).toBe(entry.cellHeight);
+      }
+    }
+  });
+
+  it('genera las siete franjas femeninas y su índice completo para ambos colores', async () => {
+    for (const color of COLORS) {
+      const index = JSON.parse(await readFile(resultsPath('female', color, 'sequences', 'index.json'), 'utf8'));
+      expect(index.map((entry) => entry.regionCount)).toEqual([12, 20, 18, 17, 20, 23, 6]);
+      expect(index.flatMap((entry) => entry.regions)).toHaveLength(atlasFrames.female.regions.length);
+
+      for (const entry of index) {
+        const group = atlasFrames.female.groups.find((candidate) => candidate.id === entry.id);
+        expect(entry.sourceBounds).toEqual(group.bounds);
+        const metadata = await sharp(resultsPath('female', color, 'sequences', entry.file)).metadata();
+        expect(metadata.width).toBe(group.bounds[2]);
+        expect(metadata.height).toBe(group.bounds[3]);
+        expect(metadata.hasAlpha).toBe(true);
       }
     }
   });
@@ -217,7 +256,10 @@ describe('resultados por género y color', () => {
         'spritesheet.png', 'run.png', 'bike.png', 'double-axe.png',
         ...atlasFrames.male.groups.map((group) => 'sequences/' + group.id + '.png'),
       ],
-      female: ['spritesheet.png', 'pose.png', 'battle-pose.png', 'levitate.png'],
+      female: [
+        'spritesheet.png', 'pose.png', 'battle-pose.png', 'levitate.png',
+        ...atlasFrames.female.groups.map((group) => 'sequences/' + group.id + '.png'),
+      ],
     };
 
     for (const [gender, list] of Object.entries(files)) {

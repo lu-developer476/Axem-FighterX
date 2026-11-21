@@ -33,6 +33,8 @@ export const ATLAS_SOURCES = Object.freeze({
     strategy: 'regions',
     gap: 3,
     minPixels: 12,
+    // Centros verticales que separan las siete franjas de la hoja Pink.
+    rowCuts: Object.freeze([56, 122, 191, 248, 305, 370]),
     excluded: Object.freeze([]),
   }),
 });

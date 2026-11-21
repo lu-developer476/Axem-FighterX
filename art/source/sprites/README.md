@@ -9,7 +9,7 @@ Hay dos géneros, cada uno con su hoja de referencia. **Violet** y **Orange** so
 
 La orientación nativa se conserva en todas las imágenes de cada fuente: Axem Red masculino, incluidos el retrato base y los GIF de acción, apunta a la derecha; Axem Pink femenino apunta a la izquierda. El renderizador espeja cada sprite solo cuando el luchador necesita mirar hacia el lado contrario.
 
-Las referencias nunca se modifican. Las poses sueltas (`axem-pink-pose.png`, `axem-pink-battle-pose.png`, `axem-pink-levitate.png`) y los GIF (`axem-ranger-run.gif`, `axem-ranger-bike.gif`, `axem-ranger-double-axe.gif`, de Axem Red) se recolorean con el mismo proceso.
+Las referencias nunca se modifican. La pose suelta femenina `axem-pink-pose.png` y los GIF de Axem Red (`axem-ranger-run.gif`, `axem-ranger-bike.gif`, `axem-ranger-double-axe.gif`) se recolorean con el mismo proceso. Las referencias sueltas femeninas `axem-pink-battle-pose.png` y `axem-pink-levitate.png` ya no forman parte del pipeline y se eliminaron.
 
 ## Cómo se generan los resultados
 
@@ -28,12 +28,13 @@ results/
   female/
     axem-ranger-{violet,orange}.png     referencias femeninas apiladas
     {violet,orange}/
-      spritesheet.png  pose.png  battle-pose.png  levitate.png
+      spritesheet.png  pose.png
+      sequences/group-01.png … group-07.png + index.json
 ```
 
 Los retratos laterales del menú se generan directamente desde la referencia original `references/axem-red/axem-red-spritesheet.png`; no se necesita una vista previa duplicada en `results/male/`. El recoloreado del cabello recorre cada componente rubio de todas las poses, incluso cuando está separado del casco o la cara, para evitar que queden mechones originales sin procesar.
 
-Las salidas femeninas `spritesheet.png`, `battle-pose.png` y `levitate.png` pueden conservar correcciones manuales de paleta cuando sus archivos están presentes en `results/female/{orange,violet}/`. `prepare:sprites`, `pretest` y `prebuild` preservan esas versiones existentes. Si alguno se elimina, el generador lo reconstruye desde la referencia original de Axem Pink y vuelve a escribirlo; la ausencia de una salida opcional nunca debe interrumpir la preparación del proyecto. La pose femenina `pose.png` se genera desde su imagen canónica versionada.
+La hoja femenina `spritesheet.png` conserva su corrección manual de paleta cuando está versionada en `results/female/{orange,violet}/`. `prepare:sprites`, `pretest` y `prebuild` la preservan; si falta, se reconstruye desde el atlas original. La pose femenina `pose.png` se genera desde su imagen canónica versionada. Los antiguos archivos sueltos de referencia de batalla y levitación ya no forman parte del pipeline.
 
 Los GIF masculinos de bicicleta y doble hacha conservan sus lienzos de **150 × 100 px**. Los 11 GIF base de cada variante masculina se generan desde las secuencias clasificadas; todos los GIF de acción usan lienzos de **150 × 100 px**, transparencia y escalado nearest-neighbor para conservar el pixel-art. El pivote de los pies se centra horizontalmente y mantiene una línea de suelo fija para evitar saltos entre fotogramas.
 
@@ -269,11 +270,11 @@ Región `[6, 744, 164, 45]` · 6 cuadros
 
 - `reference-poses` `[525, 0, 205, 385]`: Siluetas de referencia (rojo pleno, rojo claro y rosa), personaje caído, pose con hacha, y poses sueltas: no forman tiras de animación.
 
-## Femenino (Axem Pink): 116 regiones, 84 de personaje
+## Femenino (Axem Pink): 7 grupos, 116 regiones, 84 de personaje
 
-La hoja de Pink tiene distribución libre (poses en el aire, estelas, armas sueltas, íconos), así que no se agrupa en tiras. Se detectan componentes conexos que se fusionan si están a 3 px o menos, y cada región se clasifica por su color: un personaje tiene masa rosada más el azul verdoso del traje o la bufanda amarilla; las estelas, armas, corazones, la figura con ojos y las tres siluetas de referencia quedan como `other`. Las regiones van en orden de lectura aproximado (franjas de 40 px y luego izquierda a derecha).
+La hoja de Pink tiene distribución libre (poses en el aire, estelas, armas sueltas e íconos), no una cuadrícula de cuadros uniformes. Se detectan componentes conexos que se fusionan si están a 3 px o menos, y cada región se clasifica por su color: un personaje tiene masa rosada más el azul verdoso del traje o la bufanda amarilla; las estelas, armas, corazones, la figura con ojos y las tres siluetas de referencia quedan como `other`. Después, las 116 regiones se distribuyen en siete grupos espaciales según su centro vertical, de arriba hacia abajo. Cada grupo conserva el ancho completo del atlas y los límites se amplían hasta incluir todas sus regiones.
 
-**La clasificación es heurística.** 12 regiones llevan una marca `review` para revisarlas a mano: `varias-poses` (una sola caja con más de una pose fusionada por una estela o un arma que las toca) y `posible-personaje` (vistas laterales angostas o poses tumbadas que se descartaron). Por eso las hojas femeninas generadas conservan la distribución original completa en lugar de recortar tiras por cuadro.
+**La clasificación de regiones es heurística.** 12 regiones llevan una marca `review` para revisarlas a mano: `varias-poses` (una sola caja con más de una pose fusionada por una estela o un arma que las toca) y `posible-personaje` (vistas laterales angostas o poses tumbadas cuya clasificación no es segura). Ninguna se descarta: las regiones `character` y `other`, incluidas las 12 marcadas, se asignan exactamente una vez a los siete grupos.
 
 | # | x | y | ancho | alto | tipo | revisión |
 |---:|---:|---:|---:|---:|---|---|
@@ -394,6 +395,22 @@ La hoja de Pink tiene distribución libre (poses en el aire, estelas, armas suel
 | 114 | 250 | 376 | 39 | 33 | other |  |
 | 115 | 306 | 382 | 43 | 20 | other |  |
 
+
+### Grupos de filas femeninas
+
+Las 116 regiones se asignan exactamente una vez a **siete grupos**, de arriba hacia abajo. Como el atlas mezcla poses, estelas, armas, corazones, efectos y siluetas en una distribución libre, estos grupos son espaciales (filas), no animaciones inventadas. Cada PNG conserva el ancho completo de 900 px y se recorta desde el primer hasta el último píxel de las regiones asignadas; los límites verticales pueden solaparse entre grupos contiguos para no cortar poses altas o inclinadas. Así se contemplan las siete franjas y se mantienen las 84 regiones de personaje, las 32 regiones de otros elementos y las 12 marcas de revisión.
+
+| Grupo | Regiones | Personajes | Otros | Revisión |
+|---|---:|---:|---:|---:|
+| group-01 | 12 | 11 | 1 | 0 |
+| group-02 | 20 | 14 | 6 | 2 |
+| group-03 | 18 | 15 | 3 | 2 |
+| group-04 | 17 | 16 | 1 | 2 |
+| group-05 | 20 | 18 | 2 | 2 |
+| group-06 | 23 | 10 | 13 | 4 |
+| group-07 | 6 | 0 | 6 | 0 |
+
+Los archivos `sequences/index.json` de Orange y Violet conservan la lista de regiones, sus coordenadas, tipo y marca de revisión. Los dos colores comparten exactamente los mismos recortes y transparencia; únicamente cambia la paleta.
 
 ## Acciones añadidas para combate y carrera
 

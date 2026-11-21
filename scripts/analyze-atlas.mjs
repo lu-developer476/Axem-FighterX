@@ -23,6 +23,38 @@ const FRAMES_PATH = path.join(
   ROOT, 'src', 'infrastructure', 'assets', 'atlasFrames.json',
 );
 
+
+/**
+ * Agrupa todas las regiones femeninas por su franja de lectura.
+ * Los cortes clasifican por centro vertical; los bounds de salida se amplían
+ * hasta los extremos de las regiones asignadas para no cortar poses solapadas.
+ */
+function groupFemaleRegions(regions, width, height, rowCuts) {
+  const edges = [0, ...rowCuts, height];
+  return Array.from({ length: edges.length - 1 }, (_, index) => {
+    const minCenter = edges[index];
+    const maxCenter = edges[index + 1];
+    const members = regions.filter((region) => {
+      const centerY = region.y + region.h / 2;
+      return centerY >= minCenter && centerY < maxCenter;
+    });
+    if (!members.length) return null;
+
+    const top = Math.min(...members.map((region) => region.y));
+    const bottom = Math.max(...members.map((region) => region.y + region.h));
+    return {
+      id: 'group-' + String(index + 1).padStart(2, '0'),
+      row: index + 1,
+      bounds: [0, top, width, bottom - top],
+      regionCount: members.length,
+      characterCount: members.filter((region) => region.kind === 'character').length,
+      otherCount: members.filter((region) => region.kind === 'other').length,
+      reviewCount: members.filter((region) => Boolean(region.review)).length,
+      regionIndices: members.map((region) => region.index),
+    };
+  }).filter(Boolean);
+}
+
 async function analyze(rules) {
   const { data, info } = await sharp(path.join(ROOT, rules.file))
     .ensureAlpha()
@@ -67,6 +99,7 @@ async function analyze(rules) {
       }
       return region;
     });
+    result.groups = groupFemaleRegions(result.regions, info.width, info.height, rules.rowCuts);
   }
   return result;
 }
@@ -80,10 +113,11 @@ await writeFile(FRAMES_PATH, JSON.stringify(manifest, null, 1) + '\n');
 
 const male = manifest.male.groups;
 const female = manifest.female.regions;
+const femaleGroups = manifest.female.groups;
 console.log(
   'male: ' + male.length + ' grupos, ' + male.reduce((sum, group) => sum + group.frames.length, 0) + ' cuadros',
 );
 console.log(
-  'female: ' + female.length + ' regiones, ' + female.filter((region) => region.kind === 'character').length + ' de personaje',
+  'female: ' + femaleGroups.length + ' grupos, ' + female.length + ' regiones, ' + female.filter((region) => region.kind === 'character').length + ' de personaje',
 );
 console.log('→ ' + path.relative(ROOT, FRAMES_PATH));

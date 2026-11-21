@@ -14,10 +14,10 @@ npm run preview  # sirve dist/ localmente
 
 Controles:
 
-| | Mover | Hachazo | Teletransporte |
-|---|---|---|---|
-| **J1** Axem Violet | `A` / `D` | `F` | `G` |
-| **J2** Axem Orange | `←` / `→` | `L` | `K` |
+| | Terreno | Vuelo | Hachazo | Teletransporte | Dash |
+|---|---|---|---|---|---|
+| **J1** Axem Violet | `A` / `D` / `W` / `S` | `Q` / `E` | `F` | `G` | `C` |
+| **J2** Axem Orange | `←` / `→` / `↑` / `↓` | `I` / `O` | `L` | `K` | `H` |
 
 `P` o el botón `[ P ] PAUSA` abre el menú de pausa durante el combate. Desde allí podés continuar, consultar los controles o volver al menú principal. Los controles quedan ocultos mientras jugás. `R` reinicia la serie completa. `ESC` vuelve al menú desde el combate. Cada personaje apunta hacia donde se movió por última vez.
 
@@ -31,7 +31,7 @@ En cada selección se elige primero el color (**Axem Naranja** o **Axem Violeta*
 
 ## Escenarios y cinemáticas
 
-En los formatos normales, el menú permite elegir entre siete escenarios. Antes de cada combate se reproduce una cinemática breve con una conversación contextual entre Axem Violet y Axem Orange. Los diálogos presentan la zona y la relación de trabajo entre ambos; se avanza con `ENTER` o `ESPACIO`, y se puede omitir con `ESC`.
+En los formatos normales, el menú permite elegir entre ocho escenarios. Antes de cada combate se reproduce una cinemática breve con una conversación contextual entre Axem Violet y Axem Orange. Los diálogos presentan la zona y la relación de trabajo entre ambos; se avanza con `ENTER` o `ESPACIO`, y se puede omitir con `ESC`.
 
 | Escenario | Entorno |
 |---|---|
@@ -41,9 +41,10 @@ En los formatos normales, el menú permite elegir entre siete escenarios. Antes 
 | **Santuario celeste** | Columnas doradas, sellos y arquitectura suspendida |
 | **Avenida del apagón** | Distrito comercial destruido, vehículos abandonados e hidrantes rotos |
 | **Llanura de la torre rota** | Colinas abiertas, puente, cercas, rocas y torre de vigilancia |
-| **Fauces de obsidiana** | Boca de volcán activa con respiraderos rotativos y columnas de lava que dañan a los luchadores
+| **Fauces de obsidiana** | Boca de volcán activa con respiraderos rotativos y columnas de lava que dañan a los luchadores |
+| **Isla de Yoshi** | Isla tropical con playas, palmeras inclinadas, muelle de tablones y mar abierto; la marea y un acantilado inestable anticipan que la isla se desvanece |
 
-Los fondos ambientales de los siete escenarios usan capas de sprites pixel art del paquete [Pixel Platformer de Kenney](https://kenney.nl/assets/pixel-platformer), descargado e integrado localmente bajo licencia **CC0 1.0**. El atlas se aplica con filtrado de vecino más cercano y parallax; los suelos, límites y elementos propios de cada arena se conservan. La licencia y procedencia están documentadas en `art/source/environments/kenney-pixel-platformer/LICENSE.txt`. El fondo de entrenamiento sigue siendo un color plano y no carga capas ambientales.
+Los fondos ambientales de los ocho escenarios usan capas de sprites pixel art del paquete [Pixel Platformer de Kenney](https://kenney.nl/assets/pixel-platformer), descargado e integrado localmente bajo licencia **CC0 1.0**. El atlas se aplica con filtrado de vecino más cercano y parallax; los suelos, límites y elementos propios de cada arena se conservan. La licencia y procedencia están documentadas en `art/source/environments/kenney-pixel-platformer/LICENSE.txt`. El fondo de entrenamiento sigue siendo un color plano y no carga capas ambientales.
 
 ## Nitidez y renderizado
 
@@ -160,10 +161,10 @@ Requiere **Settings → Pages → Source: GitHub Actions**. Para correr la captu
 
 ## Movimiento y efectos visuales ampliados
 
-- **Dash:** J1 activa el impulso con `C`; J2 con `M`. Dura 180 ms y tiene un enfriamiento de 900 ms. No concede invulnerabilidad ni altera el daño.
+- **Dash:** J1 activa el impulso con `C`; J2 con `H`. Dura 180 ms y tiene un enfriamiento de 900 ms. No concede invulnerabilidad ni altera el daño.
 - **Defensa:** J1 mantiene el bloqueo con `V`; J2 con `N`. Solo reduce el daño cuando el luchador mira hacia el atacante; el golpe bloqueado conserva daño residual y una breve reacción.
 - **Esquiva:** J1 pulsa `X`; J2 pulsa `J`. Ejecuta una rodada diferenciada del dash, con una ventana corta de evasión y enfriamiento propio.
-- **Ataque especial:** J1 pulsa `Z`; J2 pulsa `H`. Tiene anticipación, impacto y recuperación más largos; inflige más daño y requiere esperar su enfriamiento.
+- **Ataque especial:** J1 pulsa `Z`; J2 pulsa `M`. Tiene anticipación, impacto y recuperación más largos; inflige más daño y requiere esperar su enfriamiento.
 - **Aterrizaje y resultado:** el contacto con el suelo reproduce una animación breve; el KO y la victoria usan secuencias de cierre independientes.
 - **Carrera:** durante la cuenta regresiva el ciclista usa una espera lenta; aceleración, frenado y nitro modifican la cadencia y la inclinación. La meta activa animaciones distintas para victoria y derrota.
 - **Escenarios:** las siete arenas combinan capas con parallax y objetos ambientales animados: espíritus en las ruinas, brasas volcánicas, luciérnagas y hojas en el bosque, sellos del santuario, descargas en la avenida y semillas impulsadas por el viento en la llanura.

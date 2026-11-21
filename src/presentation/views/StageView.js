@@ -20,6 +20,7 @@ const AMBIENT_PLACEMENTS = {
   [STAGE_IDS.DOWNTOWN]: [[54,94,.65,.56,.18],[164,126,.55,.46,.34],[282,84,.7,.66,.22],[418,112,.62,.54,.38],[568,90,.72,.62,.2]],
   [STAGE_IDS.MEADOW]: [[76,68,.92,.5,.1],[208,94,.62,.42,.22],[344,72,.84,.5,.14],[520,106,.58,.4,.3]],
   [STAGE_IDS.VOLCANO_MOUTH]: [[62,126,.72,.72,.2],[152,76,.62,.62,.32],[286,112,.82,.74,.22],[424,80,.68,.66,.36],[572,128,.76,.72,.24]],
+  [STAGE_IDS.YOSHI_ISLAND]: [[70,62,.9,.7,.12],[214,88,.7,.62,.2],[356,54,.84,.7,.16],[512,96,.64,.6,.28]],
 };
 const STAGE_VISUALS = {
   [STAGE_IDS.RUINS]: { hazeAlpha: 0.035, barrierBaseAlpha: 0.55, flicker: 0.08 },
@@ -29,6 +30,7 @@ const STAGE_VISUALS = {
   [STAGE_IDS.DOWNTOWN]: { hazeAlpha: 0.018, barrierBaseAlpha: 0.4, flicker: 0.03 },
   [STAGE_IDS.MEADOW]: { hazeAlpha: 0.012, barrierBaseAlpha: 0.3, flicker: 0.02 },
   [STAGE_IDS.VOLCANO_MOUTH]: { hazeAlpha: 0.08, barrierBaseAlpha: 0.78, flicker: 0.16 },
+  [STAGE_IDS.YOSHI_ISLAND]: { hazeAlpha: 0.014, barrierBaseAlpha: 0.3, flicker: 0.02 },
 };
 
 /** Construye el escenario seleccionado o un fondo plano para el entrenamiento. */
@@ -82,6 +84,7 @@ export class StageView {
       STAGE_IDS.DOWNTOWN,
       STAGE_IDS.MEADOW,
       STAGE_IDS.VOLCANO_MOUTH,
+      STAGE_IDS.YOSHI_ISLAND,
     ].includes(this.stageId);
     this.barriers = [];
     if (!usesStageSetPieces) {

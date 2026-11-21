@@ -631,12 +631,12 @@ export class MenuScene extends Phaser.Scene {
       const optionTitle = stage.hazards
         ? stage.name.toUpperCase() + ' · CALDERA ACTIVA'
         : stage.name.toUpperCase();
-      this.#addButton(optionTitle, 150 + index * 12.4, () => {
+      this.#addButton(optionTitle, 150 + index * 10.4, () => {
         this.#startSelectedFight(stage.id, true);
       }, {
         width: 300,
         fontSize: '7px',
-        height: 16,
+        height: 12,
       });
     });
 
@@ -664,10 +664,10 @@ export class MenuScene extends Phaser.Scene {
       fontSize: '7px',
       color: '#ffc17e',
     });
-    this.#addText('Movimiento ←/→ · Vuelo ↑ asciende · ↓ desciende', GAME_WIDTH / 2, 197, {
+    this.#addText('Terreno ←/→/↑/↓ · Vuelo I asciende · O desciende', GAME_WIDTH / 2, 197, {
       fontSize: '6px',
     });
-    this.#addText('Ataque L · Teletransporte K', GAME_WIDTH / 2, 208, {
+    this.#addText('Ataque L · Teletransporte K · Dash H', GAME_WIDTH / 2, 208, {
       fontSize: '6px',
     });
     this.#addText('R · REINICIAR COMBATE   ESC · VOLVER / SALIR', GAME_WIDTH / 2, 223, {

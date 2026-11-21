@@ -19,20 +19,25 @@ describe('Controles de teclado', () => {
     });
   });
 
-  it('asigna a J2 movimiento terrestre izquierda/derecha e I/O, vuelo arriba/abajo', () => {
+  it('asigna a J2 terreno con las flechas, vuelo I/O, ataque L, teletransporte K y dash H', () => {
     expect(KEYMAPS.PLAYER_2).toEqual({
       left: 'LEFT',
       right: 'RIGHT',
-      forward: 'I',
-      backward: 'O',
-      ascend: 'UP',
-      descend: 'DOWN',
+      forward: 'UP',
+      backward: 'DOWN',
+      ascend: 'I',
+      descend: 'O',
       attack: 'L',
       teleport: 'K',
-      dash: 'M',
+      dash: 'H',
       block: 'N',
       dodge: 'J',
-      specialAttack: 'H',
+      specialAttack: 'M',
     });
+  });
+
+  it('no repite ninguna tecla dentro de los controles de J2', () => {
+    const keys = Object.values(KEYMAPS.PLAYER_2);
+    expect(new Set(keys).size).toBe(keys.length);
   });
 });

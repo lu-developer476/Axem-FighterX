@@ -13,6 +13,7 @@ const BIOMES = Object.freeze({
   [STAGE_IDS.DOWNTOWN]: 'sky',
   [STAGE_IDS.MEADOW]: 'forest',
   [STAGE_IDS.VOLCANO_MOUTH]: 'desert',
+  [STAGE_IDS.YOSHI_ISLAND]: 'sky',
 });
 
 const SOURCE = Object.freeze({

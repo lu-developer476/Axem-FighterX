@@ -13,5 +13,6 @@ describe('Fondos pixel art de Kenney', () => {
     expect(biomeForStage(STAGE_IDS.FOREST)).toBe('forest');
     expect(biomeForStage(STAGE_IDS.MEADOW)).toBe('forest');
     expect(biomeForStage(STAGE_IDS.DOWNTOWN)).toBe('sky');
+    expect(biomeForStage(STAGE_IDS.YOSHI_ISLAND)).toBe('sky');
   });
 });

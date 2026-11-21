@@ -1,6 +1,5 @@
 import { Fighter } from '../entities/Fighter.js';
-import { rangerCatalog } from './rangerCatalog.js';
-import { allowedGenderFor, isAllowedRangerVariant } from '../../infrastructure/assets/assetManifest.js';
+import { rangerCatalog, allowedGenderFor, isAllowedRangerVariant } from './rangerCatalog.js';
 
 /**
  * Fábrica de dominio: crea un Fighter a partir del catálogo.

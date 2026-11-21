@@ -7,9 +7,10 @@ import { StageView } from '../views/StageView.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import {
   DEFAULT_RANGER_GENDER,
+  maleAnimationKey,
   spriteKeyFor,
 } from '../../infrastructure/assets/assetManifest.js';
-import { spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
+import { GIF_ORIGIN_Y, spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
 import { shouldFlip } from '../views/orientation.js';
 
 const SPEAKERS = {
@@ -37,6 +38,34 @@ export class CinematicScene extends Phaser.Scene {
     this.transitioning = false;
   }
 
+  /**
+   * El Axem masculino invoca su hacha (battle-pose) y queda en su pose de espera;
+   * el resto de los personajes conserva la imagen fija con el vaivén.
+   */
+  #createCharacterSprite(x, character, facing) {
+    const battlePoseKey = maleAnimationKey(character.id, 'battle-pose');
+    const poseKey = maleAnimationKey(character.id, 'pose');
+    const animated = character.gender === 'male'
+      && this.anims.exists(battlePoseKey)
+      && this.anims.exists(poseKey);
+
+    const sprite = animated
+      ? this.add.sprite(x, ARENA.groundY, battlePoseKey).setOrigin(0.5, GIF_ORIGIN_Y)
+      : this.add.image(x, ARENA.groundY, spriteKeyFor(character.id, character.gender)).setOrigin(0.5, 1);
+
+    sprite
+      .setScale(1)
+      .setFlipX(shouldFlip(facing, spriteFacingFor(character.id, character.gender)))
+      .setDepth(100);
+
+    if (animated) {
+      sprite.setData('animated', true);
+      sprite.play(battlePoseKey);
+      sprite.chain(poseKey);
+    }
+    return sprite;
+  }
+
   create() {
     this.stageView = new StageView(this, this.stage.id, { cinematic: true });
     this.cameras.main.setBounds(0, 0, 640, 270);
@@ -56,22 +85,13 @@ export class CinematicScene extends Phaser.Scene {
 
     this.leftCharacter = left;
     this.rightCharacter = right;
-    this.leftSprite = this.add
-      .image(106, ARENA.groundY, spriteKeyFor(left.id, left.gender))
-      .setOrigin(0.5, 1)
-      .setScale(1)
-      .setFlipX(shouldFlip(1, spriteFacingFor(left.id, left.gender)))
-      .setDepth(100);
-    this.rightSprite = this.add
-      .image(374, ARENA.groundY, spriteKeyFor(right.id, right.gender))
-      .setOrigin(0.5, 1)
-      .setScale(1)
-      .setFlipX(shouldFlip(-1, spriteFacingFor(right.id, right.gender)))
-      .setDepth(100);
+    this.leftSprite = this.#createCharacterSprite(106, left, 1);
+    this.rightSprite = this.#createCharacterSprite(374, right, -1);
 
-    // Los dos personajes comparten el mismo movimiento de espera, sin depender del género.
+    // Los personajes con animación propia (pose de combate) no necesitan el vaivén.
+    const bobbingTargets = [this.leftSprite, this.rightSprite].filter((sprite) => !sprite.getData('animated'));
     this.tweens.add({
-      targets: [this.leftSprite, this.rightSprite],
+      targets: bobbingTargets,
       y: ARENA.groundY - 4,
       duration: 780,
       ease: 'Sine.easeInOut',

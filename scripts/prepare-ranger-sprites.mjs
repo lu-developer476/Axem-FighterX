@@ -857,6 +857,35 @@ async function buildMaleGroup16Sequence(color, frames) {
   );
 }
 
+/** Acciones de los GIF que el juego reproduce como hojas de sprites. */
+const GAME_GIF_ACTIONS = Object.freeze([
+  'idle', 'dash', 'punch-01', 'punch-02', 'punch-03', 'hit', 'hurt',
+  'jump', 'teleport', 'charge', 'battle-pose', 'pose',
+]);
+
+/**
+ * Los GIF usan el lienzo de 150×100 a escala 1,75 sobre el arte nativo. El juego
+ * dibuja el resto de las hojas a escala nativa, así que cada cuadro se reduce
+ * con nearest-neighbor a la misma escala para que el personaje mida igual.
+ */
+async function writeMaleGameStrips(color) {
+  const cellWidth = Math.round(ACTION_GIF_SIZE.width / SEQUENCE_GIF_SCALE);
+  const cellHeight = Math.round(ACTION_GIF_SIZE.height / SEQUENCE_GIF_SCALE);
+  for (const action of GAME_GIF_ACTIONS) {
+    const { frames } = await readMaleGifFrames(color, action + '.gif');
+    const cells = await Promise.all(frames.map((frame) =>
+      sharp(frame)
+        .resize(cellWidth, cellHeight, { fit: 'fill', kernel: 'nearest' })
+        .png()
+        .toBuffer()
+    ));
+    const strip = await makeHorizontalStrip(cells, cellWidth, cellHeight);
+    const outputPath = path.join(GENERATED, 'axem-' + color + '-' + action + '.png');
+    await fs.writeFile(outputPath, strip);
+    console.log('Generada hoja de juego ' + path.relative(ROOT, outputPath));
+  }
+}
+
 /**
  * Completa teleport, charge, idle, derrota e invocación del hacha. Se genera
  * igual para Violeta y Naranja; el personaje de pie mide STANDARD_STANDING_HEIGHT
@@ -1088,6 +1117,7 @@ async function buildGender(gender) {
       await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop);
       await buildMaleActionGifs(color, sequenceIndex);
       await buildMaleSharedExtraGifs(color);
+      await writeMaleGameStrips(color);
       baseSource = run.frames[0];
     } else {
       const pinkReference = SOURCE('sprites', 'references', 'axem-pink');

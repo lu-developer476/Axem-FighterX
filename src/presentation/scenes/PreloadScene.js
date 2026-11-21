@@ -10,6 +10,7 @@ import {
   maleAnimationKey,
   maleAnimationUrl,
 } from '../../infrastructure/assets/assetManifest.js';
+import { GIF_ACTIONS, GIF_CELL } from '../../infrastructure/assets/characterAnimationData.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { createStageTextures } from '../../infrastructure/graphics/StageTextureFactory.js';
 import { createAdditionalStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';
@@ -101,6 +102,12 @@ export class PreloadScene extends Phaser.Scene {
         this.load.spritesheet(maleAnimationKey(rangerId, action), maleAnimationUrl(rangerId, action), {
           frameWidth: 53,
           frameHeight: 83,
+        });
+      }
+      for (const action of GIF_ACTIONS) {
+        this.load.spritesheet(maleAnimationKey(rangerId, action), maleAnimationUrl(rangerId, action), {
+          frameWidth: GIF_CELL.width,
+          frameHeight: GIF_CELL.height,
         });
       }
       this.load.image(

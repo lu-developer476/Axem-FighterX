@@ -30,3 +30,19 @@ export const spriteFacingFor = (rangerId, gender = 'male') =>
   characterAnimationData[rangerId]?.spriteFacing?.[gender] ?? -1;
 
 export const animationKey = (rangerId, state) => rangerId + ':' + state;
+
+/**
+ * Hojas de juego generadas desde los GIF de 150×100 px. Cada cuadro mide 86×57 px
+ * (los 150×100 a escala 1/1,75, la escala nativa del resto de las hojas).
+ */
+export const GIF_ACTIONS = Object.freeze([
+  'idle', 'dash', 'punch-01', 'punch-02', 'punch-03', 'hit', 'hurt',
+  'jump', 'teleport', 'charge', 'battle-pose', 'pose',
+]);
+export const GIF_CELL = Object.freeze({ width: 86, height: 57 });
+/**
+ * Las hojas de carrera (53×83) apoyan los pies 27 px sobre el borde inferior de la celda
+ * y se dibujan con origen en ese borde. Para que los pies queden en el mismo punto, las
+ * hojas GIF (pies en la fila 55 de 57) usan un origen vertical equivalente.
+ */
+export const GIF_ORIGIN_Y = (55 + 27) / GIF_CELL.height;

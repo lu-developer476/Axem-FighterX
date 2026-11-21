@@ -1,7 +1,12 @@
-import { animationKey } from '../../infrastructure/assets/characterAnimationData.js';
+import { GIF_ORIGIN_Y, animationKey } from '../../infrastructure/assets/characterAnimationData.js';
 import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
 import { spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
 import { flashOnlyPose, poseFor } from './proceduralPoses.js';
+
+const PUNCH_ACTIONS = Object.freeze(['punch-01', 'punch-02', 'punch-03']);
+
+/** Poder de furia activo: el Axem se muestra cargado. */
+const FURY_KEY = 'fury';
 
 /**
  * Decide cómo se anima un personaje en cada estado:
@@ -23,6 +28,7 @@ export class FighterAnimator {
     this.anims = anims;
     this.state = null;
     this.usingSheet = false;
+    this.punchIndex = -1;
   }
 
   /** La pose base y las hojas GIF usan la misma orientación nativa declarada para cada fuente. */
@@ -32,16 +38,39 @@ export class FighterAnimator {
 
   /** @param {import('../../domain/entities/Fighter.js').Fighter} fighter */
   update(fighter) {
-    const visualState = fighter.state === 'dash' ? 'walk' : fighter.state;
-    const animationState = visualState === 'walk' && this.gender === 'male'
-      ? 'walk'
-      : visualState === 'attack' && this.gender === 'male' && fighter.position.z > 0
-        ? 'air-attack'
-        : visualState;
+    const visualState = fighter.state === 'dash' && this.gender !== 'male' ? 'walk' : fighter.state;
+    const animationState = this.gender === 'male'
+      ? this.#maleAnimationState(fighter)
+      : visualState;
     if (animationState !== this.state) this.#enter(animationState);
     return this.usingSheet
       ? flashOnlyPose(fighter.state, fighter.stateTimeMs)
       : poseFor(visualState, fighter.stateTimeMs, fighter.elapsedMs);
+  }
+
+  /**
+   * Elige la animación masculina. La clave devuelta empieza por la acción:
+   * `run`, `double-axe` y `defeated` usan hojas de 53×83; el resto, hojas de los GIF.
+   */
+  #maleAnimationState(fighter) {
+    const inAir = (fighter.position?.z ?? 0) > 0;
+    switch (fighter.state) {
+      case 'walk':
+        return 'run';
+      case 'dash':
+        return 'dash';
+      case 'attack':
+        return inAir ? 'double-axe' : 'punch';
+      case 'hurt':
+        return 'hurt-combo';
+      case 'teleport':
+        return 'teleport';
+      case 'ko':
+        return 'ko';
+      default:
+        if (inAir) return 'jump';
+        return (fighter.powerUps?.[FURY_KEY] ?? 0) > 0 ? 'charge' : 'idle';
+    }
   }
 
   #enter(state) {
@@ -50,20 +79,34 @@ export class FighterAnimator {
     if (state === 'ko' && this.gender === 'male') {
       this.sprite.stop();
       this.sprite.setTexture(maleAnimationKey(this.rangerId, 'defeated'));
+      this.sprite.setOrigin?.(0.5, 1);
       this.usingSheet = true;
       return;
     }
 
-    const maleAction = state === 'walk' ? 'run' : state === 'air-attack' ? 'double-axe' : null;
-    const key = maleAction && this.gender === 'male'
-      ? maleAnimationKey(this.rangerId, maleAction)
-      : animationKey(this.rangerId, state);
+    let key;
+    let gifSheet = false;
+    if (this.gender === 'male') {
+      let action = state;
+      if (state === 'punch') {
+        this.punchIndex = (this.punchIndex + 1) % PUNCH_ACTIONS.length;
+        action = PUNCH_ACTIONS[this.punchIndex];
+      }
+      key = maleAnimationKey(this.rangerId, action);
+      gifSheet = action !== 'run' && action !== 'double-axe';
+    } else {
+      key = animationKey(this.rangerId, state);
+    }
+
     if (this.anims.exists(key)) {
+      // Las hojas GIF y las de 53×83 apoyan los pies a distinta altura de su celda.
+      this.sprite.setOrigin?.(0.5, gifSheet ? GIF_ORIGIN_Y : 1);
       this.sprite.play(key);
       this.usingSheet = true;
     } else {
       this.sprite.stop();
       this.sprite.setTexture(this.fallbackTexture);
+      this.sprite.setOrigin?.(0.5, 1);
       this.usingSheet = false;
     }
   }

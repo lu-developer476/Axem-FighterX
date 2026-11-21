@@ -17,6 +17,7 @@ import { createStageTextures } from '../../infrastructure/graphics/StageTextureF
 import { createAdditionalStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';
 import { createKenneyStageBackgrounds, KENNEY_STAGE_ATLAS_KEY } from '../../infrastructure/graphics/KenneyStageBackgrounds.js';
 import stageBackgroundAtlasUrl from '../../../art/source/environments/kenney-pixel-platformer/tilemap-backgrounds.png';
+import whitePuffAtlasUrl from '../../../art/source/effects/kenney-smoke-particles/white-puff-atlas.png';
 import { registerCharacterAnimations } from '../animation/registerCharacterAnimations.js';
 import { registerFxAnimations } from '../animation/registerFxAnimations.js';
 
@@ -120,6 +121,11 @@ export class PreloadScene extends Phaser.Scene {
     }
     this.load.image('title-art', import.meta.env.BASE_URL + 'generated/title.png');
     this.load.image(KENNEY_STAGE_ATLAS_KEY, stageBackgroundAtlasUrl);
+    Object.values(KENNEY_FX).forEach(({ key, url }) => this.load.image(key, url));
+    this.load.spritesheet('kenney-white-puff', whitePuffAtlasUrl, {
+      frameWidth: 381,
+      frameHeight: 346,
+    });
   }
 
   create() {

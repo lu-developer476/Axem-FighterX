@@ -92,6 +92,7 @@ export class FxDirector {
         if (elapsed >= DASH_DUST_INTERVAL_MS) {
           const x = fighter.position.x - fighter.facing * 17;
           this.#play('dust', x, fighter.position.y - 5, { scale: 1.1, depth: FX_DEPTH - 10 });
+          this.#playWhitePuff(x, fighter.position.y - 7, 0.12, 370);
           this.#scatter(x, fighter.position.y - 4, 2, FX_PARTICLES.rubble, 0xc5b49b, -fighter.facing);
           this.dashTimers.set(fighter.id, 0);
         } else this.dashTimers.set(fighter.id, elapsed);
@@ -145,6 +146,7 @@ export class FxDirector {
     this.#play('burst', x, y, { scale: 1.55, depth: FX_DEPTH + 2 });
     this.#assetPop('flame', x, y - 4, { tint: 0xff9a52, scale: 1.1 });
     this.#assetPop('smoke', x, y - 8, { tint: 0xb9b7c5, scale: 1.3, depth: FX_DEPTH - 1, duration: 780 });
+    this.#playWhitePuff(x, y - 10, 0.22, 760);
     this.#leaveScorch(x, ARENA.groundY - 3);
     this.#play('shockwave', x, y + 18, { scale: 1.6 });
     [[-18, -10, 90], [16, 8, 170], [-6, 20, 250]].forEach(([dx, dy, delay]) => {
@@ -297,6 +299,24 @@ export class FxDirector {
     sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => sprite.destroy());
     sprite.play(fxAnimKey(name));
     return sprite;
+  }
+
+  #playWhitePuff(x, y, scale, duration) {
+    if (!this.scene.textures.exists('kenney-white-puff')) return null;
+    const puff = this.scene.add.sprite(Math.round(x), Math.round(y), 'kenney-white-puff', 0)
+      .setScale(scale)
+      .setAlpha(0.68)
+      .setDepth(FX_DEPTH - 2);
+    puff.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => puff.destroy());
+    puff.play('kenney-white-puff-animation');
+    this.scene.tweens.add({
+      targets: puff,
+      scale: scale * 1.2,
+      alpha: 0,
+      duration,
+      ease: 'Quad.easeOut',
+    });
+    return puff;
   }
 
   #assetPop(name, x, y, { tint = 0xffffff, scale = 1, duration = 560, depth = FX_DEPTH, flipX = false } = {}) {

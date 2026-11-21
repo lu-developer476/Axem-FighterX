@@ -24,6 +24,15 @@ export function registerFxAnimations(scene) {
     });
   }
 
+  if (scene.textures.exists('kenney-white-puff') && !scene.anims.exists('kenney-white-puff-animation')) {
+    scene.anims.create({
+      key: 'kenney-white-puff-animation',
+      frames: scene.anims.generateFrameNumbers('kenney-white-puff', { start: 0, end: 24 }),
+      frameRate: 24,
+      repeat: 0,
+    });
+  }
+
   registerFlameAnimation(scene, FLAME_ANIMATION, STAGE_TEXTURES);
   for (const stageId of ADDITIONAL_STAGE_IDS) {
     registerFlameAnimation(scene, flameAnimationKey(stageId), getStageTextures(stageId));

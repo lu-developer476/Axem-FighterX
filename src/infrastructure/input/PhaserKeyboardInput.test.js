@@ -137,7 +137,7 @@ describe('Controles de teclado', () => {
     }
   });
 
-  it('no repite teclas dentro de cada esquema', () =>
+  it('no repite teclas dentro de cada esquema', () => {
     for (const keymap of Object.values(KEYMAPS)) {
       const keys = Object.values(keymap);
       expect(new Set(keys).size).toBe(keys.length);

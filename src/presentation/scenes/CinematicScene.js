@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH } from '../../config/gameConfig.js';
 import { ARENA } from '../../domain/arena/arena.js';
 import { contentWidth, insetSize } from '../views/uiLayout.js';
-import { STAGE_IDS, getStage } from '../../domain/arena/stageCatalog.js';
+import { DEFAULT_STAGE_ID, getStage } from '../../infrastructure/assets/stageAssetManifest.js';
 import { StageView } from '../views/StageView.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import {
@@ -26,12 +26,10 @@ export class CinematicScene extends Phaser.Scene {
     this.lineIndex = 0;
     this.transitioning = false;
     this.matchSetup = {};
-    this.stageVariantId = 'classic';
   }
 
   init(data = {}) {
-    this.stageId = data.stageId ?? STAGE_IDS.RUINS;
-    this.stageVariantId = data.stageVariantId ?? 'classic';
+    this.stageId = data.stageId ?? DEFAULT_STAGE_ID;
     this.stage = getStage(this.stageId);
     this.matchSetup = {
       ...(data.matchSetup ?? {}),
@@ -73,7 +71,6 @@ export class CinematicScene extends Phaser.Scene {
     playStageMusic(this, this.stage.id);
     this.stageView = new StageView(this, this.stage.id, {
       cinematic: true,
-      variantId: this.stageVariantId,
     });
     this.cameras.main.setBounds(0, 0, 640, 270);
 
@@ -232,7 +229,6 @@ export class CinematicScene extends Phaser.Scene {
     this.transitioning = true;
     this.scene.start('FightScene', {
       stageId: this.stage.id,
-      stageVariantId: this.stageVariantId,
       matchSetup: this.matchSetup,
     });
   }

@@ -1,10 +1,10 @@
 import { ARENA } from '../../domain/arena/arena.js';
+import { GAME_HEIGHT } from '../../config/gameConfig.js';
 import {
   proceduralTextureKeyForTileset,
   STAGE_TILESET_ASSETS,
 } from '../assets/stageAssetManifest.js';
 import { createCanvasTexture } from './canvasTexture.js';
-import { VIEW } from './StageTextureFactory.js';
 
 const MIN_FOREGROUND_COVERAGE = 0.055;
 
@@ -41,7 +41,7 @@ export function createProceduralBackground(scene, asset) {
   const palette = paletteFor(asset.id);
   const key = proceduralTextureKeyForTileset(asset.key);
 
-  createCanvasTexture(scene, key, ARENA.width, VIEW.height, (ctx, width, height) => {
+  createCanvasTexture(scene, key, ARENA.width, GAME_HEIGHT, (ctx, width, height) => {
     const random = createRandom(asset.seed ?? 1);
     const pick = () => tiles[Math.floor(random() * tiles.length)];
 

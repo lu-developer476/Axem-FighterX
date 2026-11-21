@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from '../../config/gameConfig.js';
 import { ARENA, getArenaForGroundDepthMode } from '../../domain/arena/arena.js';
-import { getStage, STAGE_IDS } from '../../domain/arena/stageCatalog.js';
+import { DEFAULT_STAGE_ID, getStage } from '../../infrastructure/assets/stageAssetManifest.js';
 import { getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { RoundSeries } from '../../domain/match/RoundSeries.js';
 import { createDefaultMatch } from '../../application/useCases/CreateMatch.js';
@@ -25,8 +25,7 @@ export class FightScene extends Phaser.Scene {
   }
 
   init(data = {}) {
-    this.stageDefinition = getStage(data.stageId ?? STAGE_IDS.RUINS);
-    this.stageVariantId = data.stageVariantId ?? 'classic';
+    this.stageDefinition = getStage(data.stageId ?? DEFAULT_STAGE_ID);
     this.matchSetup = {
       ...(data.matchSetup ?? {}),
       characters: [...(data.matchSetup?.characters ?? [])],
@@ -86,11 +85,10 @@ export class FightScene extends Phaser.Scene {
 
     this.stage = new StageView(this, this.stageDefinition.id, {
       backgroundColor: this.matchSetup.trainingBackgroundColor ?? null,
-      variantId: this.stageVariantId,
     });
     this.pickupView = new PickupView(this);
     this.views = this.match.fighters.map((fighter) => new FighterView(this, fighter));
-    this.fx = new FxDirector(this, this.stageDefinition.id);
+    this.fx = new FxDirector(this);
     this.paused = false;
     this.pauseKey = this.input.keyboard.addKey('P');
     this.restartKey = this.input.keyboard.addKey('R');

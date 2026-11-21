@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STAGE_IDS } from '../../domain/arena/stageCatalog.js';
+import { STAGES } from '../assets/stageAssetManifest.js';
 import {
   getMenuMusicTrack,
   getStageMusicTrack,
@@ -15,7 +15,7 @@ describe('Descubrimiento automático de música', () => {
     expect(MUSIC_TRACKS.map(({ stem }) => stem)).toContain('cathedral');
     expect(MUSIC_TRACKS.every(({ url, id }) => typeof url === 'string' && id.startsWith('music-'))).toBe(true);
     expect(getMenuMusicTrack()).not.toBe(null);
-    expect(getStageMusicTrack(STAGE_IDS.RUINS)).not.toBe(null);
+    expect(getStageMusicTrack(STAGES[0].id)).not.toBe(null);
   });
 
   it('prefiere OGG y conserva WAV como alternativa compatible', () => {
@@ -34,11 +34,12 @@ describe('Descubrimiento automático de música', () => {
   });
 
   it('prioriza una pista etiquetada con el ID del escenario', () => {
+    const stageId = STAGES[0].id;
     const tracks = [
       { id: 'music-global', stem: 'global' },
-      { id: 'music-ruins-night', stem: 'ruins--night' },
+      { id: 'music-stage-night', stem: stageId + '--night' },
     ];
-    expect(selectStageMusicTrack(STAGE_IDS.RUINS, tracks).id).toBe('music-ruins-night');
+    expect(selectStageMusicTrack(stageId, tracks).id).toBe('music-stage-night');
   });
 
   it('rota las pistas genéricas de forma determinista', () => {
@@ -47,8 +48,8 @@ describe('Descubrimiento automático de música', () => {
       { id: 'music-global-b', stem: 'global-b' },
       { id: 'music-menu', stem: 'menu' },
     ];
-    expect(selectStageMusicTrack(STAGE_IDS.RUINS, tracks).id).toBe('music-global-a');
-    expect(selectStageMusicTrack(STAGE_IDS.VOLCANO, tracks).id).toBe('music-global-b');
+    expect(selectStageMusicTrack(STAGES[0].id, tracks).id).toBe('music-global-a');
+    expect(selectStageMusicTrack(STAGES[1].id, tracks).id).toBe('music-global-b');
   });
 
   it('permite reservar una pista para el menú con el nombre menu', () => {

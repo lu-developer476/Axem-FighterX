@@ -1,4 +1,4 @@
-import { STAGE_IDS } from '../../domain/arena/stageCatalog.js';
+import { STAGES } from '../assets/stageAssetManifest.js';
 
 const AUDIO_MODULES = import.meta.glob(
   '../../../art/source/effects/music/*.{wav,ogg,mp3,m4a,aac,webm}',
@@ -104,7 +104,7 @@ export function selectStageMusicTrack(stageId, tracks = MUSIC_TRACKS) {
   const specific = stageSpecificTracks(stageId, tracks);
   if (specific.length) return specific[0];
 
-  const stageIds = Object.values(STAGE_IDS);
+  const stageIds = STAGES.map(({ id }) => id);
   const stageIndex = Math.max(0, stageIds.indexOf(stageId));
   const stageScoped = tracks.filter((track) =>
     stageIds.some((id) => {

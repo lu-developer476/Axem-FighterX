@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { ARENA } from '../../domain/arena/arena.js';
-import { STAGE_IDS } from '../../domain/arena/stageCatalog.js';
 import { FighterState, TIMINGS } from '../../domain/entities/FighterState.js';
 import { POWER_UPS, PICKUP_TYPES } from '../../domain/entities/PowerUpPickup.js';
 import { FX_PARTICLES, fxAnimKey, fxFrameKey } from '../../infrastructure/graphics/FxTextureFactory.js';
@@ -22,9 +21,8 @@ const POWER_UP_TEXTURES = {
  */
 export class FxDirector {
   /** @param {Phaser.Scene} scene */
-  constructor(scene, stageId = STAGE_IDS.RUINS) {
+  constructor(scene) {
     this.scene = scene;
-    this.stageId = stageId;
     this.dustTimers = new Map();
     this.dashTimers = new Map();
   }
@@ -259,13 +257,7 @@ export class FxDirector {
   }
 
   #stepParticles(x, y) {
-    if (this.stageId === STAGE_IDS.FOREST || this.stageId === STAGE_IDS.MEADOW || this.stageId === STAGE_IDS.YOSHI_ISLAND) {
-      this.#scatter(x, y, 2, FX_PARTICLES.leaf, 0x9fda76, 1);
-    } else if (this.stageId === STAGE_IDS.VOLCANO || this.stageId === STAGE_IDS.VOLCANO_MOUTH) {
-      this.#scatter(x, y, 2, FX_PARTICLES.ember, 0xff9b43, 1);
-    } else if (this.stageId === STAGE_IDS.SANCTUARY) {
-      this.#scatter(x, y, 2, FX_PARTICLES.star, 0xf7dc9e, 1);
-    }
+    this.#play('dust', x, y, { scale: 0.62, depth: FX_DEPTH - 10 });
   }
 
   #scatter(x, y, count, texture, tint, direction = 1) {

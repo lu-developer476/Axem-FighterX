@@ -4,10 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0d0b16" />
-    <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=4" />
-    <!-- El GIF va último: con íconos del mismo tamaño, Chrome elige el último candidato compatible. El PNG queda como respaldo. -->
-    <link rel="icon" type="image/gif" sizes="32x32" href="./favicon.gif?v=4" />
-    <title>Axem FighterX</title>
+    <meta name="description" content="Axem FighterX: juego arcade de combate retro con Axem Rangers, escenarios pixel-art y minijuegos de carreras." />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Axem FighterX" />
+    <meta property="og:title" content="Axem FighterX — Combate arcade y carreras" />
+    <meta property="og:description" content="Elegí tu Axem, entrá al combate y competí en minijuegos de carreras." />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Axem FighterX — Combate arcade y carreras" />
+    <meta name="twitter:description" content="Juego arcade de combate retro con Axem Rangers y carreras." />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png?v=5" />
+    <link rel="icon" type="image/gif" sizes="32x32" href="./favicon.gif?v=5" />
+    <title>Axem FighterX — Combate arcade y carreras</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Axem FighterX",
+        "description": "Juego arcade de combate retro con Axem Rangers, escenarios pixel-art y minijuegos de carreras.",
+        "genre": ["Fighting game", "Racing game", "Arcade"],
+        "gamePlatform": "Web browser",
+        "inLanguage": "es",
+        "applicationCategory": "GameApplication"
+      }
+    </script>
     <style>
       html, body {
         margin: 0;
@@ -30,7 +51,7 @@
     </style>
   </head>
   <body>
-    <div id="game"></div>
+    <div id="game" aria-label="Axem FighterX, juego arcade"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

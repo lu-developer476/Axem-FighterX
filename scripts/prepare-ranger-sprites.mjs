@@ -1372,7 +1372,7 @@ async function buildMenuMalePoses() {
   const { file, poses, width: sourceWidth, height: sourceHeight } = await findMenuPoseReference();
   await fs.mkdir(GENERATED, { recursive: true });
 
-  for (const [index, [color, targetHue]] of Object.entries(COLORS).entries()) {
+  for (const [index, [color, targetHue]] of Object.entries(COLORS).filter(([color]) => color === 'orange').entries()) {
     const recolored = await recolorAndKey(file, 'male', targetHue);
     const bounds = poses[index];
     const padding = 4;
@@ -1395,8 +1395,8 @@ async function buildMenuMalePoses() {
   }
 }
 
-async function buildGender(gender) {
-  for (const [color, targetHue] of Object.entries(COLORS)) {
+async function buildGender(gender, allowedColors) {
+  for (const [color, targetHue] of Object.entries(COLORS).filter(([color]) => allowedColors.includes(color))) {
     const parts = [];
     let baseSource;
 
@@ -1497,8 +1497,21 @@ async function buildGender(gender) {
 
 async function main() {
   await fs.mkdir(GENERATED, { recursive: true });
-  await buildGender('male');
-  await buildGender('female');
+  // Elimina salidas antiguas de las dos combinaciones que ya no forman parte del juego.
+  const retiredAssets = [
+    'ranger-male-violet.png',
+    'ranger-female-orange.png',
+    'menu-ranger-male-violet.png',
+    ...['violet'].flatMap((color) => [
+      'run', 'bike', 'bike-idle', 'bike-accelerate', 'bike-brake', 'bike-boost',
+      'bike-victory', 'bike-defeat', 'double-axe', 'defeated', 'idle', 'dash', 'jump', 'roll',
+      'guard', 'ko', 'charge', 'pose', 'battle-pose', 'teleport',
+      'punch-01', 'punch-02', 'punch-03', 'hit', 'hurt',
+    ].map((action) => 'axem-' + color + '-' + action + '.png')),
+  ];
+  await Promise.all(retiredAssets.map((name) => fs.rm(path.join(GENERATED, name), { force: true })));
+  await buildGender('male', ['orange']);
+  await buildGender('female', ['violet']);
   await buildMenuMalePoses();
 }
 

@@ -23,7 +23,11 @@ const CHARACTER_DATA = Object.freeze({
 });
 
 export const characterAnimationData = Object.freeze({
-  [RANGER_IDS.VIOLET]: CHARACTER_DATA,
+  [RANGER_IDS.VIOLET]: Object.freeze({
+    ...CHARACTER_DATA,
+    spriteFacing: Object.freeze({ male: 1, female: -1 }),
+    sheets: Object.freeze({}),
+  }),
   [RANGER_IDS.ORANGE]: CHARACTER_DATA,
 });
 

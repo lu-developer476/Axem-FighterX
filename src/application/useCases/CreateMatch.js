@@ -8,9 +8,9 @@ function normalizeSelection(selection, index) {
     !selection ||
     typeof selection !== 'object' ||
     typeof selection.id !== 'string' ||
-    !VALID_GENDERS.has(selection.gender)
+    !isAvailableRangerVariant(selection.id, selection.gender)
   ) {
-    throw new Error(`El personaje ${index + 1} debe tener Axem y género seleccionados.`);
+    throw new Error(`El personaje ${index + 1} debe tener una variante disponible de Axem seleccionada.`);
   }
 
   return { id: selection.id, gender: selection.gender };

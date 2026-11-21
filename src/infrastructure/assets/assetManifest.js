@@ -1,14 +1,15 @@
-export const RANGER_GENDERS = Object.freeze(['male', 'female']);
+import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
+
 export const DEFAULT_RANGER_GENDER = 'male';
 
-export const spriteKeyFor = (rangerId, gender = DEFAULT_RANGER_GENDER) =>
+export const spriteKeyFor = (rangerId, gender = genderForRanger(rangerId) ?? DEFAULT_RANGER_GENDER) =>
   'ranger-' + gender + '-' + rangerId;
 
-export const spriteUrlFor = (rangerId, gender = DEFAULT_RANGER_GENDER) =>
+export const spriteUrlFor = (rangerId, gender = genderForRanger(rangerId) ?? DEFAULT_RANGER_GENDER) =>
   import.meta.env.BASE_URL + 'generated/ranger-' + gender + '-' + rangerId + '.png';
 
 /** Reservado para futuras hojas de animación registradas por estado. */
-export const sheetTextureKey = (rangerId, state, gender = DEFAULT_RANGER_GENDER) =>
+export const sheetTextureKey = (rangerId, state, gender = genderForRanger(rangerId) ?? DEFAULT_RANGER_GENDER) =>
   'motion-' + gender + '-' + rangerId + '-' + state;
 
 /** Texturas laterales del menú: poses masculinas extraídas de Axem Red. */

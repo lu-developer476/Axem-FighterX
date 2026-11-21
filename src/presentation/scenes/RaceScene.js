@@ -1,16 +1,70 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
-import { DEFAULT_STAGE_ID } from '../../infrastructure/assets/stageAssetManifest.js';
-import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
-import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
-import { StageView } from '../views/StageView.js';
+import { genderForRanger, getCounterpartSelection } from '../../domain/rangers/rangerVariants.js';
+import { maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
+import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
+import {
+  MOTORCYCLE_LANE_COUNT,
+  MOTORCYCLE_LANE_BASELINES,
+  MOTORCYCLE_LANE_SCALES,
+  MOTORCYCLE_RACE_OBSTACLES,
+  normalizeMotorcycleLane,
+} from '../../domain/race/motorcycleRaceRules.js';
 
-const RACE_LENGTH = 1100;
-const TRACK_START = 66;
-const TRACK_END = 416;
-const TRACK_WIDTH = TRACK_END - TRACK_START;
-const LANES = Object.freeze([174, 220]);
+const RACE_DISTANCE = 3800;
+const PLAYER_X = 112;
+const OPPONENT_X = 170;
+const COUNTDOWN_MS = 3000;
+const LANE_SWITCH_MS = 145;
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+function createTexture(scene, key, width, height, draw) {
+  if (scene.textures.exists(key)) return;
+  const graphics = scene.make.graphics({ x: 0, y: 0, add: false });
+  draw(graphics);
+  graphics.generateTexture(key, width, height);
+  graphics.destroy();
+}
+
+function createRaceTextures(scene) {
+  createTexture(scene, 'bike-race-motorcycle', 76, 34, (g) => {
+    g.fillStyle(0x151a23, 1).fillCircle(14, 25, 9).fillCircle(60, 25, 9);
+    g.fillStyle(0x9ca6a8, 1).fillCircle(14, 25, 4).fillCircle(60, 25, 4);
+    g.lineStyle(4, 0x9a4d40, 1).lineBetween(14, 25, 34, 14).lineBetween(34, 14, 60, 25);
+    g.lineStyle(3, 0xd7b26f, 1).lineBetween(34, 14, 44, 24).lineBetween(44, 24, 60, 25);
+    g.fillStyle(0x333f51, 1).fillRoundedRect(27, 7, 23, 8, 3);
+    g.fillStyle(0xd7b26f, 1).fillRect(42, 4, 13, 3);
+  });
+  createTexture(scene, 'bike-race-barrier', 42, 24, (g) => {
+    g.fillStyle(0x252332, 1).fillRect(5, 4, 5, 20).fillRect(32, 4, 5, 20);
+    g.fillStyle(0xe7d7b5, 1).fillRect(3, 3, 36, 6);
+    g.fillStyle(0xc85d50, 1).fillRect(7, 3, 7, 6).fillRect(21, 3, 7, 6);
+    g.fillStyle(0xf3bf72, 1).fillRect(5, 21, 10, 3).fillRect(27, 21, 10, 3);
+  });
+  createTexture(scene, 'bike-race-crate', 24, 24, (g) => {
+    g.fillStyle(0x62452f, 1).fillRect(1, 1, 22, 22);
+    g.lineStyle(2, 0xc99a5c, 1).strokeRect(2, 2, 20, 20);
+    g.lineBetween(3, 3, 21, 21).lineBetween(21, 3, 3, 21);
+    g.fillStyle(0xe5bd7c, 1).fillRect(10, 3, 4, 18);
+  });
+  createTexture(scene, 'bike-race-oil', 38, 15, (g) => {
+    g.fillStyle(0x121722, 0.9).fillEllipse(19, 8, 37, 14);
+    g.fillStyle(0x45516a, 0.85).fillEllipse(13, 6, 13, 3);
+    g.fillStyle(0x171c2c, 1).fillEllipse(27, 10, 11, 4);
+  });
+  createTexture(scene, 'bike-race-tree', 36, 64, (g) => {
+    g.fillStyle(0x493a31, 1).fillRect(15, 31, 7, 32);
+    g.fillStyle(0x214b3b, 1).fillTriangle(18, 0, 1, 39, 35, 39);
+    g.fillStyle(0x367052, 1).fillTriangle(18, 12, 3, 49, 33, 49);
+    g.fillStyle(0x71945d, 1).fillRect(13, 23, 8, 3);
+  });
+  createTexture(scene, 'bike-race-rock', 34, 21, (g) => {
+    g.fillStyle(0x343b3d, 1).fillTriangle(1, 20, 11, 2, 20, 20);
+    g.fillStyle(0x51595a, 1).fillTriangle(12, 20, 24, 0, 33, 20);
+    g.fillStyle(0x899083, 1).fillRect(12, 8, 7, 2);
+  });
+}
 
 export class RaceScene extends Phaser.Scene {
   constructor() {
@@ -18,228 +72,337 @@ export class RaceScene extends Phaser.Scene {
   }
 
   create() {
-    this.stage = new StageView(this, DEFAULT_STAGE_ID);
+    createRaceTextures(this);
+    playRaceMusic(this, 'motorcycleRace');
     this.distance = 0;
-    this.rivalDistance = 0;
+    this.speed = 210;
     this.boost = 100;
-    this.trackOffset = 0;
-    this.countdownMs = 3000;
+    this.countdownMs = COUNTDOWN_MS;
     this.finished = false;
-    this.particleTimer = 0;
+    this.selectingCharacter = true;
+    this.selectedRangerId = RANGER_IDS.VIOLET;
+    this.trackOffset = 0;
+    this.sceneryOffset = 0;
+    this.lastSceneryChunk = -1;
+    this.obstacles = MOTORCYCLE_RACE_OBSTACLES.map((item) => ({ ...item, resolved: false, hitRacers: new Set() }));
     this.keys = this.input.keyboard.addKeys({
       left: Phaser.Input.Keyboard.KeyCodes.LEFT,
       right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+      up: Phaser.Input.Keyboard.KeyCodes.UP,
+      down: Phaser.Input.Keyboard.KeyCodes.DOWN,
       a: Phaser.Input.Keyboard.KeyCodes.A,
       d: Phaser.Input.Keyboard.KeyCodes.D,
+      w: Phaser.Input.Keyboard.KeyCodes.W,
+      s: Phaser.Input.Keyboard.KeyCodes.S,
       space: Phaser.Input.Keyboard.KeyCodes.SPACE,
       escape: Phaser.Input.Keyboard.KeyCodes.ESC,
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
-      r: Phaser.Input.Keyboard.KeyCodes.R,
+      restart: Phaser.Input.Keyboard.KeyCodes.R,
     });
 
-    this.track = this.add.graphics().setDepth(20);
+    this.background = this.add.graphics().setDepth(0);
+    this.track = this.add.graphics().setDepth(10);
+    this.scenery = [];
+    this.#drawEnvironment();
     this.#drawTrack();
-    this.player = this.#createRacer(RANGER_IDS.VIOLET, LANES[0], 0x9e82e5);
-    this.rival = this.#createRacer(RANGER_IDS.ORANGE, LANES[1], 0xe98a48);
-    this.playerLabel = this.#text('AXEM VIOLETA', 24, LANES[0] - 19, '#d7c4ff', 6).setOrigin(0, 0.5);
-    this.rivalLabel = this.#text('AXEM NARANJA', 24, LANES[1] - 19, '#ffc28b', 6).setOrigin(0, 0.5);
-    this.playerProgress = this.add.graphics().setDepth(50);
-    this.rivalProgress = this.add.graphics().setDepth(50);
+    this.hud = this.add.graphics().setDepth(80);
+    this.title = this.#text('CARRERA AXEM · MOTOS', GAME_WIDTH / 2, 12, '#ffe1a5', 9);
+    this.status = this.#text('ELEGÍ TU AXEM', GAME_WIDTH / 2, 48, '#fff0c9', 10);
+    this.instructions = this.#text('← / → ELEGIR · ENTER CONFIRMAR · ESC MENÚ',
+      GAME_WIDTH / 2, GAME_HEIGHT - 7, '#f0dfc2', 6);
+    this.distanceLabel = this.#text('J1 · 0 M', 63, 18, '#e7dcff', 5);
+    this.nitroLabel = this.#text('NITRO', GAME_WIDTH - 48, 8, '#a8e8ff', 4);
 
-    this.title = this.#text('CARRERA AXEM', GAME_WIDTH / 2, 23, '#ffe0a1', 12);
-    this.status = this.#text('3', GAME_WIDTH / 2, 112, '#fff1c9', 28);
-    this.controls = this.#text('← / A FRENAR   ·   → / D ACELERAR   ·   ESPACIO NITRO', GAME_WIDTH / 2, 257, '#e5d7f0', 6);
-    this.boostLabel = this.#text('NITRO', GAME_WIDTH - 28, 47, '#9fe4ff', 6);
-    this.boostBar = this.add.graphics().setDepth(50);
+    this.selectionPreview = this.add.sprite(GAME_WIDTH / 2, 94,
+      spriteKeyFor(RANGER_IDS.VIOLET, 'female'))
+      .setOrigin(0.5, 0.82)
+      .setScale(0.9)
+      .setDepth(42);
+    this.selectionVehicle = this.add.image(GAME_WIDTH / 2, 103, 'bike-race-motorcycle')
+      .setOrigin(0.5, 0.75)
+      .setScale(0.85)
+      .setDepth(40);
+    this.selectionLabel = this.#text('J1 · AXEM VIOLETA · FEMENINO',
+      GAME_WIDTH / 2, 134, '#e3d4ff', 7);
+    this.#refreshSelectionPreview();
   }
+
 
   update(time, delta) {
     if (Phaser.Input.Keyboard.JustDown(this.keys.escape)) {
       this.scene.start('MenuScene');
       return;
     }
-
-    if (this.finished) {
-      if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) this.scene.start('MenuScene');
-      if (Phaser.Input.Keyboard.JustDown(this.keys.r)) this.scene.restart();
+    if (this.selectingCharacter) {
+      const choosePrevious = Phaser.Input.Keyboard.JustDown(this.keys.left) ||
+        Phaser.Input.Keyboard.JustDown(this.keys.a);
+      const chooseNext = Phaser.Input.Keyboard.JustDown(this.keys.right) ||
+        Phaser.Input.Keyboard.JustDown(this.keys.d);
+      if (choosePrevious || chooseNext) {
+        this.selectedRangerId = this.selectedRangerId === RANGER_IDS.VIOLET
+          ? RANGER_IDS.ORANGE
+          : RANGER_IDS.VIOLET;
+        this.#refreshSelectionPreview();
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) this.#startRace();
       return;
     }
-
+    if (this.finished) {
+      if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) this.scene.start('MenuScene');
+      if (Phaser.Input.Keyboard.JustDown(this.keys.restart)) this.scene.restart();
+      return;
+    }
     if (this.countdownMs > 0) {
       this.countdownMs = Math.max(0, this.countdownMs - delta);
       const count = Math.ceil(this.countdownMs / 1000);
       this.status.setText(count ? String(count) : '¡YA!');
-      if (this.countdownMs === 0) {
-        this.time.delayedCall(550, () => this.status.setText(''));
-      }
-      this.stage.update(time, 0);
+      if (!this.countdownMs) this.time.delayedCall(450, () => this.status?.setText(''));
       return;
     }
 
     const accelerate = this.keys.right.isDown || this.keys.d.isDown;
     const brake = this.keys.left.isDown || this.keys.a.isDown;
     const boosting = this.keys.space.isDown && this.boost > 0;
-    const playerMode = boosting
-      ? 'boost'
-      : brake && !accelerate
-        ? 'brake'
-        : accelerate
-          ? 'accelerate'
-          : 'coast';
-    this.#setRacerMode(this.player, playerMode);
-    this.#setRacerMode(this.rival, 'coast');
-    const speed = Phaser.Math.Clamp(184 + (accelerate ? 88 : 0) - (brake ? 84 : 0) + (boosting ? 115 : 0), 82, 387);
-    const frameTime = Math.min(delta, 50) / 1000;
+    if (Phaser.Input.Keyboard.JustDown(this.keys.up) || Phaser.Input.Keyboard.JustDown(this.keys.w)) {
+      this.#changeLane(this.player, -1);
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.down) || Phaser.Input.Keyboard.JustDown(this.keys.s)) {
+      this.#changeLane(this.player, 1);
+    }
 
-    this.distance += speed * frameTime;
-    this.rivalDistance += (220 + Math.sin(time / 460) * 24) * frameTime;
-    this.boost = Phaser.Math.Clamp(this.boost + (boosting ? -37 : 14) * frameTime, 0, 100);
-    this.trackOffset = (this.trackOffset + speed * frameTime * 1.7) % 30;
+    this.player.laneSwitchMs = Math.max(0, this.player.laneSwitchMs - delta);
+    if (this.player.laneSwitchMs === 0) this.player.lane = this.player.targetLane;
+    const frame = Math.min(delta, 50) / 1000;
+    const targetSpeed = 172 + (accelerate ? 100 : 0) - (brake ? 70 : 0) + (boosting ? 90 : 0);
+    this.speed = Phaser.Math.Linear(this.speed, clamp(targetSpeed, 85, 410), Math.min(1, frame * 3.2));
+    this.distance += this.speed * frame;
+    this.player.distance = this.distance;
+    this.boost = clamp(this.boost + (boosting ? -38 : 13) * frame, 0, 100);
+    this.trackOffset = (this.trackOffset + this.speed * frame * 0.9) % 34;
+    this.sceneryOffset += this.speed * frame * 0.52;
+
+    this.#updateOpponents(time, frame);
+    this.#updateObstacles(frame);
+    this.#updateScenery();
     this.#drawTrack();
-    this.#positionRacer(this.player, this.distance);
-    this.#positionRacer(this.rival, this.rivalDistance);
-    this.#drawProgress();
-    this.#drawBoost();
-    this.stage.update(time, 0);
+    this.#syncRacers(time);
+    this.#drawHud();
 
-    this.particleTimer += delta;
-    if (this.particleTimer >= 125) {
-      this.particleTimer = 0;
-      this.#trailParticle(this.player, boosting ? KENNEY_FX.spark.key : KENNEY_FX.dirt.key, boosting ? 0x99dcff : 0xc4b28e);
-    }
-
-    const playerWon = this.distance >= this.rivalDistance;
-    if (this.distance >= RACE_LENGTH || this.rivalDistance >= RACE_LENGTH) {
-      this.#finish(playerWon);
+    if (this.racers.some((racer) => racer.distance >= RACE_DISTANCE)) {
+      const sorted = [...this.racers].sort((a, b) => b.distance - a.distance);
+      this.#finish(sorted[0] === this.player);
     }
   }
 
-  #createRacer(rangerId, y, tint) {
-    const key = maleAnimationKey(rangerId, 'bike');
-    const racer = this.add.sprite(TRACK_START, y, key)
-      .setOrigin(0.5, 0.78)
-      .setScale(0.57)
-      .setDepth(35);
-    racer.setData('laneY', y);
-    racer.setData('tint', tint);
-    racer.setData('rangerId', rangerId);
-    racer.setData('mode', null);
-    this.#setRacerMode(racer, 'idle');
-    return racer;
-  }
-
-  #setRacerMode(racer, mode) {
-    const action = mode === 'coast' ? 'bike'
-      : mode === 'idle' ? 'bike-idle'
-        : mode === 'victory' ? 'bike-victory'
-          : mode === 'defeat' ? 'bike-defeat'
-            : 'bike-' + mode;
-    if (racer.getData('mode') !== mode) {
-      const key = maleAnimationKey(racer.getData('rangerId'), action);
-      const fallback = maleAnimationKey(racer.getData('rangerId'), 'bike');
-      racer.play(this.anims.exists(key) ? key : fallback, true);
-      racer.setData('mode', mode);
+  #refreshSelectionPreview() {
+    const isViolet = this.selectedRangerId === RANGER_IDS.VIOLET;
+    this.selectionPreview.stop();
+    if (isViolet) {
+      this.selectionPreview.setTexture(spriteKeyFor(RANGER_IDS.VIOLET, 'female')).setScale(0.9);
+      this.selectionVehicle.setVisible(true);
+      this.selectionLabel.setText('J1 · AXEM VIOLETA · FEMENINO').setColor('#e3d4ff');
+    } else {
+      const bikeKey = maleAnimationKey(RANGER_IDS.ORANGE, 'bike');
+      this.selectionPreview.setTexture(bikeKey).setScale(0.9);
+      this.selectionVehicle.setVisible(false);
+      if (this.anims.exists(bikeKey)) this.selectionPreview.play(bikeKey);
+      this.selectionLabel.setText('J1 · AXEM NARANJA · MASCULINO').setColor('#ffc58e');
     }
-    const angle = mode === 'accelerate' ? -4
-      : mode === 'brake' ? 6
-        : mode === 'boost' ? -9
-          : mode === 'victory' ? -12
-            : mode === 'defeat' ? 12
-              : 0;
-    racer.setAngle(angle);
-    racer.setAlpha(mode === 'defeat' ? 0.82 : 1);
   }
 
-  #positionRacer(racer, distance) {
-    const progress = Phaser.Math.Clamp(distance / RACE_LENGTH, 0, 1);
-    racer.setPosition(Math.round(TRACK_START + progress * TRACK_WIDTH), racer.getData('laneY'));
+  #startRace() {
+    this.selectingCharacter = false;
+    this.selectionPreview.destroy();
+    this.selectionVehicle.destroy();
+    this.selectionLabel.destroy();
+    this.status.setText('3').setFontSize(25);
+    this.instructions.setText('↑ / ↓ CAMBIAR CARRIL · → / D ACELERAR · ← / A FRENAR · ESPACIO NITRO')
+      .setFontSize(5);
+
+    const opponentSelection = getCounterpartSelection({
+      id: this.selectedRangerId,
+      gender: genderForRanger(this.selectedRangerId),
+    });
+    const opponentId = opponentSelection.id;
+    this.player = this.#createRacer(this.selectedRangerId, 'J1', 0, true);
+    this.opponents = [1, 2, 3].map((number, index) =>
+      this.#createRacer(opponentId, 'IA ' + number, index + 1, false),
+    );
+    this.racers = [this.player, ...this.opponents];
+    this.obstacleSprites = this.obstacles.map((obstacle) =>
+      this.add.image(0, 0, this.#obstacleTexture(obstacle.kind)).setDepth(30),
+    );
+    this.#drawHud();
+  }
+
+  #createRacer(rangerId, label, lane, isPlayer) {
+    const texture = rangerId === RANGER_IDS.VIOLET
+      ? spriteKeyFor(rangerId, 'female')
+      : maleAnimationKey(rangerId, 'bike');
+    const sprite = this.add.sprite(isPlayer ? PLAYER_X : OPPONENT_X, MOTORCYCLE_LANE_BASELINES[lane], texture)
+      .setOrigin(0.5, 0.82)
+      .setScale(MOTORCYCLE_LANE_SCALES[lane] * (isPlayer ? 0.78 : 0.7))
+      .setDepth(36 + lane);
+    if (rangerId === RANGER_IDS.ORANGE && this.anims.exists(maleAnimationKey(rangerId, 'bike'))) {
+      sprite.play(maleAnimationKey(rangerId, 'bike'));
+    }
+    const vehicle = rangerId === RANGER_IDS.VIOLET
+      ? this.add.image(sprite.x, sprite.y + 8, 'bike-race-motorcycle')
+        .setOrigin(0.5, 0.75).setScale(MOTORCYCLE_LANE_SCALES[lane] * 0.78).setDepth(34 + lane)
+      : null;
+    const labelText = this.#text(label, sprite.x, sprite.y - 27, isPlayer ? '#e3d4ff' : '#ffe0b2', 5);
+    return {
+      rangerId, label, lane, targetLane: lane, isPlayer, sprite, vehicle, labelText,
+      distance: isPlayer ? 0 : lane * 18,
+      stunMs: 0, laneSwitchMs: 0, crashed: false,
+    };
+  }
+
+  #changeLane(racer, direction) {
+    if (racer.laneSwitchMs > 0) return;
+    racer.targetLane = normalizeMotorcycleLane(racer.lane + direction);
+    if (racer.targetLane !== racer.lane) racer.laneSwitchMs = LANE_SWITCH_MS;
+  }
+
+  #updateOpponents(time, frame) {
+    this.opponents.forEach((racer, index) => {
+      racer.distance += (196 + index * 7 + Math.sin(time / (390 + index * 55)) * 15) * frame;
+      racer.laneSwitchMs = Math.max(0, racer.laneSwitchMs - frame * 1000);
+      const upcoming = this.obstacles.find((obstacle) => !obstacle.resolved &&
+        obstacle.lane === racer.lane && obstacle.distance - racer.distance < 125 &&
+        obstacle.distance - racer.distance > 0);
+      if (upcoming && racer.laneSwitchMs <= 0 && Math.random() < 0.045) {
+        this.#changeLane(racer, racer.lane === 3 ? -1 : 1);
+      }
+      if (racer.stunMs > 0) racer.stunMs = Math.max(0, racer.stunMs - frame * 1000);
+      if (racer.laneSwitchMs === 0) racer.lane = racer.targetLane;
+      const y = Phaser.Math.Linear(MOTORCYCLE_LANE_BASELINES[racer.lane],
+        MOTORCYCLE_LANE_BASELINES[racer.targetLane], 1 - racer.laneSwitchMs / LANE_SWITCH_MS);
+      racer.sprite.y = y;
+      racer.labelText.y = y - 27;
+    });
+  }
+
+  #updateObstacles(frame) {
+    this.obstacles.forEach((obstacle, index) => {
+      const screenX = PLAYER_X + (obstacle.distance - this.distance) * 0.19;
+      const y = MOTORCYCLE_LANE_BASELINES[obstacle.lane] + 3;
+      const sprite = this.obstacleSprites[index];
+      sprite.setPosition(screenX, y).setScale(MOTORCYCLE_LANE_SCALES[obstacle.lane]);
+      if (screenX < -30) {
+        sprite.setVisible(false);
+        obstacle.resolved = true;
+        return;
+      }
+      sprite.setVisible(true);
+      for (const racer of this.racers) {
+        if (racer.crashed || racer.lane !== obstacle.lane || obstacle.hitRacers.has(racer.label)) continue;
+        const racerX = racer.isPlayer ? PLAYER_X : OPPONENT_X;
+        const racerDistance = racer.isPlayer ? this.distance : racer.distance;
+        const collisionX = racerX + (obstacle.distance - racerDistance) * 0.19;
+        if (Math.abs(collisionX - racerX) < (obstacle.kind === 'oil' ? 18 : 20)) {
+          racer.stunMs = 720;
+          if (racer.isPlayer) this.boost = Math.max(0, this.boost - 22);
+          racer.distance -= 20;
+          if (racer.isPlayer) this.distance = Math.max(0, this.distance - 20);
+          obstacle.hitRacers.add(racer.label);
+        }
+      }
+    });
+  }
+
+  #updateScenery() {
+    if (Math.floor(this.sceneryOffset / 105) > this.lastSceneryChunk) {
+      this.lastSceneryChunk = Math.floor(this.sceneryOffset / 105);
+      const side = this.lastSceneryChunk % 2 ? 1 : -1;
+      const texture = this.lastSceneryChunk % 4 === 0 ? 'bike-race-rock' : 'bike-race-tree';
+      const item = this.add.image(GAME_WIDTH + 28,
+        108 + (this.lastSceneryChunk % 3) * 10, texture).setFlipX(side < 0).setDepth(8).setScale(0.45 + (this.lastSceneryChunk % 3) * 0.1);
+      this.scenery.push({ item, chunk: this.lastSceneryChunk });
+    }
+    for (const entry of this.scenery) {
+      entry.item.x -= this.speed * 0.0005 * 16;
+      if (entry.item.x < -40 || entry.item.x > GAME_WIDTH + 40) entry.item.destroy();
+    }
+    this.scenery = this.scenery.filter(({ item }) => item.active);
+  }
+
+  #obstacleTexture(kind) {
+    return kind === 'barrier' ? 'bike-race-barrier' : kind === 'crate' ? 'bike-race-crate' : 'bike-race-oil';
+  }
+
+  #drawEnvironment() {
+    const g = this.background;
+    g.fillGradientStyle(0x1b2a3c, 0x1b2a3c, 0x546a5d, 0x546a5d, 1);
+    g.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    g.fillStyle(0x182d29, 1).fillTriangle(0, 134, 76, 35, 160, 134);
+    g.fillStyle(0x29443a, 1).fillTriangle(100, 137, 230, 24, 350, 137);
+    g.fillStyle(0x1d352d, 1).fillTriangle(300, 140, 414, 43, 480, 140);
+    g.fillStyle(0x66805a, 1).fillRect(0, 119, GAME_WIDTH, 18);
+    g.fillStyle(0x273b31, 1).fillRect(0, 134, GAME_WIDTH, 136);
+    g.fillStyle(0x8d8a79, 1).fillRect(0, 136, GAME_WIDTH, 4);
+    for (let x = 0; x < GAME_WIDTH; x += 42) {
+      g.fillStyle(0xc0ae85, 0.5).fillRect(x, 122 + (x % 3) * 2, 15, 2);
+    }
   }
 
   #drawTrack() {
-    const graphics = this.track;
-    graphics.clear();
-    graphics.fillStyle(0x151321, 0.97);
-    graphics.fillRect(14, 145, GAME_WIDTH - 28, 99);
-    graphics.lineStyle(1, 0x9a78ac, 0.9);
-    graphics.strokeRect(14, 145, GAME_WIDTH - 28, 99);
-    graphics.fillStyle(0x292633, 1);
-    graphics.fillRect(20, 151, GAME_WIDTH - 40, 87);
-
-    graphics.lineStyle(1, 0x726677, 0.7);
-    graphics.lineBetween(20, 197, GAME_WIDTH - 20, 197);
-    for (let x = TRACK_START - 30; x < TRACK_END; x += 30) {
-      const stripeX = Math.round(x - this.trackOffset);
-      graphics.fillStyle(0xf0d9a8, 0.72);
-      graphics.fillRect(stripeX, 196, 13, 2);
-    }
-
-    for (let y = 151; y < 238; y += 8) {
-      const row = Math.floor((y - 151) / 8);
-      for (let column = 0; column < 2; column++) {
-        if ((row + column) % 2 === 0) graphics.fillStyle(0xf2d9a4, 1);
-        else graphics.fillStyle(0x522f62, 1);
-        graphics.fillRect(TRACK_END + column * 5, y, 5, 8);
+    const g = this.track;
+    g.clear();
+    g.fillStyle(0x252a30, 1).fillRect(0, 139, GAME_WIDTH, 131);
+    g.fillStyle(0x333a40, 1).fillRect(0, 143, GAME_WIDTH, 122);
+    g.fillStyle(0x6b6d64, 1).fillRect(0, 141, GAME_WIDTH, 2);
+    g.fillStyle(0x6b6d64, 1).fillRect(0, 265, GAME_WIDTH, 2);
+    for (let lane = 0; lane < MOTORCYCLE_LANE_COUNT; lane += 1) {
+      const y = 145 + lane * 30;
+      if (lane > 0) {
+        g.lineStyle(1, 0xb8b9a9, 0.65);
+        g.lineBetween(0, y, GAME_WIDTH, y);
       }
+      for (let x = -34; x < GAME_WIDTH; x += 34) {
+        const stripe = (x - this.trackOffset) % 34;
+        g.fillStyle(0xe5d9bc, 0.32).fillRect(stripe, y + 13, 13, 1);
+      }
+      g.fillStyle(0x1d242b, 0.22).fillRect(0, y + 1, GAME_WIDTH, 1);
+    }
+    g.fillStyle(0xf1d8a8, 1).fillRect(6, 143, 3, 120);
+    g.fillStyle(0xf1d8a8, 1).fillRect(GAME_WIDTH - 9, 143, 3, 120);
+  }
+
+  #syncRacers(time) {
+    for (const racer of this.racers) {
+      const baseline = MOTORCYCLE_LANE_BASELINES[racer.lane];
+      const targetY = Phaser.Math.Linear(baseline, MOTORCYCLE_LANE_BASELINES[racer.targetLane],
+        racer.laneSwitchMs > 0 ? 1 - racer.laneSwitchMs / LANE_SWITCH_MS : 1);
+      const x = racer.isPlayer ? PLAYER_X : OPPONENT_X + Math.sin(time / 500 + racer.lane) * 5;
+      racer.sprite.setPosition(x, targetY + (racer.stunMs > 0 ? Math.sin(time / 25) * 2 : 0));
+      racer.sprite.setScale(MOTORCYCLE_LANE_SCALES[racer.lane] * (racer.isPlayer ? 0.78 : 0.7));
+      if (racer.rangerId === RANGER_IDS.VIOLET) racer.sprite.setAngle(Math.sin(time / 160) * 1.5);
+      racer.labelText.setPosition(x, targetY - 27);
+      if (racer.vehicle) racer.vehicle.setPosition(x, targetY + 8).setScale(MOTORCYCLE_LANE_SCALES[racer.lane] * 0.78);
     }
   }
 
-  #drawProgress() {
-    const draw = (graphics, distance, y, color) => {
-      graphics.clear();
-      graphics.fillStyle(0x0d0b16, 0.95);
-      graphics.fillRect(78, y, 278, 4);
-      graphics.fillStyle(color, 1);
-      graphics.fillRect(79, y + 1, Math.round(276 * Phaser.Math.Clamp(distance / RACE_LENGTH, 0, 1)), 2);
-    };
-    draw(this.playerProgress, this.distance, LANES[0] - 26, 0x9d80ed);
-    draw(this.rivalProgress, this.rivalDistance, LANES[1] - 26, 0xef9454);
-  }
-
-  #drawBoost() {
-    this.boostBar.clear();
-    this.boostBar.fillStyle(0x171321, 1);
-    this.boostBar.fillRect(GAME_WIDTH - 60, 52, 48, 5);
-    this.boostBar.fillStyle(0x63c9ef, 1);
-    this.boostBar.fillRect(GAME_WIDTH - 59, 53, Math.round(46 * (this.boost / 100)), 3);
-  }
-
-  #trailParticle(racer, texture, tint) {
-    if (!this.textures.exists(texture)) return;
-    const particle = this.add.image(racer.x - 18, racer.y + 1, texture)
-      .setTint(tint)
-      .setScale(texture === KENNEY_FX.dirt.key ? 0.28 : 0.2)
-      .setAlpha(0.8)
-      .setDepth(30);
-    this.tweens.add({
-      targets: particle,
-      x: particle.x - Phaser.Math.Between(13, 25),
-      y: particle.y + Phaser.Math.Between(-3, 5),
-      alpha: 0,
-      duration: 320,
-      ease: 'Quad.easeOut',
-      onComplete: () => particle.destroy(),
-    });
+  #drawHud() {
+    this.hud.clear();
+    this.hud.fillStyle(0x111725, 0.88).fillRoundedRect(8, 5, GAME_WIDTH - 16, 28, 4);
+    this.hud.fillStyle(0x9b85d1, 1).fillRect(17, 27, 132 * clamp(this.distance / RACE_DISTANCE, 0, 1), 2);
+    this.hud.fillStyle(0x172033, 1).fillRect(GAME_WIDTH - 76, 12, 56, 5);
+    this.hud.fillStyle(0x78c9e8, 1).fillRect(GAME_WIDTH - 75, 13, 54 * this.boost / 100, 3);
+    this.distanceLabel.setText('J1 · ' + Math.floor(this.distance) + ' M');
   }
 
   #finish(playerWon) {
     this.finished = true;
-    this.#setRacerMode(this.player, playerWon ? 'victory' : 'defeat');
-    this.#setRacerMode(this.rival, playerWon ? 'defeat' : 'victory');
-    this.status.setText(playerWon ? '¡GANASTE, AXEM VIOLETA!' : 'AXEM NARANJA GANA LA CARRERA')
-      .setFontSize(11)
-      .setColor('#fff0c9');
-    this.controls.setText('R · VOLVER A CORRER     ENTER · MENÚ     ESC · MENÚ').setColor('#fff0c9');
-    this.cameras.main.flash(150, 255, 246, 216);
+    this.status.setText(playerWon ? '¡J1 GANA LA CARRERA!' : '¡GANA LA IA!').setFontSize(11);
+    this.instructions.setText('R · REINICIAR     ENTER / ESC · MENÚ');
+    this.cameras.main.flash(180, 255, 245, 218);
   }
 
   #text(value, x, y, color, size) {
     return this.add.text(x, y, value, {
-      fontFamily: 'monospace',
-      fontSize: size + 'px',
-      color,
-      stroke: '#120d1b',
-      strokeThickness: 3,
-      align: 'center',
-    }).setOrigin(0.5).setDepth(60);
+      fontFamily: 'monospace', fontSize: size + 'px', color,
+      stroke: '#111423', strokeThickness: 3, align: 'center',
+    }).setOrigin(0.5).setDepth(90);
   }
 }

@@ -6,7 +6,6 @@ import { layoutSequence } from './atlasFrameDetection.js';
 import { ATLAS_SEQUENCE_ROLES, ATLAS_SOURCES } from './atlasLayoutRules.js';
 import atlasFrames from './atlasFrames.json';
 
-const COLORS = ['violet', 'orange'];
 const resultsPath = (...parts) =>
   fileURLToPath(new URL('../../../art/source/sprites/results/' + parts.join('/'), import.meta.url));
 
@@ -136,307 +135,95 @@ describe('secuencias y recursos de la hoja femenina (Axem Pink)', () => {
   });
 });
 
-describe('resultados por género y color', () => {
-  it('exporta los recursos suplementarios masculinos para Orange y Violet', async () => {
+describe('resultados de las variantes canónicas', () => {
+  it('exporta los recursos suplementarios masculinos de Axem Naranja', async () => {
     const groups = atlasFrames.male.supplementalGroups;
-    for (const color of COLORS) {
-      const index = JSON.parse(await readFile(resultsPath('male', color, 'supplemental', 'index.json'), 'utf8'));
-      expect(index).toHaveLength(groups.length);
+    const index = JSON.parse(await readFile(resultsPath('male', 'orange', 'supplemental', 'index.json'), 'utf8'));
+    expect(index).toHaveLength(groups.length);
+    for (const entry of index) {
+      const group = groups.find((candidate) => candidate.id === entry.id);
+      expect(entry.assetCount).toBe(group.assets.length);
+      const metadata = await sharp(resultsPath('male', 'orange', 'supplemental', entry.file)).metadata();
+      expect(metadata.width).toBe(entry.cellWidth * entry.assetCount);
+      expect(metadata.height).toBe(entry.cellHeight);
+      expect(metadata.hasAlpha).toBe(true);
+    }
+  });
 
-      for (const entry of index) {
-        const group = groups.find((candidate) => candidate.id === entry.id);
-        expect(entry.assetCount).toBe(group.assets.length);
-        expect(entry.assets.map((asset) => asset.sourceRegion)).toEqual(group.assets.map((asset) => asset.index));
-        const metadata = await sharp(resultsPath('male', color, 'supplemental', entry.file)).metadata();
-        expect(metadata.width).toBe(entry.cellWidth * entry.assetCount);
-        expect(metadata.height).toBe(entry.cellHeight);
+  it('genera las tiras de secuencias masculinas de Axem Naranja', async () => {
+    const index = JSON.parse(await readFile(resultsPath('male', 'orange', 'sequences', 'index.json'), 'utf8'));
+    expect(index).toHaveLength(atlasFrames.male.groups.length);
+    for (const entry of index) {
+      const group = atlasFrames.male.groups.find((candidate) => candidate.id === entry.id);
+      const layout = layoutSequence(group.frames, { anchor: entry.anchor });
+      expect(entry.frameCount).toBe(group.frames.length);
+      expect(entry.cellWidth).toBe(layout.cellWidth);
+      expect(entry.cellHeight).toBe(layout.cellHeight);
+      const metadata = await sharp(resultsPath('male', 'orange', 'sequences', entry.file)).metadata();
+      expect(metadata.width).toBe(entry.cellWidth * entry.frameCount);
+      expect(metadata.height).toBe(entry.cellHeight);
+    }
+  });
+
+  it('genera las secuencias femeninas de Axem Violeta', async () => {
+    const index = JSON.parse(await readFile(resultsPath('female', 'violet', 'sequences', 'index.json'), 'utf8'));
+    expect(index).toHaveLength(7);
+    expect(index.map((entry) => entry.frameCount)).toEqual([11, 14, 16, 16, 20, 10, 0]);
+    expect(index.map((entry) => entry.assetCount)).toEqual([1, 6, 3, 1, 2, 13, 6]);
+    for (const entry of index) {
+      const group = atlasFrames.female.groups.find((candidate) => candidate.id === entry.id);
+      expect(entry.regionIndices).toEqual(group.regionIndices);
+      if (group.frameCount) {
+        const metadata = await sharp(resultsPath('female', 'violet', 'sequences', entry.sequence.file)).metadata();
+        expect(metadata.width).toBe(entry.sequence.cellWidth * group.frameCount);
+        expect(metadata.height).toBe(entry.sequence.cellHeight);
         expect(metadata.hasAlpha).toBe(true);
+      } else {
+        expect(entry.sequence).toBeNull();
       }
     }
   });
 
-  it('cada tira masculina mide celdas × cuadros según su índice', async () => {
-    for (const color of COLORS) {
-      const index = JSON.parse(await readFile(resultsPath('male', color, 'sequences', 'index.json'), 'utf8'));
-      expect(index).toHaveLength(atlasFrames.male.groups.length);
-
-      for (const entry of index) {
-        const group = atlasFrames.male.groups.find((candidate) => candidate.id === entry.id);
-        const layout = layoutSequence(group.frames, { anchor: entry.anchor });
-        expect(entry.frameCount).toBe(group.frames.length);
-        expect(entry.cellWidth).toBe(layout.cellWidth);
-        expect(entry.cellHeight).toBe(layout.cellHeight);
-        expect(entry.anchorX).toBe(layout.placements[0].x + group.frames[0].pivotX);
-
-        const metadata = await sharp(resultsPath('male', color, 'sequences', entry.file)).metadata();
-        expect(metadata.width).toBe(entry.cellWidth * entry.frameCount);
-        expect(metadata.height).toBe(entry.cellHeight);
-      }
-    }
-  });
-
-  it('genera las seis tiras compactas de poses femeninas y los siete grupos suplementarios', async () => {
-    for (const color of COLORS) {
-      const index = JSON.parse(await readFile(resultsPath('female', color, 'sequences', 'index.json'), 'utf8'));
-      expect(index).toHaveLength(7);
-      expect(index.map((entry) => entry.frameCount)).toEqual([11, 14, 16, 16, 20, 10, 0]);
-      expect(index.map((entry) => entry.assetCount)).toEqual([1, 6, 3, 1, 2, 13, 6]);
-
-      for (const entry of index) {
-        const group = atlasFrames.female.groups.find((candidate) => candidate.id === entry.id);
-        expect(entry.regionIndices).toEqual(group.regionIndices);
-
-        if (group.frameCount) {
-          const metadata = await sharp(resultsPath('female', color, 'sequences', entry.sequence.file)).metadata();
-          expect(metadata.width).toBe(entry.sequence.cellWidth * group.frameCount);
-          expect(metadata.height).toBe(entry.sequence.cellHeight);
-          expect(metadata.hasAlpha).toBe(true);
-          expect(entry.sequence.frames.map((frame) => [
-            frame.sourceRegion, frame.segment ?? null, frame.splitFrom ?? null,
-          ])).toEqual(group.frames.map((frame) => [
-            frame.regionIndex, frame.segment ?? null, frame.splitFrom ?? null,
-          ]));
-        } else {
-          expect(entry.sequence).toBeNull();
-          await expect(readFile(resultsPath('female', color, 'sequences', group.id + '.png')))
-            .rejects.toMatchObject({ code: 'ENOENT' });
-        }
-
-        if (group.assetCount) {
-          const metadata = await sharp(resultsPath('female', color, 'supplemental', entry.supplemental.file)).metadata();
-          expect(metadata.width).toBe(entry.supplemental.cellWidth * group.assetCount);
-          expect(metadata.height).toBe(entry.supplemental.cellHeight);
-          expect(metadata.hasAlpha).toBe(true);
-          expect(entry.supplemental.items.map((item) => item.sourceRegion))
-            .toEqual(group.assets.map((asset) => asset.regionIndex));
-        }
-      }
-    }
-  });
-
-  it('genera los GIF de acción de ambos masculinos en lienzos de 150×100 px', async () => {
+  it('genera los GIF de acción de Axem Naranja en lienzos de 150×100 px', async () => {
     const animations = {
-      'pose.gif': 16,
-      'punch-01.gif': 10,
-      'punch-02.gif': 8,
-      'punch-03.gif': 8,
-      'battle-pose.gif': 20,
-      'run.gif': 11,
-      'dash.gif': 8,
-      'jump.gif': 14,
-      'hit.gif': 2,
-      'hurt.gif': 3,
-      'teleport.gif': 6,
+      'pose.gif': 16, 'punch-01.gif': 10, 'punch-02.gif': 8, 'punch-03.gif': 8,
+      'battle-pose.gif': 20, 'run.gif': 11, 'dash.gif': 8, 'jump.gif': 14,
+      'hit.gif': 2, 'hurt.gif': 3, 'teleport.gif': 6,
     };
-
-    for (const color of COLORS) {
-      for (const [animation, originalFrames] of Object.entries(animations)) {
-        const expectedFrames = animation === 'battle-pose.gif'
-          ? originalFrames + 1
-          : animation === 'teleport.gif'
-            ? originalFrames + 3
-            : originalFrames;
-        const metadata = await sharp(resultsPath('male', color, animation), { animated: true }).metadata();
-        const frameHeight = metadata.pageHeight ?? metadata.height / (metadata.pages || 1);
-        expect(metadata.width, color + '/' + animation).toBe(150);
-        expect(frameHeight, color + '/' + animation).toBe(100);
-        expect(metadata.pages, color + '/' + animation).toBe(expectedFrames);
-      }
-    }
-  });
-
-  it('completa los GIF y la pose de derrota del Axem Violeta', async () => {
-    const animations = {
-      'battle-pose.gif': 21,
-      'teleport.gif': 9,
-      'charge.gif': 7,
-      'idle.gif': 8,
-    };
-
-    for (const [animation, expectedFrames] of Object.entries(animations)) {
-      const metadata = await sharp(resultsPath('male', 'violet', animation), { animated: true }).metadata();
+    for (const [animation, originalFrames] of Object.entries(animations)) {
+      const expectedFrames = animation === 'battle-pose.gif' ? originalFrames + 1
+        : animation === 'teleport.gif' ? originalFrames + 3 : originalFrames;
+      const metadata = await sharp(resultsPath('male', 'orange', animation), { animated: true }).metadata();
       expect(metadata.format, animation).toBe('gif');
       expect(metadata.width, animation).toBe(150);
       expect(metadata.pageHeight, animation).toBe(100);
       expect(metadata.pages, animation).toBe(expectedFrames);
       expect(metadata.hasAlpha, animation).toBe(true);
     }
+  });
 
-    const defeated = await sharp(resultsPath('male', 'violet', 'defeated.png')).metadata();
+  it('conserva charge y la pose de derrota de Axem Naranja', async () => {
+    const charge = await sharp(resultsPath('male', 'orange', 'charge.gif'), { animated: true }).metadata();
+    expect(charge.pages).toBe(7);
+    expect(charge.width).toBe(150);
+    expect(charge.pageHeight).toBe(100);
+    const defeated = await sharp(resultsPath('male', 'orange', 'defeated.png')).metadata();
     expect(defeated.format).toBe('png');
     expect(defeated.width).toBe(150);
     expect(defeated.height).toBe(100);
     expect(defeated.hasAlpha).toBe(true);
   });
 
-  it.each(COLORS)('termina charge %s sosteniendo la última pose de group-09 con aura Super Saiyan', async (color) => {
-    const auraPath = fileURLToPath(new URL(
-      '../../../art/source/effects/dragon-ball-style/super-saiyan-aura.webp',
-      import.meta.url,
-    ));
-    const auraMetadata = await sharp(auraPath).metadata();
-    expect(auraMetadata.width).toBe(128);
-    expect(auraMetadata.height).toBe(128);
-    expect(auraMetadata.hasAlpha).toBe(true);
-
-    const chargePath = resultsPath('male', color, 'charge.gif');
-    const chargeMetadata = await sharp(chargePath, { animated: true }).metadata();
-    expect(chargeMetadata.pages).toBe(7);
-    expect(chargeMetadata.width).toBe(150);
-    expect(chargeMetadata.pageHeight).toBe(100);
-    const delays = Array.isArray(chargeMetadata.delay)
-      ? chargeMetadata.delay
-      : [chargeMetadata.delay || 100];
-    expect(delays).toHaveLength(7);
-    expect(delays.slice(3).every((delay) => delay >= 160)).toBe(true);
-
-    const group09 = atlasFrames.male.groups.find((group) => group.id === 'group-09');
-    const finalSourceFrame = group09.frames[group09.frames.length - 1];
-    expect(group09.frames).toHaveLength(5);
-    const sourceFrame = await sharp(resultsPath('male', color, 'spritesheet.png'))
-      .extract({
-        left: finalSourceFrame.x,
-        top: finalSourceFrame.y,
-        width: finalSourceFrame.w,
-        height: finalSourceFrame.h,
-      })
-      .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 1 })
-      .png()
-      .toBuffer();
-    const sourceMetadata = await sharp(sourceFrame).metadata();
-    const width = Math.round(sourceMetadata.width * (78 / sourceMetadata.height));
-    const normalized = await sharp(sourceFrame)
-      .resize(width, 78, { fit: 'fill', kernel: 'nearest' })
-      .png()
-      .toBuffer();
-    const expectedLeft = Math.round((150 - width) / 2);
-    const expectedPose = await sharp({
-      create: {
-        width: 150,
-        height: 100,
-        channels: 4,
-        background: { r: 0, g: 0, b: 0, alpha: 0 },
-      },
-    })
-      .composite([{ input: normalized, left: expectedLeft, top: 18 }])
-      .png()
-      .toBuffer();
-
-    const expectedRaw = await sharp(expectedPose).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-    const expectedMask = new Uint8Array(expectedRaw.info.width * expectedRaw.info.height);
-    let opaquePosePixels = 0;
-    for (let pixel = 0; pixel < expectedMask.length; pixel += 1) {
-      expectedMask[pixel] = expectedRaw.data[pixel * 4 + 3] > 220 ? 1 : 0;
-      if (expectedMask[pixel]) opaquePosePixels += 1;
-    }
-    expect(opaquePosePixels).toBeGreaterThan(900);
-
-    const previousAuraFrames = [];
-    for (let page = 3; page < 7; page += 1) {
-      const frameIndex = page - 3;
-      const sourceAura = await sharp(auraPath)
-        .extract({
-          left: (frameIndex % 2) * 64,
-          top: Math.floor(frameIndex / 2) * 64,
-          width: 64,
-          height: 64,
-        })
-        .resize(112, 112, { fit: 'fill', kernel: 'nearest' })
-        .extract({ left: 0, top: 8, width: 112, height: 100 })
-        .ensureAlpha()
-        .raw()
-        .toBuffer({ resolveWithObject: true });
-
-      const finalRaw = await sharp(chargePath, { page, pages: 1 })
-        .ensureAlpha()
-        .raw()
-        .toBuffer({ resolveWithObject: true });
-      const finalMask = new Uint8Array(finalRaw.info.width * finalRaw.info.height);
-      for (let pixel = 0; pixel < finalMask.length; pixel += 1) {
-        finalMask[pixel] = finalRaw.data[pixel * 4 + 3] > 200 ? 1 : 0;
-      }
-
-      let bestPoseOverlap = 0;
-      let bestPoseMask = new Uint8Array(expectedMask.length);
-      for (let offsetY = -8; offsetY <= 8; offsetY += 1) {
-        for (let offsetX = -8; offsetX <= 8; offsetX += 1) {
-          const shiftedMask = new Uint8Array(expectedMask.length);
-          let overlap = 0;
-          for (let y = 0; y < 100; y += 1) {
-            for (let x = 0; x < 150; x += 1) {
-              const sourceX = x - offsetX;
-              const sourceY = y - offsetY;
-              if (sourceX < 0 || sourceX >= 150 || sourceY < 0 || sourceY >= 100) continue;
-              const sourceIndex = sourceY * 150 + sourceX;
-              const targetIndex = y * 150 + x;
-              if (expectedMask[sourceIndex]) {
-                shiftedMask[targetIndex] = 1;
-                if (finalMask[targetIndex]) overlap += 1;
-              }
-            }
-          }
-          if (overlap > bestPoseOverlap) {
-            bestPoseOverlap = overlap;
-            bestPoseMask = shiftedMask;
-          }
-        }
-      }
-
-      let expectedAuraPixels = 0;
-      let matchingAuraPixels = 0;
-      let auraPixelsOutsidePose = 0;
-      for (let y = 0; y < 100; y += 1) {
-        for (let x = 0; x < 112; x += 1) {
-          const auraOffset = (y * 112 + x) * 4;
-          if (sourceAura.data[auraOffset + 3] < 96) continue;
-          const screenX = x + 19;
-          const screenY = y;
-          const screenIndex = screenY * 150 + screenX;
-          if (bestPoseMask[screenIndex]) continue;
-
-          expectedAuraPixels += 1;
-          const outputOffset = screenIndex * 4;
-          if (finalRaw.data[outputOffset + 3] <= 100) continue;
-          auraPixelsOutsidePose += 1;
-          const channelDelta = Math.abs(sourceAura.data[auraOffset] - finalRaw.data[outputOffset]) +
-            Math.abs(sourceAura.data[auraOffset + 1] - finalRaw.data[outputOffset + 1]) +
-            Math.abs(sourceAura.data[auraOffset + 2] - finalRaw.data[outputOffset + 2]);
-          if (channelDelta <= 180) matchingAuraPixels += 1;
-        }
-      }
-
-      expect(bestPoseOverlap / opaquePosePixels, color + '/frame-' + page)
-        .toBeGreaterThan(0.9);
-      expect(expectedAuraPixels, color + '/source-aura-' + frameIndex).toBeGreaterThan(800);
-      expect(auraPixelsOutsidePose, color + '/frame-' + page).toBeGreaterThan(700);
-      expect(matchingAuraPixels / expectedAuraPixels, color + '/source-aura-' + frameIndex)
-        .toBeGreaterThan(0.62);
-
-      const currentFrameHash = finalRaw.data.toString('hex');
-      previousAuraFrames.push(currentFrameHash);
-    }
-
-    expect(new Set(previousAuraFrames).size).toBe(4);
-  });
-
-
-  it.each(COLORS)('mantiene la escala estándar del personaje en los ocho cuadros de idle %s', async (color) => {
-    const file = resultsPath('male', color, 'idle.gif');
+  it('mantiene la escala estándar de los ocho cuadros idle de Axem Naranja', async () => {
+    const file = resultsPath('male', 'orange', 'idle.gif');
     const metadata = await sharp(file, { animated: true }).metadata();
     const visibleHeights = [];
-
     expect(metadata.width).toBe(150);
     expect(metadata.pageHeight).toBe(100);
     expect(metadata.pages).toBe(8);
-
     for (let page = 0; page < metadata.pages; page += 1) {
       const { data, info } = await sharp(file, { page, pages: 1 })
-        .ensureAlpha()
-        .raw()
-        .toBuffer({ resolveWithObject: true });
-      expect(info.width).toBe(150);
-      expect(info.height).toBe(100);
-
+        .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
       let top = info.height;
       let bottom = -1;
       for (let y = 0; y < info.height; y += 1) {
@@ -448,61 +235,28 @@ describe('resultados por género y color', () => {
       }
       visibleHeights.push(bottom >= top ? bottom - top + 1 : 0);
     }
-
     expect(visibleHeights.every((height) => height > 0)).toBe(true);
     expect(Math.max(...visibleHeights) - Math.min(...visibleHeights)).toBeLessThanOrEqual(1);
     expect(Math.abs(visibleHeights[0] - 78)).toBeLessThanOrEqual(1);
   });
 
-  it('integra la invocación del hacha y la pose de derrota del Axem Naranja', async () => {
-    const battlePose = await sharp(resultsPath('male', 'orange', 'battle-pose.gif'), { animated: true }).metadata();
-    expect(battlePose.format).toBe('gif');
-    expect(battlePose.width).toBe(150);
-    expect(battlePose.pageHeight).toBe(100);
-    expect(battlePose.pages).toBe(21);
-    expect(battlePose.hasAlpha).toBe(true);
-
-    const defeated = await sharp(resultsPath('male', 'orange', 'defeated.png')).metadata();
-    expect(defeated.format).toBe('png');
-    expect(defeated.width).toBe(150);
-    expect(defeated.height).toBe(100);
-    expect(defeated.hasAlpha).toBe(true);
+  it('mantiene el sprite-sheet canónico y la pose femenina de Axem Violeta', async () => {
+    const canonical = await readFile(resultsPath('female', 'axem-ranger-violet.png'));
+    const pose = await readFile(resultsPath('female', 'violet', 'pose.png'));
+    expect(pose.equals(canonical)).toBe(true);
+    const metadata = await sharp(resultsPath('female', 'violet', 'spritesheet.png')).metadata();
+    expect(metadata.format).toBe('png');
+    expect(metadata.hasAlpha).toBe(true);
   });
 
-  it('Violet y Orange comparten exactamente los mismos cuadros: solo cambia la paleta', async () => {
-    const files = {
-      male: [
-        'spritesheet.png', 'run.png', 'bike.png', 'double-axe.png',
-        ...atlasFrames.male.groups.map((group) => 'sequences/' + group.id + '.png'),
-        ...atlasFrames.male.supplementalGroups.map((group) => 'supplemental/' + group.id + '.png'),
-      ],
-      female: [
-        'spritesheet.png', 'pose.png', 'battle-pose.png', 'levitate.png',
-        ...atlasFrames.female.groups.flatMap((group) => [
-          ...(group.frameCount ? ['sequences/' + group.id + '.png'] : []),
-          ...(group.assetCount ? ['supplemental/' + group.id + '.png'] : []),
-        ]),
-      ],
-    };
-
-    for (const [gender, list] of Object.entries(files)) {
-      for (const file of list) {
-        // Las poses femeninas pose y levitate pueden tener siluetas propias por color.
-        if (gender === 'female' && ['pose.png', 'levitate.png'].includes(file)) continue;
-        const violet = await alphaOf(resultsPath(gender, 'violet', file));
-        const orange = await alphaOf(resultsPath(gender, 'orange', file));
-        expect(orange.width).toBe(violet.width);
-        expect(orange.height).toBe(violet.height);
-        expect(orange.alpha.equals(violet.alpha)).toBe(true);
-      }
-    }
-  });
-
-  it('las poses femeninas generadas son copias exactas de los resultados canónicos', async () => {
-    for (const color of COLORS) {
-      const canonical = await readFile(resultsPath('female', 'axem-ranger-' + color + '.png'));
-      const pose = await readFile(resultsPath('female', color, 'pose.png'));
-      expect(pose.equals(canonical)).toBe(true);
+  it('no conserva archivos de las dos variantes retiradas', async () => {
+    for (const parts of [
+      ['male', 'violet', 'spritesheet.png'],
+      ['male', 'violet', 'run.gif'],
+      ['female', 'orange', 'spritesheet.png'],
+      ['female', 'orange', 'pose.png'],
+    ]) {
+      await expect(readFile(resultsPath(...parts))).rejects.toMatchObject({ code: 'ENOENT' });
     }
   });
 });

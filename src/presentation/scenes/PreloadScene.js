@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import {
-  RANGER_GENDERS,
   spriteKeyFor,
   spriteUrlFor,
   menuSpriteKeyFor,
@@ -10,6 +9,7 @@ import {
   maleAnimationKey,
   maleAnimationUrl,
 } from '../../infrastructure/assets/assetManifest.js';
+import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { GIF_ACTIONS, GIF_CELL } from '../../infrastructure/assets/characterAnimationData.js';
 import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
@@ -89,33 +89,30 @@ export class PreloadScene extends Phaser.Scene {
       status.setText('NO SE PUDO CARGAR ' + file.key.toUpperCase());
     });
 
-    // Cada variante (color + género) tiene su retrato generado desde las referencias.
-    for (const gender of RANGER_GENDERS) {
-      for (const rangerId of [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE]) {
-        this.load.image(
-          spriteKeyFor(rangerId, gender),
-          spriteUrlFor(rangerId, gender),
-        );
-      }
+    // Solo se cargan las dos variantes canónicas permitidas por el catálogo.
+    for (const rangerId of [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE]) {
+      const gender = genderForRanger(rangerId);
+      this.load.image(spriteKeyFor(rangerId, gender), spriteUrlFor(rangerId, gender));
     }
     for (const rangerId of [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE]) {
-      this.load.image(menuSpriteKeyFor(rangerId), menuSpriteUrlFor(rangerId));
-      for (const action of ['run', 'bike', 'double-axe']) {
+      if (rangerId === RANGER_IDS.ORANGE) {
+        this.load.image(menuSpriteKeyFor(rangerId), menuSpriteUrlFor(rangerId));
+      }
+      if (rangerId === RANGER_IDS.ORANGE) for (const action of ['run', 'bike', 'double-axe']) {
         this.load.spritesheet(maleAnimationKey(rangerId, action), maleAnimationUrl(rangerId, action), {
           frameWidth: 53,
           frameHeight: 83,
         });
       }
-      for (const action of GIF_ACTIONS) {
+      if (rangerId === RANGER_IDS.ORANGE) for (const action of GIF_ACTIONS) {
         this.load.spritesheet(maleAnimationKey(rangerId, action), maleAnimationUrl(rangerId, action), {
           frameWidth: GIF_CELL.width,
           frameHeight: GIF_CELL.height,
         });
       }
-      this.load.image(
-        maleAnimationKey(rangerId, 'defeated'),
-        maleAnimationUrl(rangerId, 'defeated'),
-      );
+      if (rangerId === RANGER_IDS.ORANGE) {
+        this.load.image(maleAnimationKey(rangerId, 'defeated'), maleAnimationUrl(rangerId, 'defeated'));
+      }
     }
     this.load.image('title-art', import.meta.env.BASE_URL + 'generated/title.png');
     Object.values(STAGE_MAP_ASSETS).forEach(({ key, url }) => this.load.image(key, url));

@@ -6,7 +6,7 @@ import {
 } from '../../infrastructure/assets/characterAnimationData.js';
 import { sheetTextureKey, maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
 
-const RANGER_ORDER = [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE];
+const RANGER_ORDER = [RANGER_IDS.ORANGE];
 const LOOPING_STATES = new Set(['idle', 'walk']);
 
 const oneShotDurationMs = (state) => {

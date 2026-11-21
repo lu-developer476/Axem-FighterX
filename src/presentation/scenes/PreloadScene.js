@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import {
-  allowedGenderFor,
   spriteKeyFor,
   spriteUrlFor,
   menuSpriteKeyFor,
@@ -10,6 +9,7 @@ import {
   maleAnimationKey,
   maleAnimationUrl,
 } from '../../infrastructure/assets/assetManifest.js';
+import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { GIF_ACTIONS, GIF_CELL } from '../../infrastructure/assets/characterAnimationData.js';
 import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
@@ -91,7 +91,7 @@ export class PreloadScene extends Phaser.Scene {
 
     // Solo se cargan las dos variantes canónicas permitidas por el catálogo.
     for (const rangerId of [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE]) {
-      const gender = allowedGenderFor(rangerId);
+      const gender = genderForRanger(rangerId);
       this.load.image(spriteKeyFor(rangerId, gender), spriteUrlFor(rangerId, gender));
     }
     for (const rangerId of [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE]) {

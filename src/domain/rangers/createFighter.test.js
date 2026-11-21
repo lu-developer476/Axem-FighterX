@@ -37,8 +37,11 @@ describe('Variantes de género de los Axem Rangers', () => {
     expect(match.fighters.map((fighter) => fighter.gender)).toEqual(['female', 'male']);
   });
 
-  it('ubica ambos luchadores sobre la coordenada compartida del suelo', () => {
-    const match = createDefaultMatch();
+  it('ubica ambos luchadores sobre la coordenada compartida del suelo sin asignar personajes por defecto', () => {
+    const match = createDefaultMatch(() => 0, [
+      { id: RANGER_IDS.VIOLET, gender: 'male' },
+      { id: RANGER_IDS.ORANGE, gender: 'male' },
+    ]);
 
     expect(match.fighters.map((fighter) => fighter.position.y)).toEqual([
       ARENA.groundY,

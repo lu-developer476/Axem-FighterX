@@ -869,6 +869,7 @@ async function buildMaleGroup16Sequence(color, frames) {
 const GAME_GIF_ACTIONS = Object.freeze([
   'idle', 'dash', 'punch-01', 'punch-02', 'punch-03', 'hit', 'hurt',
   'jump', 'teleport', 'charge', 'battle-pose', 'pose',
+  'guard', 'guard-hit', 'roll', 'land', 'special-attack', 'victory', 'ko',
 ]);
 
 /**
@@ -926,6 +927,7 @@ async function buildMaleSharedExtraGifs(color) {
   await writeMaleActionGif(color, 'charge', charged, charged.map(() => 100));
 
   await buildMaleIdleGif(color);
+  await buildMaleCombatEnhancementGifs(color);
 }
 
 /**
@@ -941,6 +943,116 @@ async function buildMaleIdleGif(color) {
     idleFrames.map((frame) => normalizeMaleActionFrame(frame.input, false, STANDARD_STANDING_HEIGHT)),
   );
   await writeMaleActionGif(color, 'idle', idle, idle.map(() => 140));
+}
+
+/** Aplica inclinación/compresión a cuadros ya normalizados sin cambiar el pivote del suelo. */
+async function transformMaleActionFrame(input, {
+  rotate = 0,
+  scaleX = 1,
+  scaleY = 1,
+  offsetY = 0,
+} = {}) {
+  const trimmed = await sharp(input)
+    .trim({ background: TRANSPARENT, threshold: 1 })
+    .png()
+    .toBuffer();
+  const rotated = await sharp(trimmed)
+    .rotate(rotate, { background: TRANSPARENT })
+    .png()
+    .toBuffer();
+  const metadata = await sharp(rotated).metadata();
+  const width = Math.max(1, Math.min(142, Math.round(metadata.width * scaleX)));
+  const height = Math.max(1, Math.min(92, Math.round(metadata.height * scaleY)));
+  const sprite = await sharp(rotated)
+    .resize(width, height, { fit: 'fill', kernel: 'nearest' })
+    .png()
+    .toBuffer();
+  const left = Math.round((ACTION_GIF_SIZE.width - width) / 2);
+  const top = Math.max(0, Math.min(
+    ACTION_GIF_SIZE.height - height,
+    ACTION_GIF_SIZE.height - SEQUENCE_GIF_FEET_MARGIN - height + offsetY,
+  ));
+  return sharp({
+    create: {
+      width: ACTION_GIF_SIZE.width,
+      height: ACTION_GIF_SIZE.height,
+      channels: 4,
+      background: TRANSPARENT,
+    },
+  }).composite([{ input: sprite, left, top }]).png().toBuffer();
+}
+
+/**
+ * Nuevas acciones construidas con cuadros reales del atlas Axem Red:
+ * guardia, reacción al bloqueo, rodada, aterrizaje, especial, victoria y KO.
+ * Se recolorean en el mismo pipeline, por lo que Violet/Orange mantienen el mismo pivote.
+ */
+async function buildMaleCombatEnhancementGifs(color) {
+  const [battlePose, dash, jump, doubleAxe, hurt, idle] = await Promise.all([
+    readMaleGifFrames(color, 'battle-pose.gif'),
+    readMaleGifFrames(color, 'dash.gif'),
+    readMaleGifFrames(color, 'jump.gif'),
+    readMaleGifFrames(color, 'double-axe.gif'),
+    readMaleGifFrames(color, 'hurt.gif'),
+    readMaleGifFrames(color, 'idle.gif'),
+  ]);
+
+  const guardFrames = battlePose.frames.slice(-Math.min(6, battlePose.frames.length));
+  await writeMaleActionGif(color, 'guard', guardFrames, guardFrames.map(() => 135));
+
+  const blockHitFrames = [
+    ...battlePose.frames.slice(-3),
+    ...hurt.frames.slice(0, 2),
+    ...battlePose.frames.slice(-2),
+  ];
+  await writeMaleActionGif(color, 'guard-hit', blockHitFrames, blockHitFrames.map(() => 85));
+
+  const rollAngles = [-8, -24, -43, -62, -78, -54, -28, -6];
+  const rollFrames = await Promise.all(rollAngles.map((angle, index) => {
+    const source = dash.frames[Math.round(index * (dash.frames.length - 1) / (rollAngles.length - 1))];
+    return transformMaleActionFrame(source, {
+      rotate: angle,
+      scaleX: 0.92,
+      scaleY: 0.86,
+      offsetY: 2,
+    });
+  }));
+  await writeMaleActionGif(color, 'roll', rollFrames, rollFrames.map(() => 45));
+
+  const landingSource = jump.frames.slice(-4);
+  const landScales = [
+    { scaleX: 1.02, scaleY: 0.78, offsetY: 0 },
+    { scaleX: 1.12, scaleY: 0.72, offsetY: 1 },
+    { scaleX: 1.08, scaleY: 0.86, offsetY: 0 },
+    { scaleX: 1, scaleY: 1, offsetY: 0 },
+  ];
+  const landFrames = await Promise.all(landingSource.map((frame, index) =>
+    transformMaleActionFrame(frame, landScales[index]),
+  ));
+  await writeMaleActionGif(color, 'land', landFrames, [65, 75, 90, 110]);
+
+  const specialFrames = [
+    ...battlePose.frames.slice(-3),
+    ...doubleAxe.frames,
+    ...battlePose.frames.slice(-2),
+  ];
+  await writeMaleActionGif(color, 'special-attack', specialFrames, specialFrames.map((_, index) =>
+    index < 3 ? 100 : index < specialFrames.length - 2 ? 75 : 115,
+  ));
+
+  const victoryFrames = [
+    ...battlePose.frames.slice(-4),
+    ...idle.frames.slice(0, Math.min(3, idle.frames.length)),
+  ];
+  await writeMaleActionGif(color, 'victory', victoryFrames, victoryFrames.map((_, index) =>
+    index < 4 ? 115 : 180,
+  ));
+
+  const defeatedFrame = await sharp(RESULTS('male', color, 'defeated.png'))
+    .png()
+    .toBuffer();
+  const koFrames = [...hurt.frames.slice(0, 2), defeatedFrame, defeatedFrame];
+  await writeMaleActionGif(color, 'ko', koFrames, [95, 110, 220, 400]);
 }
 
 /**

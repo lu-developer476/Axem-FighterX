@@ -393,3 +393,23 @@ La hoja de Pink tiene distribución libre (poses en el aire, estelas, armas suel
 | 113 | 192 | 377 | 46 | 23 | other |  |
 | 114 | 250 | 376 | 39 | 33 | other |  |
 | 115 | 306 | 382 | 43 | 20 | other |  |
+
+
+## Acciones añadidas para combate y carrera
+
+El proceso de preparación también genera para Orange y Violet los GIF `guard.gif`,
+`guard-hit.gif`, `roll.gif`, `land.gif`, `special-attack.gif`, `victory.gif`
+y `ko.gif`. Se construyen desde secuencias originales del atlas masculino: guardia
+y reacción al bloqueo desde la pose de combate, rodada desde el dash, aterrizaje
+desde los últimos cuadros del salto, especial desde la secuencia del hacha, y
+victoria/KO desde las poses de combate, reposo y derrota disponibles.
+
+Todos conservan el lienzo transparente de 150×100 px y el apoyo del sprite en la misma
+línea de suelo. El pipeline también exporta sus tiras de 86×57 px en
+`public/generated/axem-{color}-{acción}.png`, que Phaser carga como hojas cuadro a
+cuadro. Las variantes femeninas conservan su material visual y reciben las mismas
+transiciones mediante poses procedurales.
+
+Para la carrera no se duplican los fotogramas de bicicleta: se registran cadencias
+independientes para espera, aceleración, frenado, nitro y resultados. La inclinación
+del ciclista acompaña la entrada y el estado final.

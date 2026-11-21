@@ -1,5 +1,5 @@
 import { FLIGHT } from '../arena/arena.js';
-import { DASH, FighterState, TIMINGS, attackTotalMs } from './FighterState.js';
+import { DASH, DODGE, FighterState, TIMINGS, attackTotalMs, specialAttackTotalMs } from './FighterState.js';
 import { PICKUP_TYPES, POWER_UPS } from './PowerUpPickup.js';
 
 /** Caja del cuerpo. La posición del luchador son sus pies, centrados. */
@@ -8,9 +8,13 @@ export const BODY = Object.freeze({ width: 36, height: 84 });
 const KNOCKBACK_FRICTION = 700; // px/s²
 const ATTACK_LUNGE = 0.9; // fracción de moveSpeed durante la fase activa
 const MAX_ATTACK_DAMAGE = 5;
+const MAX_SPECIAL_DAMAGE = 7;
+const BLOCK_DAMAGE_MULTIPLIER = 0.2;
+const BLOCK_KNOCKBACK_MULTIPLIER = 0.18;
 
 /**
- * @typedef {{ x: number, y?: number, z?: number, attack?: boolean, teleport?: boolean }} Intent
+ * @typedef {{ x: number, y?: number, z?: number, attack?: boolean, specialAttack?: boolean,
+ *   block?: boolean, dodge?: boolean, teleport?: boolean, dash?: boolean }} Intent
  */
 
 /**
@@ -52,6 +56,10 @@ export class Fighter {
     this.teleportCooldownMs = 0;
     this.dashCooldownMs = 0;
     this.dashVector = { x: 0, y: 0 };
+    this.dodgeCooldownMs = 0;
+    this.dodgeVector = { x: 0, y: 0 };
+    this.specialAttackCooldownMs = 0;
+    this.lastHitBlocked = false;
     this.teleportTarget = null;
     this.teleportMoved = false;
     this.powerUps = {
@@ -97,10 +105,15 @@ export class Fighter {
     return this.canAct && this.dashCooldownMs <= 0;
   }
 
+  get canDodge() {
+    return this.canAct && this.dodgeCooldownMs <= 0;
+  }
+
   get isInvulnerable() {
     return (
       this.state === FighterState.KO ||
       this.state === FighterState.TELEPORT ||
+      (this.state === FighterState.DODGE && this.stateTimeMs < DODGE.invulnerabilityMs) ||
       this.invulnerableMs > 0
     );
   }
@@ -116,8 +129,9 @@ export class Fighter {
 
   /** Caja de ataque: solo existe durante la fase activa del hachazo. */
   get attackHitbox() {
-    if (this.state !== FighterState.ATTACK) return null;
-    const { windupMs, activeMs } = TIMINGS.attack;
+    const isSpecial = this.state === FighterState.SPECIAL_ATTACK;
+    if (this.state !== FighterState.ATTACK && !isSpecial) return null;
+    const { windupMs, activeMs } = isSpecial ? TIMINGS.specialAttack : TIMINGS.attack;
     if (this.stateTimeMs < windupMs || this.stateTimeMs >= windupMs + activeMs) return null;
     const reach = this.stats.attackReach;
     const x =
@@ -135,14 +149,16 @@ export class Fighter {
   }
 
   /** Calcula el daño de un impacto con un valor aleatorio entre 1 y 5. */
-  rollAttackDamage(randomValue = 0) {
+  rollAttackDamage(randomValue = 0, special = false) {
     const normalized = Number.isFinite(randomValue)
       ? Math.min(0.999999, Math.max(0, randomValue))
       : 0;
     const baseDamage = 1 + Math.floor(normalized * this.stats.attackDamage);
     const furyActive = this.powerUps[PICKUP_TYPES.FURY] > 0;
-    const multiplier = furyActive ? POWER_UPS[PICKUP_TYPES.FURY].damageMultiplier : 1;
-    return Math.min(MAX_ATTACK_DAMAGE, Math.max(1, Math.round(baseDamage * multiplier)));
+    const furyMultiplier = furyActive ? POWER_UPS[PICKUP_TYPES.FURY].damageMultiplier : 1;
+    const specialMultiplier = special ? 1.5 : 1;
+    const maximum = special ? MAX_SPECIAL_DAMAGE : MAX_ATTACK_DAMAGE;
+    return Math.min(maximum, Math.max(1, Math.round(baseDamage * furyMultiplier * specialMultiplier)));
   }
 
   // ── Comandos ─────────────────────────────────────────────────────────────
@@ -152,6 +168,15 @@ export class Fighter {
     this.hasHitThisAttack = false;
     this.#setState(FighterState.ATTACK);
     this.#emit('attack');
+    return true;
+  }
+
+  startSpecialAttack() {
+    if (!this.canAct || this.specialAttackCooldownMs > 0) return false;
+    this.hasHitThisAttack = false;
+    this.specialAttackCooldownMs = TIMINGS.specialAttack.cooldownMs;
+    this.#setState(FighterState.SPECIAL_ATTACK);
+    this.#emit('special-attack');
     return true;
   }
 
@@ -184,19 +209,32 @@ export class Fighter {
   takeHit({ damage, fromDirection }) {
     if (this.isInvulnerable) return false;
     const shieldActive = this.powerUps[PICKUP_TYPES.SHIELD] > 0;
-    this.lastDamageTaken = shieldActive
+    const guarding = this.state === FighterState.BLOCK
+      && this.position.z === 0
+      && this.facing === -fromDirection;
+    const shieldDamage = shieldActive
       ? Math.max(1, Math.round(damage * POWER_UPS[PICKUP_TYPES.SHIELD].damageMultiplier))
       : damage;
-    if (shieldActive) {
+
+    this.lastHitBlocked = guarding;
+    this.lastDamageTaken = guarding
+      ? Math.max(1, Math.round(shieldDamage * BLOCK_DAMAGE_MULTIPLIER))
+      : shieldDamage;
+    if (guarding) {
+      this.#emit('block', { blocked: Math.max(0, damage - this.lastDamageTaken) });
+    } else if (shieldActive) {
       this.#emit('shield-block', { blocked: damage - this.lastDamageTaken });
     }
+
     this.health = Math.max(0, this.health - this.lastDamageTaken);
-    this.velocityX = fromDirection * this.stats.knockback;
+    this.velocityX = fromDirection * this.stats.knockback * (guarding ? BLOCK_KNOCKBACK_MULTIPLIER : 1);
     this.invulnerableMs = TIMINGS.hitInvulnerabilityMs;
     if (this.health === 0) {
       this.velocityX *= 1.5;
       this.#setState(FighterState.KO);
       this.#emit('ko');
+    } else if (guarding) {
+      this.#setState(FighterState.BLOCK_HIT);
     } else {
       this.#setState(FighterState.HURT);
     }
@@ -219,10 +257,17 @@ export class Fighter {
     this.invulnerableMs = Math.max(0, this.invulnerableMs - deltaMs);
     this.teleportCooldownMs = Math.max(0, this.teleportCooldownMs - deltaMs);
     this.dashCooldownMs = Math.max(0, this.dashCooldownMs - deltaMs);
+    this.dodgeCooldownMs = Math.max(0, this.dodgeCooldownMs - deltaMs);
+    this.specialAttackCooldownMs = Math.max(0, this.specialAttackCooldownMs - deltaMs);
     this.#updatePowerUps(deltaMs);
 
     if ((this.state === FighterState.IDLE || this.state === FighterState.WALK)
-      && intent.dash && this.canDash && !intent.attack) this.#beginDash(intent.x, intent.y);
+      && intent.dodge && this.canDodge && !intent.attack && !intent.specialAttack && !intent.block) {
+      this.#beginDodge(intent.x, intent.y);
+    } else if ((this.state === FighterState.IDLE || this.state === FighterState.WALK)
+      && intent.dash && this.canDash && !intent.attack && !intent.specialAttack && !intent.block) {
+      this.#beginDash(intent.x, intent.y);
+    }
 
     switch (this.state) {
       case FighterState.IDLE:
@@ -232,8 +277,29 @@ export class Fighter {
       case FighterState.DASH:
         this.#updateDash(seconds);
         break;
+      case FighterState.DODGE:
+        this.#updateDodge(seconds);
+        break;
+      case FighterState.BLOCK:
+        if (!intent.block) {
+          this.#setState(FighterState.IDLE);
+          this.#updateFree(intent, seconds);
+        }
+        break;
+      case FighterState.BLOCK_HIT:
+        this.#applyKnockback(seconds);
+        if (this.stateTimeMs >= TIMINGS.blockHitMs) {
+          this.#setState(intent.block && this.position.z === 0 ? FighterState.BLOCK : FighterState.IDLE);
+        }
+        break;
       case FighterState.ATTACK:
         this.#updateAttack(seconds);
+        break;
+      case FighterState.SPECIAL_ATTACK:
+        this.#updateSpecialAttack(seconds);
+        break;
+      case FighterState.LAND:
+        if (this.stateTimeMs >= TIMINGS.landMs) this.#setState(FighterState.IDLE);
         break;
       case FighterState.HURT:
         this.#applyKnockback(seconds);
@@ -283,6 +349,12 @@ export class Fighter {
   }
 
   #updateFree(intent, seconds) {
+    if (intent.block && this.position.z === 0) {
+      this.velocityX = 0;
+      this.#setState(FighterState.BLOCK);
+      return;
+    }
+    if (intent.specialAttack && this.startSpecialAttack()) return;
     if (intent.attack && this.startAttack()) return;
 
     const moveX = Number.isFinite(intent.x) ? intent.x : 0;
@@ -303,8 +375,31 @@ export class Fighter {
     }
     if (previousAltitude > 0 && this.position.z === 0) {
       this.#emit('land', { groundY: this.position.y, impact: previousAltitude });
+      this.#setState(FighterState.LAND);
+      return;
     }
     this.#setState(movingOnGround ? FighterState.WALK : FighterState.IDLE);
+  }
+
+  #beginDodge(moveX = 0, moveY = 0) {
+    const magnitude = Math.hypot(moveX, moveY);
+    const direction = magnitude > 0
+      ? { x: moveX / magnitude, y: moveY / magnitude }
+      : { x: -this.facing, y: 0 };
+    this.dodgeVector = direction;
+    this.dodgeCooldownMs = DODGE.cooldownMs;
+    if (direction.x !== 0) this.facing = Math.sign(direction.x);
+    this.#setState(FighterState.DODGE);
+    this.#emit('dodge-start', { directionX: direction.x, directionY: direction.y });
+  }
+
+  #updateDodge(seconds) {
+    const remainingMs = Math.max(0, DODGE.durationMs - this.stateTimeMs);
+    const activeSeconds = Math.min(seconds, remainingMs / 1000);
+    const speed = this.currentMoveSpeed * DODGE.speedMultiplier;
+    this.position.x += this.dodgeVector.x * speed * activeSeconds;
+    this.position.y += this.dodgeVector.y * speed * activeSeconds;
+    if (this.stateTimeMs >= DODGE.durationMs) this.#setState(FighterState.IDLE);
   }
 
   #beginDash(moveX = 0, moveY = 0) {
@@ -336,6 +431,16 @@ export class Fighter {
     if (inActive) this.position.x += this.facing * this.currentMoveSpeed * ATTACK_LUNGE * seconds;
   }
 
+  #updateSpecialAttack(seconds) {
+    const { windupMs, activeMs } = TIMINGS.specialAttack;
+    if (this.stateTimeMs >= specialAttackTotalMs()) {
+      this.#setState(FighterState.IDLE);
+      return;
+    }
+    const inActive = this.stateTimeMs >= windupMs && this.stateTimeMs < windupMs + activeMs;
+    if (inActive) this.position.x += this.facing * this.currentMoveSpeed * 1.25 * seconds;
+  }
+
   #updateTeleport() {
     const { teleportOutMs, teleportInMs } = TIMINGS;
     if (!this.teleportMoved && this.stateTimeMs >= teleportOutMs) {
@@ -359,6 +464,7 @@ export class Fighter {
     this.state = next;
     this.stateTimeMs = 0;
     if (next !== FighterState.DASH) this.dashVector = { x: 0, y: 0 };
+    if (next !== FighterState.DODGE) this.dodgeVector = { x: 0, y: 0 };
   }
 
   #emit(type, extra = {}) {

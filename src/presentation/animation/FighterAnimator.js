@@ -29,6 +29,7 @@ export class FighterAnimator {
     this.state = null;
     this.usingSheet = false;
     this.punchIndex = -1;
+    this.forcedState = null;
   }
 
   /** La pose base y las hojas GIF usan la misma orientación nativa declarada para cada fuente. */
@@ -38,14 +39,27 @@ export class FighterAnimator {
 
   /** @param {import('../../domain/entities/Fighter.js').Fighter} fighter */
   update(fighter) {
-    const visualState = fighter.state === 'dash' && this.gender !== 'male' ? 'walk' : fighter.state;
+    const currentState = fighter.state === 'dash' && this.gender !== 'male' ? 'walk' : fighter.state;
+    const visualState = this.forcedState ?? currentState;
     const animationState = this.gender === 'male'
-      ? this.#maleAnimationState(fighter)
+      ? (this.forcedState ?? this.#maleAnimationState(fighter))
       : visualState;
     if (animationState !== this.state) this.#enter(animationState);
     return this.usingSheet
-      ? flashOnlyPose(fighter.state, fighter.stateTimeMs)
-      : poseFor(visualState, fighter.stateTimeMs, fighter.elapsedMs);
+      ? flashOnlyPose(this.forcedState ?? fighter.state, fighter.stateTimeMs)
+      : poseFor(visualState, this.forcedState ? fighter.elapsedMs : fighter.stateTimeMs, fighter.elapsedMs);
+  }
+
+  showVictory() {
+    this.forcedState = 'victory';
+    this.#enter('victory');
+  }
+
+  clearForcedState() {
+    if (!this.forcedState) return;
+    this.forcedState = null;
+    this.state = null;
+    this.sprite.stop();
   }
 
   /**
@@ -59,6 +73,16 @@ export class FighterAnimator {
         return 'run';
       case 'dash':
         return 'dash';
+      case 'dodge':
+        return 'roll';
+      case 'block':
+        return 'guard';
+      case 'block-hit':
+        return 'guard-hit';
+      case 'land':
+        return 'land';
+      case 'special-attack':
+        return 'special-attack';
       case 'attack':
         return inAir ? 'double-axe' : 'punch';
       case 'hurt':
@@ -76,7 +100,8 @@ export class FighterAnimator {
   #enter(state) {
     this.state = state;
 
-    if (state === 'ko' && this.gender === 'male') {
+    if (state === 'ko' && this.gender === 'male'
+      && !this.anims.exists(maleAnimationKey(this.rangerId, 'ko'))) {
       this.sprite.stop();
       this.sprite.setTexture(maleAnimationKey(this.rangerId, 'defeated'));
       this.sprite.setOrigin?.(0.5, 1);

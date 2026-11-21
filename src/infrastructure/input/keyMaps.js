@@ -1,6 +1,6 @@
 /**
  * Controles de los dos jugadores.
- * Los ejes de terreno mueven sobre el piso; ascend/descend controlan la altura aérea.
+ * X/Y recorren el terreno; Z es exclusivamente la altura de vuelo.
  */
 export const KEYMAPS = Object.freeze({
   PLAYER_1: Object.freeze({
@@ -13,6 +13,9 @@ export const KEYMAPS = Object.freeze({
     attack: 'F',
     teleport: 'G',
     dash: 'C',
+    block: 'V',
+    dodge: 'X',
+    specialAttack: 'Z',
   }),
   PLAYER_2: Object.freeze({
     left: 'LEFT',
@@ -24,5 +27,8 @@ export const KEYMAPS = Object.freeze({
     attack: 'L',
     teleport: 'K',
     dash: 'M',
+    block: 'N',
+    dodge: 'J',
+    specialAttack: 'H',
   }),
 });

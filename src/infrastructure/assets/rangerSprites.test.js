@@ -149,3 +149,28 @@ describe('Variantes de Axem Rangers', () => {
   }
 
 });
+
+
+describe('Acciones nuevas de combate', () => {
+  for (const color of COLORS) {
+    for (const action of ['guard', 'guard-hit', 'roll', 'land', 'special-attack', 'victory', 'ko']) {
+      it(`male/${color}/${action} genera un GIF transparente de 150×100 px`, async () => {
+        const gifPath = fileURLToPath(new URL(`../../../art/source/sprites/results/male/${color}/${action}.gif`, import.meta.url));
+        const metadata = await sharp(gifPath, { animated: true }).metadata();
+        expect(metadata.format).toBe('gif');
+        expect(metadata.width).toBe(150);
+        expect(metadata.pageHeight).toBe(100);
+        expect(metadata.pages).toBeGreaterThan(1);
+        expect(metadata.hasAlpha).toBe(true);
+      });
+
+      it(`male/${color}/${action} expone una hoja de cuadros para Phaser`, async () => {
+        const stripPath = fileURLToPath(new URL(`../../../public/generated/axem-${color}-${action}.png`, import.meta.url));
+        const metadata = await sharp(stripPath).metadata();
+        expect(metadata.format).toBe('png');
+        expect(metadata.height).toBe(57);
+        expect(metadata.width % 86).toBe(0);
+      });
+    }
+  }
+});

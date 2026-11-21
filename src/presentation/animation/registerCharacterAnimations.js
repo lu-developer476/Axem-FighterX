@@ -1,4 +1,4 @@
-import { DASH, TIMINGS, attackTotalMs } from '../../domain/entities/FighterState.js';
+import { DASH, DODGE, TIMINGS, attackTotalMs, specialAttackTotalMs } from '../../domain/entities/FighterState.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import {
   animationKey,
@@ -15,6 +15,16 @@ const oneShotDurationMs = (state) => {
       return attackTotalMs();
     case 'hurt':
       return TIMINGS.hurtMs;
+    case 'block-hit':
+      return TIMINGS.blockHitMs;
+    case 'dodge':
+      return DODGE.durationMs;
+    case 'land':
+      return TIMINGS.landMs;
+    case 'special-attack':
+      return specialAttackTotalMs();
+    case 'victory':
+      return TIMINGS.victoryAnimationMs;
     case 'teleport':
       return TIMINGS.teleportOutMs + TIMINGS.teleportInMs;
     case 'ko':
@@ -43,6 +53,7 @@ export function registerCharacterAnimations(scene) {
         });
       }
     }
+    registerBikeAnimations(scene, rangerId);
   }
   for (const rangerId of RANGER_ORDER) registerGifAnimations(scene, rangerId);
   for (const rangerId of RANGER_ORDER) {
@@ -88,6 +99,13 @@ function registerGifAnimations(scene, rangerId) {
   };
 
   define('idle', { frameRate: 7, repeat: -1 });
+  define('guard', { frameRate: 8, repeat: -1 });
+  define('guard-hit', { duration: TIMINGS.blockHitMs, repeat: 0 });
+  define('roll', { duration: DODGE.durationMs, repeat: 0 });
+  define('land', { duration: TIMINGS.landMs, repeat: 0 });
+  define('special-attack', { duration: specialAttackTotalMs(), repeat: 0 });
+  define('victory', { duration: TIMINGS.victoryAnimationMs, repeat: 0 });
+  define('ko', { duration: TIMINGS.koAnimationMs, repeat: 0 });
   define('charge', { frameRate: 10, repeat: -1 });
   define('pose', { frameRate: 8, repeat: -1 });
   define('battle-pose', { frameRate: 10, repeat: 0 });
@@ -103,4 +121,35 @@ function registerGifAnimations(scene, rangerId) {
     [...gifFrames(scene, rangerId, 'hit'), ...gifFrames(scene, rangerId, 'hurt')],
     hurtComboKey(rangerId),
   );
+}
+
+/**
+ * Variantes de ritmo para la carrera. Comparten los cuadros originales de bicicleta,
+ * pero cada fase tiene una cadencia propia y se selecciona según la entrada del jugador.
+ */
+function registerBikeAnimations(scene, rangerId) {
+  const sourceKey = maleAnimationKey(rangerId, 'bike');
+  const texture = scene.textures.get(sourceKey);
+  if (!texture) return;
+
+  const frames = scene.anims.generateFrameNumbers(sourceKey, {
+    start: 0,
+    end: texture.frameTotal - 2,
+  });
+  if (!frames.length) return;
+
+  const specs = [
+    ['bike-idle', frames.slice(0, Math.min(3, frames.length)), 3, -1],
+    ['bike-accelerate', frames, 12, -1],
+    ['bike-brake', frames.slice(0, Math.min(4, frames.length)), 5, -1],
+    ['bike-boost', frames, 16, -1],
+    ['bike-victory', frames.slice(-Math.min(5, frames.length)), 8, 0],
+    ['bike-defeat', frames.slice(0, Math.min(4, frames.length)), 5, 0],
+  ];
+
+  for (const [action, actionFrames, frameRate, repeat] of specs) {
+    const key = maleAnimationKey(rangerId, action);
+    if (scene.anims.exists(key) || !actionFrames.length) continue;
+    scene.anims.create({ key, frames: actionFrames, frameRate, repeat });
+  }
 }

@@ -33,16 +33,16 @@ export class PauseMenuView {
       fontSize: '9px',
       color: '#d9a9ff',
     });
-    this.#addText('JUGADOR 1 · ATAQUE F · TELETRANSPORTE G · DASH C', 96, {
-      fontSize: '9px',
+    this.#addText('J1 · ATAQUE F · TELETRANSPORTE G · DASH C · BLOQUEO V · ESQUIVA X · ESPECIAL Z', 96, {
+      fontSize: '8px',
       color: '#d9a9ff',
     });
     this.#addText('JUGADOR 2 · ←/→/I/O TERRENO · ↑/↓ VUELO', 116, {
       fontSize: '9px',
       color: '#ffc17e',
     });
-    this.#addText('JUGADOR 2 · ATAQUE L · TELETRANSPORTE K · DASH M', 136, {
-      fontSize: '9px',
+    this.#addText('J2 · ATAQUE L · TELETRANSPORTE K · DASH M · BLOQUEO N · ESQUIVA J · ESPECIAL H', 136, {
+      fontSize: '8px',
       color: '#ffc17e',
     });
     this.#addText('OBJETOS · VIDA · FURIA · RAPIDEZ · ESCUDO', 164, {

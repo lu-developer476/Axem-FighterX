@@ -95,6 +95,16 @@ describe('FighterAnimator', () => {
     expect(sprite.play).toHaveBeenLastCalledWith('axem-orange-teleport');
     animator.update(fighter('hurt'));
     expect(sprite.play).toHaveBeenLastCalledWith('axem-orange-hurt-combo');
+    animator.update(fighter('block'));
+    expect(sprite.play).toHaveBeenLastCalledWith('axem-orange-guard');
+    animator.update(fighter('block-hit'));
+    expect(sprite.play).toHaveBeenLastCalledWith('axem-orange-guard-hit');
+    animator.update(fighter('dodge'));
+    expect(sprite.play).toHaveBeenLastCalledWith('axem-orange-roll');
+    animator.update(fighter('land'));
+    expect(sprite.play).toHaveBeenLastCalledWith('axem-orange-land');
+    animator.update(fighter('special-attack'));
+    expect(sprite.play).toHaveBeenLastCalledWith('axem-orange-special-attack');
     animator.update(fighter('idle', { powerUps: { fury: 3000 } }));
     expect(sprite.play).toHaveBeenLastCalledWith('axem-orange-charge');
   });

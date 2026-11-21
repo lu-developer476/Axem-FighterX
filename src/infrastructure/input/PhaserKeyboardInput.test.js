@@ -13,6 +13,9 @@ describe('Controles de teclado', () => {
       attack: 'F',
       teleport: 'G',
       dash: 'C',
+      block: 'V',
+      dodge: 'X',
+      specialAttack: 'Z',
     });
   });
 
@@ -27,6 +30,9 @@ describe('Controles de teclado', () => {
       attack: 'L',
       teleport: 'K',
       dash: 'M',
+      block: 'N',
+      dodge: 'J',
+      specialAttack: 'H',
     });
   });
 });

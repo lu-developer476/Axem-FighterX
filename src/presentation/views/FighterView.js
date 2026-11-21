@@ -18,6 +18,7 @@ export class FighterView {
    * @param {import('../../domain/entities/Fighter.js').Fighter} fighter
    */
   constructor(scene, fighter) {
+    this.scene = scene;
     this.fighter = fighter;
     this.data = characterAnimationData[fighter.id];
     const fallbackTexture = spriteKeyFor(fighter.id, fighter.gender);
@@ -60,5 +61,27 @@ export class FighterView {
     this.shadow.setScale(shadowScale * flightScale, shadowScale * flightScale);
     this.shadow.setDepth(laneDepth - 1);
     this.shadow.setAlpha(pose.alpha * (0.4 - altitudeRatio * 0.2));
+  }
+
+  showVictory() {
+    this.animator.showVictory();
+    if (this.fighter.gender !== 'male') {
+      this.victoryTween = this.scene.tweens.add({
+        targets: this.sprite,
+        y: this.sprite.y - 8,
+        angle: -5,
+        duration: 180,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    }
+  }
+
+  clearVictory() {
+    this.victoryTween?.stop();
+    this.victoryTween = null;
+    this.sprite.setAngle(0);
+    this.animator.clearForcedState();
   }
 }

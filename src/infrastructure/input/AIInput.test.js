@@ -192,7 +192,9 @@ describe('AIInput: táctica y progresión', () => {
     const input = new AIInput(fighter, opponent);
 
     expect(input.readIntent()).toEqual({
-      x: 0, y: 0, z: 0, attack: false, teleport: false, dash: false,
+      x: 0, y: 0, z: 0,
+      attack: false, specialAttack: false, block: false, dodge: false,
+      teleport: false, dash: false,
     });
   });
 });

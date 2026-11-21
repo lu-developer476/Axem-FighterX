@@ -149,7 +149,7 @@ export class Match {
       if (!box || !sameDepthLane || !rectsOverlap(box, target.hurtbox)) continue;
       const point = overlapCenter(box, target.hurtbox);
       const landed = target.takeHit({
-        damage: attacker.rollAttackDamage(this.rng()),
+        damage: attacker.rollAttackDamage(this.rng(), attacker.state === 'special-attack'),
         fromDirection: attacker.facing,
       });
       if (!landed) continue;
@@ -159,6 +159,7 @@ export class Match {
         attackerId: attacker.id,
         targetId: target.id,
         damage: target.lastDamageTaken,
+        blocked: target.lastHitBlocked,
         x: point.x,
         y: point.y,
         facing: attacker.facing,

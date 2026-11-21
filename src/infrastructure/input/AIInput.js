@@ -72,7 +72,7 @@ const PROFILES = Object.freeze([
   }),
 ]);
 
-const NEUTRAL = Object.freeze({ x: 0, y: 0, z: 0, attack: false, teleport: false, dash: false });
+const NEUTRAL = Object.freeze({ x: 0, y: 0, z: 0, attack: false, specialAttack: false, block: false, dodge: false, teleport: false, dash: false });
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const sign = (value) => Math.sign(value) || 0;
 
@@ -181,7 +181,13 @@ export class AIInput {
       && now >= this.nextTeleportAt;
     if (teleport) this.nextTeleportAt = now + this.profile.teleportCooldownMs;
 
-    return { x, y, z, attack, teleport };
+    const block = this.#isAttackThreatening()
+      && fighter.canAct
+      && facingOpponent
+      && distanceX <= reach + 28
+      && !attack;
+
+    return { x, y, z, attack, teleport, block };
   }
 
   #observeOpponent(now) {

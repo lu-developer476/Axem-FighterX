@@ -79,6 +79,15 @@ export class RaceScene extends Phaser.Scene {
     const accelerate = this.keys.right.isDown || this.keys.d.isDown;
     const brake = this.keys.left.isDown || this.keys.a.isDown;
     const boosting = this.keys.space.isDown && this.boost > 0;
+    const playerMode = boosting
+      ? 'boost'
+      : brake && !accelerate
+        ? 'brake'
+        : accelerate
+          ? 'accelerate'
+          : 'coast';
+    this.#setRacerMode(this.player, playerMode);
+    this.#setRacerMode(this.rival, 'coast');
     const speed = Phaser.Math.Clamp(184 + (accelerate ? 88 : 0) - (brake ? 84 : 0) + (boosting ? 115 : 0), 82, 387);
     const frameTime = Math.min(delta, 50) / 1000;
 
@@ -99,8 +108,9 @@ export class RaceScene extends Phaser.Scene {
       this.#trailParticle(this.player, boosting ? KENNEY_FX.spark.key : KENNEY_FX.dirt.key, boosting ? 0x99dcff : 0xc4b28e);
     }
 
+    const playerWon = this.distance >= this.rivalDistance;
     if (this.distance >= RACE_LENGTH || this.rivalDistance >= RACE_LENGTH) {
-      this.#finish(this.distance >= this.rivalDistance ? '¡GANASTE, AXEM VIOLETA!' : 'AXEM NARANJA GANA LA CARRERA');
+      this.#finish(playerWon);
     }
   }
 
@@ -110,10 +120,34 @@ export class RaceScene extends Phaser.Scene {
       .setOrigin(0.5, 0.78)
       .setScale(0.57)
       .setDepth(35);
-    if (this.anims.exists(key)) racer.play(key);
     racer.setData('laneY', y);
     racer.setData('tint', tint);
+    racer.setData('rangerId', rangerId);
+    racer.setData('mode', null);
+    this.#setRacerMode(racer, 'idle');
     return racer;
+  }
+
+  #setRacerMode(racer, mode) {
+    const action = mode === 'coast' ? 'bike'
+      : mode === 'idle' ? 'bike-idle'
+        : mode === 'victory' ? 'bike-victory'
+          : mode === 'defeat' ? 'bike-defeat'
+            : 'bike-' + mode;
+    if (racer.getData('mode') !== mode) {
+      const key = maleAnimationKey(racer.getData('rangerId'), action);
+      const fallback = maleAnimationKey(racer.getData('rangerId'), 'bike');
+      racer.play(this.anims.exists(key) ? key : fallback, true);
+      racer.setData('mode', mode);
+    }
+    const angle = mode === 'accelerate' ? -4
+      : mode === 'brake' ? 6
+        : mode === 'boost' ? -9
+          : mode === 'victory' ? -12
+            : mode === 'defeat' ? 12
+              : 0;
+    racer.setAngle(angle);
+    racer.setAlpha(mode === 'defeat' ? 0.82 : 1);
   }
 
   #positionRacer(racer, distance) {
@@ -187,9 +221,13 @@ export class RaceScene extends Phaser.Scene {
     });
   }
 
-  #finish(message) {
+  #finish(playerWon) {
     this.finished = true;
-    this.status.setText(message).setFontSize(11).setColor('#fff0c9');
+    this.#setRacerMode(this.player, playerWon ? 'victory' : 'defeat');
+    this.#setRacerMode(this.rival, playerWon ? 'defeat' : 'victory');
+    this.status.setText(playerWon ? '¡GANASTE, AXEM VIOLETA!' : 'AXEM NARANJA GANA LA CARRERA')
+      .setFontSize(11)
+      .setColor('#fff0c9');
     this.controls.setText('R · VOLVER A CORRER     ENTER · MENÚ     ESC · MENÚ').setColor('#fff0c9');
     this.cameras.main.flash(150, 255, 246, 216);
   }

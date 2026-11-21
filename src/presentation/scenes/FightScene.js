@@ -257,6 +257,7 @@ export class FightScene extends Phaser.Scene {
   #startNextRound() {
     if (!this.pendingNextRound) return;
     this.pendingNextRound = false;
+    this.views.forEach((view) => view.clearVictory());
     this.match.restart();
     const nextAiLevel = this.roundSeries.completedRounds + 1;
     this.aiInputs.forEach((controller) => controller.setDifficulty(nextAiLevel));
@@ -271,13 +272,16 @@ export class FightScene extends Phaser.Scene {
   }
 
   #showResult(winnerId) {
-    const winner = this.match.fighters.find((fighter) => fighter.id === winnerId);
+    const winnerIndex = this.match.fighters.findIndex((fighter) => fighter.id === winnerId);
+    const winner = winnerIndex >= 0 ? this.match.fighters[winnerIndex] : null;
+    if (winner) this.views[winnerIndex]?.showVictory();
     const outcome = winnerId ? winnerId + 'Wins' : 'draw';
     const dialogue = this.stageDefinition.resultDialogue[outcome] ?? this.stageDefinition.resultDialogue.draw;
     this.hud.showResult(winner ? winner.name : null, dialogue);
   }
 
   #restart() {
+    this.views.forEach((view) => view.clearVictory());
     this.match.restart();
     this.roundSeries?.reset();
     this.aiInputs.forEach((controller) => controller.setDifficulty(1));

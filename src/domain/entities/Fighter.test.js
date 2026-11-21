@@ -239,3 +239,68 @@ describe('Fighter: teletransporte', () => {
     expect(fighter.canTeleport).toBe(true);
   });
 });
+
+
+describe('Fighter: defensa, esquiva y ataque especial', () => {
+  it('mantiene el bloqueo y reduce el daño al recibir un golpe de frente', () => {
+    const fighter = make('violet', 300);
+    fighter.facing = -1;
+    fighter.update({ ...idle, block: true }, 16);
+    expect(fighter.state).toBe(FighterState.BLOCK);
+    expect(fighter.takeHit({ damage: 20, fromDirection: 1 })).toBe(true);
+    expect(fighter.lastHitBlocked).toBe(true);
+    expect(fighter.lastDamageTaken).toBe(4);
+    expect(fighter.health).toBe(96);
+    expect(fighter.state).toBe(FighterState.BLOCK_HIT);
+    run(fighter, { ...idle, block: true }, TIMINGS.blockHitMs + 16);
+    expect(fighter.state).toBe(FighterState.BLOCK);
+  });
+
+  it('no bloquea un golpe que llega desde atrás', () => {
+    const fighter = make('violet', 300);
+    fighter.facing = 1;
+    fighter.update({ ...idle, block: true }, 16);
+    expect(fighter.takeHit({ damage: 20, fromDirection: 1 })).toBe(true);
+    expect(fighter.lastHitBlocked).toBe(false);
+    expect(fighter.health).toBe(80);
+    expect(fighter.state).toBe(FighterState.HURT);
+  });
+
+  it('la esquiva tiene desplazamiento propio, invulnerabilidad breve y enfriamiento', () => {
+    const fighter = make('violet', 300);
+    const initialX = fighter.position.x;
+    fighter.update({ ...idle, dodge: true }, 80);
+    expect(fighter.state).toBe(FighterState.DODGE);
+    expect(fighter.position.x).toBeLessThan(initialX);
+    expect(fighter.isInvulnerable).toBe(true);
+    expect(fighter.takeHit({ damage: 10, fromDirection: 1 })).toBe(false);
+    run(fighter, idle, 400);
+    expect(fighter.state).toBe(FighterState.IDLE);
+    fighter.update({ ...idle, dodge: true }, 32);
+    expect(fighter.state).toBe(FighterState.IDLE);
+  });
+
+  it('el ataque especial tiene anticipación, hitbox y daño superior con enfriamiento', () => {
+    const fighter = make('violet', 300);
+    expect(fighter.startSpecialAttack()).toBe(true);
+    expect(fighter.state).toBe(FighterState.SPECIAL_ATTACK);
+    expect(fighter.attackHitbox).toBeNull();
+    expect(fighter.rollAttackDamage(0.999, true)).toBe(7);
+    run(fighter, idle, TIMINGS.specialAttack.windupMs + 16);
+    expect(fighter.attackHitbox).not.toBeNull();
+    expect(fighter.startSpecialAttack()).toBe(false);
+    run(fighter, idle, TIMINGS.specialAttack.activeMs + TIMINGS.specialAttack.recoveryMs + 32);
+    expect(fighter.state).toBe(FighterState.IDLE);
+    expect(fighter.startSpecialAttack()).toBe(false);
+  });
+
+  it('reproduce el estado de aterrizaje al tocar el suelo', () => {
+    const fighter = make('violet', 300);
+    fighter.position.z = 30;
+    fighter.update({ ...idle, z: -1 }, 2000);
+    expect(fighter.position.z).toBe(0);
+    expect(fighter.state).toBe(FighterState.LAND);
+    run(fighter, idle, TIMINGS.landMs + 32);
+    expect(fighter.state).toBe(FighterState.IDLE);
+  });
+});

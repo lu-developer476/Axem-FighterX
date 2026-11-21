@@ -183,10 +183,10 @@ La carrera de motos tiene cuatro carriles: J1 y tres rivales controlados por IA.
 
 ## Música
 
-- Menú: `mecha-collection`.
-- Combates: `cathedral`.
-- Carrera de motos: `dark-music-final`.
-- Carrera terrestre: `slow-dark-music`.
+- Menú: `menu--cathedral`.
+- Combates: `combat--dark-music-final`.
+- Carrera de motos: `race--mecha-collection`.
+- Carrera terrestre: `race--slow-dark-music`.
 
 Los roles se asignan de forma explícita en `src/infrastructure/audio/GameMusic.js`; los archivos originales permanecen en la carpeta común de música para no duplicar audio.
 

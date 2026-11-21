@@ -15,6 +15,14 @@ const PALETTE_SOURCES = Object.freeze({
   male: [[0, 25], [335, 360]],
   female: [[300, 360]],
 });
+// Estas salidas femeninas contienen correcciones manuales de paleta validadas.
+// Se preservan desde el repositorio para que pretest/prebuild no las regenere
+// desde Axem Pink y sobrescriba los ajustes de Orange y Violet.
+const FEMALE_PRESERVED_PALETTE_ASSETS = new Set([
+  'spritesheet.png',
+  'battle-pose.png',
+  'levitate.png',
+]);
 const BASE_SIZE = Object.freeze({ width: 53, height: 83 });
 const ACTION_GIF_SIZE = Object.freeze({ width: 150, height: 100 });
 const SEQUENCE_GIF_SCALE = 1.75;
@@ -1136,7 +1144,13 @@ async function buildGender(gender) {
       for (const file of files) {
         const outputName = file.replace(/^axem-pink-/, '');
         let corrected;
-        if (file === 'axem-pink-pose.png') {
+        if (FEMALE_PRESERVED_PALETTE_ASSETS.has(outputName)) {
+          // Estas tres imágenes fueron ajustadas manualmente y están versionadas.
+          // No se recalculan desde la referencia porque eso revierte las paletas.
+          const preservedPath = path.join(RESULTS(gender, color), outputName);
+          corrected = await fs.readFile(preservedPath);
+          console.log('Se conserva la paleta femenina ajustada: ' + path.relative(ROOT, preservedPath));
+        } else if (file === 'axem-pink-pose.png') {
           // La pose final del usuario es la fuente canónica, no una reconstrucción.
           corrected = canonicalPose;
         } else {
@@ -1148,7 +1162,9 @@ async function buildGender(gender) {
           corrected = await harmonizeFemalePalette(recolored);
         }
         parts.push(corrected);
-        await writeResult(gender, color, outputName, corrected);
+        if (!FEMALE_PRESERVED_PALETTE_ASSETS.has(outputName)) {
+          await writeResult(gender, color, outputName, corrected);
+        }
       }
       baseSource = canonicalPose;
     }

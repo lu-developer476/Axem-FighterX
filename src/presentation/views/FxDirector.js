@@ -300,6 +300,22 @@ export class FxDirector {
     return sprite;
   }
 
+  /** Reproduce el atlas animado de humo blanco y limpia el sprite al finalizar. */
+  #playWhitePuff(x, y, scale = 0.12, depth = FX_DEPTH - 130) {
+    const textureKey = 'kenney-white-puff';
+    const animationKey = 'kenney-white-puff-animation';
+    if (!this.scene.textures.exists(textureKey) || !this.scene.anims.exists(animationKey)) return null;
+
+    const sprite = this.scene.add
+      .sprite(Math.round(x), Math.round(y), textureKey)
+      .setScale(scale)
+      .setAlpha(0.88)
+      .setDepth(depth);
+    sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => sprite.destroy());
+    sprite.play(animationKey);
+    return sprite;
+  }
+
   #assetPop(name, x, y, { tint = 0xffffff, scale = 1, duration = 560, depth = FX_DEPTH, flipX = false } = {}) {
     const asset = KENNEY_FX[name];
     if (!asset || !this.scene.textures.exists(asset.key)) return null;

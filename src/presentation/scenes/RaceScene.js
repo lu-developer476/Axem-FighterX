@@ -77,6 +77,8 @@ export class RaceScene extends Phaser.Scene {
     this.boost = 100;
     this.countdownMs = COUNTDOWN_MS;
     this.finished = false;
+    this.selectingCharacter = true;
+    this.selectedRangerId = RANGER_IDS.VIOLET;
     this.trackOffset = 0;
     this.sceneryOffset = 0;
     this.lastSceneryChunk = -1;
@@ -101,28 +103,46 @@ export class RaceScene extends Phaser.Scene {
     this.scenery = [];
     this.#drawEnvironment();
     this.#drawTrack();
-    this.player = this.#createRacer(RANGER_IDS.VIOLET, 'J1', 0, true);
-    this.opponents = [
-      this.#createRacer(RANGER_IDS.ORANGE, 'IA 1', 1, false),
-      this.#createRacer(RANGER_IDS.ORANGE, 'IA 2', 2, false),
-      this.#createRacer(RANGER_IDS.ORANGE, 'IA 3', 3, false),
-    ];
-    this.racers = [this.player, ...this.opponents];
-    this.obstacleSprites = this.obstacles.map((obstacle) => this.add.image(0, 0, this.#obstacleTexture(obstacle.kind))
-      .setDepth(30));
     this.hud = this.add.graphics().setDepth(80);
     this.title = this.#text('CARRERA AXEM · MOTOS', GAME_WIDTH / 2, 12, '#ffe1a5', 9);
-    this.status = this.#text('3', GAME_WIDTH / 2, 112, '#fff0c9', 25);
-    this.instructions = this.#text('↑ / ↓ CAMBIAR CARRIL · → / D ACELERAR · ← / A FRENAR · ESPACIO NITRO',
-      GAME_WIDTH / 2, GAME_HEIGHT - 7, '#f0dfc2', 5);
+    this.status = this.#text('ELEGÍ TU AXEM', GAME_WIDTH / 2, 48, '#fff0c9', 10);
+    this.instructions = this.#text('← / → ELEGIR · ENTER CONFIRMAR · ESC MENÚ',
+      GAME_WIDTH / 2, GAME_HEIGHT - 7, '#f0dfc2', 6);
     this.distanceLabel = this.#text('J1 · 0 M', 63, 18, '#e7dcff', 5);
     this.nitroLabel = this.#text('NITRO', GAME_WIDTH - 48, 8, '#a8e8ff', 4);
-    this.#drawHud();
+
+    this.selectionPreview = this.add.sprite(GAME_WIDTH / 2, 94,
+      spriteKeyFor(RANGER_IDS.VIOLET, 'female'))
+      .setOrigin(0.5, 0.82)
+      .setScale(0.9)
+      .setDepth(42);
+    this.selectionVehicle = this.add.image(GAME_WIDTH / 2, 103, 'bike-race-motorcycle')
+      .setOrigin(0.5, 0.75)
+      .setScale(0.85)
+      .setDepth(40);
+    this.selectionLabel = this.#text('J1 · AXEM VIOLETA · FEMENINO',
+      GAME_WIDTH / 2, 134, '#e3d4ff', 7);
+    this.#refreshSelectionPreview();
   }
+
 
   update(time, delta) {
     if (Phaser.Input.Keyboard.JustDown(this.keys.escape)) {
       this.scene.start('MenuScene');
+      return;
+    }
+    if (this.selectingCharacter) {
+      const choosePrevious = Phaser.Input.Keyboard.JustDown(this.keys.left) ||
+        Phaser.Input.Keyboard.JustDown(this.keys.a);
+      const chooseNext = Phaser.Input.Keyboard.JustDown(this.keys.right) ||
+        Phaser.Input.Keyboard.JustDown(this.keys.d);
+      if (choosePrevious || chooseNext) {
+        this.selectedRangerId = this.selectedRangerId === RANGER_IDS.VIOLET
+          ? RANGER_IDS.ORANGE
+          : RANGER_IDS.VIOLET;
+        this.#refreshSelectionPreview();
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) this.#startRace();
       return;
     }
     if (this.finished) {
@@ -170,6 +190,45 @@ export class RaceScene extends Phaser.Scene {
       const sorted = [...this.racers].sort((a, b) => b.distance - a.distance);
       this.#finish(sorted[0] === this.player);
     }
+  }
+
+  #refreshSelectionPreview() {
+    const isViolet = this.selectedRangerId === RANGER_IDS.VIOLET;
+    this.selectionPreview.stop();
+    if (isViolet) {
+      this.selectionPreview.setTexture(spriteKeyFor(RANGER_IDS.VIOLET, 'female')).setScale(0.9);
+      this.selectionVehicle.setVisible(true);
+      this.selectionLabel.setText('J1 · AXEM VIOLETA · FEMENINO').setColor('#e3d4ff');
+    } else {
+      const bikeKey = maleAnimationKey(RANGER_IDS.ORANGE, 'bike');
+      this.selectionPreview.setTexture(bikeKey).setScale(0.9);
+      this.selectionVehicle.setVisible(false);
+      if (this.anims.exists(bikeKey)) this.selectionPreview.play(bikeKey);
+      this.selectionLabel.setText('J1 · AXEM NARANJA · MASCULINO').setColor('#ffc58e');
+    }
+  }
+
+  #startRace() {
+    this.selectingCharacter = false;
+    this.selectionPreview.destroy();
+    this.selectionVehicle.destroy();
+    this.selectionLabel.destroy();
+    this.status.setText('3').setFontSize(25);
+    this.instructions.setText('↑ / ↓ CAMBIAR CARRIL · → / D ACELERAR · ← / A FRENAR · ESPACIO NITRO')
+      .setFontSize(5);
+
+    const opponentId = this.selectedRangerId === RANGER_IDS.VIOLET
+      ? RANGER_IDS.ORANGE
+      : RANGER_IDS.VIOLET;
+    this.player = this.#createRacer(this.selectedRangerId, 'J1', 0, true);
+    this.opponents = [1, 2, 3].map((number, index) =>
+      this.#createRacer(opponentId, 'IA ' + number, index + 1, false),
+    );
+    this.racers = [this.player, ...this.opponents];
+    this.obstacleSprites = this.obstacles.map((obstacle) =>
+      this.add.image(0, 0, this.#obstacleTexture(obstacle.kind)).setDepth(30),
+    );
+    this.#drawHud();
   }
 
   #createRacer(rangerId, label, lane, isPlayer) {

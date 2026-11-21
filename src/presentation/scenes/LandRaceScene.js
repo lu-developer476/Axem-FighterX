@@ -21,7 +21,7 @@ export const LAND_RACE_OBSTACLES = Object.freeze([
   Object.freeze({ distance: 1080, action: 'jump', type: 'hurdle' }),
 ]);
 
-const ACTION_DURATION_MS = Object.freeze({ jump: 680, roll: 560 });
+const ACTION_DURATION_MS = Object.freeze({ jump: 680, roll: 650 });
 
 function createTexture(scene, key, width, height, draw) {
   if (scene.textures.exists(key)) return;

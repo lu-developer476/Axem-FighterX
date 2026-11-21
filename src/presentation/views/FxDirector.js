@@ -146,7 +146,6 @@ export class FxDirector {
     this.#play('burst', x, y, { scale: 1.55, depth: FX_DEPTH + 2 });
     this.#assetPop('flame', x, y - 4, { tint: 0xff9a52, scale: 1.1 });
     this.#assetPop('smoke', x, y - 8, { tint: 0xb9b7c5, scale: 1.3, depth: FX_DEPTH - 1, duration: 780 });
-    this.#playWhitePuff(x, y - 10, 0.22, 760);
     this.#leaveScorch(x, ARENA.groundY - 3);
     this.#play('shockwave', x, y + 18, { scale: 1.6 });
     [[-18, -10, 90], [16, 8, 170], [-6, 20, 250]].forEach(([dx, dy, delay]) => {
@@ -299,24 +298,6 @@ export class FxDirector {
     sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => sprite.destroy());
     sprite.play(fxAnimKey(name));
     return sprite;
-  }
-
-  #playWhitePuff(x, y, scale, duration) {
-    if (!this.scene.textures.exists('kenney-white-puff')) return null;
-    const puff = this.scene.add.sprite(Math.round(x), Math.round(y), 'kenney-white-puff', 0)
-      .setScale(scale)
-      .setAlpha(0.68)
-      .setDepth(FX_DEPTH - 2);
-    puff.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => puff.destroy());
-    puff.play('kenney-white-puff-animation');
-    this.scene.tweens.add({
-      targets: puff,
-      scale: scale * 1.2,
-      alpha: 0,
-      duration,
-      ease: 'Quad.easeOut',
-    });
-    return puff;
   }
 
   #assetPop(name, x, y, { tint = 0xffffff, scale = 1, duration = 560, depth = FX_DEPTH, flipX = false } = {}) {

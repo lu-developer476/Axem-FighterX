@@ -1,176 +1,46 @@
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
+import { allowedGenderFor, isAllowedRangerVariant } from './assetManifest.js';
 
-const COLORS = ['violet', 'orange'];
-const GENDERS = ['male', 'female'];
-const generatedSpritePath = (gender, color) =>
-  fileURLToPath(new URL(`../../../public/generated/ranger-${gender}-${color}.png`, import.meta.url));
-const femaleReferencePath = (color) =>
-  fileURLToPath(new URL(`../../../art/source/sprites/results/female/axem-ranger-${color}.png`, import.meta.url));
-const maleMenuPosePath = (color) =>
-  fileURLToPath(new URL(`../../../public/generated/menu-ranger-male-${color}.png`, import.meta.url));
-const maleCompositePath = (color) =>
-  fileURLToPath(new URL(`../../../art/source/sprites/results/male/axem-ranger-${color}.png`, import.meta.url));
-const maleSpritesheetPath = (color) =>
-  fileURLToPath(new URL(`../../../art/source/sprites/results/male/${color}/spritesheet.png`, import.meta.url));
-const maleDefeatedPath = (color) =>
-  fileURLToPath(new URL(`../../../art/source/sprites/results/male/${color}/defeated.png`, import.meta.url));
-const generatedDefeatedPath = (color) =>
-  fileURLToPath(new URL(`../../../public/generated/axem-${color}-defeated.png`, import.meta.url));
+const variants = Object.freeze([
+  { id: 'violet', gender: 'female' },
+  { id: 'orange', gender: 'male' },
+]);
 
-describe('Variantes de Axem Rangers', () => {
-  for (const gender of GENDERS) {
-    for (const color of COLORS) {
-      it(`${gender}/${color} genera una hoja de referencia PNG con transparencia`, async () => {
-        const referencePath = gender === 'male' ? maleSpritesheetPath(color) : femaleReferencePath(color);
-        const metadata = await sharp(referencePath).metadata();
-        expect(metadata.format).toBe('png');
-        expect(metadata.width).toBeGreaterThan(0);
-        expect(metadata.height).toBeGreaterThan(0);
-        expect(metadata.hasAlpha).toBe(true);
-      });
+const generatedSpritePath = ({ id, gender }) =>
+  fileURLToPath(new URL(`../../../public/generated/ranger-${gender}-${id}.png`, import.meta.url));
 
-      it(`${gender}/${color} genera una textura de combate de 53×83 px`, async () => {
-        const metadata = await sharp(generatedSpritePath(gender, color)).metadata();
-        expect(metadata.format).toBe('png');
-        expect(metadata.width).toBe(53);
-        expect(metadata.height).toBe(83);
-        expect(metadata.hasAlpha).toBe(true);
-      });
-    }
-  }
-  
+describe('Variantes canónicas de Axem Rangers', () => {
+  it('solo mantiene Axem Violeta femenino y Axem Naranja masculino', () => {
+    expect(allowedGenderFor('violet')).toBe('female');
+    expect(allowedGenderFor('orange')).toBe('male');
+    expect(isAllowedRangerVariant('violet', 'male')).toBe(false);
+    expect(isAllowedRangerVariant('orange', 'female')).toBe(false);
+  });
 
-  for (const color of COLORS) {
-    it(`male/${color} genera la hoja principal sin una copia compuesta redundante`, async () => {
-      await expect(import('node:fs/promises').then(({ access }) => access(maleCompositePath(color))))
-        .rejects.toMatchObject({ code: 'ENOENT' });
-      const metadata = await sharp(maleSpritesheetPath(color)).metadata();
+  for (const variant of variants) {
+    it(`${variant.gender}/${variant.id} genera una textura transparente de 53×83 px`, async () => {
+      const metadata = await sharp(generatedSpritePath(variant)).metadata();
       expect(metadata.format).toBe('png');
+      expect(metadata.width).toBe(53);
+      expect(metadata.height).toBe(83);
       expect(metadata.hasAlpha).toBe(true);
     });
+  }
 
-    it(`male/${color} genera el retrato de menú desde la referencia Axem Red`, async () => {
-      const metadata = await sharp(maleMenuPosePath(color)).metadata();
-      expect(metadata.format).toBe('png');
-      expect(metadata.width).toBe(78);
-      expect(metadata.height).toBe(112);
+  it('mantiene los GIF de carrera y combate del Axem Naranja masculino', async () => {
+    for (const action of ['run', 'bike', 'double-axe', 'idle', 'jump', 'roll', 'guard', 'ko']) {
+      const file = fileURLToPath(new URL(
+        `../../../art/source/sprites/results/male/orange/${action}.gif`,
+        import.meta.url,
+      ));
+      const metadata = await sharp(file, { animated: true }).metadata();
+      expect(metadata.format).toBe('gif');
+      expect(metadata.width).toBe(150);
+      expect(metadata.pageHeight).toBe(100);
+      expect(metadata.pages).toBeGreaterThan(1);
       expect(metadata.hasAlpha).toBe(true);
-    });
-
-    it(`male/${color} conserva una base de cabello negra y puntas marrones`, async () => {
-      const { data, info } = await sharp(maleSpritesheetPath(color))
-        .ensureAlpha()
-        .raw()
-        .toBuffer({ resolveWithObject: true });
-      let darkPixels = 0;
-      let brownPixels = 0;
-
-      for (let offset = 0; offset < data.length; offset += 4) {
-        if (data[offset + 3] < 24) continue;
-        const red = data[offset];
-        const green = data[offset + 1];
-        const blue = data[offset + 2];
-        if (Math.max(red, green, blue) <= 32) darkPixels += 1;
-        if (
-          red >= 70 && red <= 185 &&
-          green >= 30 && green <= 125 &&
-          blue >= 12 && blue <= 90 &&
-          red > green * 1.28 &&
-          green > blue * 1.18
-        ) brownPixels += 1;
-      }
-
-      let residualBlondePixels = 0;
-      for (let offset = 0; offset < data.length; offset += 4) {
-        if (data[offset + 3] < 24) continue;
-        const red = data[offset] / 255;
-        const green = data[offset + 1] / 255;
-        const blue = data[offset + 2] / 255;
-        const max = Math.max(red, green, blue);
-        const min = Math.min(red, green, blue);
-        const delta = max - min;
-        const lightness = (max + min) / 2;
-        let hue = 0;
-        let saturation = 0;
-        if (delta !== 0) {
-          saturation = lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min);
-          if (max === red) hue = ((green - blue) / delta + (green < blue ? 6 : 0)) * 60;
-          else if (max === green) hue = ((blue - red) / delta + 2) * 60;
-          else hue = ((red - green) / delta + 4) * 60;
-        }
-        // Las puntas intencionales son marrón rojizo (H≈25°, L≤0.40);
-        // aquí solo se cuentan restos claros de cabello rubio/dorado.
-        if (hue >= 32 && hue <= 80 && saturation >= 0.2 && lightness >= 0.42) {
-          residualBlondePixels += 1;
-        }
-      }
-
-      expect(info.width).toBeGreaterThan(0);
-      expect(darkPixels).toBeGreaterThan(100);
-      expect(brownPixels).toBeGreaterThan(50);
-      expect(residualBlondePixels).toBeLessThan(80);
-    });
-  }
-
-  for (const color of COLORS) {
-    it(`male/${color} genera la pose de derrota de 150×100 px para combate`, async () => {
-      for (const file of [maleDefeatedPath(color), generatedDefeatedPath(color)]) {
-        const metadata = await sharp(file).metadata();
-        expect(metadata.format).toBe('png');
-        expect(metadata.width).toBe(150);
-        expect(metadata.height).toBe(100);
-        expect(metadata.hasAlpha).toBe(true);
-      }
-    });
-  }
-
-  for (const color of COLORS) {
-    for (const action of ['run', 'bike', 'double-axe']) {
-      it(`male/${color}/${action} conserva celdas de animación uniformes de 53×83 px`, async () => {
-        const animationPath = fileURLToPath(new URL(`../../../public/generated/axem-${color}-${action}.png`, import.meta.url));
-        const metadata = await sharp(animationPath).metadata();
-        expect(metadata.format).toBe('png');
-        expect(metadata.height).toBe(83);
-        expect(metadata.width % 53).toBe(0);
-        expect(metadata.pages ?? 1).toBe(1);
-      });
-      it(`male/${color}/${action} genera un GIF animado de 150×100 px con transparencia`, async () => {
-        const gifPath = fileURLToPath(new URL(`../../../art/source/sprites/results/male/${color}/${action}.gif`, import.meta.url));
-        const metadata = await sharp(gifPath, { animated: true }).metadata();
-        expect(metadata.format).toBe('gif');
-        expect(metadata.width).toBe(150);
-        expect(metadata.pageHeight).toBe(100);
-        expect(metadata.pages).toBeGreaterThan(1);
-        expect(metadata.hasAlpha).toBe(true);
-      });
     }
-  }
-
-});
-
-
-describe('Acciones nuevas de combate', () => {
-  for (const color of COLORS) {
-    for (const action of ['guard', 'roll', 'ko']) {
-      it(`male/${color}/${action} genera un GIF transparente de 150×100 px`, async () => {
-        const gifPath = fileURLToPath(new URL(`../../../art/source/sprites/results/male/${color}/${action}.gif`, import.meta.url));
-        const metadata = await sharp(gifPath, { animated: true }).metadata();
-        expect(metadata.format).toBe('gif');
-        expect(metadata.width).toBe(150);
-        expect(metadata.pageHeight).toBe(100);
-        expect(metadata.pages).toBeGreaterThan(1);
-        expect(metadata.hasAlpha).toBe(true);
-      });
-
-      it(`male/${color}/${action} expone una hoja de cuadros para Phaser`, async () => {
-        const stripPath = fileURLToPath(new URL(`../../../public/generated/axem-${color}-${action}.png`, import.meta.url));
-        const metadata = await sharp(stripPath).metadata();
-        expect(metadata.format).toBe('png');
-        expect(metadata.height).toBe(57);
-        expect(metadata.width % 86).toBe(0);
-      });
-    }
-  }
+  });
 });

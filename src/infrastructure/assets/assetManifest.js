@@ -1,5 +1,4 @@
 export const RANGER_GENDER_BY_ID = Object.freeze({ violet: 'female', orange: 'male' });
-export const RANGER_GENDERS = Object.freeze(['male', 'female']);
 export const DEFAULT_RANGER_GENDER = 'male';
 export const allowedGenderFor = (rangerId) => RANGER_GENDER_BY_ID[rangerId] ?? null;
 export const isAllowedRangerVariant = (rangerId, gender) => allowedGenderFor(rangerId) === gender;

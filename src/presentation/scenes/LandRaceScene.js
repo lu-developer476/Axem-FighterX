@@ -307,7 +307,8 @@ export class LandRaceScene extends Phaser.Scene {
       ? spriteKeyFor(racer.rangerId, 'female')
       : maleAnimationKey(racer.rangerId, 'idle');
     const selectedKey = !isFemaleViolet && this.anims.exists(animationKey) ? animationKey : fallbackKey;
-    racer.sprite.play(selectedKey, true);
+    if (isFemaleViolet) racer.sprite.setTexture(selectedKey);
+    else racer.sprite.play(selectedKey, true);
     const usesRunSheet = mode === 'run' || mode === 'walk';
     const scale = usesRunSheet ? 0.68 : 1;
     racer.sprite.setScale(scale);

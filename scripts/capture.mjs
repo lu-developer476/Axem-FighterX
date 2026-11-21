@@ -225,6 +225,19 @@ await shot('29-carrera-terrestre');
 await tap('Escape');
 await wait(150);
 
+// Comprueba la carrera de motos: cuatro carriles, tres IA, obstáculos y nitro.
+await tap('ArrowDown'); // Menú → CARRERA AXEM
+await tap('Enter');
+await wait(3200); // Cuenta regresiva
+await hold('ArrowRight', 900); // Acelerar
+await tap('ArrowDown'); // Cambiar al carril inferior
+await hold('Space', 700); // Nitro
+await tap('ArrowUp'); // Volver al carril superior
+await hold('ArrowRight', 700);
+await shot('30-carrera-motos-cuatro-carriles');
+await tap('Escape');
+await wait(150);
+
 await context.close();
 await browser.close();
 

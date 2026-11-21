@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import { allowedGenderFor, isAllowedRangerVariant } from './assetManifest.js';
+import { allowedGenderFor, isAllowedRangerVariant } from '../../domain/rangers/rangerCatalog.js';
 
 const variants = Object.freeze([
   { id: 'violet', gender: 'female' },

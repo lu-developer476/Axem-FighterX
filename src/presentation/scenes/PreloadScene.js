@@ -11,6 +11,7 @@ import {
   maleAnimationUrl,
 } from '../../infrastructure/assets/assetManifest.js';
 import { GIF_ACTIONS, GIF_CELL } from '../../infrastructure/assets/characterAnimationData.js';
+import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { createStageTextures } from '../../infrastructure/graphics/StageTextureFactory.js';
 import { createAdditionalStageTextures } from '../../infrastructure/graphics/StageThemeFactory.js';

@@ -419,8 +419,9 @@ export class MenuScene extends Phaser.Scene {
     this.#beginPage('');
     this.#addHomeRangerArt();
     this.#addButton('JUGAR', 158, () => this.#showVersusModes());
-    this.#addButton('TUTORIAL', 182, () => this.#showControls());
-    this.#addButton('CRÉDITOS', 206, () => this.#showCredits());
+    this.#addButton('CARRERA AXEM', 180, () => this.scene.start('RaceScene'));
+    this.#addButton('TUTORIAL', 202, () => this.#showControls());
+    this.#addButton('CRÉDITOS', 224, () => this.#showCredits());
     this.#addFooter();
   }
 

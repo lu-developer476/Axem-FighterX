@@ -4,5 +4,6 @@ import { PreloadScene } from './presentation/scenes/PreloadScene.js';
 import { MenuScene } from './presentation/scenes/MenuScene.js';
 import { CinematicScene } from './presentation/scenes/CinematicScene.js';
 import { FightScene } from './presentation/scenes/FightScene.js';
+import { RaceScene } from './presentation/scenes/RaceScene.js';
 
-new Phaser.Game(createGameConfig([PreloadScene, MenuScene, CinematicScene, FightScene]));
+new Phaser.Game(createGameConfig([PreloadScene, MenuScene, CinematicScene, FightScene, RaceScene]));

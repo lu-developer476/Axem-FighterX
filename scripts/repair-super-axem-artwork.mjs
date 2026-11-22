@@ -150,6 +150,46 @@ function isBlackLinework(red, green, blue) {
     Math.max(red, green, blue) - Math.min(red, green, blue) <= 24;
 }
 
+function softenOrangeAlphaEdges(data, width, height, edgeAlphaFloor) {
+  let softenedPixels = 0;
+  let retainedEdgePixels = 0;
+  const isTransparent = (index) => data[index * 4 + 3] === 0;
+
+  // Solo modifica el alfa del primer píxel junto al exterior transparente.
+  // Nunca elimina píxeles ni cambia RGB, geometría, escala o resolución.
+  // El vecindario cardinal conserva el carácter nítido del pixel art.
+  for (let y = 1; y < height - 1; y += 1) {
+    for (let x = 1; x < width - 1; x += 1) {
+      const index = y * width + x;
+      const offset = index * 4;
+      const alpha = data[offset + 3];
+      if (alpha === 0) continue;
+
+      const touchesTransparency =
+        isTransparent(index - 1) ||
+        isTransparent(index + 1) ||
+        isTransparent(index - width) ||
+        isTransparent(index + width);
+      if (!touchesTransparency) continue;
+
+      retainedEdgePixels += 1;
+      if (alpha > edgeAlphaFloor) {
+        data[offset + 3] = edgeAlphaFloor;
+        softenedPixels += 1;
+      }
+    }
+  }
+  return { softenedPixels, retainedEdgePixels };
+}
+
+function countVisiblePixels(data) {
+  let count = 0;
+  for (let offset = 3; offset < data.length; offset += 4) {
+    if (data[offset] > 0) count += 1;
+  }
+  return count;
+}
+
 async function repairOrange() {
   // Orange conserva la escala y la ocupación de su upload original.
   // El ajuste de escala se aplica al derivado Red en prepare-super-rangers.mjs.
@@ -195,6 +235,21 @@ async function repairOrange() {
     }
   }
 
+  const visiblePixelsBeforeEdgeTreatment = countVisiblePixels(orangePixels);
+  const edgeTreatment = softenOrangeAlphaEdges(
+    orangePixels,
+    orangeDecoded.info.width,
+    orangeDecoded.info.height,
+    ORANGE_EDGE_OPTIONS.edgeAlphaFloor,
+  );
+  const visiblePixelsAfterEdgeTreatment = countVisiblePixels(orangePixels);
+  if (visiblePixelsAfterEdgeTreatment !== visiblePixelsBeforeEdgeTreatment) {
+    throw new Error('El suavizado de Orange eliminó píxeles visibles; se canceló la escritura.');
+  }
+  if (edgeTreatment.softenedPixels === 0 || edgeTreatment.retainedEdgePixels === 0) {
+    throw new Error('No se pudo aplicar el suavizado de alfa al borde de Orange.');
+  }
+
   const sourceBounds = boundsFromAlpha(orangePixels, orangeDecoded.info.width, orangeDecoded.info.height);
   const sourceWidth = sourceBounds.right - sourceBounds.left;
   const sourceHeight = sourceBounds.bottom - sourceBounds.top;
@@ -224,7 +279,7 @@ async function repairOrange() {
   await fs.writeFile(ORANGE_PATH, output);
   console.log('Orange conserva su escala original: lienzo=' + orangeMeta.width + '×' + orangeMeta.height +
     '; caja visible=' + JSON.stringify(resultBounds) +
-    '; fondo quitado=' + sourceBackgroundRemoved + ' px. Sin resize, crop ni deformación.');
+    '; fondo quitado=' + sourceBackgroundRemoved + ' px; bordes suavizados=' + edgeTreatment.softenedPixels + ' px; píxeles visibles preservados=' + visiblePixelsAfterEdgeTreatment + '. Sin resize, crop, blur, sharpen ni deformación.');
 }
 async function repairViolet() {
   // Se recupera la versión sin el margen superior artificial de 348 px.

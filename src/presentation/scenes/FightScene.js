@@ -261,14 +261,14 @@ export class FightScene extends Phaser.Scene {
       return;
     }
 
-    const winnerIndex = this.match.fighters.findIndex((fighter) => fighter.id === winnerId);
+    const winnerIndex = this.match.fighters.findIndex((fighter) => fighter.combatantId === winnerId);
     const result = this.roundSeries.completeRound(winnerIndex < 0 ? null : winnerIndex);
     this.hud.setRoundScore(result.completedRounds, result.totalRounds, result.wins);
 
     if (result.isComplete) {
       const championId = result.winnerIndex === null
         ? null
-        : this.match.fighters[result.winnerIndex].id;
+        : this.match.fighters[result.winnerIndex].combatantId;
       this.#showResult(championId);
       return;
     }
@@ -299,7 +299,7 @@ export class FightScene extends Phaser.Scene {
     const winnerIndex = this.match.fighters.findIndex((fighter) => fighter.id === winnerId);
     const winner = winnerIndex >= 0 ? this.match.fighters[winnerIndex] : null;
     if (winner) this.views[winnerIndex]?.showVictory();
-    const outcome = winnerId ? winnerId + 'Wins' : 'draw';
+    const outcome = winner ? winner.id + 'Wins' : 'draw';
     const dialogue = this.stageDefinition.resultDialogue[outcome] ?? this.stageDefinition.resultDialogue.draw;
     this.hud.showResult(winner ? winner.name : null, dialogue);
   }

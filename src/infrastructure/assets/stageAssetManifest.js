@@ -47,7 +47,7 @@ export function collectImageFiles(modules, keyPrefix) {
     const rootMarker = keyPrefix === 'stage-tileset-' ? '/tilesets/' : '/maps/';
     const rootIndex = normalizedPath.lastIndexOf(rootMarker);
     const relativePath = rootIndex >= 0
-      ? normalizedPath.slice(rootIndex + rootMarker.length).replace(/\\.[^.]+$/, '')
+      ? normalizedPath.slice(rootIndex + rootMarker.length).replace(/\.[^.]+$/, '')
       : parts.stem;
     const stem = slugifyAssetName(relativePath);
     if (!stem || typeof url !== 'string') continue;

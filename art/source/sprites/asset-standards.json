@@ -18,6 +18,7 @@
         "male": {
           "reference": "art/source/sprites/references/axem-red/super-axem-red.png",
           "result": "art/source/sprites/results/male/orange/super-axem-ranger-orange.png",
+          "derivedArtwork": "art/source/sprites/results/male/red/super-axem-ranger-red.png",
           "preparedSource": "public/generated/super-axem-source-male.png",
           "width": 857,
           "height": 1171,

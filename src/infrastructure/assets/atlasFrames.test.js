@@ -241,7 +241,7 @@ describe('resultados de las variantes canónicas', () => {
   });
 
   it('mantiene el sprite-sheet canónico y la pose femenina de Axem Violeta', async () => {
-    const canonical = await readFile(resultsPath('female', 'axem-ranger-violet.png'));
+    const canonical = await readFile(resultsPath('female', 'violet', 'axem-ranger-violet.png'));
     const pose = await readFile(resultsPath('female', 'violet', 'pose.png'));
     expect(pose.equals(canonical)).toBe(true);
     const metadata = await sharp(resultsPath('female', 'violet', 'spritesheet.png')).metadata();

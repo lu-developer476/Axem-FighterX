@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  collectImageFiles,
   DEFAULT_STAGE_ID,
   getStage,
   proceduralTextureKeyForTileset,
@@ -18,6 +19,19 @@ describe('Descubrimiento automático de escenarios', () => {
     expect(STAGE_MAP_ASSETS.map(({ filename }) => filename)).toContain('castle.png');
     expect(STAGE_MAP_ASSETS.map(({ filename }) => filename)).toContain('cave-1.png');
     expect(STAGE_TILESET_ASSETS.map(({ filename }) => filename)).toContain('cave1-tileset.png');
+  });
+
+  it('mantiene separados archivos con el mismo nombre en carpetas distintas y prioriza PNG por variante', () => {
+    const assets = collectImageFiles({
+      '../../../art/source/environments/maps/forest/arena.webp': '/forest/arena.webp',
+      '../../../art/source/environments/maps/forest/arena.png': '/forest/arena.png',
+      '../../../art/source/environments/maps/space/arena.png': '/space/arena.png',
+    }, 'stage-map-');
+
+    expect(assets).toHaveLength(2);
+    expect(new Set(assets.map(({ id }) => id)).size).toBe(2);
+    expect(assets.find(({ path }) => path.includes('/forest/arena.png'))?.url).toBe('/forest/arena.png');
+    expect(assets.some(({ path }) => path.includes('/space/arena.png'))).toBe(true);
   });
 
   it('crea un escenario seleccionable para cada mapa y cada tileset descubierto', () => {

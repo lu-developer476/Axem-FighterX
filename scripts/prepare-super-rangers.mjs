@@ -57,17 +57,11 @@ async function scaleRedToOrange(sourceBuffer, family, label) {
   const targetWidth = targetBounds.right - targetBounds.left;
   const targetHeight = targetBounds.bottom - targetBounds.top;
 
-  // Escala uniforme por altura visible, sin deformar el pixel art. El ancho
-  // proyectado se valida antes de escribir para evitar una coincidencia falsa.
-  const scale = targetHeight / sourceHeight;
+  // Escala uniforme para que Red quepa por completo en la caja visible de Orange.
+  // Se prioriza el ancho cuando las proporciones difieren; nunca se deforma ni recorta.
+  const scale = Math.min(targetWidth / sourceWidth, targetHeight / sourceHeight);
   const scaledWidth = Math.round(sourceWidth * scale);
   const scaledHeight = Math.round(sourceHeight * scale);
-  const widthDifference = Math.abs(scaledWidth - targetWidth) / targetWidth;
-  if (widthDifference > 0.04) {
-    throw new Error('Las proporciones visibles de Red y Orange difieren demasiado para escalar sin deformar: ' +
-      'ancho proyectado=' + scaledWidth + ', ancho Orange=' + targetWidth +
-      ', diferencia=' + (widthDifference * 100).toFixed(2) + '%.');
-  }
 
   const left = Math.round(targetBounds.left + (targetWidth - scaledWidth) / 2);
   const top = targetBounds.bottom - scaledHeight;
@@ -95,16 +89,22 @@ async function scaleRedToOrange(sourceBuffer, family, label) {
   const verified = await sharp(output).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const resultBounds = boundsFromAlpha(verified.data, verified.info.width, verified.info.height);
   const tolerance = family.visualBoundsTolerance ?? 2;
-  const deltas = {
-    left: Math.abs(resultBounds.left - targetBounds.left),
-    top: Math.abs(resultBounds.top - targetBounds.top),
-    right: Math.abs(resultBounds.right - targetBounds.right),
-    bottom: Math.abs(resultBounds.bottom - targetBounds.bottom),
-  };
-  if (Object.values(deltas).some((delta) => delta > tolerance)) {
-    throw new Error(label + ': el Red derivado no ocupa la misma caja visible que Orange: ' +
+  const ratioTolerance = family.visualBoundsRatioTolerance ?? 0.04;
+  const resultWidth = resultBounds.right - resultBounds.left;
+  const resultHeight = resultBounds.bottom - resultBounds.top;
+  const widthDifference = Math.abs(resultWidth - targetWidth) / targetWidth;
+  const heightDifference = Math.abs(resultHeight - targetHeight) / targetHeight;
+  const centerDifference = Math.abs(
+    (resultBounds.left + resultBounds.right - targetBounds.left - targetBounds.right) / 2,
+  );
+  const bottomDifference = Math.abs(resultBounds.bottom - targetBounds.bottom);
+  if (widthDifference > ratioTolerance || heightDifference > ratioTolerance ||
+      centerDifference > tolerance || bottomDifference > tolerance) {
+    throw new Error(label + ': el Red derivado no está alineado y dimensionado respecto de Orange: ' +
       'Orange=' + JSON.stringify(targetBounds) + '; Red=' + JSON.stringify(resultBounds) +
-      '; diferencias=' + JSON.stringify(deltas) + '; tolerancia=' + tolerance + ' px.');
+      '; diferencia ancho=' + (widthDifference * 100).toFixed(2) + '%' +
+      '; diferencia alto=' + (heightDifference * 100).toFixed(2) + '%' +
+      '; centro=' + centerDifference + ' px; línea de pies=' + bottomDifference + ' px.');
   }
 
   console.log(label + ': escala uniforme=' + scale.toFixed(4) + '×; caja Red=' +

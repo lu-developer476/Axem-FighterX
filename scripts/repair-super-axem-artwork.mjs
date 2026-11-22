@@ -105,6 +105,7 @@ async function repairOrange() {
 
     // Une las máscaras en vez de sustituir la de Orange: no elimina ningún
     // píxel visible del upload aunque haya pequeñas diferencias de contorno.
+    // La unión se comprueba después de codificar el PNG para evitar pérdidas.
     outputPixels[offset + 3] = Math.max(oldOrangeAlpha, redAlpha);
   }
 

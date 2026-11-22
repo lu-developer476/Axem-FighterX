@@ -178,6 +178,14 @@ async function prepareReference({ file, label, gender }) {
   const outputPath = path.join(ROOT, family.preparedSource);
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
   await fs.writeFile(outputPath, output);
+
+  if (family.derivedArtwork) {
+    const artworkPath = path.join(ROOT, family.derivedArtwork);
+    await fs.mkdir(path.dirname(artworkPath), { recursive: true });
+    await fs.writeFile(artworkPath, output);
+    console.log(label + ': artwork versionado generado en ' + path.relative(ROOT, artworkPath));
+  }
+
   console.log(
     label + ': derivado preparado en ' + path.relative(ROOT, outputPath) +
     '; lienzo maestro conservado ' + family.width + 'x' + family.height +

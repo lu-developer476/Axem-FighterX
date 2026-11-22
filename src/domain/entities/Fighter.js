@@ -31,8 +31,9 @@ export class Fighter {
    * @param {{ x: number, y: number }} props.position
    * @param {1 | -1} [props.facing]
    */
-  constructor({ id, name, stats, position, facing = 1, gender = 'male' }) {
+  constructor({ id, name, stats, position, facing = 1, gender = 'male', combatantId = id }) {
     this.id = id;
+    this.combatantId = combatantId;
     this.name = name;
     this.gender = gender;
     this.stats = Object.freeze({ ...stats });

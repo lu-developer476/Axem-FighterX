@@ -1399,6 +1399,7 @@ async function buildGender(gender, allowedColors) {
   for (const [color, targetHue] of Object.entries(COLORS).filter(([color]) => allowedColors.includes(color))) {
     const parts = [];
     let baseSource;
+    let canonicalPosePath;
 
     if (gender === 'male') {
       // Use the actual checked-in Axem Red reference; legacy preview filenames are absent.
@@ -1434,7 +1435,7 @@ async function buildGender(gender, allowedColors) {
       ];
       // Las poses canónicas femeninas viven dentro de results/female/<color>/.
       // Mantener el color en la ruta evita depender del antiguo archivo en la raíz.
-      const canonicalPosePath = RESULTS(
+      canonicalPosePath = RESULTS(
         gender,
         color,
         'axem-ranger-' + color + '.png',

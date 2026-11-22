@@ -105,6 +105,7 @@ async function repairOrange() {
 
     // El alfa de Red no se usa: su referencia puede tener un canal de
     // transparencia distinto o no equivalente. Orange conserva su alfa exacto.
+    // La transparencia original forma parte del arte y nunca se reconstruye.
     // Solo se recuperan valores RGB del lineart negro en el dibujo original.
     outputPixels[offset + 3] = oldOrangeAlpha;
   }

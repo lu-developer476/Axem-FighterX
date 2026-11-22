@@ -39,15 +39,17 @@ describe('Estándares centrales de recursos gráficos', () => {
     });
   }
 
-  it('hace que Orange ocupe la misma caja visible que Red', async () => {
+  it('hace que el Red derivado ocupe la misma caja visible que Orange', async () => {
     const family = ASSET_STANDARDS.categories.characterArtwork.families.male;
-    const [reference, orange, referenceBounds, orangeBounds] = await Promise.all([
-      sharp(absolute(family.reference)).metadata(), sharp(absolute(family.result)).metadata(),
-      visibleBounds(family.reference), visibleBounds(family.result),
+    const [master, orange, orangeBounds, redBounds] = await Promise.all([
+      sharp(absolute(family.reference)).metadata(),
+      sharp(absolute(family.result)).metadata(),
+      visibleBounds(family.visualBoundsReference),
+      visibleBounds(family.preparedSource),
     ]);
-    expect([orange.width, orange.height]).toEqual([reference.width, reference.height]);
+    expect([orange.width, orange.height]).toEqual([master.width, master.height]);
     for (const edge of ['left', 'top', 'right', 'bottom']) {
-      expect(Math.abs(orangeBounds[edge] - referenceBounds[edge])).toBeLessThanOrEqual(family.visualBoundsTolerance);
+      expect(Math.abs(redBounds[edge] - orangeBounds[edge])).toBeLessThanOrEqual(family.visualBoundsTolerance);
     }
   });
 

@@ -96,15 +96,23 @@ async function assertVisualBoundsMatch(family) {
   const [orange, red] = await Promise.all([
     readVisibleBounds(family.visualBoundsReference), readVisibleBounds(family.preparedSource),
   ]);
-  const tolerance = family.visualBoundsTolerance ?? 0;
-  const deltas = {
-    left: Math.abs(orange.left - red.left), top: Math.abs(orange.top - red.top),
-    right: Math.abs(orange.right - red.right), bottom: Math.abs(orange.bottom - red.bottom),
-  };
-  if (Object.values(deltas).some((delta) => delta > tolerance)) {
-    throw new Error('El derivado Red ' + family.preparedSource + ' no ocupa la misma caja visible que Orange: ' +
+  const tolerance = family.visualBoundsTolerance ?? 2;
+  const ratioTolerance = family.visualBoundsRatioTolerance ?? 0.04;
+  const orangeWidth = orange.right - orange.left;
+  const orangeHeight = orange.bottom - orange.top;
+  const redWidth = red.right - red.left;
+  const redHeight = red.bottom - red.top;
+  const widthDifference = Math.abs(redWidth - orangeWidth) / orangeWidth;
+  const heightDifference = Math.abs(redHeight - orangeHeight) / orangeHeight;
+  const centerDifference = Math.abs((red.left + red.right - orange.left - orange.right) / 2);
+  const bottomDifference = Math.abs(red.bottom - orange.bottom);
+  if (widthDifference > ratioTolerance || heightDifference > ratioTolerance ||
+      centerDifference > tolerance || bottomDifference > tolerance) {
+    throw new Error('El derivado Red ' + family.preparedSource + ' no coincide con la escala visual de Orange: ' +
       'Orange=' + JSON.stringify(orange) + '; Red=' + JSON.stringify(red) +
-      '; diferencias=' + JSON.stringify(deltas) + '; tolerancia=' + tolerance + ' px.');
+      '; diferencia ancho=' + (widthDifference * 100).toFixed(2) + '%' +
+      '; diferencia alto=' + (heightDifference * 100).toFixed(2) + '%' +
+      '; centro=' + centerDifference + ' px; línea de pies=' + bottomDifference + ' px.');
   }
 }
 

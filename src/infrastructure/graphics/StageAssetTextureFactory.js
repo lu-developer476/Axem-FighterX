@@ -115,6 +115,128 @@ export function createProceduralBackground(scene, asset, options = {}) {
   return { key, tileCount: tiles.length };
 }
 
+/**
+ * Construye patrones largos a partir de tiles repetibles para usarlos como fondos
+ * en movimiento. La carrera puede avanzar sin mover horizontalmente a los corredores.
+ */
+export function createLoopingRaceTextures(scene, assets, {
+  prefix = 'race-loop',
+  trackTop = 140,
+  patternWidth = 1024,
+  seed = 1,
+} = {}) {
+  const available = (assets ?? []).filter((asset) => scene.textures.exists(asset.key)).slice(0, 2);
+  return available.map((asset, index) => {
+    const source = scene.textures.get(asset.key).getSourceImage();
+    const tileWidth = asset.tileWidth ?? 32;
+    const tileHeight = asset.tileHeight ?? 32;
+    const sourceCanvas = document.createElement('canvas');
+    sourceCanvas.width = source.width;
+    sourceCanvas.height = source.height;
+    const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+    sourceContext.drawImage(source, 0, 0);
+    const sourcePixels = sourceContext.getImageData(0, 0, source.width, source.height).data;
+    const backgroundColor = asset.backgroundColor && asset.backgroundColor !== 'auto'
+      ? parseHexColor(asset.backgroundColor)
+      : detectCornerBackground(sourcePixels, source.width, source.height);
+    const tiles = findUsableTiles(sourcePixels, source.width, source.height, asset, backgroundColor);
+    if (!tiles.length) return null;
+
+    const width = Math.max(tileWidth * 8, Math.ceil(patternWidth / tileWidth) * tileWidth);
+    const key = prefix + '-' + index;
+    const palette = paletteFor(asset.id);
+    createCanvasTexture(scene, key, width, GAME_HEIGHT, (ctx) => {
+      const random = createRandom((seed + index * 7919) >>> 0);
+      const pick = () => tiles[Math.floor(random() * tiles.length)];
+      const columns = Math.floor(width / tileWidth);
+
+      if (index === 0) {
+        const gradient = ctx.createLinearGradient(0, 0, 0, trackTop);
+        gradient.addColorStop(0, palette.skyTop);
+        gradient.addColorStop(1, palette.skyBottom);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, GAME_HEIGHT);
+        drawFarHorizon(ctx, width, trackTop, palette, random);
+      }
+
+      // La primera y última columna de cada fila comparten el mismo tile:
+      // al repetirse el TileSprite no aparece una costura vertical.
+      for (let y = 42; y + tileHeight <= trackTop; y += tileHeight) {
+        const seamTile = pick();
+        for (let column = 0; column < columns; column += 1) {
+          const tile = column === 0 || column === columns - 1 ? seamTile : pick();
+          ctx.globalAlpha = index === 0 ? 0.24 + random() * 0.2 : 0.34 + random() * 0.28;
+          drawTile(ctx, source, tile, tileWidth, tileHeight, column * tileWidth, y);
+        }
+      }
+
+      if (index === 0) {
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = palette.ground;
+        ctx.fillRect(0, trackTop, width, GAME_HEIGHT - trackTop);
+        ctx.fillStyle = palette.accent;
+        ctx.fillRect(0, trackTop, width, 2);
+        for (let y = trackTop + tileHeight; y < GAME_HEIGHT; y += tileHeight) {
+          const seamTile = pick();
+          for (let column = 0; column < columns; column += 1) {
+            const tile = column === 0 || column === columns - 1 ? seamTile : pick();
+            ctx.globalAlpha = 0.14 + random() * 0.12;
+            drawTile(ctx, source, tile, tileWidth, tileHeight, column * tileWidth, y);
+          }
+        }
+      }
+
+      ctx.globalAlpha = 1;
+      if (backgroundColor) removeKeyedBackground(ctx, width, GAME_HEIGHT, backgroundColor);
+    });
+    return key;
+  }).filter(Boolean);
+}
+
+/** Prepara motivos individuales para repetirlos como vegetación, rocas y objetos contextuales. */
+export function createTilesetStampTextures(scene, assets, {
+  prefix = 'race-prop',
+  countPerAsset = 5,
+  seed = 1,
+} = {}) {
+  const stamps = [];
+  (assets ?? []).forEach((asset, assetIndex) => {
+    if (!scene.textures.exists(asset.key)) return;
+    const source = scene.textures.get(asset.key).getSourceImage();
+    const tileWidth = asset.tileWidth ?? 32;
+    const tileHeight = asset.tileHeight ?? 32;
+    const sourceCanvas = document.createElement('canvas');
+    sourceCanvas.width = source.width;
+    sourceCanvas.height = source.height;
+    const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+    sourceContext.drawImage(source, 0, 0);
+    const sourcePixels = sourceContext.getImageData(0, 0, source.width, source.height).data;
+    const backgroundColor = asset.backgroundColor && asset.backgroundColor !== 'auto'
+      ? parseHexColor(asset.backgroundColor)
+      : detectCornerBackground(sourcePixels, source.width, source.height);
+    const tiles = findUsableTiles(sourcePixels, source.width, source.height, asset, backgroundColor);
+    if (!tiles.length) return;
+
+    const random = createRandom((seed + assetIndex * 104729) >>> 0);
+    const used = new Set();
+    for (let index = 0; index < Math.min(countPerAsset, tiles.length); index += 1) {
+      let tileIndex = Math.floor(random() * tiles.length);
+      while (used.has(tileIndex) && used.size < tiles.length) tileIndex = (tileIndex + 1) % tiles.length;
+      used.add(tileIndex);
+      const tile = tiles[tileIndex];
+      const key = prefix + '-' + assetIndex + '-' + index;
+      const texture = scene.textures.createCanvas(key, tileWidth, tileHeight);
+      const ctx = texture.getContext();
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(source, tile.x, tile.y, tileWidth, tileHeight, 0, 0, tileWidth, tileHeight);
+      if (backgroundColor) removeKeyedBackground(ctx, tileWidth, tileHeight, backgroundColor);
+      texture.refresh();
+      stamps.push(key);
+    }
+  });
+  return stamps;
+}
+
 function paletteFor(id = '') {
   const name = String(id).toLowerCase();
   if (name.includes('cave')) return PALETTES.cave;

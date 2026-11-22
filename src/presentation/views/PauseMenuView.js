@@ -1,17 +1,28 @@
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
+import { RACE_DISTANCE_OPTIONS } from '../../domain/race/raceCourseRules.js';
 import { contentWidth, insetSize, mapPanelY, UI_SPACING } from './uiLayout.js';
 
 /** Menú superpuesto con paneles y botones de ancho coherente. */
 export class PauseMenuView {
-  constructor(scene, { onResume, onReturnToMenu, controls = null, controlsTitle = 'CONTROLES' }) {
+  constructor(scene, {
+    onResume,
+    onReturnToMenu,
+    onSelectDistance = null,
+    distanceOptions = RACE_DISTANCE_OPTIONS,
+    controls = null,
+    controlsTitle = 'CONTROLES',
+  }) {
     this.scene = scene;
     this.onResume = onResume;
     this.onReturnToMenu = onReturnToMenu;
+    this.onSelectDistance = onSelectDistance;
+    this.distanceOptions = [...distanceOptions];
     this.minigameControls = Array.isArray(controls) ? [...controls] : null;
     this.controlsTitle = controlsTitle;
     this.buttons = [];
     this.selectedIndex = 0;
     this.showingControls = false;
+    this.showingDistanceSelection = false;
     this.panelWidth = 344;
     this.container = scene.add.container(0, 0)
       .setScrollFactor(0)
@@ -21,6 +32,7 @@ export class PauseMenuView {
 
   showMenu() {
     this.showingControls = false;
+    this.showingDistanceSelection = false;
     this.#beginPanel('PAUSA', 170);
     this.#addButton('CONTINUAR', 116, this.onResume);
     this.#addButton(this.minigameControls ? 'CONTROLES' : 'TUTORIAL', 151, () => this.showControls());
@@ -28,7 +40,24 @@ export class PauseMenuView {
     this.container.setVisible(true);
   }
 
+  showDistanceSelection() {
+    this.showingControls = false;
+    this.showingDistanceSelection = true;
+    this.#beginPanel('DISTANCIA TOTAL', 238);
+    this.#addText('ELEGÍ EL RECORRIDO', 96, {
+      fontSize: '8px',
+      color: '#e7def5',
+    });
+    this.distanceOptions.forEach(({ label, value }, index) => {
+      this.#addButton(label, 124 + index * 29, () => {
+        this.onSelectDistance?.(value);
+      }, { width: 190 });
+    });
+    this.container.setVisible(true);
+  }
+
   showControls(player = null) {
+    this.showingDistanceSelection = false;
     this.showingControls = true;
     if (this.minigameControls) {
       const compact = this.minigameControls.length > 5;

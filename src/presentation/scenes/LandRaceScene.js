@@ -9,17 +9,21 @@ import landRollGifUrl from '../../../art/source/sprites/results/male/orange/roll
 import redRaceRunGifUrl from '../../../art/source/sprites/references/axem-red/axem-ranger-run.gif?url';
 import { PauseMenuView } from '../views/PauseMenuView.js';
 import { STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
-import { createProceduralBackground } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
+import {
+  createLoopingRaceTextures,
+  createTilesetStampTextures,
+} from '../../infrastructure/graphics/StageAssetTextureFactory.js';
+import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
 
-const FINISH_DISTANCE = 1200;
-const TRACK_START_X = 62;
-const TRACK_FINISH_X = 420;
-const TRACK_SPAN = TRACK_FINISH_X - TRACK_START_X;
 const RUNNER_LANES = Object.freeze([170, 218]);
+const PLAYER_RUNNER_X = 116;
+const RIVAL_RUNNER_X = 164;
+const LAND_OBJECT_SCALE = 0.14;
+const LAND_RACE_LOOP_DISTANCE = 1200;
 const RUNNER_FOOT_OFFSET = 13;
 const COUNTDOWN_MS = 3000;
 const STAMINA_MAX = 100;
@@ -112,6 +116,14 @@ function createLandRaceTextures(scene) {
     graphics.fillRect(13, 11, 62, 1);
   });
 
+  createTexture(scene, 'land-race-energy', 18, 18, (graphics) => {
+    graphics.fillStyle(0x16394a, 1).fillCircle(9, 9, 8);
+    graphics.lineStyle(2, 0x9eeeff, 1).strokeCircle(9, 9, 7);
+    graphics.fillStyle(0xe8ffff, 1).fillRect(8, 3, 3, 12);
+    graphics.fillRect(4, 7, 10, 3);
+    graphics.fillStyle(0x5bd8ed, 1).fillRect(8, 5, 2, 8);
+  });
+
   createTexture(scene, 'land-race-finish-arch', 34, 72, (graphics) => {
     graphics.fillStyle(0x28273a, 1).fillRect(3, 0, 5, 71);
     graphics.fillRect(26, 0, 5, 71);
@@ -135,26 +147,42 @@ export class LandRaceScene extends Phaser.Scene {
   create() {
     playRaceMusic(this, 'landRace');
     createLandRaceTextures(this);
+
     const raceTilesets = STAGE_TILESET_ASSETS.filter((asset) => LAND_RACE_TILESET_IDS.includes(asset.id));
-    const selectedStage = Phaser.Utils.Array.GetRandom(raceTilesets);
-    if (selectedStage) {
-      const stageKey = 'race-stage-land-' + this.game.loop.frame;
-      createProceduralBackground(this, selectedStage, {
-        key: stageKey,
-        seed: Phaser.Math.Between(1, 0x7fffffff),
-      });
-      this.add.image(0, 0, stageKey).setOrigin(0).setDepth(-100)
-        .setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
-    }
-    this.#drawStadium();
+    const worldKeys = createLoopingRaceTextures(this, raceTilesets, {
+      prefix: 'land-world-' + this.game.loop.frame,
+      trackTop: 146,
+      seed: 601,
+    });
+    this.stageLayers = worldKeys.map((key, index) =>
+      this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, key)
+        .setOrigin(0)
+        .setDepth(-100 + index)
+        .setAlpha(index === 0 ? 0.9 : 0.58),
+    );
+    this.sceneryTextures = createTilesetStampTextures(this, raceTilesets, {
+      prefix: 'land-prop-' + this.game.loop.frame,
+      countPerAsset: 5,
+      seed: 701,
+    });
+    this.crowd = this.add.tileSprite(0, 94, GAME_WIDTH, 34, 'land-race-crowd')
+      .setOrigin(0)
+      .setDepth(-20)
+      .setAlpha(0.78);
+
     this.distance = 0;
-    this.finishDistance = Phaser.Math.Between(1250, 1600);
-    this.obstacles = this.#generateRaceObstacles();
+    this.finishDistance = 0;
+    this.trackOffset = 0;
+    this.scenery = [];
+    this.lastSceneryChunk = -1;
+    this.previousSceneryDistance = 0;
     this.countdownMs = COUNTDOWN_MS;
     this.finished = false;
-    this.player = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[0], true);
-    this.rival = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[1], false);
-    this.#createTrackObjects();
+    this.selectingDistance = true;
+    this.paused = false;
+    this.player = null;
+    this.rival = null;
+    this.runners = [];
 
     this.keys = this.input.keyboard.addKeys({
       accelerate: Phaser.Input.Keyboard.KeyCodes.D,
@@ -176,11 +204,11 @@ export class LandRaceScene extends Phaser.Scene {
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
     });
 
+    this.#drawStadium();
     this.hudGraphics = this.add.graphics().setDepth(80);
-    this.title = this.#text('CARRERA TERRESTRE', GAME_WIDTH / 2, 20, '#ffe2aa', 11);
-    this.playerName = this.#text('J1 · AXEM NARANJA', 87, 34, '#ffc58e', 6);
-    this.rivalName = this.#text('RIVAL · AXEM RED', 393, 34, '#ffc58e', 6);
-    this.status = this.#text('3', GAME_WIDTH / 2, 120, '#fff0c9', 24);
+    this.playerName = this.#text('J1 · AXEM NARANJA', PLAYER_RUNNER_X, 34, '#ffc58e', 6);
+    this.rivalName = this.#text('RIVAL · AXEM RED', RIVAL_RUNNER_X, 34, '#ff9b9b', 6);
+    this.status = this.#text('ELEGÍ LA DISTANCIA', GAME_WIDTH / 2, 120, '#fff0c9', 12);
     this.staminaLabel = this.#text('RESISTENCIA', GAME_WIDTH / 2, 70, '#b8e7f4', 5);
     this.controls = this.#text(
       'D/→ CORRER  ·  A/← FRENAR  ·  W/↑ SALTAR  ·  S/↓ RODAR',
@@ -189,24 +217,60 @@ export class LandRaceScene extends Phaser.Scene {
       '#f0dfc2',
       5,
     );
-    this.#drawHud();
-    this.paused = false;
+    this.distanceLabel = this.#text('0 / 0 M', GAME_WIDTH / 2, 50, '#e7dcff', 5);
     this.pauseMenu = new PauseMenuView(this, {
       onResume: () => this.#resume(),
       onReturnToMenu: () => this.scene.start('MenuScene'),
+      onSelectDistance: (distance) => this.#startRace(distance),
+      distanceOptions: RACE_DISTANCE_OPTIONS,
       controlsTitle: 'CONTROLES · CARRERA TERRESTRE',
       controls: [
         'D / → · CORRER',
         'A / ← · FRENAR',
         'W / ↑ · SALTAR',
         'S / ↓ · RODAR',
+        'RECOGÉ ENERGÍA PARA RECUPERAR RESISTENCIA',
         'AL FINAL · ENTER MENÚ · R REPETIR',
         'ESC · VOLVER AL MENÚ',
       ],
     });
+    this.pauseMenu.showDistanceSelection();
+  }
+
+  #startRace(distance) {
+    this.finishDistance = distance;
+    this.distance = 0;
+    this.trackOffset = 0;
+    this.scenery = [];
+    this.lastSceneryChunk = -1;
+    this.previousSceneryDistance = 0;
+    this.obstacles = this.#generateRaceObstacles();
+    this.pickups = this.#generateRacePickups();
+    this.countdownMs = COUNTDOWN_MS;
+    this.finished = false;
+    this.selectingDistance = false;
+    this.pauseMenu.hide();
+    this.player = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[0], true);
+    this.rival = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[1], false);
+    this.runners = [this.player, this.rival];
+    this.#createTrackObjects();
+    this.status.setText('3').setFontSize(24);
+    this.distanceLabel.setText('0 / ' + Math.round(distance) + ' M');
+    this.#drawHud();
   }
 
   update(_time, delta) {
+    if (this.selectingDistance) {
+      if (Phaser.Input.Keyboard.JustDown(this.keys.escape)) {
+        this.scene.start('MenuScene');
+        return;
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.pauseNavigationKeys.up)) this.pauseMenu.moveSelection(-1);
+      if (Phaser.Input.Keyboard.JustDown(this.pauseNavigationKeys.down)) this.pauseMenu.moveSelection(1);
+      if (Phaser.Input.Keyboard.JustDown(this.pauseNavigationKeys.enter)) this.pauseMenu.activateSelection();
+      return;
+    }
+
     if (this.paused) {
       if (Phaser.Input.Keyboard.JustDown(this.keys.pause)) {
         this.#resume();
@@ -264,8 +328,13 @@ export class LandRaceScene extends Phaser.Scene {
 
     this.#advanceRacer(this.player, delta, { accelerate, brake });
     this.#advanceRacer(this.rival, delta, null);
+    this.distance = this.player.distance;
+    this.#updateEnvironment();
     this.#syncRacer(this.player);
     this.#syncRacer(this.rival);
+    this.#syncTrackObjects(this.player);
+    this.#syncTrackObjects(this.rival);
+    this.#syncPickups();
     this.#drawHud();
 
     if (this.player.distance >= this.finishDistance || this.rival.distance >= this.finishDistance) {
@@ -278,6 +347,7 @@ export class LandRaceScene extends Phaser.Scene {
     this.paused = true;
     this.tweens.pauseAll();
     this.anims.pauseAll();
+    this.runners.forEach((racer) => racer.gif?.setVisible(false));
     this.pauseMenu.showMenu();
   }
 
@@ -287,55 +357,57 @@ export class LandRaceScene extends Phaser.Scene {
     this.pauseMenu.hide();
     this.tweens.resumeAll();
     this.anims.resumeAll();
+    this.runners.forEach((racer) => racer.gif?.setVisible(true));
   }
 
   #drawStadium() {
-    this.add.image(82, 91, 'land-race-crowd').setScale(1.45).setAlpha(0.95);
-    this.add.image(240, 91, 'land-race-crowd').setScale(1.45).setAlpha(0.95);
-    this.add.image(398, 91, 'land-race-crowd').setScale(1.45).setAlpha(0.95);
-    this.add.rectangle(GAME_WIDTH / 2, 117, GAME_WIDTH, 7, 0x111a2d);
-    this.add.image(GAME_WIDTH / 2, 128, 'land-race-banner').setScale(1.05);
+    this.add.rectangle(GAME_WIDTH / 2, 143, GAME_WIDTH, 18, 0x326344).setDepth(2);
+    this.add.rectangle(GAME_WIDTH / 2, 153, GAME_WIDTH, 5, 0x7a985d).setDepth(3);
+    this.add.rectangle(GAME_WIDTH / 2, 199, GAME_WIDTH, 98, 0x9c4c4d).setDepth(2);
+    this.add.rectangle(GAME_WIDTH / 2, 199, GAME_WIDTH, 92, 0xad5b56).setDepth(3);
+    this.trackGraphics = this.add.graphics().setDepth(8);
+    this.startLineGraphics = this.add.graphics().setDepth(18);
+    this.#drawTrack();
+  }
 
-    const lights = this.add.graphics().setDepth(4);
-    [28, 452].forEach((x) => {
-      lights.fillStyle(0x101526, 1).fillRect(x - 2, 39, 4, 72);
-      lights.fillStyle(0xf6e4af, 0.9).fillRect(x - 9, 37, 18, 4);
-      lights.fillStyle(0xffeec6, 0.18).fillCircle(x, 54, 19);
-    });
-
-    this.add.rectangle(GAME_WIDTH / 2, 143, GAME_WIDTH, 18, 0x326344);
-    this.add.rectangle(GAME_WIDTH / 2, 153, GAME_WIDTH, 5, 0x7a985d);
-    this.add.rectangle(GAME_WIDTH / 2, 199, GAME_WIDTH, 98, 0x9c4c4d);
-    this.add.rectangle(GAME_WIDTH / 2, 199, GAME_WIDTH, 92, 0xad5b56);
-    this.add.rectangle(GAME_WIDTH / 2, 199, GAME_WIDTH, 2, 0xe5c8a4, 0.7);
-
-    const laneLines = this.add.graphics().setDepth(8);
-    laneLines.lineStyle(1, 0xf2dfc5, 0.75);
-    laneLines.lineBetween(0, 194, GAME_WIDTH, 194);
-    laneLines.lineBetween(0, 148, GAME_WIDTH, 148);
-    laneLines.lineBetween(0, 244, GAME_WIDTH, 244);
-    for (let x = 0; x < GAME_WIDTH; x += 28) {
-      laneLines.fillStyle(0xf4dfc2, 0.35).fillRect(x, 171, 12, 1);
-      laneLines.fillRect(x + 12, 218, 12, 1);
+  #drawTrack() {
+    const graphics = this.trackGraphics;
+    graphics.clear();
+    graphics.lineStyle(1, 0xf2dfc5, 0.75);
+    graphics.lineBetween(0, 194, GAME_WIDTH, 194);
+    graphics.lineBetween(0, 148, GAME_WIDTH, 148);
+    graphics.lineBetween(0, 244, GAME_WIDTH, 244);
+    for (let x = -28; x < GAME_WIDTH + 28; x += 28) {
+      const markX = x - this.trackOffset;
+      graphics.fillStyle(0xf4dfc2, 0.35).fillRect(markX, 171, 12, 1);
+      graphics.fillRect(markX + 12, 218, 12, 1);
     }
 
-    this.add.image(12, 153, 'land-race-cone').setOrigin(0.5, 1).setScale(1.2);
-    this.add.image(GAME_WIDTH - 12, 153, 'land-race-cone').setOrigin(0.5, 1).setScale(1.2);
-    this.add.image(TRACK_FINISH_X + 17, 194, 'land-race-finish-arch').setOrigin(0.5, 0.5).setDepth(25);
-
-    const finish = this.add.graphics().setDepth(12);
-    for (let row = 0; row < 10; row += 1) {
-      finish.fillStyle(row % 2 === 0 ? 0xf3e6cb : 0x393143, 1);
-      finish.fillRect(TRACK_FINISH_X - 2, 151 + row * 9, 4, 9);
+    this.startLineGraphics.clear();
+    const scroll = this.distance * LAND_OBJECT_SCALE;
+    const playerLineX = PLAYER_RUNNER_X - scroll;
+    const rivalLineX = RIVAL_RUNNER_X - scroll;
+    if (rivalLineX > -12) {
+      const playerFootLine = RUNNER_LANES[0] + RUNNER_FOOT_OFFSET;
+      const rivalFootLine = RUNNER_LANES[1] + RUNNER_FOOT_OFFSET;
+      this.startLineGraphics.lineStyle(3, 0xffedc6, 0.96);
+      this.startLineGraphics.lineBetween(playerLineX, playerFootLine, rivalLineX, rivalFootLine);
+      this.startLineGraphics.lineStyle(1, 0x483c42, 0.9);
+      this.startLineGraphics.lineBetween(playerLineX + 3, playerFootLine, rivalLineX + 3, rivalFootLine);
     }
+  }
+
+  #runnerX(racer) {
+    return racer.isPlayer ? PLAYER_RUNNER_X : RIVAL_RUNNER_X;
   }
 
   #createRacer(rangerId, laneY, isPlayer) {
     const idleKey = spriteKeyFor(rangerId, genderForRanger(rangerId));
-    const sprite = this.add.sprite(TRACK_START_X, laneY + RUNNER_FOOT_OFFSET, idleKey)
+    const runnerX = isPlayer ? PLAYER_RUNNER_X : RIVAL_RUNNER_X;
+    const sprite = this.add.sprite(runnerX, laneY + RUNNER_FOOT_OFFSET, idleKey)
       .setOrigin(0.5, 1)
       .setDepth(42);
-    const shadow = this.add.ellipse(TRACK_START_X, laneY + RUNNER_FOOT_OFFSET, 34, 6, 0x241b2a, 0.52)
+    const shadow = this.add.ellipse(runnerX, laneY + RUNNER_FOOT_OFFSET, 34, 6, 0x241b2a, 0.52)
       .setDepth(31);
 
     const animationSources = isPlayer
@@ -356,7 +428,7 @@ export class LandRaceScene extends Phaser.Scene {
         roll: redRaceRunGifUrl,
       };
     const racerName = isPlayer ? 'Axem Naranja' : 'Axem Red';
-    const racerGif = this.add.dom(TRACK_START_X, laneY - 28).createFromHTML(
+    const racerGif = this.add.dom(runnerX, laneY - 28).createFromHTML(
       '<img src="' + animationSources.idle + '" alt="' + racerName + '" style="width:48px;height:68px;object-fit:contain;image-rendering:pixelated;pointer-events:none;">',
     ).setDepth(44);
     const racer = {
@@ -385,38 +457,115 @@ export class LandRaceScene extends Phaser.Scene {
 
 
   #generateRaceObstacles() {
-    const obstacles = [];
-    let distance = 145;
-    let index = 0;
-    while (distance < this.finishDistance - 90) {
-      const action = Phaser.Math.Between(0, 1) === 0 ? 'jump' : 'roll';
-      obstacles.push({
-        distance,
-        action,
-        type: action === 'jump' ? 'hurdle' : 'roll-gate',
-      });
-      distance += Phaser.Math.Between(145, 235);
-      index += 1;
-    }
-    return obstacles;
+    return repeatCoursePattern(LAND_RACE_OBSTACLES, this.finishDistance, {
+      cycleDistance: LAND_RACE_LOOP_DISTANCE,
+      finishPadding: 90,
+    });
+  }
+
+  #generateRacePickups() {
+    return repeatCoursePattern([
+      { distance: 280, kind: 'energy' },
+      { distance: 760, kind: 'energy' },
+      { distance: 1060, kind: 'energy' },
+    ], this.finishDistance, {
+      cycleDistance: LAND_RACE_LOOP_DISTANCE,
+      finishPadding: 35,
+    }).map((pickup) => ({ ...pickup, collected: false }));
   }
 
   #createTrackObjects() {
-    for (const racer of [this.player, this.rival]) {
-      racer.startBlock = this.add.image(TRACK_START_X - 11, racer.laneY + 17, 'land-race-start-block')
+    for (const racer of this.runners) {
+      const runnerX = this.#runnerX(racer);
+      racer.startBlock = this.add.image(runnerX - 11, racer.laneY + 17, 'land-race-start-block')
         .setDepth(30);
       racer.obstacleSprites = this.obstacles.map((obstacle) => {
         const texture = obstacle.type === 'hurdle' ? 'land-race-hurdle' : 'land-race-roll-gate';
-        const y = racer.laneY + RUNNER_FOOT_OFFSET - (obstacle.type === 'hurdle' ? 8 : 4);
-        return this.add.image(this.#worldToScreen(obstacle.distance), y, texture)
-          .setDepth(34);
+        return this.add.image(runnerX, racer.laneY, texture).setDepth(34);
       });
     }
+    this.pickupBackdropSprites = this.pickups.map((pickup, index) => {
+      const texture = this.sceneryTextures.length
+        ? this.sceneryTextures[index % this.sceneryTextures.length]
+        : 'land-race-energy';
+      return this.add.image(PLAYER_RUNNER_X, this.player.laneY - 27, texture)
+        .setDepth(36)
+        .setAlpha(0.82)
+        .setScale(0.78);
+    });
+    this.pickupSprites = this.pickups.map(() =>
+      this.add.image(PLAYER_RUNNER_X, this.player.laneY - 27, 'land-race-energy')
+        .setDepth(38),
+    );
   }
 
-  #worldToScreen(distance) {
-    return TRACK_START_X + (distance / this.finishDistance) * TRACK_SPAN;
+  #syncTrackObjects(racer) {
+    const runnerX = this.#runnerX(racer);
+    const startX = runnerX - racer.distance * LAND_OBJECT_SCALE - 11;
+    racer.startBlock?.setPosition(startX, racer.laneY + 17)
+      .setVisible(racer.distance < 35 && startX > -30);
+    racer.obstacleSprites.forEach((sprite, index) => {
+      const obstacle = this.obstacles[index];
+      const x = runnerX + (obstacle.distance - racer.distance) * LAND_OBJECT_SCALE;
+      sprite.setPosition(x, racer.laneY + RUNNER_FOOT_OFFSET -
+        (obstacle.type === 'hurdle' ? 8 : 4));
+      sprite.setVisible(index >= racer.obstacleIndex && x > -36 && x < GAME_WIDTH + 36);
+    });
   }
+
+  #syncPickups() {
+    this.pickups.forEach((pickup, index) => {
+      const sprite = this.pickupSprites[index];
+      const backdrop = this.pickupBackdropSprites[index];
+      if (pickup.collected) {
+        sprite.setVisible(false);
+        backdrop?.setVisible(false);
+        return;
+      }
+      const x = PLAYER_RUNNER_X + (pickup.distance - this.player.distance) * LAND_OBJECT_SCALE;
+      backdrop?.setPosition(x, this.player.laneY - 27)
+        .setVisible(x > -24 && x < GAME_WIDTH + 24);
+      sprite.setPosition(x, this.player.laneY - 27).setVisible(x > -24 && x < GAME_WIDTH + 24);
+      if (Math.abs(x - PLAYER_RUNNER_X) < 14) {
+        pickup.collected = true;
+        sprite.setVisible(false);
+        this.player.stamina = Math.min(STAMINA_MAX, this.player.stamina + 30);
+      }
+    });
+  }
+
+  #updateEnvironment() {
+    this.trackOffset = (this.distance * 0.56) % 28;
+    this.stageLayers.forEach((layer, index) => {
+      layer.tilePositionX = this.distance * (index === 0 ? 0.12 : 0.28);
+    });
+    this.crowd.tilePositionX = this.distance * 0.42;
+    this.#drawTrack();
+
+    const nextChunk = Math.floor(this.distance / 180);
+    while (this.lastSceneryChunk < nextChunk) {
+      this.lastSceneryChunk += 1;
+      if (!this.sceneryTextures.length) break;
+      const index = this.lastSceneryChunk;
+      const key = this.sceneryTextures[index % this.sceneryTextures.length];
+      const y = index % 2 === 0 ? 136 : 151;
+      const item = this.add.image(GAME_WIDTH + 28, y, key)
+        .setDepth(5)
+        .setScale(index % 3 === 0 ? 1.3 : 1);
+      this.scenery.push(item);
+    }
+    const travelled = Math.max(0, this.distance - this.previousSceneryDistance);
+    this.previousSceneryDistance = this.distance;
+    for (const item of this.scenery) item.x -= travelled * 0.28;
+    this.scenery = this.scenery.filter((item) => {
+      if (item.x < -60) {
+        item.destroy();
+        return false;
+      }
+      return item.active;
+    });
+  }
+
 
   #setMode(racer, mode) {
     if (racer.mode === mode) return;
@@ -511,7 +660,7 @@ export class LandRaceScene extends Phaser.Scene {
   }
 
   #syncRacer(racer) {
-    const x = this.#worldToScreen(racer.distance);
+    const x = this.#runnerX(racer);
     const groundY = racer.laneY + RUNNER_FOOT_OFFSET;
     const runPhase = racer.distance / 16;
     const movingBob = racer.mode === 'run' || racer.mode === 'walk' || racer.mode === 'dash'
@@ -539,7 +688,8 @@ export class LandRaceScene extends Phaser.Scene {
         Math.round((width - 2) * Phaser.Math.Clamp(distance / this.finishDistance, 0, 1)), 2);
     };
     drawProgress(26, 42, 122, this.player.distance, 0xf0a064);
-    drawProgress(332, 42, 122, this.rival.distance, 0xf0a064);
+    drawProgress(332, 42, 122, this.rival.distance, 0xf06464);
+    this.distanceLabel.setText(Math.floor(this.player.distance) + ' / ' + this.finishDistance + ' M');
     this.hudGraphics.fillStyle(0x121c2c, 1).fillRect(193, 77, 94, 5);
     this.hudGraphics.fillStyle(0x72c9e7, 1).fillRect(194, 78,
       Math.round(92 * this.player.stamina / STAMINA_MAX), 3);

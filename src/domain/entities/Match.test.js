@@ -80,6 +80,25 @@ describe('Match: golpes', () => {
 });
 
 describe('Match: KO', () => {
+  it('mantiene ganadores inequívocos cuando se construye con dos instancias del mismo Axem', () => {
+    const fighters = [
+      createFighter('violet', { x: 300, y: ARENA.groundY }, 1, 'female'),
+      createFighter('violet', { x: 340, y: ARENA.groundY }, -1, 'female'),
+    ];
+    const match = new Match({ fighters, rng: () => 0.999 });
+
+    expect(fighters[0].id).toBe(fighters[1].id);
+    expect(fighters[0].combatantId).not.toBe(fighters[1].combatantId);
+
+    fighters[1].health = 1;
+    fighters[1].takeHit({ damage: 1, fromDirection: 1 });
+    const events = match.step([idle, idle], 16);
+
+    expect(match.winnerId).toBe(fighters[0].combatantId);
+    expect(events.find((event) => event.type === 'match-over')?.winnerId)
+      .toBe(fighters[0].combatantId);
+  });
+
   it('termina la partida con ganador y congela las entradas', () => {
     const match = make({ rng: () => 0.999 });
     const [a, b] = match.fighters;

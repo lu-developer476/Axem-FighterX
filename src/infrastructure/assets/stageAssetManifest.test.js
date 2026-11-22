@@ -29,7 +29,7 @@ describe('Descubrimiento automático de escenarios', () => {
     }, 'stage-map-');
 
     expect(assets).toHaveLength(2);
-    expect(new Set(assets.map(({ id }) => id)).size).toBe(2);
+    expect(new Set(assets.map(({ stem }) => stem)).size).toBe(2);
     expect(assets.find(({ path }) => path.includes('/forest/arena.png'))?.url).toBe('/forest/arena.png');
     expect(assets.some(({ path }) => path.includes('/space/arena.png'))).toBe(true);
   });

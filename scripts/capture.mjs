@@ -53,7 +53,6 @@ await wait(120);
 await shot('03-modal-segundo-personaje');
 await tap('ArrowDown');
 await tap('Enter'); // J2 elige Axem
-await tap('Enter'); // J2 elige Axem → selección de esquinas
 await shot('03b-modal-esquinas');
 await tap('Enter'); // J1 elige la esquina izquierda
 for (let down = 0; down < 3; down++) await tap('ArrowDown');
@@ -73,7 +72,6 @@ await tap('Enter'); // Primer personaje → segundo selector
 await shot('05-modal-ia-dos');
 await tap('ArrowDown');
 await tap('Enter'); // Segundo Axem
-await tap('Enter'); // Segundo personaje → escenarios
 await tap('Escape'); // Escenario → segundo personaje
 await tap('Escape'); // Segundo personaje → primero
 await tap('Escape'); // Primer personaje → formato
@@ -122,7 +120,7 @@ await tap('ArrowDown');
 await tap('ArrowDown');
 await tap('ArrowDown');
 await tap('Enter'); // Entrenamiento → selección de personaje
-await tap('Enter'); // Elegir Axem → género
+await tap('Enter'); // Elegir Axem → esquema de teclas
 await tap('Enter'); // Elegir J1 / izquierda
 for (let down = 0; down < 3; down++) await tap('ArrowDown');
 await tap('Enter'); // Continuar → paleta de entrenamiento

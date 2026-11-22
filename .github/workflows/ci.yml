@@ -93,11 +93,61 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     permissions:
+      actions: read
+      contents: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Esperar a que termine la publicación automática de Jekyll
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          legacy_run=""
+          # El workflow generado de Pages suele aparecer inmediatamente después del push.
+          # Si Pages ya está configurado para usar solo Actions, no habrá un build Jekyll que esperar.
+          for attempt in $(seq 1 6); do
+            runs="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?branch=main&per_page=100")"
+            legacy_run="$(jq -r --arg sha "$EXPECTED_SHA" '
+              [.workflow_runs[]
+                | select(.head_sha == $sha and .path == "dynamic/pages/pages-build-deployment")]
+              | max_by(.created_at)
+              | .id // empty
+            ' <<< "$runs")"
+            if [[ -n "$legacy_run" ]]; then break; fi
+            sleep 5
+          done
+
+          if [[ -z "$legacy_run" ]]; then
+            echo "No se detectó un build Jekyll paralelo; continúa la publicación normal."
+            exit 0
+          fi
+
+          echo "Esperando el workflow Jekyll $legacy_run para el commit $EXPECTED_SHA."
+          for attempt in $(seq 1 120); do
+            run_state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/$legacy_run")"
+            status="$(jq -r '.status' <<< "$run_state")"
+            conclusion="$(jq -r '.conclusion // ""' <<< "$run_state")"
+
+            if [[ "$status" == "completed" ]]; then
+              if [[ "$conclusion" != "success" ]]; then
+                echo "El build Jekyll paralelo terminó con estado: $conclusion"
+                exit 1
+              fi
+              echo "Jekyll terminó. Ahora se publica el build Vite de dist."
+              exit 0
+            fi
+
+            sleep 5
+          done
+
+          echo "El workflow Jekyll no terminó dentro del tiempo esperado."
+          exit 1
+
       - id: deployment
         uses: actions/deploy-pages@v4

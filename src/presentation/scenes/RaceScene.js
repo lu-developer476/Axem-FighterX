@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { genderForRanger, getCounterpartSelection } from '../../domain/rangers/rangerVariants.js';
-import { maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
+import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
 import {
   MOTORCYCLE_LANE_COUNT,
@@ -196,18 +196,17 @@ export class RaceScene extends Phaser.Scene {
 
   #refreshSelectionPreview() {
     const isViolet = this.selectedRangerId === RANGER_IDS.VIOLET;
+    const gender = genderForRanger(this.selectedRangerId);
     this.selectionPreview.stop();
-    if (isViolet) {
-      this.selectionPreview.setTexture(spriteKeyFor(RANGER_IDS.VIOLET, 'female')).setScale(0.9);
-      this.selectionVehicle.setVisible(true);
-      this.selectionLabel.setText('J1 · AXEM VIOLETA · FEMENINO').setColor('#e3d4ff');
-    } else {
-      const bikeKey = maleAnimationKey(RANGER_IDS.ORANGE, 'bike');
-      this.selectionPreview.setTexture(bikeKey).setScale(0.9);
-      this.selectionVehicle.setVisible(false);
-      if (this.anims.exists(bikeKey)) this.selectionPreview.play(bikeKey);
-      this.selectionLabel.setText('J1 · AXEM NARANJA · MASCULINO').setColor('#ffc58e');
-    }
+    this.selectionPreview
+      .setTexture(spriteKeyFor(this.selectedRangerId, gender))
+      .setScale(0.9)
+      .setAngle(0);
+    this.selectionVehicle.setVisible(true);
+    this.selectionLabel.setText(isViolet
+      ? 'J1 · AXEM VIOLETA · FEMENINO'
+      : 'J1 · AXEM NARANJA · MASCULINO')
+      .setColor(isViolet ? '#e3d4ff' : '#ffc58e');
   }
 
   #startRace() {
@@ -236,20 +235,15 @@ export class RaceScene extends Phaser.Scene {
   }
 
   #createRacer(rangerId, label, lane, isPlayer) {
-    const texture = rangerId === RANGER_IDS.VIOLET
-      ? spriteKeyFor(rangerId, 'female')
-      : maleAnimationKey(rangerId, 'bike');
+    const texture = spriteKeyFor(rangerId, genderForRanger(rangerId));
     const sprite = this.add.sprite(isPlayer ? PLAYER_X : OPPONENT_X, MOTORCYCLE_LANE_BASELINES[lane], texture)
       .setOrigin(0.5, 0.82)
       .setScale(MOTORCYCLE_LANE_SCALES[lane] * (isPlayer ? 0.78 : 0.7))
       .setDepth(36 + lane);
-    if (rangerId === RANGER_IDS.ORANGE && this.anims.exists(maleAnimationKey(rangerId, 'bike'))) {
-      sprite.play(maleAnimationKey(rangerId, 'bike'));
-    }
-    const vehicle = rangerId === RANGER_IDS.VIOLET
-      ? this.add.image(sprite.x, sprite.y + 8, 'bike-race-motorcycle')
-        .setOrigin(0.5, 0.75).setScale(MOTORCYCLE_LANE_SCALES[lane] * 0.78).setDepth(34 + lane)
-      : null;
+    const vehicle = this.add.image(sprite.x, sprite.y + 8, 'bike-race-motorcycle')
+      .setOrigin(0.5, 0.75)
+      .setScale(MOTORCYCLE_LANE_SCALES[lane] * 0.78)
+      .setDepth(34 + lane);
     const labelText = this.#text(label, sprite.x, sprite.y - 27, isPlayer ? '#e3d4ff' : '#ffe0b2', 5);
     return {
       rangerId, label, lane, targetLane: lane, isPlayer, sprite, vehicle, labelText,
@@ -377,7 +371,7 @@ export class RaceScene extends Phaser.Scene {
       const x = racer.isPlayer ? PLAYER_X : OPPONENT_X + Math.sin(time / 500 + racer.lane) * 5;
       racer.sprite.setPosition(x, targetY + (racer.stunMs > 0 ? Math.sin(time / 25) * 2 : 0));
       racer.sprite.setScale(MOTORCYCLE_LANE_SCALES[racer.lane] * (racer.isPlayer ? 0.78 : 0.7));
-      if (racer.rangerId === RANGER_IDS.VIOLET) racer.sprite.setAngle(Math.sin(time / 160) * 1.5);
+      racer.sprite.setAngle(Math.sin(time / 160 + racer.lane) * 1.5);
       racer.labelText.setPosition(x, targetY - 27);
       if (racer.vehicle) racer.vehicle.setPosition(x, targetY + 8).setScale(MOTORCYCLE_LANE_SCALES[racer.lane] * 0.78);
     }

@@ -4,12 +4,9 @@ import { ARENA } from '../../domain/arena/arena.js';
 import { contentWidth, insetSize } from '../views/uiLayout.js';
 import { DEFAULT_STAGE_ID, getStage } from '../../infrastructure/assets/stageAssetManifest.js';
 import { StageView } from '../views/StageView.js';
-import {
-  maleAnimationKey,
-  spriteKeyFor,
-} from '../../infrastructure/assets/assetManifest.js';
+import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { isAvailableRangerVariant } from '../../domain/rangers/rangerVariants.js';
-import { GIF_ORIGIN_Y, spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
+import { spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
 import { shouldFlip } from '../views/orientation.js';
 import { playStageMusic } from '../../infrastructure/audio/GameMusic.js';
 
@@ -38,32 +35,17 @@ export class CinematicScene extends Phaser.Scene {
     this.transitioning = false;
   }
 
-  /**
-   * El Axem masculino invoca su hacha (battle-pose) y queda en su pose de espera;
-   * el resto de los personajes conserva la imagen fija con el vaivén.
-   */
+  /** Muestra el mismo arte Super Axem que se usará durante todo el combate. */
   #createCharacterSprite(x, character, facing) {
-    const battlePoseKey = maleAnimationKey(character.id, 'battle-pose');
-    const poseKey = maleAnimationKey(character.id, 'pose');
-    const animated = character.gender === 'male'
-      && this.anims.exists(battlePoseKey)
-      && this.anims.exists(poseKey);
-
-    const sprite = animated
-      ? this.add.sprite(x, ARENA.groundY, battlePoseKey).setOrigin(0.5, GIF_ORIGIN_Y)
-      : this.add.image(x, ARENA.groundY, spriteKeyFor(character.id, character.gender)).setOrigin(0.5, 1);
-
-    sprite
+    return this.add.image(
+      x,
+      ARENA.groundY,
+      spriteKeyFor(character.id, character.gender),
+    )
+      .setOrigin(0.5, 1)
       .setScale(1)
       .setFlipX(shouldFlip(facing, spriteFacingFor(character.id, character.gender)))
       .setDepth(100);
-
-    if (animated) {
-      sprite.setData('animated', true);
-      sprite.play(battlePoseKey);
-      sprite.chain(poseKey);
-    }
-    return sprite;
   }
 
   create() {
@@ -92,8 +74,7 @@ export class CinematicScene extends Phaser.Scene {
     this.leftSprite = this.#createCharacterSprite(106, left, 1);
     this.rightSprite = this.#createCharacterSprite(374, right, -1);
 
-    // Los personajes con animación propia (pose de combate) no necesitan el vaivén.
-    const bobbingTargets = [this.leftSprite, this.rightSprite].filter((sprite) => !sprite.getData('animated'));
+    const bobbingTargets = [this.leftSprite, this.rightSprite];
     this.tweens.add({
       targets: bobbingTargets,
       y: ARENA.groundY - 4,

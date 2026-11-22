@@ -26,9 +26,6 @@ const SEQUENCE_GIF_FEET_MARGIN = 4;
 /** Altura visible estándar del personaje de pie, común a todas las animaciones masculinas. */
 const STANDARD_STANDING_HEIGHT = 78;
 const MENU_SIZE = Object.freeze({ width: 104, height: 150 });
-const MENU_POSE_REFERENCES = Object.freeze([
-  SOURCE('sprites', 'references', 'axem-red', 'axem-red-spritesheet.png'),
-]);
 const TRANSPARENT = Object.freeze({ r: 0, g: 0, b: 0, alpha: 0 });
 const ATLAS_FRAMES_PATH = path.join(ROOT, 'src', 'infrastructure', 'assets', 'atlasFrames.json');
 const KI_AURA_SHEET_PATH = path.join(
@@ -1417,146 +1414,29 @@ async function buildMaleCombatEnhancementGifs(color) {
 }
 
 /**
- * Localiza figuras separadas dentro de una referencia ya procesada.
- * Descarta motas, efectos y piezas demasiado pequeñas para ser una pose.
+ * Genera retratos del menú directamente desde las ilustraciones Super Axem.
+ * Ambas salidas comparten un lienzo transparente para conservar una escala
+ * visual pareja y no invadir el título ni los botones de inicio.
  */
-function findSpriteComponents(data, width, height) {
-  const total = width * height;
-  const visited = new Uint8Array(total);
-  const queue = new Uint32Array(total);
-  const components = [];
+async function buildMenuSuperPoses() {
+  const poses = [
+    {
+      gender: 'male',
+      color: 'orange',
+      file: SOURCE('sprites', 'references', 'axem-red', 'super-axem-red.png'),
+    },
+    {
+      gender: 'female',
+      color: 'violet',
+      file: SOURCE('sprites', 'references', 'axem-pink', 'super-axem-pink.png'),
+    },
+  ];
 
-  for (let start = 0; start < total; start += 1) {
-    if (visited[start] || data[start * 4 + 3] < 24) continue;
-
-    let head = 0;
-    let tail = 0;
-    let minX = width;
-    let minY = height;
-    let maxX = 0;
-    let maxY = 0;
-    visited[start] = 1;
-    queue[tail++] = start;
-
-    while (head < tail) {
-      const index = queue[head++];
-      const x = index % width;
-      const y = Math.floor(index / width);
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x);
-      maxY = Math.max(maxY, y);
-
-      if (x > 0) {
-        const next = index - 1;
-        if (!visited[next] && data[next * 4 + 3] >= 24) {
-          visited[next] = 1;
-          queue[tail++] = next;
-        }
-      }
-      if (x + 1 < width) {
-        const next = index + 1;
-        if (!visited[next] && data[next * 4 + 3] >= 24) {
-          visited[next] = 1;
-          queue[tail++] = next;
-        }
-      }
-      if (y > 0) {
-        const next = index - width;
-        if (!visited[next] && data[next * 4 + 3] >= 24) {
-          visited[next] = 1;
-          queue[tail++] = next;
-        }
-      }
-      if (y + 1 < height) {
-        const next = index + width;
-        if (!visited[next] && data[next * 4 + 3] >= 24) {
-          visited[next] = 1;
-          queue[tail++] = next;
-        }
-      }
-    }
-
-    const boundsWidth = maxX - minX + 1;
-    const boundsHeight = maxY - minY + 1;
-    const density = tail / (boundsWidth * boundsHeight);
-    if (
-      tail >= 180 &&
-      boundsWidth >= 12 &&
-      boundsHeight >= 28 &&
-      boundsHeight / boundsWidth >= 0.48 &&
-      density >= 0.035
-    ) {
-      components.push({
-        left: minX,
-        top: minY,
-        width: boundsWidth,
-        height: boundsHeight,
-        area: tail,
-      });
-    }
-  }
-
-  components.sort((a, b) => b.area - a.area);
-  const selected = [];
-  for (const component of components) {
-    const overlaps = selected.some((other) =>
-      component.left < other.left + other.width &&
-      component.left + component.width > other.left &&
-      component.top < other.top + other.height &&
-      component.top + component.height > other.top
-    );
-    if (!overlaps) selected.push(component);
-    if (selected.length === 2) break;
-  }
-  return selected;
-}
-
-/** Prioriza las dos poses independientes de la referencia masculina indicada. */
-async function findMenuPoseReference() {
-  for (const file of MENU_POSE_REFERENCES) {
-    try {
-      const { data, info } = await sharp(file)
-        .ensureAlpha()
-        .raw()
-        .toBuffer({ resolveWithObject: true });
-      const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
-      removeSpriteBackground({
-        data: pixels,
-        width: info.width,
-        height: info.height,
-      }, {
-        tolerance: 48,
-        minBorderCoverage: 0.025,
-      });
-
-      const poses = findSpriteComponents(pixels, info.width, info.height);
-      if (poses.length >= 2) return { file, poses, width: info.width, height: info.height };
-    } catch (error) {
-      if (file === MENU_POSE_REFERENCES[MENU_POSE_REFERENCES.length - 1]) throw error;
-    }
-  }
-
-  throw new Error(
-    'No se encontraron dos poses masculinas separadas en las referencias de Axem Red.'
-  );
-}
-
-/** Genera dos retratos laterales distintos desde las poses de Axem Red. */
-async function buildMenuMalePoses() {
-  const { file, poses, width: sourceWidth, height: sourceHeight } = await findMenuPoseReference();
   await fs.mkdir(GENERATED, { recursive: true });
-
-  for (const [index, [color, targetHue]] of Object.entries(COLORS).filter(([color]) => color === 'orange').entries()) {
-    const recolored = await recolorAndKey(file, 'male', targetHue);
-    const bounds = poses[index];
-    const padding = 4;
-    const left = Math.max(0, Math.min(sourceWidth - 1, bounds.left - padding));
-    const top = Math.max(0, Math.min(sourceHeight - 1, bounds.top - padding));
-    const width = Math.max(1, Math.min(sourceWidth - left, bounds.width + padding * 2));
-    const height = Math.max(1, Math.min(sourceHeight - top, bounds.height + padding * 2));
-    const output = await sharp(recolored)
-      .extract({ left, top, width, height })
+  for (const pose of poses) {
+    const output = await sharp(pose.file)
+      .ensureAlpha()
+      .trim({ background: TRANSPARENT, threshold: 1 })
       .resize(MENU_SIZE.width, MENU_SIZE.height, {
         fit: 'contain',
         kernel: 'nearest',
@@ -1564,29 +1444,13 @@ async function buildMenuMalePoses() {
       })
       .png()
       .toBuffer();
-    const outputPath = path.join(GENERATED, 'menu-ranger-male-' + color + '.png');
+    const outputPath = path.join(
+      GENERATED,
+      'menu-ranger-' + pose.gender + '-' + pose.color + '.png',
+    );
     await fs.writeFile(outputPath, output);
-    console.log('Generada pose lateral ' + path.relative(ROOT, outputPath));
+    console.log('Generado retrato Super Axem ' + path.relative(ROOT, outputPath));
   }
-}
-
-/** Genera una pose femenina limpia y ampliada, sin el arma que reduce la silueta en combate. */
-async function buildMenuFemalePose() {
-  const sourcePath = RESULTS('female', 'violet', 'levitate.png');
-  const outputPath = path.join(GENERATED, 'menu-ranger-female-violet.png');
-  const output = await sharp(sourcePath)
-    .ensureAlpha()
-    .trim({ background: TRANSPARENT, threshold: 1 })
-    .resize(MENU_SIZE.width, MENU_SIZE.height, {
-      fit: 'contain',
-      kernel: 'nearest',
-      background: TRANSPARENT,
-    })
-    .png()
-    .toBuffer();
-
-  await fs.writeFile(outputPath, output);
-  console.log('Generada pose lateral ' + path.relative(ROOT, outputPath));
 }
 
 async function buildGender(gender, allowedColors) {
@@ -1620,7 +1484,7 @@ async function buildGender(gender, allowedColors) {
       await buildMaleActionGifs(color, sequenceIndex);
       await buildMaleSharedExtraGifs(color);
       await writeMaleGameStrips(color);
-      baseSource = run.frames[0];
+      baseSource = await fs.readFile(SOURCE('sprites', 'references', 'axem-red', 'super-axem-red.png'));
     } else {
       const pinkReference = SOURCE('sprites', 'references', 'axem-pink');
       const files = [
@@ -1665,7 +1529,7 @@ async function buildGender(gender, allowedColors) {
           await writeResult(gender, color, outputName, corrected);
         }
       }
-      baseSource = canonicalPose;
+      baseSource = await fs.readFile(SOURCE('sprites', 'references', 'axem-pink', 'super-axem-pink.png'));
     }
 
     if (gender === 'female') {
@@ -1710,8 +1574,7 @@ async function main() {
   await Promise.all(retiredAssets.map((name) => fs.rm(path.join(GENERATED, name), { force: true })));
   await buildGender('male', ['orange']);
   await buildGender('female', ['violet']);
-  await buildMenuMalePoses();
-  await buildMenuFemalePose();
+  await buildMenuSuperPoses();
 }
 
 main().catch((error) => {

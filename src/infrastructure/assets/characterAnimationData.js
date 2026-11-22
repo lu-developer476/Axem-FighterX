@@ -12,9 +12,9 @@ export const ANIMATION_STATES = Object.freeze([
  */
 const CHARACTER_DATA = Object.freeze({
   spriteFacing: Object.freeze({
-    // Axem Red masculino mira a la derecha; Axem Pink femenino mira a la izquierda.
+    // Las dos ilustraciones Super Axem tienen orientación nativa hacia la derecha.
     male: 1,
-    female: -1,
+    female: 1,
   }),
   displayHeight: 83,
   // Alto fijo de cada celda de animación: no depende del frame activo.

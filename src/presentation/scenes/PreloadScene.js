@@ -6,17 +6,13 @@ import {
   spriteUrlFor,
   menuSpriteKeyFor,
   menuSpriteUrlFor,
-  maleAnimationKey,
-  maleAnimationUrl,
 } from '../../infrastructure/assets/assetManifest.js';
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
-import { GIF_ACTIONS, GIF_CELL } from '../../infrastructure/assets/characterAnimationData.js';
 import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { createStageAssetTextures } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import whitePuffAtlasUrl from '../../../art/source/effects/kenney-smoke-particles/white-puff-atlas.png';
-import { registerCharacterAnimations } from '../animation/registerCharacterAnimations.js';
 import { registerFxAnimations } from '../animation/registerFxAnimations.js';
 
 export class PreloadScene extends Phaser.Scene {
@@ -94,31 +90,12 @@ export class PreloadScene extends Phaser.Scene {
       const gender = genderForRanger(rangerId);
       this.load.image(spriteKeyFor(rangerId, gender), spriteUrlFor(rangerId, gender));
     }
-    for (const rangerId of [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE]) {
-      if (rangerId === RANGER_IDS.ORANGE) {
-        this.load.image(menuSpriteKeyFor(rangerId), menuSpriteUrlFor(rangerId));
-      }
-      if (rangerId === RANGER_IDS.VIOLET) {
-        this.load.image(
-          menuSpriteKeyFor(rangerId, 'female'),
-          menuSpriteUrlFor(rangerId, 'female'),
-        );
-      }
-      if (rangerId === RANGER_IDS.ORANGE) for (const action of ['run', 'bike', 'double-axe']) {
-        this.load.spritesheet(maleAnimationKey(rangerId, action), maleAnimationUrl(rangerId, action), {
-          frameWidth: 53,
-          frameHeight: 83,
-        });
-      }
-      if (rangerId === RANGER_IDS.ORANGE) for (const action of GIF_ACTIONS) {
-        this.load.spritesheet(maleAnimationKey(rangerId, action), maleAnimationUrl(rangerId, action), {
-          frameWidth: GIF_CELL.width,
-          frameHeight: GIF_CELL.height,
-        });
-      }
-      if (rangerId === RANGER_IDS.ORANGE) {
-        this.load.image(maleAnimationKey(rangerId, 'defeated'), maleAnimationUrl(rangerId, 'defeated'));
-      }
+    for (const rangerId of [RANGER_IDS.ORANGE, RANGER_IDS.VIOLET]) {
+      const gender = genderForRanger(rangerId);
+      this.load.image(
+        menuSpriteKeyFor(rangerId, gender),
+        menuSpriteUrlFor(rangerId, gender),
+      );
     }
     this.load.image('title-art', import.meta.env.BASE_URL + 'generated/title.png');
     Object.values(STAGE_MAP_ASSETS).forEach(({ key, url }) => this.load.image(key, url));
@@ -134,7 +111,6 @@ export class PreloadScene extends Phaser.Scene {
     createStageAssetTextures(this);
     createFxTextures(this);
     registerFxAnimations(this);
-    registerCharacterAnimations(this);
     this.scene.start('MenuScene');
   }
 }

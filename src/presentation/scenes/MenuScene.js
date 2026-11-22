@@ -5,7 +5,7 @@ import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { getCharacterSelectionsByCorner } from '../../domain/match/playerAssignments.js';
-import { maleAnimationKey, menuSpriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
+import { menuSpriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playMenuMusic } from '../../infrastructure/audio/GameMusic.js';
 import { contentWidth, insetSize, mapPanelY, UI_SPACING } from '../views/uiLayout.js';
 
@@ -81,7 +81,28 @@ export class MenuScene extends Phaser.Scene {
   }
 
 
-  /** Arte de menú independiente de los sprites compactos usados en combate. */
+  /** Retratos Super Axem con escala y espacio uniformes en la portada. */
+  #addHomeRangerArt() {
+    const orange = this.add.image(
+      GAME_WIDTH / 2 - 108,
+      160,
+      menuSpriteKeyFor(RANGER_IDS.ORANGE, 'male'),
+    )
+      .setOrigin(0.5, 1)
+      .setScale(0.72)
+      .setDepth(1);
+
+    const violet = this.add.image(
+      GAME_WIDTH / 2 + 108,
+      160,
+      menuSpriteKeyFor(RANGER_IDS.VIOLET, 'female'),
+    )
+      .setOrigin(0.5, 1)
+      .setScale(0.72)
+      .setDepth(1);
+
+    this.ui.add([orange, violet]);
+  }
   #addHomeRangerArt() {
     const orangeKey = maleAnimationKey(RANGER_IDS.ORANGE, 'charge');
     const orange = this.add.sprite(GAME_WIDTH / 2 - 108, 160, orangeKey)

@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
-import { maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
+import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
+import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
 
 const FINISH_DISTANCE = 1200;
@@ -254,7 +255,7 @@ export class LandRaceScene extends Phaser.Scene {
   }
 
   #createRacer(rangerId, laneY, isPlayer) {
-    const idleKey = rangerId === RANGER_IDS.VIOLET ? spriteKeyFor(rangerId, 'female') : maleAnimationKey(rangerId, 'idle');
+    const idleKey = spriteKeyFor(rangerId, genderForRanger(rangerId));
     const sprite = this.add.sprite(TRACK_START_X, laneY + RUNNER_FOOT_OFFSET, idleKey)
       .setOrigin(0.5, 1)
       .setDepth(42);
@@ -301,17 +302,10 @@ export class LandRaceScene extends Phaser.Scene {
 
   #setMode(racer, mode) {
     if (racer.mode === mode) return;
-    const isFemaleViolet = racer.rangerId === RANGER_IDS.VIOLET;
-    const animationKey = maleAnimationKey(racer.rangerId, mode);
-    const fallbackKey = isFemaleViolet
-      ? spriteKeyFor(racer.rangerId, 'female')
-      : maleAnimationKey(racer.rangerId, 'idle');
-    const selectedKey = !isFemaleViolet && this.anims.exists(animationKey) ? animationKey : fallbackKey;
-    if (isFemaleViolet) racer.sprite.setTexture(selectedKey);
-    else racer.sprite.play(selectedKey, true);
-    const usesRunSheet = mode === 'run' || mode === 'walk';
-    const scale = usesRunSheet ? 0.68 : 1;
+    racer.sprite.setTexture(spriteKeyFor(racer.rangerId, genderForRanger(racer.rangerId)));
+    const scale = mode === 'run' || mode === 'walk' ? 0.82 : 0.9;
     racer.sprite.setScale(scale);
+    racer.sprite.setAngle(0);
     racer.sprite.setAlpha(mode === 'idle' ? 0.96 : 1);
     racer.mode = mode;
   }
@@ -320,9 +314,7 @@ export class LandRaceScene extends Phaser.Scene {
     if (racer.actionRemainingMs > 0 || racer.stumbleMs > 0 || this.finished) return;
     const duration = ACTION_DURATION_MS[action];
     if (!duration) return;
-    const animationKey = maleAnimationKey(racer.rangerId, action);
-    const usesProceduralFemaleMotion = racer.rangerId === RANGER_IDS.VIOLET;
-    if (!usesProceduralFemaleMotion && !this.anims.exists(animationKey)) return;
+
     racer.actionMode = action;
     racer.actionDurationMs = duration;
     racer.actionElapsedMs = 0;
@@ -404,17 +396,24 @@ export class LandRaceScene extends Phaser.Scene {
   #syncRacer(racer) {
     const x = this.#worldToScreen(racer.distance);
     const groundY = racer.laneY + RUNNER_FOOT_OFFSET;
+    const runPhase = racer.distance / 16;
+    const movingBob = racer.mode === 'run' || racer.mode === 'walk'
+      ? Math.abs(Math.sin(runPhase)) * 2.2
+      : 0;
     let lift = 0;
     if (racer.actionMode === 'jump' && racer.actionDurationMs > 0) {
       const progress = Phaser.Math.Clamp(racer.actionElapsedMs / racer.actionDurationMs, 0, 1);
       lift = Math.sin(progress * Math.PI) * 27;
     }
 
-    racer.sprite.setPosition(Math.round(x), Math.round(groundY - lift));
+    racer.sprite.setPosition(Math.round(x), Math.round(groundY - lift - movingBob));
+    racer.sprite.setAngle(
+      racer.mode === 'run' || racer.mode === 'walk' ? Math.sin(runPhase) * 1.8 : 0,
+    );
     racer.shadow.setPosition(Math.round(x), groundY + 1);
     racer.shadow.setScale(1 - lift / 90, 1);
-    if (racer.actionMode === 'roll') racer.sprite.setScale(1, 0.78);
-    else racer.sprite.setScale(racer.mode === 'run' || racer.mode === 'walk' ? 0.68 : 1);
+    if (racer.actionMode === 'roll') racer.sprite.setScale(0.9, 0.68);
+    else racer.sprite.setScale(racer.mode === 'run' || racer.mode === 'walk' ? 0.82 : 0.9);
   }
 
   #drawHud() {

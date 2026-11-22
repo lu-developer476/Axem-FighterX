@@ -37,6 +37,8 @@ export function poseFor(state, timeMs, elapsedMs) {
     case 'walk':
       // Mantiene una leve inclinación de avance, sin deformaciones ni bamboleo.
       return { ...NEUTRAL_POSE, angle: 7 };
+    case 'dash':
+      return dashPose(timeMs);
     case 'attack':
       return attackPose(timeMs);
     case 'special-attack':
@@ -86,6 +88,17 @@ function attackPose(t) {
   }
   const k = easeInOutSine(clamp01((t - windupMs - activeMs) / recoveryMs));
   return { ...NEUTRAL_POSE, angle: lerp(40, 0, k), x: lerp(16, 0, k), scaleX: lerp(1.06, 1, k) };
+}
+
+function dashPose(t) {
+  const pulse = Math.sin(Math.min(1, t / 240) * Math.PI);
+  return {
+    ...NEUTRAL_POSE,
+    x: 5 + pulse * 5,
+    angle: 12 + pulse * 5,
+    scaleX: 1.04 + pulse * 0.05,
+    scaleY: 0.96 - pulse * 0.04,
+  };
 }
 
 function hurtPose(t) {

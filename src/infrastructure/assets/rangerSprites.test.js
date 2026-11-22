@@ -14,6 +14,9 @@ const generatedSpritePath = ({ id, gender }) =>
 const generatedMenuVioletPath = () =>
   fileURLToPath(new URL('../../../public/generated/menu-ranger-female-violet.png', import.meta.url));
 
+const generatedMenuOrangePath = () =>
+  fileURLToPath(new URL('../../../public/generated/menu-ranger-male-orange.png', import.meta.url));
+
 describe('Variantes canónicas de Axem Rangers', () => {
   it('solo mantiene Axem Violeta femenino y Axem Naranja masculino', () => {
     expect(genderForRanger('violet')).toBe('female');
@@ -32,8 +35,11 @@ describe('Variantes canónicas de Axem Rangers', () => {
     });
   }
 
-  it('genera una pose de menú violeta grande, transparente y con píxeles visibles', async () => {
-    const file = generatedMenuVioletPath();
+  it.each([
+    ['male/orange', generatedMenuOrangePath],
+    ['female/violet', generatedMenuVioletPath],
+  ])('genera el retrato de menú Super Axem %s en un lienzo transparente de 104×150 px', async (_name, getFile) => {
+    const file = getFile();
     const metadata = await sharp(file).metadata();
     expect(metadata.format).toBe('png');
     expect(metadata.width).toBe(104);

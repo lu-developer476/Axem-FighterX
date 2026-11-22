@@ -56,6 +56,86 @@ function boundsFromAlpha(data, width, height) {
   return { left: minX, top: minY, right: maxX + 1, bottom: maxY + 1 };
 }
 
+function detectOrangeUploadBackground(data, width, height) {
+  const histogram = new Map();
+  const add = (x, y) => {
+    const offset = (y * width + x) * 4;
+    if (data[offset + 3] < 16) return;
+    const red = data[offset];
+    const green = data[offset + 1];
+    const blue = data[offset + 2];
+    const key = (red >> 4) + ',' + (green >> 4) + ',' + (blue >> 4);
+    const entry = histogram.get(key) ?? { count: 0, red: 0, green: 0, blue: 0 };
+    entry.count += 1;
+    entry.red += red;
+    entry.green += green;
+    entry.blue += blue;
+    histogram.set(key, entry);
+  };
+
+  for (let x = 0; x < width; x += 1) {
+    add(x, 0);
+    add(x, height - 1);
+  }
+  for (let y = 1; y < height - 1; y += 1) {
+    add(0, y);
+    add(width - 1, y);
+  }
+
+  const ranked = Array.from(histogram.values()).sort((a, b) => b.count - a.count);
+  const perimeter = ranked.reduce((sum, entry) => sum + entry.count, 0);
+  if (!perimeter || !ranked.length) throw new Error('El perímetro del upload Orange está vacío.');
+
+  const colorOf = (entry) => [
+    Math.round(entry.red / entry.count),
+    Math.round(entry.green / entry.count),
+    Math.round(entry.blue / entry.count),
+  ];
+  const first = colorOf(ranked[0]);
+  const firstCoverage = ranked[0].count / perimeter;
+  const neutral = (color) => Math.max(...color) - Math.min(...color) <= 24;
+  const brightness = (color) => (color[0] + color[1] + color[2]) / 3;
+
+  // Regla local del upload Orange: un tono neutro oscuro solo se acepta como
+  // fondo sólido si domina claramente el perímetro completo.
+  if (firstCoverage >= 0.65 && neutral(first)) {
+    return { colors: [first], coverage: firstCoverage, mode: 'solid-dark-or-neutral' };
+  }
+
+  const secondEntry = ranked[1];
+  if (secondEntry) {
+    const second = colorOf(secondEntry);
+    const secondCoverage = secondEntry.count / perimeter;
+    const distance = Math.sqrt(
+      (first[0] - second[0]) ** 2 +
+      (first[1] - second[1]) ** 2 +
+      (first[2] - second[2]) ** 2,
+    );
+    if (
+      firstCoverage >= 0.12 &&
+      secondCoverage >= 0.12 &&
+      firstCoverage + secondCoverage >= 0.55 &&
+      neutral(first) &&
+      neutral(second) &&
+      distance >= 12 &&
+      distance <= 110
+    ) {
+      return {
+        colors: [first, second],
+        coverage: firstCoverage + secondCoverage,
+        mode: 'dark-or-neutral-checkerboard',
+      };
+    }
+  }
+
+  const detected = detectCheckerboardColors(data, width, height);
+  return {
+    colors: detected.colors,
+    coverage: detected.borderCoverage ?? null,
+    mode: detected.backgroundType ?? 'generic-detection',
+  };
+}
+
 function isBlackLinework(red, green, blue) {
   return Math.max(red, green, blue) <= 56 &&
     Math.max(red, green, blue) - Math.min(red, green, blue) <= 24;
@@ -87,11 +167,18 @@ async function repairOrange() {
 
   // Si el master Orange llegó opaco, retirar solo el fondo conectado al borde.
   if (countTransparentPixels(orangePixels) === 0) {
-    const detected = detectCheckerboardColors(orangePixels, orangeDecoded.info.width, orangeDecoded.info.height);
+    const detected = detectOrangeUploadBackground(
+      orangePixels, orangeDecoded.info.width, orangeDecoded.info.height,
+    );
     const cleaned = removeCheckerboardBackground(
       orangePixels, orangeDecoded.info.width, orangeDecoded.info.height, detected.colors,
     );
     sourceBackgroundRemoved = cleaned.removedPixels;
+    console.log(
+      'Fondo del upload Orange: tipo=' + detected.mode +
+      '; colores=' + JSON.stringify(detected.colors) +
+      '; cobertura del perímetro=' + detected.coverage,
+    );
     if (sourceBackgroundRemoved < orangeDecoded.info.width * orangeDecoded.info.height * 0.1) {
       throw new Error('No se pudo retirar con confianza el fondo del upload Orange.');
     }

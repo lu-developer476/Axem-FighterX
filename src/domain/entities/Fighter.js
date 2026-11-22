@@ -471,7 +471,8 @@ export class Fighter {
   #emit(type, extra = {}) {
     this.events.push({
       type,
-      id: this.id,
+      id: this.combatantId,
+      characterId: this.id,
       x: this.position.x,
       y: this.position.y - BODY.height / 2 - this.position.z,
       groundY: this.position.y,

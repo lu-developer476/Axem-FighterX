@@ -154,7 +154,6 @@ async function prepareReference({ file, label, gender }) {
     raw: { width: info.width, height: info.height, channels: 4 },
   }).png({ compressionLevel: 9, effort: 10 }).toBuffer();
 
-  const family = CHARACTER_ARTWORK.families[gender];
   if (gender === 'male') {
     output = await scaleRedToOrange(output, family, label);
   }

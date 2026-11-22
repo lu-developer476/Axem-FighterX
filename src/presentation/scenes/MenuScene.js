@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { DEFAULT_STAGE_ID, STAGES } from '../../infrastructure/assets/stageAssetManifest.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
+import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { getCharacterSelectionsByCorner } from '../../domain/match/playerAssignments.js';
 import { maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
@@ -386,7 +387,6 @@ export class MenuScene extends Phaser.Scene {
 
   #moveSelectionBackToCharacters() {
     this.characterSlot = 0;
-    this.pendingCharacterId = null;
     this.#showCharacterModal();
   }
 

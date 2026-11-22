@@ -20,6 +20,11 @@ async function visibleBounds(relativePath) {
 }
 
 describe('Estándares centrales de recursos gráficos', () => {
+  it('no crea una carpeta results/male/red para el artwork de Red', async () => {
+    await expect(fs.access(absolute('art/source/sprites/results/male/red'))).rejects.toThrow();
+    expect(ASSET_STANDARDS.categories.characterArtwork.families.male).not.toHaveProperty('derivedArtwork');
+  });
+
   it('mantiene los uploads Orange y Violet en sus rutas y fuera de references', async () => {
     const sources = [
       {
@@ -46,11 +51,10 @@ describe('Estándares centrales de recursos gráficos', () => {
 
   for (const [gender, family] of Object.entries(ASSET_STANDARDS.categories.characterArtwork.families)) {
     it('mantiene el mismo lienzo entre el master y el artwork ' + gender, async () => {
-      const [master, artwork, prepared, derived] = await Promise.all([
+      const [master, artwork, prepared] = await Promise.all([
         sharp(absolute(family.reference)).metadata(),
         sharp(absolute(family.result)).metadata(),
         sharp(absolute(family.preparedSource)).metadata(),
-        family.derivedArtwork ? sharp(absolute(family.derivedArtwork)).metadata() : Promise.resolve(null),
       ]);
       expect(master.format).toBe('png');
       expect(master.width).toBe(family.width);
@@ -62,12 +66,6 @@ describe('Estándares centrales de recursos gráficos', () => {
       expect(prepared.width).toBe(master.width);
       expect(prepared.height).toBe(master.height);
       expect(prepared.hasAlpha).toBe(true);
-      if (family.derivedArtwork) {
-        expect(family.derivedArtwork).toBe('art/source/sprites/results/male/red/super-axem-ranger-red.png');
-        expect(derived.format).toBe('png');
-        expect([derived.width, derived.height]).toEqual([family.width, family.height]);
-        expect(derived.hasAlpha).toBe(true);
-      }
     });
   }
 
@@ -77,7 +75,7 @@ describe('Estándares centrales de recursos gráficos', () => {
       sharp(absolute(family.reference)).metadata(),
       sharp(absolute(family.result)).metadata(),
       visibleBounds(family.visualBoundsReference),
-      visibleBounds(family.derivedArtwork ?? family.preparedSource),
+      visibleBounds(family.preparedSource),
     ]);
     expect([orange.width, orange.height]).toEqual([master.width, master.height]);
     const orangeWidth = orangeBounds.right - orangeBounds.left;

@@ -1209,145 +1209,133 @@ async function transformMaleActionFrame(input, {
  * Dibuja una nube giratoria opaca que sustituye visualmente al cuerpo durante
  * la rodada. La silueta del personaje queda completamente debajo de esta capa.
  */
+/**
+ * Círculo de humo giratorio. Es una capa opaca e independiente: sustituye al
+ * personaje durante la rodada, sin dejar partes reconocibles del sprite.
+ */
 async function createGrayRollSmokeCover(angle) {
   const rotation = ((angle % 360) + 360) % 360;
-  const svg = Buffer.from(`
+  const svg = \`
     <svg width="150" height="100" viewBox="0 0 150 100" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <radialGradient id="smoke" cx="48%" cy="40%" r="68%">
-          <stop offset="0" stop-color="#d9dce1"/>
-          <stop offset="0.48" stop-color="#aeb3bb"/>
-          <stop offset="1" stop-color="#686e77"/>
+        <radialGradient id="rollCloud" cx="43%" cy="37%" r="70%">
+          <stop offset="0" stop-color="#e0e2e5"/>
+          <stop offset="0.48" stop-color="#b9bec5"/>
+          <stop offset="1" stop-color="#737a84"/>
         </radialGradient>
-        <linearGradient id="swirlLight" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#f0f2f5"/>
-          <stop offset="1" stop-color="#8b919a"/>
+        <linearGradient id="rollLight" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#f2f3f5"/>
+          <stop offset="1" stop-color="#969da6"/>
         </linearGradient>
       </defs>
-      <g transform="rotate(${rotation} 75 52)">
-        <!-- Masa cerrada y opaca: no deja ver el sprite que queda debajo. -->
+      <g transform="rotate(__ANGLE__ 103 50)">
         <path
-          d="M 12 59
-             C 7 48, 14 34, 27 31
-             C 24 18, 39 8, 52 15
-             C 61 3, 79 5, 86 16
-             C 101 8, 117 18, 116 31
-             C 132 29, 143 42, 136 55
-             C 147 66, 137 82, 122 82
-             C 114 96, 96 97, 84 87
-             C 70 99, 51 92, 48 82
-             C 31 89, 15 78, 20 66
-             C 15 65, 12 63, 12 59 Z"
-          fill="url(#smoke)" opacity="1"/>
-        <ellipse cx="75" cy="53" rx="51" ry="32" fill="#9ba1aa" opacity="0.34"/>
-        <!-- Bandas de giro encima de la nube, también opacas en su trazo. -->
-        <path d="M 20 55 C 39 22, 89 15, 124 39"
-          fill="none" stroke="url(#swirlLight)" stroke-width="6"
-          stroke-linecap="round" opacity="0.94"/>
-        <path d="M 29 72 C 57 91, 108 79, 130 53"
-          fill="none" stroke="#5f6670" stroke-width="7"
-          stroke-linecap="round" opacity="0.88"/>
-        <path d="M 44 36 C 61 22, 94 24, 108 43 C 119 59, 101 72, 81 69"
-          fill="none" stroke="#e1e4e8" stroke-width="4.5"
-          stroke-linecap="round" opacity="0.9"/>
-        <path d="M 40 59 C 54 43, 77 40, 95 49"
-          fill="none" stroke="#747b85" stroke-width="5"
-          stroke-linecap="round" opacity="0.82"/>
+          d="M 101 5
+             C 114 1, 128 10, 128 22
+             C 142 22, 149 35, 142 47
+             C 151 58, 143 73, 130 75
+             C 126 89, 110 97, 97 87
+             C 84 96, 68 87, 68 73
+             C 55 66, 54 51, 64 42
+             C 58 29, 69 17, 81 19
+             C 84 8, 94 3, 101 5 Z"
+          fill="url(#rollCloud)" opacity="1"/>
+        <ellipse cx="103" cy="51" rx="36" ry="29" fill="#989fa8" opacity="0.30"/>
+        <path d="M 67 47 C 80 23, 116 15, 137 37"
+          fill="none" stroke="url(#rollLight)" stroke-width="7"
+          stroke-linecap="round" opacity="0.96"/>
+        <path d="M 68 65 C 89 85, 124 80, 141 56"
+          fill="none" stroke="#626a74" stroke-width="8"
+          stroke-linecap="round" opacity="0.90"/>
+        <path d="M 87 27 C 106 17, 128 31, 126 49
+                 C 124 65, 106 72, 91 62"
+          fill="none" stroke="#e7e9ec" stroke-width="5"
+          stroke-linecap="round" opacity="0.92"/>
+        <path d="M 76 57 C 88 43, 105 39, 119 47"
+          fill="none" stroke="#747b85" stroke-width="5.5"
+          stroke-linecap="round" opacity="0.86"/>
       </g>
     </svg>
-  `);
-
-  return sharp(svg).png().toBuffer();
+  \`;
+  return sharp(Buffer.from(svg.replace("__ANGLE__", String(rotation)))).png().toBuffer();
 }
 
 /**
- * Mantiene los ecos grises detrás y coloca una nube giratoria opaca delante.
- * La nube cubre el cuerpo completo: durante el giro no deben distinguirse
- * cabeza, brazos, piernas ni detalles del personaje.
- */
-/**
- * Estela de humo visible detrás de la nube. Las bandas atraviesan solo la
- * superficie del humo y salen por el borde izquierdo, como rastro de velocidad.
+ * Nube de polvo independiente que queda DETRÁS del círculo. La masa nace en
+ * el borde posterior del giro y se prolonga hacia la izquierda como en una
+ * rodada rápida de Sonic: ancha junto al círculo, irregular y difusa al alejarse.
  */
 async function createGrayRollSmokeTrail() {
-  const svg = Buffer.from(`
+  const svg = Buffer.from(\`
     <svg width="150" height="100" viewBox="0 0 150 100" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="plume" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#aeb4bd" stop-opacity="0.04"/>
-          <stop offset="0.28" stop-color="#c8cdd4" stop-opacity="0.42"/>
-          <stop offset="0.72" stop-color="#a4aab3" stop-opacity="0.82"/>
-          <stop offset="1" stop-color="#777e88" stop-opacity="0.12"/>
+        <linearGradient id="dustFade" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#99958d" stop-opacity="0.12"/>
+          <stop offset="0.22" stop-color="#aaa69e" stop-opacity="0.42"/>
+          <stop offset="0.62" stop-color="#c2beb6" stop-opacity="0.78"/>
+          <stop offset="1" stop-color="#d4d0c8" stop-opacity="0.92"/>
         </linearGradient>
-        <linearGradient id="plumeShade" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#747b85" stop-opacity="0"/>
-          <stop offset="0.58" stop-color="#747b85" stop-opacity="0.55"/>
-          <stop offset="1" stop-color="#626a75" stop-opacity="0.1"/>
+        <linearGradient id="dustShadow" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#777d86" stop-opacity="0.05"/>
+          <stop offset="1" stop-color="#777d86" stop-opacity="0.58"/>
         </linearGradient>
+        <radialGradient id="dustPuff">
+          <stop offset="0" stop-color="#d9d5cd" stop-opacity="0.78"/>
+          <stop offset="1" stop-color="#a7a39b" stop-opacity="0.08"/>
+        </radialGradient>
       </defs>
-      <!-- Cola continua: nace ancha junto al giro y se afina hacia atrás. -->
-      <path d="M 0 48
-        C 17 40, 28 43, 42 40
-        C 53 37, 62 42, 77 45
-        C 61 49, 53 53, 39 52
-        C 24 52, 14 59, 0 56 Z"
-        fill="url(#plume)"/>
-      <path d="M 0 47
-        C 21 45, 34 35, 50 39
-        C 62 42, 68 46, 81 46
-        C 62 48, 48 48, 35 50
-        C 19 52, 10 53, 0 51 Z"
-        fill="#d8dce2" opacity="0.36"/>
-      <path d="M 0 57
-        C 20 54, 31 48, 46 50
-        C 60 52, 67 49, 82 48
-        C 65 55, 55 59, 40 57
-        C 23 55, 13 63, 0 62 Z"
-        fill="url(#plumeShade)"/>
-      <!-- Mechones finos que dan lectura de humo arrastrado, no de líneas. -->
-      <path d="M 1 42 C 20 34, 32 39, 48 37 S 67 42, 78 44"
-        fill="none" stroke="#e1e4e9" stroke-width="4"
-        stroke-linecap="round" opacity="0.48"/>
-      <path d="M 0 61 C 17 57, 31 55, 43 57 S 64 53, 78 49"
-        fill="none" stroke="#737b85" stroke-width="5"
-        stroke-linecap="round" opacity="0.48"/>
-      <path d="M 3 51 C 18 47, 28 48, 41 45 S 59 46, 70 47"
-        fill="none" stroke="#f0f1f4" stroke-width="2"
-        stroke-linecap="round" opacity="0.52"/>
+
+      <!-- Cuerpo de la estela: se ensancha al acercarse al círculo. -->
+      <path d="M 68 36
+        C 57 30, 48 32, 40 36
+        C 31 30, 21 32, 16 39
+        C 7 37, 0 43, 2 49
+        C -2 56, 5 63, 14 60
+        C 22 67, 32 62, 39 57
+        C 49 61, 58 57, 69 63
+        C 60 54, 59 45, 68 36 Z"
+        fill="url(#dustFade)"/>
+
+      <!-- Sombra suave en la parte inferior para dar volumen de polvo. -->
+      <path d="M 4 51
+        C 17 46, 27 50, 39 49
+        C 50 48, 58 54, 68 59
+        C 56 57, 49 62, 38 58
+        C 26 56, 17 64, 7 58 Z"
+        fill="url(#dustShadow)" opacity="0.58"/>
+
+      <!-- Bultos y remolinos de polvo, no rayas dibujadas sobre el círculo. -->
+      <ellipse cx="14" cy="46" rx="13" ry="9" fill="url(#dustPuff)" opacity="0.70"/>
+      <ellipse cx="29" cy="39" rx="12" ry="8" fill="url(#dustPuff)" opacity="0.58"/>
+      <ellipse cx="31" cy="56" rx="15" ry="8" fill="#c9c5bd" opacity="0.38"/>
+      <ellipse cx="47" cy="43" rx="16" ry="9" fill="#d5d1c9" opacity="0.42"/>
+
+      <!-- Mechones anchos y difusos que prolongan el rastro hacia atrás. -->
+      <path d="M 1 40 C 14 33, 25 35, 39 39 C 47 41, 54 39, 64 40
+        C 49 42, 38 43, 25 41 C 15 40, 8 45, 1 46 Z"
+        fill="#e0dcd4" opacity="0.44"/>
+      <path d="M 0 60 C 14 55, 23 57, 35 55 C 47 53, 54 57, 66 61
+        C 51 59, 42 63, 29 62 C 17 61, 9 66, 0 64 Z"
+        fill="#858b94" opacity="0.30"/>
+
+      <!-- Partículas que refuerzan la lectura de polvo arrastrado. -->
+      <circle cx="8" cy="34" r="3.2" fill="#c9c5bd" opacity="0.30"/>
+      <circle cx="19" cy="67" r="2.6" fill="#a8a49c" opacity="0.34"/>
+      <circle cx="39" cy="29" r="2.2" fill="#d8d4cc" opacity="0.42"/>
+      <circle cx="48" cy="68" r="2.5" fill="#aaa69e" opacity="0.28"/>
     </svg>
-  `);
-  return sharp(svg).blur(2.8).png().toBuffer();
+  \`);
+  return sharp(svg).blur(2.2).png().toBuffer();
 }
 
 /**
- * Construye la rodada en el lienzo final. Los ecos desplazados y las bandas
- * de humo permanecen dentro del cuadro visible; la nube opaca queda delante
- * del personaje, tapándolo por completo sin borrar la estela.
+ * Ensambla el efecto en dos capas separadas: primero el rastro de polvo y
+ * después el círculo giratorio que lo tapa parcialmente en su punto de origen.
+ * No se reutiliza ni se desenfoca el sprite del Axem: el cuerpo desaparece.
  */
-async function addGrayRollMotionBlur(input, angle) {
-  const echo = await sharp(input)
-    .greyscale()
-    .tint({ r: 148, g: 152, b: 160 })
-    .blur(5.2)
-    .png()
-    .toBuffer();
-
-  const blurredBody = await sharp(input)
-    .greyscale()
-    .tint({ r: 158, g: 162, b: 170 })
-    .blur(6.5)
-    .png()
-    .toBuffer();
-
-  const diffuseCore = await sharp(input)
-    .greyscale()
-    .tint({ r: 126, g: 130, b: 138 })
-    .blur(9)
-    .png()
-    .toBuffer();
-
-  const smokeCover = await createGrayRollSmokeCover(angle);
+async function addGrayRollMotionBlur(_input, angle) {
   const smokeTrail = await createGrayRollSmokeTrail();
+  const smokeCover = await createGrayRollSmokeCover(angle);
 
   return sharp({
     create: {
@@ -1358,19 +1346,8 @@ async function addGrayRollMotionBlur(input, angle) {
     },
   })
     .composite([
-      // Ecos de movimiento a la izquierda: el desplazamiento ya no se recorta.
-      { input: echo, left: -22, top: 8, opacity: 0.18 },
-      { input: echo, left: -13, top: 5, opacity: 0.22 },
-      { input: echo, left: -5, top: 2, opacity: 0.27 },
-      { input: diffuseCore, left: 0, top: 0, opacity: 0.34 },
-      { input: blurredBody, left: 0, top: 0, opacity: 0.88 },
-      // Nube principal delante del cuerpo, con opacidad total.
-      // Cola larga y afinada detrás del giro; queda parcialmente oculta
-      // bajo la nube, por eso parece nacer de ella y prolongarse hacia atrás.
       { input: smokeTrail, left: 0, top: 0, opacity: 1 },
-      // La nube se reduce y desplaza ligeramente a la derecha para dejar
-      // espacio real a la cola de humo dentro del lienzo de 150×100.
-      { input: await sharp(smokeCover).resize(118, 78).png().toBuffer(), left: 22, top: 11, opacity: 1 },
+      { input: smokeCover, left: 0, top: 0, opacity: 1 },
     ])
     .png()
     .toBuffer();

@@ -264,6 +264,7 @@ export class LandRaceScene extends Phaser.Scene {
 
     const racer = {
       rangerId,
+      gender: genderForRanger(rangerId),
       laneY,
       isPlayer,
       sprite,
@@ -302,11 +303,19 @@ export class LandRaceScene extends Phaser.Scene {
 
   #setMode(racer, mode) {
     if (racer.mode === mode) return;
-    racer.sprite.setTexture(spriteKeyFor(racer.rangerId, genderForRanger(racer.rangerId)));
-    const scale = mode === 'run' || mode === 'walk' ? 0.82 : 0.9;
+    const baseTexture = spriteKeyFor(racer.rangerId, racer.gender);
+    const isMoving = mode === 'run' || mode === 'walk';
+    const runAnimation = 'axem-' + racer.gender + '-' + racer.rangerId + '-run';
+    racer.sprite.stop();
+    racer.sprite.setTexture(baseTexture);
+    const scale = isMoving ? 0.82 : 0.9;
     racer.sprite.setScale(scale);
     racer.sprite.setAngle(0);
     racer.sprite.setAlpha(mode === 'idle' ? 0.96 : 1);
+    if (isMoving && this.anims.exists(runAnimation)) {
+      racer.sprite.play(runAnimation);
+      racer.sprite.anims.timeScale = mode === 'walk' ? 0.58 : 1;
+    }
     racer.mode = mode;
   }
 

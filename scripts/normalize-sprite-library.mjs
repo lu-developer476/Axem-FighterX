@@ -20,7 +20,10 @@ async function listImages(directory) {
     if (entry.isDirectory()) files.push(...await listImages(absolute));
     else if (entry.isFile() && EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
       const relative = path.relative(RESULTS_ROOT, absolute).split(path.sep).join('/');
-      if (EXCLUDED_FILES.has(relative)) {
+      if (
+        EXCLUDED_FILES.has(relative) ||
+        path.basename(absolute).toLowerCase() === 'super-axem-ranger-orange.png'
+      ) {
         console.log(path.relative(ROOT, absolute) + ': artwork maestro preservado; sin keying automático.');
         continue;
       }

@@ -665,9 +665,12 @@ async function writeMaleAnimation(frames, rangerId, action, frameDelays, loop = 
       .toBuffer()
   ));
   const strip = await makeHorizontalStrip(normalized, BASE_SIZE.width, BASE_SIZE.height);
-  const outputPath = path.join(GENERATED, 'axem-' + rangerId + '-' + action + '.png');
-  await fs.writeFile(outputPath, strip);
-  console.log('Generada animación ' + path.relative(ROOT, outputPath));
+  const outputPaths = [
+    path.join(GENERATED, 'axem-' + rangerId + '-' + action + '.png'),
+    path.join(GENERATED, 'axem-male-' + rangerId + '-' + action + '.png'),
+  ];
+  await Promise.all(outputPaths.map((outputPath) => fs.writeFile(outputPath, strip)));
+  console.log('Generada animación masculina ' + rangerId + '/' + action);
 
   // Los GIF de referencia usan lienzo 150×100. La corrida original mide 101×100:
   // se centra sobre transparencia para llegar al mismo tamaño sin deformar el sprite.
@@ -801,18 +804,13 @@ async function buildMaleActionGifs(color, sequenceIndex) {
     return group;
   });
 
-  await writeMaleSequenceGif(frames('group-01', 'group-02'), color, 'idle', 140);
+  // idle.gif conserva sus ocho cuadros maestros; no se reemplaza por el atlas completo.
 
   await writeMaleSequenceGif(frames('group-03'), color, 'punch-01', 90);
   await writeMaleSequenceGif(frames('group-04'), color, 'punch-02', 90);
   await writeMaleSequenceGif(frames('group-05'), color, 'punch-03', 90);
 
-  await writeMaleSequenceGif(
-    frames('group-09', 'group-08', 'group-07', 'group-06'),
-    color,
-    'battle-pose',
-    120,
-  );
+  // battle-pose.gif y teleport.gif mantienen sus GIF maestros completos.
 
   await writeMaleSequenceGif(frames('group-10'), color, 'run', 80);
   await writeMaleSequenceGif(frames('group-11'), color, 'dash', 80);
@@ -821,7 +819,6 @@ async function buildMaleActionGifs(color, sequenceIndex) {
   await writeMaleSequenceGif(groups.get('group-13').slice(0, 2), color, 'hit', 120);
   await writeMaleSequenceGif(groups.get('group-13').slice(3, 6), color, 'hurt', 150);
 
-  await writeMaleSequenceGif(frames('group-14'), color, 'teleport', 100);
 }
 
 
@@ -1477,15 +1474,18 @@ async function buildGender(gender, allowedColors) {
       await writeResult(gender, color, 'run.png', parts[1]);
       await writeResult(gender, color, 'bike.png', parts[2]);
       await writeResult(gender, color, 'double-axe.png', parts[3]);
-      const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
-      const sequenceIndex = await writeMaleSequences(color, parts[0], manifest.male.groups);
-      // La carpeta male/<color>/supplemental ya no se exporta (se eliminó del repositorio).
       await writeMaleAnimation(run.frames, color, 'run', run.delay, run.loop);
       await writeMaleAnimation(bike.frames, color, 'bike', bike.delay, bike.loop);
-      await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop);
-      await buildMaleActionGifs(color, sequenceIndex);
-      await buildMaleSharedExtraGifs(color);
-      await writeMaleGameStrips(color);
+      if (color === 'orange') {
+        const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
+        // Solo Orange tiene los grupos auxiliares completos para crear las acciones de combate.
+        const sequenceIndex = await writeMaleSequences(color, parts[0], manifest.male.groups);
+        await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop);
+        await buildMaleActionGifs(color, sequenceIndex);
+        // charge/guard/roll/KO ya tienen GIF maestros versionados; no se reconstruyen
+        // desde tiras auxiliares antiguas que fueron retiradas del repositorio.
+        await writeMaleGameStrips(color);
+      }
       baseSource = await fs.readFile(path.join(GENERATED, 'super-axem-source-male.png'));
     } else {
       const pinkReference = SOURCE('sprites', 'references', 'axem-pink');
@@ -1500,7 +1500,18 @@ async function buildGender(gender, allowedColors) {
         color,
         'axem-ranger-' + color + '.png',
       );
-      const canonicalPose = await fs.readFile(canonicalPosePath);
+      let canonicalPose;
+      try {
+        canonicalPose = await fs.readFile(canonicalPosePath);
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+        const generatedPose = await recolorAndKey(
+          path.join(pinkReference, 'axem-pink-pose.png'),
+          gender,
+          targetHue,
+        );
+        canonicalPose = await harmonizeFemalePalette(generatedPose);
+      }
 
       for (const file of files) {
         const outputName = file.replace(/^axem-pink-/, '');
@@ -1531,12 +1542,29 @@ async function buildGender(gender, allowedColors) {
           await writeResult(gender, color, outputName, corrected);
         }
       }
+      for (const [action, sourceName] of [
+        ['run', 'axem-ranger-run.gif'],
+        ['bike', 'axem-ranger-bike.gif'],
+      ]) {
+        const animation = await extractGifFrames(
+          SOURCE('sprites', 'references', 'axem-red', sourceName),
+          gender,
+          targetHue,
+        );
+        const cells = await Promise.all(animation.frames.map((frame) =>
+          sharp(frame).resize(BASE_SIZE.width, BASE_SIZE.height, {
+            fit: 'fill', kernel: 'nearest', background: TRANSPARENT,
+          }).png().toBuffer(),
+        ));
+        const strip = await makeHorizontalStrip(cells, BASE_SIZE.width, BASE_SIZE.height);
+        const outputPath = path.join(GENERATED, 'axem-female-' + color + '-' + action + '.png');
+        await fs.writeFile(outputPath, strip);
+        console.log('Generada animación femenina ' + color + '/' + action);
+      }
       baseSource = await fs.readFile(path.join(GENERATED, 'super-axem-source-female.png'));
     }
 
     if (gender === 'female') {
-      const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
-      await writeFemaleSequences(color, parts[0], manifest.female.groups);
       console.log(
         'Se conserva la imagen canónica femenina: ' +
         path.relative(ROOT, canonicalPosePath)
@@ -1561,11 +1589,28 @@ async function buildGender(gender, allowedColors) {
 
 async function main() {
   await fs.mkdir(GENERATED, { recursive: true });
-  // Elimina salidas antiguas de las dos combinaciones que ya no forman parte del juego.
+  const retiredSpriteDirectories = [
+    RESULTS('male', 'violet'),
+    RESULTS('female', 'orange'),
+    RESULTS('male', 'orange', 'source'),
+    RESULTS('male', 'orange', 'sequences'),
+    RESULTS('male', 'orange', 'supplemental'),
+    RESULTS('female', 'violet', 'source'),
+    RESULTS('female', 'violet', 'sequences'),
+    RESULTS('female', 'violet', 'supplemental'),
+  ];
+  await Promise.all(retiredSpriteDirectories.map((directory) =>
+    fs.rm(directory, { recursive: true, force: true }),
+  ));
+  // Elimina salidas antiguas que ya no forman parte del juego.
   const retiredAssets = [
+    'menu-ranger-male-violet.png',
     'ranger-male-violet.png',
     'ranger-female-orange.png',
-    'menu-ranger-male-violet.png',
+    'axem-male-violet-run.png',
+    'axem-male-violet-bike.png',
+    'axem-female-orange-run.png',
+    'axem-female-orange-bike.png',
     ...['violet'].flatMap((color) => [
       'run', 'bike', 'bike-idle', 'bike-accelerate', 'bike-brake', 'bike-boost',
       'bike-victory', 'bike-defeat', 'double-axe', 'defeated', 'idle', 'dash', 'jump', 'roll',
@@ -1587,6 +1632,10 @@ async function main() {
   await buildGender('male', ['orange']);
   await buildGender('female', ['violet']);
   await buildMenuSuperPoses();
+  // Las tiras auxiliares solo existen durante la generación; no quedan versionadas.
+  await Promise.all(retiredSpriteDirectories.map((directory) =>
+    fs.rm(directory, { recursive: true, force: true }),
+  ));
 }
 
 main().catch((error) => {

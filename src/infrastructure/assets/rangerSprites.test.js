@@ -5,8 +5,8 @@ import { genderForRanger, isAvailableRangerVariant } from '../../domain/rangers/
 import ASSET_STANDARDS from '../../../art/source/sprites/asset-standards.json';
 
 const variants = Object.freeze([
-  { id: 'violet', gender: 'female' },
   { id: 'orange', gender: 'male' },
+  { id: 'violet', gender: 'female' },
 ]);
 
 const generatedSpritePath = ({ id, gender }) =>
@@ -19,11 +19,14 @@ const generatedMenuOrangePath = () =>
   fileURLToPath(new URL('../../../public/generated/menu-ranger-male-orange.png', import.meta.url));
 
 describe('Variantes canónicas de Axem Rangers', () => {
-  it('solo mantiene Axem Violeta femenino y Axem Naranja masculino', () => {
-    expect(genderForRanger('violet')).toBe('female');
+  it('mantiene solo Orange masculino y Violet femenino', () => {
     expect(genderForRanger('orange')).toBe('male');
-    expect(isAvailableRangerVariant('violet', 'male')).toBe(false);
+    expect(genderForRanger('violet')).toBe('female');
+    for (const variant of variants) {
+      expect(isAvailableRangerVariant(variant.id, variant.gender)).toBe(true);
+    }
     expect(isAvailableRangerVariant('orange', 'female')).toBe(false);
+    expect(isAvailableRangerVariant('violet', 'male')).toBe(false);
   });
 
   for (const variant of variants) {
@@ -51,6 +54,18 @@ describe('Variantes canónicas de Axem Rangers', () => {
     const visiblePixels = Array.from({ length: data.length / 4 }, (_, index) => data[index * 4 + 3])
       .filter((alpha) => alpha > 0).length;
     expect(visiblePixels).toBeGreaterThan(900);
+  });
+
+  it('no genera carpetas de variantes no canónicas', async () => {
+    const { access } = await import('node:fs/promises');
+    await expect(access(fileURLToPath(new URL(
+      '../../../art/source/sprites/results/male/violet',
+      import.meta.url,
+    )))).rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(access(fileURLToPath(new URL(
+      '../../../art/source/sprites/results/female/orange',
+      import.meta.url,
+    )))).rejects.toMatchObject({ code: 'ENOENT' });
   });
 
   it('mantiene los GIF de carrera y combate del Axem Naranja masculino', async () => {

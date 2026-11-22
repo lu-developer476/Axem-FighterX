@@ -64,29 +64,9 @@ export class MenuScene extends Phaser.Scene {
   }
 
   #createBackdrop() {
-    this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x090713, 1)
+    this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 1)
       .setOrigin(0, 0)
       .setDepth(-100);
-    this.add.rectangle(GAME_WIDTH / 2, 158, GAME_WIDTH, 224, 0x171027, 0.24)
-      .setDepth(-99);
-    this.add.rectangle(GAME_WIDTH / 2, 244, GAME_WIDTH, 1, 0x8861b0, 0.24)
-      .setDepth(-98);
-
-    // Estrellas discretas y deterministas: aportan profundidad sin competir con el menú.
-    for (let index = 0; index < 30; index += 1) {
-      const x = (index * 79 + 31) % GAME_WIDTH;
-      const y = 88 + ((index * 43 + 17) % 145);
-      const star = this.add.rectangle(x, y, index % 6 === 0 ? 2 : 1, 1, 0xc8b5ed, 0.34)
-        .setDepth(-97);
-      this.tweens.add({
-        targets: star,
-        alpha: { from: 0.12, to: index % 4 === 0 ? 0.55 : 0.32 },
-        duration: 1100 + (index % 5) * 260,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut',
-      });
-    }
 
     const titleTexture = this.textures.get('title-art').getSourceImage();
     const titleScale = Math.min(1, 436 / titleTexture.width, 78 / titleTexture.height);
@@ -505,11 +485,6 @@ export class MenuScene extends Phaser.Scene {
     this.characterSlot = 0;
     this.#beginPage('', 282, 146);
     this.#addHomeRangerArt();
-    this.#addText('SUPER AXEM · NUEVAS FORMAS', GAME_WIDTH / 2, 108, {
-      fontSize: '5px',
-      color: '#c9b7e4',
-      letterSpacing: 1,
-    });
     this.#addButton('JUGAR', 190, () => this.#showPlayModes(), { width: 194, height: 17 });
     this.#addButton('TUTORIAL', 211, () => this.#showControls(), { width: 194, height: 17 });
     this.#addButton('CRÉDITOS', 232, () => this.#showCredits(), { width: 194, height: 17 });
@@ -595,9 +570,9 @@ export class MenuScene extends Phaser.Scene {
     this.#beginCharacterModal();
 
     RANGER_ORDER.forEach((rangerId, index) => {
-      const title = rangerId === RANGER_IDS.ORANGE ? 'AXEM NARANJA' : 'AXEM VIOLETA';
-      this.#addButton(title, 181, () => {
-        this.#selectCharacter(rangerId, genderForRanger(rangerId));
+      const rangerLabel = rangerId === RANGER_IDS.ORANGE ? 'NARANJA' : 'VIOLETA';
+      this.#addButton('AXEM ' + rangerLabel, 181, () => {
+        this.#selectCharacter(rangerId);
       }, {
         width: 154,
         x: index === 0 ? 160 : 320,
@@ -606,9 +581,9 @@ export class MenuScene extends Phaser.Scene {
     });
   }
 
-  #selectCharacter(rangerId, gender) {
+  #selectCharacter(rangerId) {
     const mode = getVersusMode(this.matchSetup.versusMode);
-    const selection = { id: rangerId, gender };
+    const selection = { id: rangerId };
     if (mode.id === 'player-vs-player') {
       const player = this.characterSlot === 0 ? 'J1' : 'J2';
       this.matchSetup.playerCharacters = {
@@ -616,7 +591,10 @@ export class MenuScene extends Phaser.Scene {
         [player]: selection,
       };
     } else {
-      this.matchSetup.characters[this.characterSlot] = selection;
+      this.matchSetup.characters[this.characterSlot] = {
+        ...selection,
+        gender: genderForRanger(rangerId),
+      };
     }
 
     if (this.characterSlot + 1 < mode.characterSlots) {

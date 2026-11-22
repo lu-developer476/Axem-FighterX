@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createDefaultMatch } from './CreateMatch.js';
 
 describe('createDefaultMatch', () => {
-  it('respeta las elecciones explícitas de Axem y género en ambos lados físicos', () => {
+  it('respeta las elecciones de Axem y conserva su género canónico en ambos lados físicos', () => {
     const match = createDefaultMatch(Math.random, [
       { id: 'violet', gender: 'female' },
       { id: 'orange', gender: 'male' },
@@ -34,12 +34,12 @@ describe('createDefaultMatch', () => {
     expect(events.find((event) => event.type === 'match-over')?.winnerId).toBe(left.combatantId);
   });
 
-  it('no asigna colores ni géneros predeterminados cuando faltan selecciones', () => {
+  it('no asigna personajes predeterminados cuando faltan selecciones', () => {
     expect(() => createDefaultMatch()).toThrow(/dos selecciones explícitas/);
     expect(() => createDefaultMatch(Math.random, [{ id: 'violet', gender: 'male' }]))
       .toThrow(/dos selecciones explícitas/);
     expect(() => createDefaultMatch(Math.random, [
-      { id: 'violet', gender: 'male' },
+      { id: 'violet', gender: 'unknown' },
       { id: 'orange', gender: 'male' },
     ])).toThrow(/variante disponible de Axem seleccionada/);
     expect(() => createDefaultMatch(Math.random, [

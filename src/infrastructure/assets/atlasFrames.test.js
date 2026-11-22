@@ -2,7 +2,6 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import { layoutSequence } from './atlasFrameDetection.js';
 import { ATLAS_SEQUENCE_ROLES, ATLAS_SOURCES } from './atlasLayoutRules.js';
 import atlasFrames from './atlasFrames.json';
 
@@ -136,40 +135,6 @@ describe('secuencias y recursos de la hoja femenina (Axem Pink)', () => {
 });
 
 describe('resultados de las variantes canónicas', () => {
-  it('genera las tiras de secuencias masculinas de Axem Naranja', async () => {
-    const index = JSON.parse(await readFile(resultsPath('male', 'orange', 'sequences', 'index.json'), 'utf8'));
-    expect(index).toHaveLength(atlasFrames.male.groups.length);
-    for (const entry of index) {
-      const group = atlasFrames.male.groups.find((candidate) => candidate.id === entry.id);
-      const layout = layoutSequence(group.frames, { anchor: entry.anchor });
-      expect(entry.frameCount).toBe(group.frames.length);
-      expect(entry.cellWidth).toBe(layout.cellWidth);
-      expect(entry.cellHeight).toBe(layout.cellHeight);
-      const metadata = await sharp(resultsPath('male', 'orange', 'sequences', entry.file)).metadata();
-      expect(metadata.width).toBe(entry.cellWidth * entry.frameCount);
-      expect(metadata.height).toBe(entry.cellHeight);
-    }
-  });
-
-  it('genera las secuencias femeninas de Axem Violeta', async () => {
-    const index = JSON.parse(await readFile(resultsPath('female', 'violet', 'sequences', 'index.json'), 'utf8'));
-    expect(index).toHaveLength(7);
-    expect(index.map((entry) => entry.frameCount)).toEqual([11, 14, 16, 16, 20, 10, 0]);
-    expect(index.map((entry) => entry.assetCount)).toEqual([1, 6, 3, 1, 2, 13, 6]);
-    for (const entry of index) {
-      const group = atlasFrames.female.groups.find((candidate) => candidate.id === entry.id);
-      expect(entry.regionIndices).toEqual(group.regionIndices);
-      if (group.frameCount) {
-        const metadata = await sharp(resultsPath('female', 'violet', 'sequences', entry.sequence.file)).metadata();
-        expect(metadata.width).toBe(entry.sequence.cellWidth * group.frameCount);
-        expect(metadata.height).toBe(entry.sequence.cellHeight);
-        expect(metadata.hasAlpha).toBe(true);
-      } else {
-        expect(entry.sequence).toBeNull();
-      }
-    }
-  });
-
   it('genera los GIF de acción de Axem Naranja en lienzos de 150×100 px', async () => {
     const animations = {
       'pose.gif': 16, 'punch-01.gif': 10, 'punch-02.gif': 8, 'punch-03.gif': 8,
@@ -235,12 +200,10 @@ describe('resultados de las variantes canónicas', () => {
     expect(metadata.hasAlpha).toBe(true);
   });
 
-  it('no conserva archivos de las dos variantes retiradas', async () => {
+  it('mantiene retiradas las tiras auxiliares del repositorio', async () => {
     for (const parts of [
-      ['male', 'violet', 'spritesheet.png'],
-      ['male', 'violet', 'run.gif'],
-      ['female', 'orange', 'spritesheet.png'],
-      ['female', 'orange', 'pose.png'],
+      ['male', 'orange', 'sequences', 'index.json'],
+      ['female', 'violet', 'sequences', 'index.json'],
     ]) {
       await expect(readFile(resultsPath(...parts))).rejects.toMatchObject({ code: 'ENOENT' });
     }

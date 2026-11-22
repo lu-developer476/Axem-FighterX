@@ -4,13 +4,12 @@ import { createFighter } from './createFighter.js';
 import { createDefaultMatch } from '../../application/useCases/CreateMatch.js';
 import { ARENA } from '../arena/arena.js';
 
-describe('Variantes de género de los Axem Rangers', () => {
-  it('conserva el género seleccionado sin alterar la identidad cromática', () => {
+describe('Identidad canónica de los Axem Rangers', () => {
+  it('asigna automáticamente a Violet su género femenino canónico', () => {
     const femaleViolet = createFighter(
       RANGER_IDS.VIOLET,
       { x: 120, y: 180 },
       1,
-      'female',
     );
 
     expect(femaleViolet.id).toBe(RANGER_IDS.VIOLET);
@@ -28,7 +27,7 @@ describe('Variantes de género de los Axem Rangers', () => {
     expect(maleOrange.gender).toBe('male');
   });
 
-  it('transporta géneros independientes en la creación del combate', () => {
+  it('mantiene el género canónico de cada Ranger en la creación del combate', () => {
     const match = createDefaultMatch(() => 0, [
       { id: RANGER_IDS.VIOLET, gender: 'female' },
       { id: RANGER_IDS.ORANGE, gender: 'male' },
@@ -52,12 +51,10 @@ describe('Variantes de género de los Axem Rangers', () => {
   });
 
 
-  it('rechaza variantes retiradas del catálogo', () => {
-    expect(() => createFighter(
-      RANGER_IDS.VIOLET,
-      { x: 120, y: 180 },
-      1,
-      'male',
-    )).toThrow('Variante de Axem no disponible');
+  it('rechaza cualquier intento de cambiar el género canónico del Ranger', () => {
+    expect(() => createFighter(RANGER_IDS.ORANGE, { x: 120, y: 180 }, 1, 'female'))
+      .toThrow('Variante de Axem no disponible');
+    expect(() => createFighter(RANGER_IDS.VIOLET, { x: 360, y: 180 }, -1, 'male'))
+      .toThrow('Variante de Axem no disponible');
   });
 });

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
-import { genderForRanger, getCounterpartSelection } from '../../domain/rangers/rangerVariants.js';
+import { AVAILABLE_RANGER_VARIANTS, getCounterpartSelection } from '../../domain/rangers/rangerVariants.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
 import {
@@ -80,7 +80,7 @@ export class RaceScene extends Phaser.Scene {
     this.countdownMs = COUNTDOWN_MS;
     this.finished = false;
     this.selectingCharacter = true;
-    this.selectedRangerId = RANGER_IDS.VIOLET;
+    this.selectedVariant = { id: RANGER_IDS.VIOLET, gender: 'female' };
     this.trackOffset = 0;
     this.sceneryOffset = 0;
     this.lastSceneryChunk = -1;
@@ -122,7 +122,7 @@ export class RaceScene extends Phaser.Scene {
       .setOrigin(0.5, 0.75)
       .setScale(0.85)
       .setDepth(40);
-    this.selectionLabel = this.#text('J1 · AXEM VIOLETA · FEMENINO',
+    this.selectionLabel = this.#text('J1 · AXEM VIOLETA',
       GAME_WIDTH / 2, 134, '#e3d4ff', 7);
     this.#refreshSelectionPreview();
   }
@@ -139,9 +139,13 @@ export class RaceScene extends Phaser.Scene {
       const chooseNext = Phaser.Input.Keyboard.JustDown(this.keys.right) ||
         Phaser.Input.Keyboard.JustDown(this.keys.d);
       if (choosePrevious || chooseNext) {
-        this.selectedRangerId = this.selectedRangerId === RANGER_IDS.VIOLET
-          ? RANGER_IDS.ORANGE
-          : RANGER_IDS.VIOLET;
+        const currentIndex = AVAILABLE_RANGER_VARIANTS.findIndex((variant) =>
+          variant.id === this.selectedVariant.id && variant.gender === this.selectedVariant.gender,
+        );
+        const direction = choosePrevious ? -1 : 1;
+        const nextIndex = (currentIndex + direction + AVAILABLE_RANGER_VARIANTS.length) %
+          AVAILABLE_RANGER_VARIANTS.length;
+        this.selectedVariant = { ...AVAILABLE_RANGER_VARIANTS[nextIndex] };
         this.#refreshSelectionPreview();
       }
       if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) this.#startRace();
@@ -195,17 +199,15 @@ export class RaceScene extends Phaser.Scene {
   }
 
   #refreshSelectionPreview() {
-    const isViolet = this.selectedRangerId === RANGER_IDS.VIOLET;
-    const gender = genderForRanger(this.selectedRangerId);
+    const { id, gender } = this.selectedVariant;
+    const isViolet = id === RANGER_IDS.VIOLET;
     this.selectionPreview.stop();
     this.selectionPreview
-      .setTexture(spriteKeyFor(this.selectedRangerId, gender))
+      .setTexture(spriteKeyFor(id, gender))
       .setScale(0.9)
       .setAngle(0);
     this.selectionVehicle.setVisible(true);
-    this.selectionLabel.setText(isViolet
-      ? 'J1 · AXEM VIOLETA · FEMENINO'
-      : 'J1 · AXEM NARANJA · MASCULINO')
+    this.selectionLabel.setText('J1 · AXEM ' + (isViolet ? 'VIOLETA' : 'NARANJA'))
       .setColor(isViolet ? '#e3d4ff' : '#ffc58e');
   }
 
@@ -218,14 +220,10 @@ export class RaceScene extends Phaser.Scene {
     this.instructions.setText('↑ / ↓ CAMBIAR CARRIL · → / D ACELERAR · ← / A FRENAR · ESPACIO NITRO')
       .setFontSize(5);
 
-    const opponentSelection = getCounterpartSelection({
-      id: this.selectedRangerId,
-      gender: genderForRanger(this.selectedRangerId),
-    });
-    const opponentId = opponentSelection.id;
-    this.player = this.#createRacer(this.selectedRangerId, 'J1', 0, true);
+    const opponentSelection = getCounterpartSelection(this.selectedVariant);
+    this.player = this.#createRacer(this.selectedVariant, 'J1', 0, true);
     this.opponents = [1, 2, 3].map((number, index) =>
-      this.#createRacer(opponentId, 'IA ' + number, index + 1, false),
+      this.#createRacer(opponentSelection, 'IA ' + number, index + 1, false),
     );
     this.racers = [this.player, ...this.opponents];
     this.obstacleSprites = this.obstacles.map((obstacle) =>
@@ -234,19 +232,22 @@ export class RaceScene extends Phaser.Scene {
     this.#drawHud();
   }
 
-  #createRacer(rangerId, label, lane, isPlayer) {
-    const texture = spriteKeyFor(rangerId, genderForRanger(rangerId));
+  #createRacer(selection, label, lane, isPlayer) {
+    const { id: rangerId, gender } = selection;
+    const texture = spriteKeyFor(rangerId, gender);
     const sprite = this.add.sprite(isPlayer ? PLAYER_X : OPPONENT_X, MOTORCYCLE_LANE_BASELINES[lane], texture)
       .setOrigin(0.5, 0.82)
       .setScale(MOTORCYCLE_LANE_SCALES[lane] * (isPlayer ? 0.78 : 0.7))
       .setDepth(36 + lane);
+    const animationKey = 'axem-' + gender + '-' + rangerId + '-bike';
+    if (this.anims.exists(animationKey)) sprite.play(animationKey);
     const vehicle = this.add.image(sprite.x, sprite.y + 8, 'bike-race-motorcycle')
       .setOrigin(0.5, 0.75)
       .setScale(MOTORCYCLE_LANE_SCALES[lane] * 0.78)
       .setDepth(34 + lane);
     const labelText = this.#text(label, sprite.x, sprite.y - 27, isPlayer ? '#e3d4ff' : '#ffe0b2', 5);
     return {
-      rangerId, label, lane, targetLane: lane, isPlayer, sprite, vehicle, labelText,
+      rangerId, gender, label, lane, targetLane: lane, isPlayer, sprite, vehicle, labelText,
       distance: isPlayer ? 0 : lane * 18,
       stunMs: 0, laneSwitchMs: 0, crashed: false,
     };

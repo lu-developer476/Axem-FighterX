@@ -6,39 +6,51 @@ import {
 
 describe('Asignaciones independientes de J1 y J2', () => {
   const selections = {
-    J1: { id: 'violet', gender: 'female' },
-    J2: { id: 'orange', gender: 'male' },
+    J1: { id: 'violet' },
+    J2: { id: 'orange' },
   };
 
   it('mantiene J1 a la izquierda y J2 a la derecha cuando así lo eligen', () => {
     expect(getPlayersByStartCorner({ J1: 'left', J2: 'right' })).toEqual(['J1', 'J2']);
     expect(getCharacterSelectionsByCorner(selections, { J1: 'left', J2: 'right' }))
-      .toEqual([selections.J1, selections.J2]);
+      .toEqual([
+        { id: 'violet', gender: 'female' },
+        { id: 'orange', gender: 'male' },
+      ]);
   });
 
   it('invierte únicamente el orden espacial cuando J1 elige la derecha', () => {
     expect(getPlayersByStartCorner({ J1: 'right', J2: 'left' })).toEqual(['J2', 'J1']);
     expect(getCharacterSelectionsByCorner(selections, { J1: 'right', J2: 'left' }))
-      .toEqual([selections.J2, selections.J1]);
+      .toEqual([
+        { id: 'orange', gender: 'male' },
+        { id: 'violet', gender: 'female' },
+      ]);
   });
 
   it('permite combates espejo y conserva la identidad de cada jugador', () => {
     const mirrorSelections = {
-      J1: { id: 'orange', gender: 'male' },
-      J2: { id: 'orange', gender: 'male' },
+      J1: { id: 'orange' },
+      J2: { id: 'orange' },
     };
 
     expect(getCharacterSelectionsByCorner(mirrorSelections, { J1: 'right', J2: 'left' }))
-      .toEqual([mirrorSelections.J2, mirrorSelections.J1]);
+      .toEqual([
+        { id: 'orange', gender: 'male' },
+        { id: 'orange', gender: 'male' },
+      ]);
   });
 
-  it('rechaza las variantes eliminadas del catálogo', () => {
-    const invalid = {
-      J1: { id: 'orange', gender: 'female' },
-      J2: { id: 'violet', gender: 'male' },
+  it('obtiene automáticamente el género fijo a partir del Axem elegido', () => {
+    const idsOnly = {
+      J1: { id: 'orange' },
+      J2: { id: 'violet' },
     };
-    expect(() => getCharacterSelectionsByCorner(invalid, { J1: 'right', J2: 'left' }))
-      .toThrow(/variante disponible/);
+    expect(getCharacterSelectionsByCorner(idsOnly, { J1: 'left', J2: 'right' }))
+      .toEqual([
+        { id: 'orange', gender: 'male' },
+        { id: 'violet', gender: 'female' },
+      ]);
   });
 
   it('rechaza esquinas ausentes, repetidas o inválidas', () => {
@@ -47,14 +59,14 @@ describe('Asignaciones independientes de J1 y J2', () => {
     expect(() => getPlayersByStartCorner({ J1: 'center', J2: 'right' })).toThrow(/esquinas opuestas/);
   });
 
-  it('no asigna Axem ni género automáticamente si falta una elección', () => {
+  it('no asigna Axem automáticamente si falta una elección', () => {
     expect(() => getCharacterSelectionsByCorner(
       { J1: selections.J1, J2: null },
       { J1: 'left', J2: 'right' },
-    )).toThrow(/J2 debe elegir una variante disponible/);
+    )).toThrow(/J2 debe elegir un Axem disponible/);
     expect(() => getCharacterSelectionsByCorner(
-      { J1: { id: 'violet' }, J2: selections.J2 },
+      { J1: { id: 'unknown' }, J2: selections.J2 },
       { J1: 'left', J2: 'right' },
-    )).toThrow(/J1 debe elegir una variante disponible/);
+    )).toThrow(/J1 debe elegir un Axem disponible/);
   });
 });

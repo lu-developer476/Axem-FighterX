@@ -25,27 +25,23 @@ describe('Estándares centrales de recursos gráficos', () => {
     expect(ASSET_STANDARDS.categories.characterArtwork.families.male).not.toHaveProperty('derivedArtwork');
   });
 
-  it('mantiene los uploads Orange y Violet en sus rutas y fuera de references', async () => {
-    const sources = [
-      {
-        file: 'art/source/sprites/results/male/orange/source/super-axem-orange-upload.png',
-        excluded: 'male/orange/source/super-axem-orange-upload.png',
-        oldDirectory: 'art/source/sprites/references/axem-orange',
-      },
-      {
-        file: 'art/source/sprites/results/female/violet/source/super-axem-violet-upload.png',
-        excluded: 'female/violet/source/super-axem-violet-upload.png',
-        oldDirectory: 'art/source/sprites/references/axem-violet',
-      },
+  it('mantiene retiradas las carpetas de origen y secuencias que ya no forman parte del proyecto', async () => {
+    const removedDirectories = [
+      'art/source/sprites/results/male/violet',
+      'art/source/sprites/results/female/orange',
+      'art/source/sprites/results/male/orange/source',
+      'art/source/sprites/results/male/orange/sequences',
+      'art/source/sprites/results/female/violet/source',
+      'art/source/sprites/results/female/violet/sequences',
+      'art/source/sprites/results/female/violet/supplemental',
     ];
-    for (const source of sources) {
-      const metadata = await sharp(absolute(source.file)).metadata();
-      expect(metadata.format).toBe('png');
-      expect(metadata.width).toBeGreaterThan(0);
-      expect(metadata.height).toBeGreaterThan(0);
-      expect(PROCESSING_RULES.processedPolicy.excludedFiles).toContain(source.excluded);
-      await expect(fs.access(absolute(source.oldDirectory))).rejects.toThrow();
+    for (const directory of removedDirectories) {
+      await expect(fs.access(absolute(directory))).rejects.toThrow();
     }
+    expect(PROCESSING_RULES.processedPolicy.excludedFiles)
+      .toContain('male/orange/super-axem-ranger-orange.png');
+    expect(PROCESSING_RULES.processedPolicy.excludedFiles)
+      .toContain('male/orange/super-axem-ranger-orange.PNG');
   });
 
 
@@ -167,27 +163,5 @@ describe('Estándares centrales de recursos gráficos', () => {
     }
   });
 
-  it('usa tamaños de celda declarados en los índices de secuencia', async () => {
-    for (const indexPath of ASSET_STANDARDS.categories.sequenceStrips.indexes) {
-      const groups = JSON.parse(await fs.readFile(absolute(indexPath), 'utf8'));
-      expect(Array.isArray(groups)).toBe(true);
-      for (const group of groups) {
-        const sequenceDirectory = path.dirname(indexPath);
-        const strips = indexPath.includes('/male/')
-          ? [{ data: group, directory: sequenceDirectory }]
-          : [
-              { data: group.sequence, directory: sequenceDirectory },
-              { data: group.supplemental, directory: path.join(sequenceDirectory, '../supplemental') },
-            ].filter(({ data }) => data);
 
-        for (const { data: strip, directory } of strips) {
-          const imagePath = path.join(directory, strip.file);
-          const metadata = await sharp(absolute(imagePath)).metadata();
-          expect(metadata.width).toBe(strip.cellWidth * strip.frameCount);
-          expect(metadata.height).toBe(strip.cellHeight);
-          expect(metadata.hasAlpha).toBe(true);
-        }
-      }
-    }
-  });
 });

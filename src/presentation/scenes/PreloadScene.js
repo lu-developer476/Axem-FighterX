@@ -7,7 +7,7 @@ import {
   menuSpriteKeyFor,
   menuSpriteUrlFor,
 } from '../../infrastructure/assets/assetManifest.js';
-import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
+import { AVAILABLE_RANGER_VARIANTS, genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
@@ -85,10 +85,17 @@ export class PreloadScene extends Phaser.Scene {
       status.setText('NO SE PUDO CARGAR ' + file.key.toUpperCase());
     });
 
-    // Solo se cargan las dos variantes canónicas permitidas por el catálogo.
-    for (const rangerId of [RANGER_IDS.VIOLET, RANGER_IDS.ORANGE]) {
-      const gender = genderForRanger(rangerId);
-      this.load.image(spriteKeyFor(rangerId, gender), spriteUrlFor(rangerId, gender));
+    // Carga únicamente las identidades canónicas: Orange masculino y Violet femenino.
+    for (const { id, gender } of AVAILABLE_RANGER_VARIANTS) {
+      this.load.image(spriteKeyFor(id, gender), spriteUrlFor(id, gender));
+      for (const action of ['run', 'bike']) {
+        const key = 'axem-' + gender + '-' + id + '-' + action;
+        this.load.spritesheet(
+          key,
+          import.meta.env.BASE_URL + 'generated/' + key + '.png',
+          { frameWidth: 53, frameHeight: 83 },
+        );
+      }
     }
     for (const rangerId of [RANGER_IDS.ORANGE, RANGER_IDS.VIOLET]) {
       const gender = genderForRanger(rangerId);
@@ -111,6 +118,21 @@ export class PreloadScene extends Phaser.Scene {
     createStageAssetTextures(this);
     createFxTextures(this);
     registerFxAnimations(this);
+    for (const { id, gender } of AVAILABLE_RANGER_VARIANTS) {
+      for (const action of ['run', 'bike']) {
+        const key = 'axem-' + gender + '-' + id + '-' + action;
+        if (!this.anims.exists(key) && this.textures.exists(key)) {
+          const texture = this.textures.get(key);
+          const frames = this.anims.generateFrameNumbers(key, { start: 0, end: texture.frameTotal - 2 });
+          if (frames.length) this.anims.create({
+            key,
+            frames,
+            frameRate: action === 'bike' ? 9 : 10,
+            repeat: -1,
+          });
+        }
+      }
+    }
     this.scene.start('MenuScene');
   }
 }

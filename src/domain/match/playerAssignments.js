@@ -1,4 +1,4 @@
-import { isAvailableRangerVariant } from '../rangers/rangerVariants.js';
+import { genderForRanger } from '../rangers/rangerVariants.js';
 
 /**
  * Asignaciones estables de los dos participantes humanos.
@@ -21,20 +21,19 @@ export function getPlayersByStartCorner(playerSides) {
 }
 
 /**
- * Convierte elecciones identificadas por jugador en el orden espacial izquierdo/derecho.
- * No infiere personaje ni género: ambas elecciones deben existir explícitamente.
+ * Convierte elecciones de personaje identificadas por jugador en el orden espacial.
+ * El género no se elige: se obtiene del personaje (Orange masculino, Violet femenino).
  */
 export function getCharacterSelectionsByCorner(playerCharacters, playerSides) {
   const playersByCorner = getPlayersByStartCorner(playerSides);
   return playersByCorner.map((player) => {
     const selection = playerCharacters?.[player];
-    if (
-      !selection
-      || typeof selection.id !== 'string'
-      || !isAvailableRangerVariant(selection.id, selection.gender)
-    ) {
-      throw new Error(`${player} debe elegir una variante disponible de Axem antes de iniciar.`);
+    const gender = selection && typeof selection.id === 'string'
+      ? genderForRanger(selection.id)
+      : null;
+    if (!gender) {
+      throw new Error(`${player} debe elegir un Axem disponible antes de iniciar.`);
     }
-    return { id: selection.id, gender: selection.gender };
+    return { id: selection.id, gender };
   });
 }

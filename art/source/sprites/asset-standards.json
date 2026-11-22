@@ -85,14 +85,6 @@
         }
       ]
     },
-    "sequenceStrips": {
-      "policy": "dimensions-from-index",
-      "indexes": [
-        "art/source/sprites/results/male/orange/sequences/index.json",
-        "art/source/sprites/results/female/violet/sequences/index.json"
-      ],
-      "description": "Cada grupo declara su propio tamaño de celda; no se fuerza una cuadrícula común."
-    },
     "otherProcessedSprites": {
       "policy": "preserve-native-dimensions",
       "alphaRequired": true,

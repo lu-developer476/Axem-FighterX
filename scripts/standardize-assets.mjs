@@ -122,7 +122,9 @@ async function main() {
 
   for (const [gender, family] of Object.entries(artwork.families)) {
     await assertMasterCanvas(family.reference, family.width, family.height, 'Master Super Axem ' + gender);
-    changed += Number(await ensureCanvas(family.result, family.width, family.height, 'Artwork Super Axem ' + gender));
+    if (!(gender === 'male' && family.result.toLowerCase().endsWith('/male/orange/super-axem-ranger-orange.png'))) {
+      changed += Number(await ensureCanvas(family.result, family.width, family.height, 'Artwork Super Axem ' + gender));
+    }
     changed += Number(await ensureCanvas(family.preparedSource, family.width, family.height, 'Fuente preparada Super Axem ' + gender));
     await assertVisualBoundsMatch(family);
   }

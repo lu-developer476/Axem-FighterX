@@ -182,20 +182,10 @@ async function main() {
   await validateAtlasSheets();
 
   const gifCount = await validateActionGifs();
-  const maleGroups = await validateSequenceIndex(
-    standards.categories.sequenceStrips.indexes[0],
-    'male',
-  );
-  const femaleGroups = await validateSequenceIndex(
-    standards.categories.sequenceStrips.indexes[1],
-    'female',
-  );
 
   console.log(
-    'Recursos gráficos validados: artwork masculino Orange y femenino Violet, ' +
-    'texturas, retratos, atlas, ' + gifCount + ' GIF de acción, ' +
-    maleGroups + ' grupos masculinos y ' + femaleGroups +
-    ' grupos femeninos. Los recursos sin tamaño fijo conservan su resolución nativa.',
+    'Recursos gráficos validados: artwork, texturas, retratos, atlas y ' +
+    gifCount + ' GIF de acción. Los recursos sin tamaño fijo conservan su resolución nativa.',
   );
 }
 

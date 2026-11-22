@@ -1,6 +1,10 @@
 import fs from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import sharp from 'sharp';
+import {
+  detectCheckerboardColors,
+  removeCheckerboardBackground,
+} from '../src/infrastructure/graphics/checkerboardBackground.js';
 
 const ORANGE_UPLOAD_COMMIT = '93a9715bcd6868b100c5a129669ecf5de1d504ef';
 const VIOLET_UPLOAD_COMMIT = '864c7e9fd8da25c0a1ab848bfdf59817f8f4c843';
@@ -31,103 +35,131 @@ function boundsFromAlpha(data, width, height) {
   return { left: minX, top: minY, right: maxX + 1, bottom: maxY + 1 };
 }
 
-function isBlackLinework(red, green, blue) {
+function isDarkNeutral(red, green, blue) {
   return Math.max(red, green, blue) <= 56 &&
     Math.max(red, green, blue) - Math.min(red, green, blue) <= 24;
 }
 
 async function repairOrange() {
-  // Se restaura byte por byte la última subida del artwork naranja.
-  // El normalizador global ahora lo excluye para no tocar su lineart negro.
-  const orangeSource = readAtCommit(ORANGE_UPLOAD_COMMIT, ORANGE_PATH);
-  const metadata = await sharp(orangeSource).metadata();
-  if (
-    metadata.format !== 'png' ||
-    metadata.width !== 857 ||
-    metadata.height !== 1171
-  ) {
+  // Parte de la subida original del usuario. No se recrea desde Red ni se recolorea.
+  const source = readAtCommit(ORANGE_UPLOAD_COMMIT, ORANGE_PATH);
+  const metadata = await sharp(source).metadata();
+  if (metadata.format !== 'png' || metadata.width !== 857 || metadata.height !== 1171) {
     throw new Error(
       'La última subida Orange debe ser PNG 857×1171; se encontró ' +
       metadata.format + ' ' + metadata.width + '×' + metadata.height,
     );
   }
 
-  const { data, info } = await sharp(orangeSource).ensureAlpha()
-    .raw().toBuffer({ resolveWithObject: true });
-  let visible = 0;
+  // El upload viene opaco. Se identifica exclusivamente el fondo exterior
+  // conectado al borde; el RGB de todos los píxeles del dibujo se conserva.
+  const { data, info } = await sharp(source)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
+  const detected = detectCheckerboardColors(pixels, info.width, info.height);
+  const keyed = removeCheckerboardBackground(pixels, info.width, info.height, detected.colors);
+
   let transparent = 0;
-  let black = 0;
-  for (let offset = 0; offset < data.length; offset += 4) {
-    if (data[offset + 3] > 0) visible += 1;
-    else transparent += 1;
-    if (
-      data[offset + 3] > 0 &&
-      Math.max(data[offset], data[offset + 1], data[offset + 2]) <= 56 &&
-      Math.max(data[offset], data[offset + 1], data[offset + 2]) -
-        Math.min(data[offset], data[offset + 1], data[offset + 2]) <= 24
-    ) black += 1;
+  let visible = 0;
+  let blackLinework = 0;
+  for (let offset = 0; offset < pixels.length; offset += 4) {
+    if (pixels[offset + 3] === 0) transparent += 1;
+    else {
+      visible += 1;
+      if (isDarkNeutral(pixels[offset], pixels[offset + 1], pixels[offset + 2])) {
+        blackLinework += 1;
+      }
+    }
   }
-  if (!visible || !transparent || !black) {
+
+  const total = info.width * info.height;
+  if (
+    keyed.removedPixels < total * 0.05 ||
+    transparent < total * 0.05 ||
+    visible < total * 0.1 ||
+    blackLinework < 10000
+  ) {
     throw new Error(
-      'Orange no conserva transparencia o lineart negro verificable: ' +
-      JSON.stringify({ visible, transparent, black, width: info.width, height: info.height }),
+      'La extracción del fondo Orange no superó las verificaciones de seguridad: ' +
+      JSON.stringify({
+        detectedBackground: detected.colors,
+        backgroundType: detected.backgroundType,
+        removedPixels: keyed.removedPixels,
+        transparent,
+        visible,
+        blackLinework,
+      }),
     );
   }
 
-  await fs.writeFile(ORANGE_PATH, orangeSource);
-  const written = await fs.readFile(ORANGE_PATH);
-  if (!written.equals(orangeSource)) {
-    throw new Error('Orange no se restauró byte por byte desde la última subida.');
+  const output = await sharp(Buffer.from(pixels), {
+    raw: { width: info.width, height: info.height, channels: 4 },
+  }).png({ compressionLevel: 9, effort: 10 }).toBuffer();
+
+  const { data: verified, info: verifiedInfo } = await sharp(output)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  if (verifiedInfo.width !== 857 || verifiedInfo.height !== 1171) {
+    throw new Error('Orange cambió de dimensiones durante la extracción del fondo.');
   }
+  for (let offset = 0; offset < verified.length; offset += 4) {
+    if (
+      verified[offset] !== pixels[offset] ||
+      verified[offset + 1] !== pixels[offset + 1] ||
+      verified[offset + 2] !== pixels[offset + 2] ||
+      verified[offset + 3] !== pixels[offset + 3]
+    ) {
+      throw new Error('El PNG Orange cambió después de codificar el canal alfa.');
+    }
+  }
+
+  await fs.writeFile(ORANGE_PATH, output);
   console.log(
-    'Orange restaurado sin recodificar ni recolorear: ' +
-    '857×1171; ' + black + ' píxeles de lineart negro; ' +
-    transparent + ' píxeles transparentes; bytes idénticos a la última subida.',
+    'Orange reparado desde la última subida: 857×1171; fondo ' +
+    detected.backgroundType + ' ' + JSON.stringify(detected.colors) +
+    '; ' + keyed.removedPixels + ' píxeles de fondo eliminados; ' +
+    blackLinework + ' píxeles negros/grises conservados. RGB del arte intacto.',
   );
 }
 
 async function repairViolet() {
-  // Se recupera la versión sin el margen superior artificial de 348 px.
-  const violetSource = readAtCommit(VIOLET_UPLOAD_COMMIT, VIOLET_PATH);
-  const metadata = await sharp(violetSource).metadata();
+  // Se recupera la versión anterior al margen artificial de 348 px.
+  const source = readAtCommit(VIOLET_UPLOAD_COMMIT, VIOLET_PATH);
+  const metadata = await sharp(source).metadata();
   if (metadata.width !== 617 || metadata.height !== 1024) {
     throw new Error(
-      'El Violet original esperado era 617×1024, se encontró ' +
+      'El Violet original esperado era 617×1024; se encontró ' +
       metadata.width + '×' + metadata.height,
     );
   }
 
-  const { data: sourceRaw, info: sourceInfo } = await sharp(violetSource)
-    .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  const sourceBounds = boundsFromAlpha(sourceRaw, sourceInfo.width, sourceInfo.height);
+  // Encajar el arte completo en el lienzo 745×1372 sin recortar ni deformar.
+  // El ancho es el factor limitante: deja solo 3 px a los lados y ~72 px
+  // arriba/abajo, el mínimo compatible con conservar toda la proporción original.
+  const canvas = { width: 745, height: 1372 };
+  const padding = 3;
+  const scale = Math.min(
+    (canvas.width - padding * 2) / metadata.width,
+    (canvas.height - padding * 2) / metadata.height,
+  );
+  const scaledWidth = Math.round(metadata.width * scale);
+  const scaledHeight = Math.round(metadata.height * scale);
+  const left = Math.floor((canvas.width - scaledWidth) / 2);
+  const top = Math.floor((canvas.height - scaledHeight) / 2);
+  const right = canvas.width - scaledWidth - left;
+  const bottom = canvas.height - scaledHeight - top;
 
-  // Mantiene la proporción del arte: escala a 1366 px de alto, recorta únicamente
-  // margen transparente lateral y agrega 3 px transparentes arriba y abajo.
-  const scaledHeight = 1366;
-  const scaledWidth = Math.round(metadata.width * scaledHeight / metadata.height);
-  const cropLeft = Math.floor((scaledWidth - 745) / 2);
-  const scaleX = scaledWidth / metadata.width;
-  const scaleY = scaledHeight / metadata.height;
-  const projected = {
-    left: Math.floor(sourceBounds.left * scaleX) - cropLeft,
-    right: Math.ceil(sourceBounds.right * scaleX) - cropLeft,
-    top: Math.floor(sourceBounds.top * scaleY) + 3,
-    bottom: Math.ceil(sourceBounds.bottom * scaleY) + 3,
-  };
-
-  if (projected.left < 0 || projected.right > 745 || projected.top < 0 || projected.bottom > 1372) {
-    throw new Error('El encuadre ajustado de Violet cortaría píxeles visibles: ' + JSON.stringify(projected));
-  }
-
-  const output = await sharp(violetSource)
+  const output = await sharp(source)
     .ensureAlpha()
     .resize(scaledWidth, scaledHeight, { fit: 'fill', kernel: 'nearest' })
-    .extract({ left: cropLeft, top: 0, width: 745, height: scaledHeight })
     .extend({
-      top: 3,
-      bottom: 3,
-      left: 0,
-      right: 0,
+      top,
+      bottom,
+      left,
+      right,
       background: { r: 0, g: 0, b: 0, alpha: 0 },
     })
     .png({ compressionLevel: 9, effort: 10 })
@@ -135,25 +167,36 @@ async function repairViolet() {
 
   const resultMeta = await sharp(output).metadata();
   const { data: resultRaw, info: resultInfo } = await sharp(output)
-    .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  const resultBounds = boundsFromAlpha(resultRaw, resultInfo.width, resultInfo.height);
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const bounds = boundsFromAlpha(resultRaw, resultInfo.width, resultInfo.height);
+  const visibleWidth = bounds.right - bounds.left;
+  const visibleHeight = bounds.bottom - bounds.top;
 
-  if (resultMeta.width !== 745 || resultMeta.height !== 1372 || !resultMeta.hasAlpha) {
-    throw new Error('Violet no quedó en el lienzo PNG transparente 745×1372.');
-  }
   if (
-    resultBounds.left > 4 ||
-    resultBounds.right < 741 ||
-    resultBounds.top > 4 ||
-    resultBounds.bottom < 1369
+    resultMeta.width !== canvas.width ||
+    resultMeta.height !== canvas.height ||
+    !resultMeta.hasAlpha ||
+    visibleWidth < 700 ||
+    visibleHeight < 1100 ||
+    bounds.left > 20 ||
+    bounds.right < 725 ||
+    bounds.top > 100 ||
+    bounds.bottom < 1270
   ) {
-    throw new Error('Violet conserva demasiado margen transparente: ' + JSON.stringify(resultBounds));
+    throw new Error(
+      'Violet no llenó el lienzo sin recortes como se esperaba: ' +
+      JSON.stringify({ bounds, visibleWidth, visibleHeight, padding: { left, top, right, bottom } }),
+    );
   }
 
   await fs.writeFile(VIOLET_PATH, output);
   console.log(
-    'Violet ajustado: 745×1372; arte ampliado proporcionalmente con nearest-neighbor; ' +
-    'márgenes visibles: ' + JSON.stringify(resultBounds),
+    'Violet ajustado sin recortes: 745×1372; lienzo transparente añadido ' +
+    JSON.stringify({ left, top, right, bottom }) +
+    '; límites visibles ' + JSON.stringify(bounds) +
+    '; escala nearest-neighbor, proporción original preservada.',
   );
 }
 

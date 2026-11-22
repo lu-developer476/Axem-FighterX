@@ -48,13 +48,12 @@ await tap('ArrowDown'); // Jugador vs Jugador
 await tap('Enter');
 await tap('Enter'); // Definitivo → primer selector
 await shot('02-modal-seleccion-personaje');
-await tap('Enter'); // J1 elige género
-await tap('Enter'); // J1 confirma género → selector de J2
+await tap('Enter'); // J1 elige Axem → selector de J2
 await wait(120);
 await shot('03-modal-segundo-personaje');
 await tap('ArrowDown');
 await tap('Enter'); // J2 elige Axem
-await tap('Enter'); // J2 elige género → selección de esquinas
+await tap('Enter'); // J2 elige Axem → selección de esquinas
 await shot('03b-modal-esquinas');
 await tap('Enter'); // J1 elige la esquina izquierda
 for (let down = 0; down < 3; down++) await tap('ArrowDown');
@@ -74,7 +73,7 @@ await tap('Enter'); // Primer personaje → segundo selector
 await shot('05-modal-ia-dos');
 await tap('ArrowDown');
 await tap('Enter'); // Segundo Axem
-await tap('Enter'); // Segundo género → escenarios
+await tap('Enter'); // Segundo personaje → escenarios
 await tap('Escape'); // Escenario → segundo personaje
 await tap('Escape'); // Segundo personaje → primero
 await tap('Escape'); // Primer personaje → formato
@@ -100,7 +99,6 @@ for (let index = 0; index < stageShots.length; index++) {
   await tap('Enter'); // Formato → modal de personajes
   if (index === 0) await shot('27-modal-jugador-vs-ia');
   await tap('Enter'); // Elegir Axem
-  await tap('Enter'); // Elegir género
   await tap('Enter'); // Elegir controles J1 y esquina izquierda
   for (let down = 0; down < 3; down++) await tap('ArrowDown');
   await tap('Enter'); // Confirmar controles y abrir la selección de escenario
@@ -125,7 +123,6 @@ await tap('ArrowDown');
 await tap('ArrowDown');
 await tap('Enter'); // Entrenamiento → selección de personaje
 await tap('Enter'); // Elegir Axem → género
-await tap('Enter'); // Elegir género → esquina y teclado
 await tap('Enter'); // Elegir J1 / izquierda
 for (let down = 0; down < 3; down++) await tap('ArrowDown');
 await tap('Enter'); // Continuar → paleta de entrenamiento
@@ -142,7 +139,6 @@ await tap('Enter'); // Inicio → enfrentamiento
 await tap('Enter'); // Jugador vs IA
 await tap('Enter'); // Definitivo
 await tap('Enter'); // Elegir Axem
-await tap('Enter'); // Elegir género
 await tap('Enter'); // Elegir J1 / izquierda
 for (let down = 0; down < 3; down++) await tap('ArrowDown');
 await tap('Enter'); // Continuar → escenarios

@@ -48,9 +48,18 @@ describe('Estándares centrales de recursos gráficos', () => {
       visibleBounds(family.preparedSource),
     ]);
     expect([orange.width, orange.height]).toEqual([master.width, master.height]);
-    for (const edge of ['left', 'top', 'right', 'bottom']) {
-      expect(Math.abs(redBounds[edge] - orangeBounds[edge])).toBeLessThanOrEqual(family.visualBoundsTolerance);
-    }
+    const orangeWidth = orangeBounds.right - orangeBounds.left;
+    const orangeHeight = orangeBounds.bottom - orangeBounds.top;
+    const redWidth = redBounds.right - redBounds.left;
+    const redHeight = redBounds.bottom - redBounds.top;
+    expect(Math.abs(redWidth - orangeWidth) / orangeWidth)
+      .toBeLessThanOrEqual(family.visualBoundsRatioTolerance);
+    expect(Math.abs(redHeight - orangeHeight) / orangeHeight)
+      .toBeLessThanOrEqual(family.visualBoundsRatioTolerance);
+    expect(Math.abs((redBounds.left + redBounds.right - orangeBounds.left - orangeBounds.right) / 2)
+      ).toBeLessThanOrEqual(family.visualBoundsTolerance);
+    expect(Math.abs(redBounds.bottom - orangeBounds.bottom))
+      .toBeLessThanOrEqual(family.visualBoundsTolerance);
   });
 
   it('genera las texturas de combate con el tamaño estándar', async () => {

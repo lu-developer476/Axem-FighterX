@@ -1201,6 +1201,45 @@ async function transformMaleActionFrame(input, {
 }
 
 /**
+ * Añade a la rodada un rastro de movimiento gris, separado de la silueta nítida.
+ * Las copias desenfocadas quedan detrás y ligeramente desplazadas; el personaje
+ * original conserva su color, transparencia, tamaño y pivote.
+ */
+async function addGrayRollMotionBlur(input) {
+  const echo = await sharp(input)
+    .greyscale()
+    .tint({ r: 148, g: 152, b: 160 })
+    .blur(2.4)
+    .png()
+    .toBuffer();
+
+  const width = ACTION_GIF_SIZE.width + 18;
+  const height = ACTION_GIF_SIZE.height + 6;
+  return sharp({
+    create: {
+      width,
+      height,
+      channels: 4,
+      background: TRANSPARENT,
+    },
+  })
+    .composite([
+      { input: echo, left: 0, top: 5, opacity: 0.12 },
+      { input: echo, left: 6, top: 4, opacity: 0.2 },
+      { input: echo, left: 12, top: 3, opacity: 0.28 },
+      { input, left: 18, top: 3 },
+    ])
+    .extract({
+      left: 18,
+      top: 3,
+      width: ACTION_GIF_SIZE.width,
+      height: ACTION_GIF_SIZE.height,
+    })
+    .png()
+    .toBuffer();
+}
+
+/**
  * Nuevas acciones construidas con cuadros reales del atlas Axem Red:
  * guardia, reacción al bloqueo, rodada, aterrizaje, especial, victoria y KO.
  * Se recolorean en el mismo pipeline, por lo que Violet/Orange mantienen el mismo pivote.
@@ -1229,7 +1268,8 @@ async function buildMaleCombatEnhancementGifs(color) {
       offsetY: 2,
     });
   }));
-  await writeMaleActionGif(color, 'roll', rollFrames, rollFrames.map(() => 45));
+  const blurredRollFrames = await Promise.all(rollFrames.map(addGrayRollMotionBlur));
+  await writeMaleActionGif(color, 'roll', blurredRollFrames, blurredRollFrames.map(() => 45));
 
   // La pose KO se refleja horizontalmente para mantener la misma orientación
   // que los cuadros de impacto: ambos terminan mirando hacia la derecha.

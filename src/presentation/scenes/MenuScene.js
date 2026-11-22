@@ -103,23 +103,6 @@ export class MenuScene extends Phaser.Scene {
 
     this.ui.add([orange, violet]);
   }
-  #addHomeRangerArt() {
-    const orangeKey = maleAnimationKey(RANGER_IDS.ORANGE, 'charge');
-    const orange = this.add.sprite(GAME_WIDTH / 2 - 108, 160, orangeKey)
-      .setOrigin(0.5, 1)
-      .setScale(1.8)
-      .setDepth(1);
-    if (this.anims.exists(orangeKey)) orange.play(orangeKey);
-
-    const violetKey = menuSpriteKeyFor(RANGER_IDS.VIOLET, 'female');
-    const violet = this.add.image(GAME_WIDTH / 2 + 108, 160, violetKey)
-      .setOrigin(0.5, 1)
-      .setScale(0.72)
-      .setDepth(1);
-
-    this.ui.add([orange, violet]);
-  }
-
   #beginPage(title, width = 282, height = 120) {
     this.ui.removeAll(true);
     this.buttons = [];

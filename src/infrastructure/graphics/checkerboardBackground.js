@@ -176,11 +176,14 @@ export function removeCheckerboardBackground(data, width, height, colors, option
       const softenedAlpha = Math.round(originalAlpha * coverage);
       // Un borde retenido nunca cae por debajo del mínimo específico del artwork.
       // RGB permanece intacto: no hay blur, resampling ni pérdida del color del píxel.
-      data[offset + 3] = Math.min(
+      const nextAlpha = Math.min(
         originalAlpha,
         Math.max(edgeAlphaFloor, softenedAlpha),
       );
-      softenedPixels += 1;
+      if (nextAlpha < originalAlpha) {
+        data[offset + 3] = nextAlpha;
+        softenedPixels += 1;
+      }
     }
   }
 

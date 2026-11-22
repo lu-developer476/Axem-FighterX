@@ -10,6 +10,15 @@ const VIOLET_PATH = 'art/source/sprites/results/female/violet/super-axem-ranger-
 const RED_REFERENCE_PATH = 'art/source/sprites/references/axem-red/super-axem-red.png';
 const ORANGE_MASTER_PATH = 'art/source/sprites/results/male/orange/source/super-axem-orange-upload.png';
 const VIOLET_MASTER_PATH = 'art/source/sprites/results/female/violet/source/super-axem-violet-upload.png';
+const PROCESSING_RULES = JSON.parse(await fs.readFile(
+  new URL('../art/source/sprites/processing-rules.json', import.meta.url),
+  'utf8',
+));
+const ORANGE_EDGE_OPTIONS =
+  PROCESSING_RULES.processedPolicy.artworkEdgeTreatment?.['male/orange/super-axem-ranger-orange.png'];
+if (!ORANGE_EDGE_OPTIONS) {
+  throw new Error('Falta la regla de bordes protegidos para el artwork Orange.');
+}
 
 async function readPreservedOriginal(filePath, commit, sourcePath) {
   try {
@@ -170,13 +179,16 @@ async function repairOrange() {
       orangePixels, orangeDecoded.info.width, orangeDecoded.info.height,
     );
     const cleaned = removeCheckerboardBackground(
-      orangePixels, orangeDecoded.info.width, orangeDecoded.info.height, detected.colors,
+      orangePixels, orangeDecoded.info.width, orangeDecoded.info.height, detected.colors, ORANGE_EDGE_OPTIONS,
     );
     sourceBackgroundRemoved = cleaned.removedPixels;
+    const softenedEdgePixels = cleaned.softenedPixels;
     console.log(
       'Fondo del upload Orange: tipo=' + detected.mode +
       '; colores=' + JSON.stringify(detected.colors) +
-      '; cobertura del perímetro=' + detected.coverage,
+      '; cobertura del perímetro=' + detected.coverage +
+      '; píxeles de borde suavizados=' + softenedEdgePixels +
+      '; alfa mínimo=' + ORANGE_EDGE_OPTIONS.edgeAlphaFloor + '/255',
     );
     if (sourceBackgroundRemoved < orangeDecoded.info.width * orangeDecoded.info.height * 0.1) {
       throw new Error('No se pudo retirar con confianza el fondo del upload Orange.');

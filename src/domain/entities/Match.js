@@ -216,7 +216,7 @@ export class Match {
         events.push({
           type: 'hit',
           attackerId: null,
-          targetId: fighter.id,
+          targetId: fighter.combatantId,
           source: 'lava-vent',
           damage: fighter.lastDamageTaken,
           x: fighter.position.x,
@@ -270,7 +270,7 @@ export class Match {
           if (durationMs <= 0) continue;
           events.push({
             type: 'powerup',
-            id: fighter.id,
+            id: fighter.combatantId,
             powerUpType: this.pickup.type,
             durationMs,
             x: fighter.position.x,

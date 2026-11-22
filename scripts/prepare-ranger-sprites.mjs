@@ -227,6 +227,93 @@ async function writeFemaleSequences(color, recoloredSheet, groups) {
   );
 }
 
+
+/**
+ * Construye GIF femeninos desde las secuencias clasificadas manualmente.
+ * Los tres grupos de combo son ataques distintos: sus arcos y poses no se mezclan.
+ */
+const FEMALE_ACTION_GROUPS = Object.freeze({
+  idle: { groups: ['group-01'], delay: 150 },
+  walk: { groups: ['group-02'], delay: 105 },
+  'attack-01': { groups: ['group-03'], delay: 95 },
+  'attack-02': { groups: ['group-04'], delay: 95 },
+  'attack-03': { groups: ['group-05'], delay: 95 },
+  charge: { groups: ['group-06'], delay: 125 },
+  teleport: { groups: ['group-02'], frames: [0, 1, 2, 3, 4, 5, 6], delay: 80 },
+});
+
+async function readFemaleSequenceFrames(color, entry) {
+  const stripPath = path.join(RESULTS('female', color, 'sequences'), entry.sequence.file);
+  const strip = await fs.readFile(stripPath);
+  const frames = [];
+  for (let i = 0; i < entry.sequence.frameCount; i += 1) {
+    frames.push(await sharp(strip)
+      .extract({
+        left: i * entry.sequence.cellWidth,
+        top: 0,
+        width: entry.sequence.cellWidth,
+        height: entry.sequence.cellHeight,
+      })
+      .png()
+      .toBuffer());
+  }
+  return frames;
+}
+
+async function writeFemaleActionGif(color, action, frames, delay) {
+  if (!frames.length) throw new Error('La animación femenina ' + action + ' no tiene cuadros.');
+  const normalized = await Promise.all(frames.map((frame) => sharp(frame)
+    .resize(ACTION_GIF_SIZE.width, ACTION_GIF_SIZE.height, {
+      fit: 'contain',
+      position: 'south',
+      kernel: 'nearest',
+      background: TRANSPARENT,
+    })
+    .png()
+    .toBuffer()));
+  const gif = await sharp(normalized, { join: { animated: true } })
+    .gif({
+      loop: 0,
+      delay,
+      colours: 256,
+      dither: 0,
+      effort: 10,
+      keepDuplicateFrames: true,
+    })
+    .toBuffer();
+  await writeResult('female', color, action + '.gif', gif);
+}
+
+async function buildFemaleActionGifs(color, sequenceIndex) {
+  const byId = new Map(sequenceIndex.map((entry) => [entry.id, entry]));
+  const manifest = {};
+  for (const [action, definition] of Object.entries(FEMALE_ACTION_GROUPS)) {
+    const groups = definition.groups.map((id) => {
+      const entry = byId.get(id);
+      if (!entry?.sequence) throw new Error('Falta la secuencia ' + id + ' para ' + action + '.');
+      return entry;
+    });
+    const sourceFrames = [];
+    for (const entry of groups) sourceFrames.push(...await readFemaleSequenceFrames(color, entry));
+    const frames = definition.frames
+      ? definition.frames.map((index) => sourceFrames[index]).filter(Boolean)
+      : sourceFrames;
+    await writeFemaleActionGif(color, action, frames, definition.delay);
+    manifest[action] = {
+      file: action + '.gif',
+      groups: definition.groups,
+      frameCount: frames.length,
+      delay: definition.delay,
+    };
+  }
+  await writeResult(
+    'female',
+    color,
+    'animations.json',
+    Buffer.from(JSON.stringify(manifest, null, 2) + '\n'),
+  );
+}
+
 function hueMatches(hue, ranges) {
   return ranges.some(([min, max]) => hue >= min && hue <= max);
 }
@@ -1536,6 +1623,8 @@ async function buildGender(gender, allowedColors) {
     if (gender === 'female') {
       const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
       await writeFemaleSequences(color, parts[0], manifest.female.groups);
+      const femaleSequenceIndex = JSON.parse(await fs.readFile(path.join(RESULTS('female', color), 'sequences', 'index.json'), 'utf8'));
+      await buildFemaleActionGifs(color, femaleSequenceIndex);
       console.log(
         'Se conserva la imagen canónica femenina: ' +
         path.relative(ROOT, canonicalPosePath)

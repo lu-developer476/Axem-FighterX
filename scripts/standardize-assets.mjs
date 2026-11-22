@@ -93,17 +93,17 @@ async function readVisibleBounds(relativePath) {
 }
 async function assertVisualBoundsMatch(family) {
   if (!family.visualBoundsReference) return;
-  const [reference, result] = await Promise.all([
-    readVisibleBounds(family.visualBoundsReference), readVisibleBounds(family.result),
+  const [orange, red] = await Promise.all([
+    readVisibleBounds(family.visualBoundsReference), readVisibleBounds(family.preparedSource),
   ]);
   const tolerance = family.visualBoundsTolerance ?? 0;
   const deltas = {
-    left: Math.abs(reference.left - result.left), top: Math.abs(reference.top - result.top),
-    right: Math.abs(reference.right - result.right), bottom: Math.abs(reference.bottom - result.bottom),
+    left: Math.abs(orange.left - red.left), top: Math.abs(orange.top - red.top),
+    right: Math.abs(orange.right - red.right), bottom: Math.abs(orange.bottom - red.bottom),
   };
   if (Object.values(deltas).some((delta) => delta > tolerance)) {
-    throw new Error('El artwork ' + family.result + ' no ocupa la misma caja visible que Red: ' +
-      'referencia=' + JSON.stringify(reference) + '; resultado=' + JSON.stringify(result) +
+    throw new Error('El derivado Red ' + family.preparedSource + ' no ocupa la misma caja visible que Orange: ' +
+      'Orange=' + JSON.stringify(orange) + '; Red=' + JSON.stringify(red) +
       '; diferencias=' + JSON.stringify(deltas) + '; tolerancia=' + tolerance + ' px.');
   }
 }

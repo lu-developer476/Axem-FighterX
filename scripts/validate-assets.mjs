@@ -30,11 +30,43 @@ async function validatePng(relativePath, expected, label, requireAlpha = true) {
   return metadata;
 }
 
+function visibleBounds(data, width, height) {
+  let left = width, top = height, right = -1, bottom = -1;
+  for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
+    if (data[(y * width + x) * 4 + 3] < 16) continue;
+    left = Math.min(left, x); top = Math.min(top, y);
+    right = Math.max(right, x + 1); bottom = Math.max(bottom, y + 1);
+  }
+  if (right <= left || bottom <= top) throw new Error('El artwork no tiene píxeles visibles.');
+  return { left, top, right, bottom };
+}
+async function readVisibleBounds(relativePath) {
+  const decoded = await sharp(absolute(relativePath)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return visibleBounds(decoded.data, decoded.info.width, decoded.info.height);
+}
+async function assertVisualBoundsMatch(family) {
+  if (!family.visualBoundsReference) return;
+  const [reference, result] = await Promise.all([
+    readVisibleBounds(family.visualBoundsReference), readVisibleBounds(family.result),
+  ]);
+  const tolerance = family.visualBoundsTolerance ?? 0;
+  const deltas = {
+    left: Math.abs(reference.left - result.left), top: Math.abs(reference.top - result.top),
+    right: Math.abs(reference.right - result.right), bottom: Math.abs(reference.bottom - result.bottom),
+  };
+  if (Object.values(deltas).some((delta) => delta > tolerance)) {
+    throw new Error('El artwork ' + family.result + ' no ocupa la misma caja visible que Red: ' +
+      'referencia=' + JSON.stringify(reference) + '; resultado=' + JSON.stringify(result) +
+      '; diferencias=' + JSON.stringify(deltas) + '; tolerancia=' + tolerance + ' px.');
+  }
+}
+
 async function validateArtwork() {
   for (const [gender, family] of Object.entries(standards.categories.characterArtwork.families)) {
     const dimensions = { width: family.width, height: family.height };
     await validatePng(family.reference, dimensions, 'Master Super Axem ' + gender, false);
     await validatePng(family.result, dimensions, 'Artwork Super Axem ' + gender, true);
+    await assertVisualBoundsMatch(family);
     await validatePng(family.preparedSource, dimensions, 'Fuente preparada Super Axem ' + gender, true);
   }
 }

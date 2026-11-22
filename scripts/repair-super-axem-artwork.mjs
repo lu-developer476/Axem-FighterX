@@ -1,12 +1,36 @@
 import fs from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import sharp from 'sharp';
+import { detectCheckerboardColors, removeCheckerboardBackground } from '../src/infrastructure/graphics/checkerboardBackground.js';
 
 const ORANGE_UPLOAD_COMMIT = '93a9715bcd6868b100c5a129669ecf5de1d504ef';
 const VIOLET_UPLOAD_COMMIT = '864c7e9fd8da25c0a1ab848bfdf59817f8f4c843';
 const ORANGE_PATH = 'art/source/sprites/results/male/orange/super-axem-ranger-orange.png';
 const VIOLET_PATH = 'art/source/sprites/results/female/violet/super-axem-ranger-violet.png';
 const RED_REFERENCE_PATH = 'art/source/sprites/references/axem-red/super-axem-red.png';
+const ORANGE_MASTER_PATH = 'art/source/sprites/references/axem-orange/super-axem-orange-upload.png';
+const VIOLET_MASTER_PATH = 'art/source/sprites/references/axem-violet/super-axem-violet-upload.png';
+
+async function readPreservedOriginal(filePath, commit, sourcePath) {
+  try {
+    return await fs.readFile(filePath);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    const original = readAtCommit(commit, sourcePath);
+    await fs.mkdir(filePath.slice(0, filePath.lastIndexOf('/')), { recursive: true });
+    await fs.writeFile(filePath, original);
+    console.log('Se preservó el upload original sin modificar: ' + filePath);
+    return original;
+  }
+}
+
+function countTransparentPixels(data) {
+  let count = 0;
+  for (let offset = 3; offset < data.length; offset += 4) {
+    if (data[offset] < 16) count += 1;
+  }
+  return count;
+}
 
 function readAtCommit(commit, path) {
   return execFileSync('git', ['show', commit + ':' + path], {
@@ -38,149 +62,109 @@ function isBlackLinework(red, green, blue) {
 }
 
 async function repairOrange() {
-  // Se parte del upload original más reciente y se reconstruye la transparencia
-  // con el alfa de Red, que comparte exactamente el lienzo 857×1171.
-  const orangeSource = readAtCommit(ORANGE_UPLOAD_COMMIT, ORANGE_PATH);
+  // Se parte del upload original de Orange, antes de aplicar cualquier máscara.
+  const orangeSource = await readPreservedOriginal(ORANGE_MASTER_PATH, ORANGE_UPLOAD_COMMIT, ORANGE_PATH);
   const redSource = await fs.readFile(RED_REFERENCE_PATH);
-
-  const [orangeMeta, redMeta] = await Promise.all([
+  const [orangeMeta, redMeta, orangeDecoded, redDecoded] = await Promise.all([
     sharp(orangeSource).metadata(),
     sharp(redSource).metadata(),
+    sharp(orangeSource).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    sharp(redSource).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
   ]);
-  if (
-    orangeMeta.width !== redMeta.width ||
-    orangeMeta.height !== redMeta.height ||
-    orangeMeta.width !== 857 ||
-    orangeMeta.height !== 1171
-  ) {
-    throw new Error(
-      'Orange y la referencia Red no comparten el lienzo esperado: ' +
-      orangeMeta.width + '×' + orangeMeta.height + ' / ' +
-      redMeta.width + '×' + redMeta.height,
+
+  if (orangeMeta.width !== 857 || orangeMeta.height !== 1171 ||
+      redMeta.width !== orangeMeta.width || redMeta.height !== orangeMeta.height) {
+    throw new Error('Orange y Red deben compartir un lienzo 857×1171: ' +
+      orangeMeta.width + '×' + orangeMeta.height + ' / ' + redMeta.width + '×' + redMeta.height);
+  }
+  if (!redMeta.hasAlpha) throw new Error('La referencia Red debe tener transparencia.');
+
+  const orangePixels = new Uint8ClampedArray(
+    orangeDecoded.data.buffer, orangeDecoded.data.byteOffset, orangeDecoded.data.byteLength,
+  );
+  const redPixels = redDecoded.data;
+  let sourceBackgroundRemoved = 0;
+
+  // Si el master Orange llegó opaco, retirar solo el fondo conectado al borde.
+  if (countTransparentPixels(orangePixels) === 0) {
+    const detected = detectCheckerboardColors(orangePixels, orangeDecoded.info.width, orangeDecoded.info.height);
+    const cleaned = removeCheckerboardBackground(
+      orangePixels, orangeDecoded.info.width, orangeDecoded.info.height, detected.colors,
     );
-  }
-  if (!redMeta.hasAlpha) {
-    throw new Error('La referencia Red no tiene canal alfa para reconstruir la silueta.');
-  }
-
-  // RGB y alfa de Red se decodifican por separado. El alfa sale del RGBA
-  // original, sin convertir el PNG indexado/gris a otro espacio de color.
-  const [orangeRgbDecoded, redRgbDecoded, redRgbaDecoded] = await Promise.all([
-    sharp(orangeSource).toColourspace('srgb').removeAlpha().raw()
-      .toBuffer({ resolveWithObject: true }),
-    sharp(redSource).toColourspace('srgb').removeAlpha().raw()
-      .toBuffer({ resolveWithObject: true }),
-    sharp(redSource).ensureAlpha().raw()
-      .toBuffer({ resolveWithObject: true }),
-  ]);
-  const pixelCount = orangeMeta.width * orangeMeta.height;
-  if (
-    orangeRgbDecoded.info.channels !== 3 ||
-    redRgbDecoded.info.channels !== 3 ||
-    redRgbaDecoded.info.channels !== 4 ||
-    redRgbaDecoded.data.length !== pixelCount * 4
-  ) {
-    throw new Error(
-      'No se pudieron separar RGB y RGBA de Red; canales: ' +
-      orangeRgbDecoded.info.channels + '/' +
-      redRgbDecoded.info.channels + '/' +
-      redRgbaDecoded.info.channels,
-    );
-  }
-
-  const redRgba = redRgbaDecoded.data;
-  const redAlpha = new Uint8Array(pixelCount);
-  for (let pixel = 0; pixel < pixelCount; pixel += 1) {
-    redAlpha[pixel] = redRgba[pixel * 4 + 3];
-  }
-
-  let visibleReferencePixels = 0;
-  let transparentReferencePixels = 0;
-  for (let pixel = 0; pixel < pixelCount; pixel += 1) {
-    if (redAlpha[pixel] >= 16) visibleReferencePixels += 1;
-    else transparentReferencePixels += 1;
-  }
-  if (visibleReferencePixels < 100000 || transparentReferencePixels < 100000) {
-    throw new Error(
-      'La máscara alfa Red no parece una silueta válida: visibles=' +
-      visibleReferencePixels + ', transparentes=' + transparentReferencePixels,
-    );
-  }
-
-  const orangeRgb = orangeRgbDecoded.data;
-  const outputPixels = new Uint8Array(pixelCount * 4);
-  let visibleBlackPixels = 0;
-
-  for (let pixel = 0; pixel < pixelCount; pixel += 1) {
-    const offsetRgb = pixel * 3;
-    const offsetRgba = pixel * 4;
-    const maskAlpha = redAlpha[pixel];
-
-    // La máscara Red solo define el contorno. Todos los colores salen del
-    // upload Orange original, para conservar su paleta y lineart exactos.
-    outputPixels[offsetRgba] = orangeRgb[offsetRgb];
-    outputPixels[offsetRgba + 1] = orangeRgb[offsetRgb + 1];
-    outputPixels[offsetRgba + 2] = orangeRgb[offsetRgb + 2];
-    outputPixels[offsetRgba + 3] = maskAlpha;
-
-    if (maskAlpha >= 16 && isBlackLinework(
-      orangeRgb[offsetRgb], orangeRgb[offsetRgb + 1], orangeRgb[offsetRgb + 2],
-    )) visibleBlackPixels += 1;
-  }
-
-  const output = await sharp(Buffer.from(outputPixels), {
-    raw: { width: orangeMeta.width, height: orangeMeta.height, channels: 4 },
-  }).png({ compressionLevel: 9, effort: 10 }).toBuffer();
-
-  // Guarda primero el resultado para que el artefacto de CI permita inspección
-  // aun cuando el control de alfa detecte una discrepancia.
-  await fs.writeFile(ORANGE_PATH, output);
-
-  const verifyDecoded = await sharp(output).raw().toBuffer({ resolveWithObject: true });
-  if (verifyDecoded.info.channels !== 4) {
-    throw new Error('Orange reparado no se codificó como PNG RGBA.');
-  }
-  const verify = verifyDecoded.data;
-  let alphaMismatchCount = 0;
-  let alphaSevereMismatchCount = 0;
-  let maxAlphaDifference = 0;
-  const alphaMismatchSamples = [];
-  for (let pixel = 0; pixel < pixelCount; pixel += 1) {
-    const expected = redAlpha[pixel];
-    const actual = verify[pixel * 4 + 3];
-    const difference = Math.abs(actual - expected);
-    if (difference > 0) {
-      alphaMismatchCount += 1;
-      if (difference > 1) alphaSevereMismatchCount += 1;
-      maxAlphaDifference = Math.max(maxAlphaDifference, difference);
-      if (alphaMismatchSamples.length < 8) {
-        alphaMismatchSamples.push({ pixel, expected, actual, difference });
-      }
+    sourceBackgroundRemoved = cleaned.removedPixels;
+    if (sourceBackgroundRemoved < orangeDecoded.info.width * orangeDecoded.info.height * 0.1) {
+      throw new Error('No se pudo retirar con confianza el fondo del upload Orange.');
     }
   }
-  console.log(
-    'Verificación alfa Orange: ' + alphaMismatchCount +
-    ' diferencias; ' + alphaSevereMismatchCount +
-    ' diferencias mayores a 1 nivel; máximo=' + maxAlphaDifference +
-    '; muestras=' + JSON.stringify(alphaMismatchSamples),
-  );
-  if (alphaSevereMismatchCount > pixelCount * 0.001) {
-    throw new Error(
-      'El PNG exportado difiere significativamente de la máscara Red en ' +
-      alphaSevereMismatchCount + ' píxeles alfa.',
-    );
+
+  const sourceBounds = boundsFromAlpha(orangePixels, orangeDecoded.info.width, orangeDecoded.info.height);
+  const referenceBounds = boundsFromAlpha(redPixels, redDecoded.info.width, redDecoded.info.height);
+  const sourceWidth = sourceBounds.right - sourceBounds.left;
+  const sourceHeight = sourceBounds.bottom - sourceBounds.top;
+  const referenceWidth = referenceBounds.right - referenceBounds.left;
+  const referenceHeight = referenceBounds.bottom - referenceBounds.top;
+  if (sourceWidth < 100 || sourceHeight < 100 || referenceWidth < 100 || referenceHeight < 100) {
+    throw new Error('Los límites visibles no parecen artworks completos: Orange=' +
+      JSON.stringify(sourceBounds) + '; Red=' + JSON.stringify(referenceBounds));
   }
 
-  console.log(
-    'Orange reparado: todo el RGB del upload Orange preservado; alfa Red aplicado solo como silueta; ' +
-    visibleReferencePixels + ' píxeles visibles y ' + transparentReferencePixels +
-    ' transparentes; ' + visibleBlackPixels + ' píxeles de lineart negro conservados desde Orange.',
-  );
+  // Escala uniforme por altura visible. El ancho se comprueba para impedir deformación.
+  const scale = referenceHeight / sourceHeight;
+  const scaledWidth = Math.round(sourceWidth * scale);
+  const scaledHeight = Math.round(sourceHeight * scale);
+  const widthDifference = Math.abs(scaledWidth - referenceWidth) / referenceWidth;
+  if (widthDifference > 0.04) {
+    throw new Error('Las proporciones visibles de Orange y Red difieren demasiado para escalar sin deformar: ' +
+      'ancho proyectado=' + scaledWidth + ', ancho Red=' + referenceWidth +
+      ', diferencia=' + (widthDifference * 100).toFixed(2) + '%.');
+  }
+
+  const left = Math.round(referenceBounds.left + (referenceWidth - scaledWidth) / 2);
+  const top = referenceBounds.bottom - scaledHeight;
+  if (left < 0 || top < 0 || left + scaledWidth > orangeMeta.width || top + scaledHeight > orangeMeta.height) {
+    throw new Error('La caja ajustada de Orange excede el lienzo: ' +
+      JSON.stringify({ left, top, scaledWidth, scaledHeight }));
+  }
+
+  const resizedArtwork = await sharp(Buffer.from(orangePixels), {
+    raw: { width: orangeDecoded.info.width, height: orangeDecoded.info.height, channels: 4 },
+  }).extract({
+    left: sourceBounds.left, top: sourceBounds.top, width: sourceWidth, height: sourceHeight,
+  }).resize(scaledWidth, scaledHeight, { fit: 'fill', kernel: 'nearest' }).png().toBuffer();
+
+  const output = await sharp({
+    create: {
+      width: orangeMeta.width, height: orangeMeta.height, channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  }).composite([{ input: resizedArtwork, left, top }])
+    .png({ compressionLevel: 9, effort: 10 }).toBuffer();
+
+  const verified = await sharp(output).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const resultBounds = boundsFromAlpha(verified.data, verified.info.width, verified.info.height);
+  const resultWidth = resultBounds.right - resultBounds.left;
+  const resultHeight = resultBounds.bottom - resultBounds.top;
+  const referenceCenter = (referenceBounds.left + referenceBounds.right) / 2;
+  const resultCenter = (resultBounds.left + resultBounds.right) / 2;
+  if (Math.abs(resultWidth - referenceWidth) > 2 ||
+      Math.abs(resultHeight - referenceHeight) > 2 ||
+      Math.abs(resultBounds.bottom - referenceBounds.bottom) > 1 ||
+      Math.abs(resultCenter - referenceCenter) > 2) {
+    throw new Error('La caja visible final de Orange no coincide con Red: Orange=' +
+      JSON.stringify(resultBounds) + '; Red=' + JSON.stringify(referenceBounds));
+  }
+
+  await fs.writeFile(ORANGE_PATH, output);
+  console.log('Orange ajustado a la ocupación visual de Red: lienzo=' + orangeMeta.width + '×' + orangeMeta.height +
+    '; escala uniforme=' + scale.toFixed(4) + '×; caja fuente=' + sourceWidth + '×' + sourceHeight +
+    '; caja final=' + resultWidth + '×' + resultHeight + '; Red=' + JSON.stringify(referenceBounds) +
+    '; Orange=' + JSON.stringify(resultBounds) + '; fondo quitado=' + sourceBackgroundRemoved +
+    ' px. Nearest-neighbor, centro horizontal y línea de pies alineados; sin deformación ni recorte.');
 }
 
 async function repairViolet() {
   // Se recupera la versión sin el margen superior artificial de 348 px.
-  const violetSource = readAtCommit(VIOLET_UPLOAD_COMMIT, VIOLET_PATH);
+  const violetSource = await readPreservedOriginal(VIOLET_MASTER_PATH, VIOLET_UPLOAD_COMMIT, VIOLET_PATH);
   const metadata = await sharp(violetSource).metadata();
   if (metadata.width !== 617 || metadata.height !== 1024) {
     throw new Error(

@@ -10,9 +10,9 @@
       "format": "png",
       "canvasPolicy": "match-family-master",
       "preserveArtworkScale": true,
-      "allowResampling": false,
+      "allowResampling": "nearest-neighbor-only",
       "allowCropping": false,
-      "mismatchCorrection": "transparent-padding-only",
+      "mismatchCorrection": "uniform-nearest-neighbor-scale-and-transparent-padding",
       "alignment": "center",
       "families": {
         "male": {
@@ -21,7 +21,10 @@
           "preparedSource": "public/generated/super-axem-source-male.png",
           "width": 857,
           "height": 1171,
-          "note": "Orange conserva su escala visual original, aunque la silueta ocupe menos área que la referencia Red."
+          "note": "Orange se escala proporcionalmente con nearest-neighbor para ocupar la misma caja visible que Red; conserva el lienzo 857×1171 y su paleta original.",
+          "visualBoundsReference": "art/source/sprites/references/axem-red/super-axem-red.png",
+          "visualBoundsTolerance": 2,
+          "alignment": "horizontal-center-and-feet-baseline"
         },
         "female": {
           "reference": "art/source/sprites/references/axem-pink/super-axem-pink.png",

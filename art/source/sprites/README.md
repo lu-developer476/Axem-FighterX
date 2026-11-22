@@ -468,15 +468,15 @@ Las reglas dimensionales viven en `asset-standards.json`. Los generadores, el ju
 
 ### Artwork Super Axem: mismo lienzo, escala original
 
-El master masculino `references/axem-red/super-axem-red.png` y el resultado `results/male/orange/super-axem-ranger-orange.png` usan exactamente **857 × 1171 px**. Orange conserva la escala de su dibujo: puede ocupar menos área visible dentro del lienzo que Red. La estandarización iguala las dimensiones del archivo, no agranda la silueta.
+El master masculino `references/axem-red/super-axem-red.png` y el resultado `results/male/orange/super-axem-ranger-orange.png` usan exactamente **857 × 1171 px**. Orange se escala proporcionalmente con vecino más cercano para ocupar la misma caja visible que Red dentro del lienzo. Se centra horizontalmente y se alinea por la línea de apoyo de los pies. No se deforma ni se recorta el dibujo; su paleta original se conserva.
 
 La misma regla incluye a la Ranger femenina Violeta: el master Pink y el resultado Violet usan **745 × 1372 px**. Cada familia conserva la proporción de su referencia; no se fuerza una relación de aspecto común entre el artwork masculino y el femenino.
 
-Los masters de `references/` son inmutables. `prepare-super-rangers.mjs` crea copias de trabajo en `public/generated/super-axem-source-male.png` y `public/generated/super-axem-source-female.png`, conservando el lienzo original. Los generadores de texturas y retratos consumen esas copias, no reescriben las referencias.
+Los masters de `references/` son inmutables. Los uploads originales de Orange y Violet quedan preservados en `references/axem-orange/` y `references/axem-violet/`. `prepare-super-rangers.mjs` crea copias de trabajo en `public/generated/super-axem-source-male.png` y `public/generated/super-axem-source-female.png`, conservando el lienzo original. Los generadores de texturas y retratos consumen esas copias, no reescriben las referencias.
 
 ### Qué se normaliza y qué se conserva
 
-- Los artworks de personaje solo pueden recibir padding transparente para completar el lienzo de su master. No se aplica resize, recorte ni deformación. Si el arte excede el lienzo, el proceso falla en vez de cortar píxeles.
+- Los artworks de personaje conservan el lienzo de su master. Orange ajusta su escala visible a la de Red mediante nearest-neighbor, con centrado horizontal y pies alineados; Violet mantiene la normalización de su familia. Nunca se aplica deformación ni recorte automático.
 - Las texturas de combate, retratos y GIF se generan con sus medidas de categoría.
 - Los atlas mantienen sus dimensiones y su distribución irregular. Las secuencias usan las celdas declaradas en sus respectivos `index.json`; no se inventa una cuadrícula global.
 - Armas, objetos, efectos, recursos suplementarios, fondos y tilesets conservan sus dimensiones nativas. Los fondos pueden tener proporciones distintas según la escena.

@@ -77,6 +77,37 @@ async function assertMasterCanvas(relativePath, width, height, label) {
   }
 }
 
+function visibleBounds(data, width, height) {
+  let left = width, top = height, right = -1, bottom = -1;
+  for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
+    if (data[(y * width + x) * 4 + 3] < 16) continue;
+    left = Math.min(left, x); top = Math.min(top, y);
+    right = Math.max(right, x + 1); bottom = Math.max(bottom, y + 1);
+  }
+  if (right <= left || bottom <= top) throw new Error('El artwork no tiene píxeles visibles.');
+  return { left, top, right, bottom };
+}
+async function readVisibleBounds(relativePath) {
+  const decoded = await sharp(absolute(relativePath)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return visibleBounds(decoded.data, decoded.info.width, decoded.info.height);
+}
+async function assertVisualBoundsMatch(family) {
+  if (!family.visualBoundsReference) return;
+  const [reference, result] = await Promise.all([
+    readVisibleBounds(family.visualBoundsReference), readVisibleBounds(family.result),
+  ]);
+  const tolerance = family.visualBoundsTolerance ?? 0;
+  const deltas = {
+    left: Math.abs(reference.left - result.left), top: Math.abs(reference.top - result.top),
+    right: Math.abs(reference.right - result.right), bottom: Math.abs(reference.bottom - result.bottom),
+  };
+  if (Object.values(deltas).some((delta) => delta > tolerance)) {
+    throw new Error('El artwork ' + family.result + ' no ocupa la misma caja visible que Red: ' +
+      'referencia=' + JSON.stringify(reference) + '; resultado=' + JSON.stringify(result) +
+      '; diferencias=' + JSON.stringify(deltas) + '; tolerancia=' + tolerance + ' px.');
+  }
+}
+
 async function main() {
   let changed = 0;
   const artwork = standards.categories.characterArtwork;
@@ -84,6 +115,7 @@ async function main() {
   for (const [gender, family] of Object.entries(artwork.families)) {
     await assertMasterCanvas(family.reference, family.width, family.height, 'Master Super Axem ' + gender);
     changed += Number(await ensureCanvas(family.result, family.width, family.height, 'Artwork Super Axem ' + gender));
+    await assertVisualBoundsMatch(family);
     changed += Number(await ensureCanvas(family.preparedSource, family.width, family.height, 'Fuente preparada Super Axem ' + gender));
   }
 

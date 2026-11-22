@@ -7,6 +7,16 @@ import ASSET_STANDARDS from '../../../art/source/sprites/asset-standards.json';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const absolute = (relativePath) => path.join(ROOT, relativePath);
+async function visibleBounds(relativePath) {
+  const { data, info } = await sharp(absolute(relativePath)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  let left = info.width, top = info.height, right = -1, bottom = -1;
+  for (let y = 0; y < info.height; y += 1) for (let x = 0; x < info.width; x += 1) {
+    if (data[(y * info.width + x) * 4 + 3] < 16) continue;
+    left = Math.min(left, x); top = Math.min(top, y);
+    right = Math.max(right, x + 1); bottom = Math.max(bottom, y + 1);
+  }
+  return { left, top, right, bottom };
+}
 
 describe('Estándares centrales de recursos gráficos', () => {
   for (const [gender, family] of Object.entries(ASSET_STANDARDS.categories.characterArtwork.families)) {
@@ -29,11 +39,16 @@ describe('Estándares centrales de recursos gráficos', () => {
     });
   }
 
-  it('iguala solo el lienzo de Orange con Red, sin imponer el tamaño visible de la silueta', async () => {
+  it('hace que Orange ocupe la misma caja visible que Red', async () => {
     const family = ASSET_STANDARDS.categories.characterArtwork.families.male;
-    const [reference, orange] = await Promise.all([sharp(absolute(family.reference)).metadata(), sharp(absolute(family.result)).metadata()]);
+    const [reference, orange, referenceBounds, orangeBounds] = await Promise.all([
+      sharp(absolute(family.reference)).metadata(), sharp(absolute(family.result)).metadata(),
+      visibleBounds(family.reference), visibleBounds(family.result),
+    ]);
     expect([orange.width, orange.height]).toEqual([reference.width, reference.height]);
-    // No se comparan ni se igualan los límites alfa: Orange conserva su escala visual original.
+    for (const edge of ['left', 'top', 'right', 'bottom']) {
+      expect(Math.abs(orangeBounds[edge] - referenceBounds[edge])).toBeLessThanOrEqual(family.visualBoundsTolerance);
+    }
   });
 
   it('genera las texturas de combate con el tamaño estándar', async () => {

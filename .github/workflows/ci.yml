@@ -35,16 +35,12 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Repair Super Axem artwork bounds and black details
-        if: github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Repair Super Axem artwork bounds and black details'
-        run: node scripts/repair-super-axem-artwork.mjs
-
       - name: Confirmar sprites generados en main
         if: github.ref == 'refs/heads/main'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/infrastructure/assets/atlasFrames.json art/source/sprites/results/female art/source/sprites/results/male art/source/title.png art/source/sprites/references/axem-pink art/source/sprites/references/axem-red/axem-red-spritesheet.png art/source/sprites/references/axem-red/super-axem-red.png
+          git add src/infrastructure/assets/atlasFrames.json art/source/sprites/references/axem-orange art/source/sprites/references/axem-violet art/source/sprites/results/female art/source/sprites/results/male art/source/title.png art/source/sprites/references/axem-pink art/source/sprites/references/axem-red/axem-red-spritesheet.png art/source/sprites/references/axem-red/super-axem-red.png
           if git diff --cached --quiet; then
             echo "Los sprites generados ya están actualizados."
           elif [[ "$(git log -1 --pretty=%s)" == "Keep black male hair with brown Californian tips" || "$(git log -1 --pretty=%s)" == "Match male action GIF reference dimensions" || "$(git log -1 --pretty=%s)" == "Fix male ranger hair and remove duplicate sprite sheets" || "$(git log -1 --pretty=%s)" == "Fix blonde hair across all male poses" || "$(git log -1 --pretty=%s)" == "Fix false positive blonde hair test" || "$(git log -1 --pretty=%s)" == "Generate male orange action GIFs" || "$(git log -1 --pretty=%s)" == "Generate male violet action GIFs" || "$(git log -1 --pretty=%s)" == "Genera GIFs del Axem Violeta" || "$(git log -1 --pretty=%s)" == "Integra derrota y secuencia de invocación del Axem Naranja" || "$(git log -1 --pretty=%s)" == "Unifica la escala de los fotogramas de idle del Axem Violeta" || "$(git log -1 --pretty=%s)" == "Integra escenarios, tilesets y musica" || "$(git log -1 --pretty=%s)" == "Clasificar secuencias femeninas por fila en tiras compactas" || "$(git log -1 --pretty=%s)" == "Completar limpieza de tiras femeninas" || "$(git log -1 --pretty=%s)" == "Separar las poses compuestas del atlas femenino" || "$(git log -1 --pretty=%s)" == "Exportar recursos suplementarios masculinos" || "$(git log -1 --pretty=%s)" == "Añadir pose final con aura de ki a charge.gif" || "$(git log -1 --pretty=%s)" == "Reemplazar Aura38 por aura Super Saiyan estilo DBZ" || "$(git log -1 --pretty=%s)" == "Hacer que charge use la hoja Super Saiyan exacta" || "$(git log -1 --pretty=%s)" == "Corregir cierre del test de aura Super Saiyan" || "$(git log -1 --pretty=%s)" == "Corregir la prueba del fotograma final de carga" || "$(git log -1 --pretty=%s)" == "Fix asset validation paths" ]]; then

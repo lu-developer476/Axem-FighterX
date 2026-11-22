@@ -5,7 +5,7 @@ import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { getCharacterSelectionsByCorner } from '../../domain/match/playerAssignments.js';
-import { maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
+import { maleAnimationKey, menuSpriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playMenuMusic } from '../../infrastructure/audio/GameMusic.js';
 import { contentWidth, insetSize, mapPanelY, UI_SPACING } from '../views/uiLayout.js';
 
@@ -81,22 +81,22 @@ export class MenuScene extends Phaser.Scene {
   }
 
 
-  /** Mantiene únicamente las animaciones GIF en la pantalla principal. */
+  /** Arte de menú independiente de los sprites compactos usados en combate. */
   #addHomeRangerArt() {
-    const runKey = maleAnimationKey(RANGER_IDS.ORANGE, 'run');
-    const runner = this.add.sprite(GAME_WIDTH / 2 - 62, 139, runKey)
+    const orangeKey = maleAnimationKey(RANGER_IDS.ORANGE, 'charge');
+    const orange = this.add.sprite(GAME_WIDTH / 2 - 108, 160, orangeKey)
       .setOrigin(0.5, 1)
-      .setScale(0.52)
-      .setDepth(0);
-    if (this.anims.exists(runKey)) runner.play(runKey);
+      .setScale(1.8)
+      .setDepth(1);
+    if (this.anims.exists(orangeKey)) orange.play(orangeKey);
 
-    const violetKey = spriteKeyFor(RANGER_IDS.VIOLET, 'female');
-    const violet = this.add.sprite(GAME_WIDTH / 2, 132, violetKey)
+    const violetKey = menuSpriteKeyFor(RANGER_IDS.VIOLET, 'female');
+    const violet = this.add.image(GAME_WIDTH / 2 + 108, 160, violetKey)
       .setOrigin(0.5, 1)
       .setScale(0.72)
       .setDepth(1);
 
-    this.ui.add([runner, violet]);
+    this.ui.add([orange, violet]);
   }
 
   #beginPage(title, width = 282, height = 120) {
@@ -404,8 +404,12 @@ export class MenuScene extends Phaser.Scene {
   }
 
   #goBack() {
-    if (this.page === 'versus') {
+    if (this.page === 'play') {
       this.#showHome();
+      return;
+    }
+    if (this.page === 'versus' || this.page === 'race') {
+      this.#showPlayModes();
       return;
     }
     if (this.page === 'combat') {
@@ -451,12 +455,46 @@ export class MenuScene extends Phaser.Scene {
     this.characterSlot = 0;
     this.#beginPage('', 282, 146);
     this.#addHomeRangerArt();
-    this.#addButton('JUGAR', 151, () => this.#showVersusModes());
-    this.#addButton('CARRERA AXEM', 170, () => this.scene.start('RaceScene'));
-    this.#addButton('CARRERA TERRESTRE', 189, () => this.scene.start('LandRaceScene'));
-    this.#addButton('TUTORIAL', 208, () => this.#showControls());
-    this.#addButton('CRÉDITOS', 227, () => this.#showCredits());
+    this.#addButton('JUGAR', 190, () => this.#showPlayModes());
+    this.#addButton('TUTORIAL', 211, () => this.#showControls());
+    this.#addButton('CRÉDITOS', 232, () => this.#showCredits());
     this.#addFooter();
+  }
+
+  #showPlayModes() {
+    this.page = 'play';
+    this.#beginPage('JUGAR', 330, 168);
+
+    this.#addButton('COMBATE', 157, () => this.#showVersusModes(), {
+      width: 246,
+      fontSize: '8px',
+    });
+    this.#addButton('CARRERA', 181, () => this.#showRaceModes(), {
+      width: 246,
+      fontSize: '8px',
+    });
+    this.#addButton('VOLVER', 226, () => this.#showHome(), {
+      width: 150,
+      fontSize: '8px',
+    });
+  }
+
+  #showRaceModes() {
+    this.page = 'race';
+    this.#beginPage('CARRERA', 330, 168);
+
+    this.#addButton('CARRERA AXEM', 157, () => this.scene.start('RaceScene'), {
+      width: 246,
+      fontSize: '8px',
+    });
+    this.#addButton('CARRERA TERRESTRE', 181, () => this.scene.start('LandRaceScene'), {
+      width: 246,
+      fontSize: '8px',
+    });
+    this.#addButton('VOLVER', 226, () => this.#showPlayModes(), {
+      width: 150,
+      fontSize: '8px',
+    });
   }
 
   #showVersusModes() {
@@ -476,7 +514,7 @@ export class MenuScene extends Phaser.Scene {
       }, { width: 246, fontSize: '8px' });
     });
 
-    this.#addButton('VOLVER', 226, () => this.#showHome(), { width: 150, fontSize: '8px' });
+    this.#addButton('VOLVER', 226, () => this.#showPlayModes(), { width: 150, fontSize: '8px' });
     this.#addFooter();
   }
 

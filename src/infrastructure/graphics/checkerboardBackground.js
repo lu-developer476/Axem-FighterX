@@ -96,7 +96,13 @@ export function detectCheckerboardColors(data, width, height) {
   };
 }
 
-export function removeCheckerboardBackground(data, width, height, colors) {
+export function removeCheckerboardBackground(data, width, height, colors, options = {}) {
+  const {
+    edgeAlphaFloor = 0,
+    fringeLimit = 36,
+    coverageStart = 8,
+    coverageRange = 28,
+  } = options;
   const total = width * height;
   const tolerance = 22;
   const toleranceSquared = tolerance * tolerance;
@@ -164,10 +170,16 @@ export function removeCheckerboardBackground(data, width, height, colors) {
 
       const pixel = data.subarray(offset, offset + 3);
       const distance = Math.min(...colors.map((color) => colorDistance(pixel, color)));
-      const fringeLimit = 36;
       if (distance >= fringeLimit) continue;
-      const coverage = Math.max(0.12, Math.min(1, (distance - 8) / 28));
-      data[offset + 3] = Math.round(data[offset + 3] * coverage);
+      const originalAlpha = data[offset + 3];
+      const coverage = Math.max(0.12, Math.min(1, (distance - coverageStart) / coverageRange));
+      const softenedAlpha = Math.round(originalAlpha * coverage);
+      // Un borde retenido nunca cae por debajo del mínimo específico del artwork.
+      // RGB permanece intacto: no hay blur, resampling ni pérdida del color del píxel.
+      data[offset + 3] = Math.min(
+        originalAlpha,
+        Math.max(edgeAlphaFloor, softenedAlpha),
+      );
       softenedPixels += 1;
     }
   }

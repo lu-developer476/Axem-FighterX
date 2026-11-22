@@ -108,38 +108,24 @@ async function repairOrange() {
   }
 
   const orangeRgb = orangeRgbDecoded.data;
-  const redRgb = redRgbDecoded.data;
   const outputPixels = new Uint8Array(pixelCount * 4);
-  let restoredBlackColor = 0;
-  let referenceBlackPixels = 0;
+  let visibleBlackPixels = 0;
 
   for (let pixel = 0; pixel < pixelCount; pixel += 1) {
     const offsetRgb = pixel * 3;
     const offsetRgba = pixel * 4;
     const maskAlpha = redAlpha[pixel];
-    const blackLine = maskAlpha >= 16 && isBlackLinework(
-      redRgb[offsetRgb], redRgb[offsetRgb + 1], redRgb[offsetRgb + 2],
-    );
 
-    if (blackLine) {
-      referenceBlackPixels += 1;
-      if (
-        orangeRgb[offsetRgb] !== redRgb[offsetRgb] ||
-        orangeRgb[offsetRgb + 1] !== redRgb[offsetRgb + 1] ||
-        orangeRgb[offsetRgb + 2] !== redRgb[offsetRgb + 2]
-      ) restoredBlackColor += 1;
-
-      // Solo RGB negro se recupera desde Red; el resto conserva el color Orange.
-      outputPixels[offsetRgba] = redRgb[offsetRgb];
-      outputPixels[offsetRgba + 1] = redRgb[offsetRgb + 1];
-      outputPixels[offsetRgba + 2] = redRgb[offsetRgb + 2];
-    } else {
-      outputPixels[offsetRgba] = orangeRgb[offsetRgb];
-      outputPixels[offsetRgba + 1] = orangeRgb[offsetRgb + 1];
-      outputPixels[offsetRgba + 2] = orangeRgb[offsetRgb + 2];
-    }
-    // La silueta se reconstruye con el canal alfa real de Red.
+    // La máscara Red solo define el contorno. Todos los colores salen del
+    // upload Orange original, para conservar su paleta y lineart exactos.
+    outputPixels[offsetRgba] = orangeRgb[offsetRgb];
+    outputPixels[offsetRgba + 1] = orangeRgb[offsetRgb + 1];
+    outputPixels[offsetRgba + 2] = orangeRgb[offsetRgb + 2];
     outputPixels[offsetRgba + 3] = maskAlpha;
+
+    if (maskAlpha >= 16 && isBlackLinework(
+      orangeRgb[offsetRgb], orangeRgb[offsetRgb + 1], orangeRgb[offsetRgb + 2],
+    )) visibleBlackPixels += 1;
   }
 
   const output = await sharp(Buffer.from(outputPixels), {
@@ -186,10 +172,9 @@ async function repairOrange() {
   }
 
   console.log(
-    'Orange reparado: RGB Orange preservado fuera del lineart; alfa Red aplicado; ' +
+    'Orange reparado: todo el RGB del upload Orange preservado; alfa Red aplicado solo como silueta; ' +
     visibleReferencePixels + ' píxeles visibles y ' + transparentReferencePixels +
-    ' transparentes; ' + restoredBlackColor + ' valores RGB negros restaurados de ' +
-    referenceBlackPixels + ' píxeles negros visibles de referencia.',
+    ' transparentes; ' + visibleBlackPixels + ' píxeles de lineart negro conservados desde Orange.',
   );
 }
 

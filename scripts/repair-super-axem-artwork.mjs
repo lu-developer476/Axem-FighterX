@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import sharp from 'sharp';
 
+const ORANGE_UPLOAD_COMMIT = '93a9715bcd6868b100c5a129669ecf5de1d504ef';
 const VIOLET_UPLOAD_COMMIT = '864c7e9fd8da25c0a1ab848bfdf59817f8f4c843';
 const ORANGE_PATH = 'art/source/sprites/results/male/orange/super-axem-ranger-orange.png';
 const VIOLET_PATH = 'art/source/sprites/results/female/violet/super-axem-ranger-violet.png';
@@ -37,9 +38,8 @@ function isBlackLinework(red, green, blue) {
 }
 
 async function repairOrange() {
-  // npm test ya procesó el último upload y quitó su fondo. Reparar sobre ese
-  // PNG evita volver a introducir el fondo opaco del archivo crudo.
-  const orangeSource = await fs.readFile(ORANGE_PATH);
+  // Se parte del último upload original para mantener su paleta naranja.
+  const orangeSource = readAtCommit(ORANGE_UPLOAD_COMMIT, ORANGE_PATH);
   const redSource = await fs.readFile(RED_REFERENCE_PATH);
 
   const [orangeMeta, redMeta] = await Promise.all([
@@ -58,79 +58,100 @@ async function repairOrange() {
       redMeta.width + '×' + redMeta.height,
     );
   }
-
-  // Normaliza ambos PNG a RGBA sRGB. Una referencia indexada o en escala
-  // de grises puede decodificarse con 2 canales; asumir 4 desplazaba el alfa.
-  if (!orangeMeta.hasAlpha) {
-    throw new Error('Orange procesado perdió su canal alfa antes de la reparación.');
+  if (!redMeta.hasAlpha) {
+    throw new Error('La referencia Red no tiene canal alfa para reconstruir la silueta.');
   }
-  const [orangeDecoded, redDecoded] = await Promise.all([
-    sharp(orangeSource).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
-    sharp(redSource).toColourspace('srgb').ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+
+  // Decodifica RGB y alfa por separado. Convertir la imagen completa a sRGB
+  // puede descartar la transparencia de PNG indexados o en escala de grises.
+  const [orangeRgbDecoded, redRgbDecoded, orangeAlpha, redAlpha] = await Promise.all([
+    sharp(orangeSource).toColourspace('srgb').removeAlpha().raw()
+      .toBuffer({ resolveWithObject: true }),
+    sharp(redSource).toColourspace('srgb').removeAlpha().raw()
+      .toBuffer({ resolveWithObject: true }),
+    sharp(orangeSource).ensureAlpha().extractChannel('alpha').raw().toBuffer(),
+    sharp(redSource).ensureAlpha().extractChannel('alpha').raw().toBuffer(),
   ]);
-  if (orangeDecoded.info.channels !== 4 || redDecoded.info.channels !== 4) {
+  if (
+    orangeRgbDecoded.info.channels !== 3 ||
+    redRgbDecoded.info.channels !== 3 ||
+    orangeAlpha.length !== orangeMeta.width * orangeMeta.height ||
+    redAlpha.length !== redMeta.width * redMeta.height
+  ) {
+    throw new Error('No se pudieron separar RGB y alfa de Orange/Red.');
+  }
+
+  let visibleReferencePixels = 0;
+  let transparentReferencePixels = 0;
+  for (let i = 0; i < redAlpha.length; i += 1) {
+    if (redAlpha[i] >= 16) visibleReferencePixels += 1;
+    else transparentReferencePixels += 1;
+  }
+  if (visibleReferencePixels < 100000 || transparentReferencePixels < 100000) {
     throw new Error(
-      'Orange/Red deben decodificarse como RGBA; canales: ' +
-      orangeDecoded.info.channels + '/' + redDecoded.info.channels,
+      'La máscara alfa Red no parece una silueta válida: visibles=' +
+      visibleReferencePixels + ', transparentes=' + transparentReferencePixels,
     );
   }
-  const orangeRaw = orangeDecoded.data;
-  const redRaw = redDecoded.data;
-  const outputPixels = new Uint8Array(orangeRaw);
+
+  const orangeRgb = orangeRgbDecoded.data;
+  const redRgb = redRgbDecoded.data;
+  const outputPixels = new Uint8Array(orangeMeta.width * orangeMeta.height * 4);
+  let alphaDifferences = 0;
+  let restoredBlackAlpha = 0;
   let restoredBlackColor = 0;
   let referenceBlackPixels = 0;
 
-  for (let offset = 0; offset < outputPixels.length; offset += 4) {
-    const oldOrangeAlpha = outputPixels[offset + 3];
-    const blackLine = oldOrangeAlpha >= 16 && isBlackLinework(
-      redRaw[offset], redRaw[offset + 1], redRaw[offset + 2],
+  for (let pixel = 0; pixel < redAlpha.length; pixel += 1) {
+    const offsetRgb = pixel * 3;
+    const offsetRgba = pixel * 4;
+    const maskAlpha = redAlpha[pixel];
+    const blackLine = maskAlpha >= 16 && isBlackLinework(
+      redRgb[offsetRgb], redRgb[offsetRgb + 1], redRgb[offsetRgb + 2],
     );
 
+    if (orangeAlpha[pixel] !== maskAlpha) alphaDifferences += 1;
     if (blackLine) {
       referenceBlackPixels += 1;
+      if (orangeAlpha[pixel] < 16) restoredBlackAlpha += 1;
       if (
-        outputPixels[offset] !== redRaw[offset] ||
-        outputPixels[offset + 1] !== redRaw[offset + 1] ||
-        outputPixels[offset + 2] !== redRaw[offset + 2]
+        orangeRgb[offsetRgb] !== redRgb[offsetRgb] ||
+        orangeRgb[offsetRgb + 1] !== redRgb[offsetRgb + 1] ||
+        orangeRgb[offsetRgb + 2] !== redRgb[offsetRgb + 2]
       ) restoredBlackColor += 1;
 
-      // Repone solo el lineart negro de la referencia. El resto de RGB naranja
-      // queda intacto, conservando la paleta subida por el usuario.
-      outputPixels[offset] = redRaw[offset];
-      outputPixels[offset + 1] = redRaw[offset + 1];
-      outputPixels[offset + 2] = redRaw[offset + 2];
+      // Recupera únicamente el RGB del lineart negro; el resto conserva
+      // exactamente los colores del upload Orange.
+      outputPixels[offsetRgba] = redRgb[offsetRgb];
+      outputPixels[offsetRgba + 1] = redRgb[offsetRgb + 1];
+      outputPixels[offsetRgba + 2] = redRgb[offsetRgb + 2];
+    } else {
+      outputPixels[offsetRgba] = orangeRgb[offsetRgb];
+      outputPixels[offsetRgba + 1] = orangeRgb[offsetRgb + 1];
+      outputPixels[offsetRgba + 2] = orangeRgb[offsetRgb + 2];
     }
-
-    // El alfa de Red no se usa: su referencia puede tener un canal de
-    // transparencia distinto o no equivalente. Orange conserva su alfa exacto.
-    // La transparencia original forma parte del arte y nunca se reconstruye.
-    // Solo se recuperan valores RGB del lineart negro en el dibujo original.
-    outputPixels[offset + 3] = oldOrangeAlpha;
+    // La silueta transparente proviene del canal alfa extraído de Red.
+    outputPixels[offsetRgba + 3] = maskAlpha;
   }
 
   const output = await sharp(Buffer.from(outputPixels), {
     raw: { width: orangeMeta.width, height: orangeMeta.height, channels: 4 },
   }).png({ compressionLevel: 9, effort: 10 }).toBuffer();
 
-  const verifyDecoded = await sharp(output).toColourspace('srgb').ensureAlpha()
-    .raw().toBuffer({ resolveWithObject: true });
-  if (verifyDecoded.info.channels !== 4) {
-    throw new Error('Orange reparado no pudo verificarse como RGBA.');
-  }
-  const verify = verifyDecoded.data;
-  for (let offset = 0; offset < verify.length; offset += 4) {
-    const expectedAlpha = orangeRaw[offset + 3];
-    if (verify[offset + 3] !== expectedAlpha) {
-      throw new Error('La transparencia original de Orange no se conservó.');
+  const verify = await sharp(output).ensureAlpha().raw().toBuffer();
+  for (let pixel = 0; pixel < redAlpha.length; pixel += 1) {
+    if (verify[pixel * 4 + 3] !== redAlpha[pixel]) {
+      throw new Error('La máscara alfa de Orange no coincide con la silueta Red.');
     }
   }
 
   await fs.writeFile(ORANGE_PATH, output);
   console.log(
-    'Orange reparado: paleta del último upload preservada; ' +
-    restoredBlackColor + ' valores negros de RGB restaurados entre ' +
-    referenceBlackPixels + ' píxeles negros visibles de referencia; ' +
-    'transparencia del PNG procesado preservada exactamente.',
+    'Orange reparado: paleta Orange preservada; alfa Red aplicado como silueta; ' +
+    alphaDifferences + ' píxeles alfa reconciliados; ' +
+    restoredBlackAlpha + ' píxeles negros recuperados por alfa; ' +
+    restoredBlackColor + ' valores RGB negros restaurados de ' +
+    referenceBlackPixels + ' píxeles negros visibles de referencia.',
   );
 }
 

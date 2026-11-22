@@ -25,7 +25,6 @@ results/
       pose.gif punch-01.gif punch-02.gif punch-03.gif battle-pose.gif
       run.gif dash.gif jump.gif hit.gif hurt.gif teleport.gif (Violet y Orange)
       sequences/group-01.png … group-14.png + index.json
-      supplemental/group-01.png … group-05.png + index.json (siluetas y poses de referencia)
   female/
     axem-ranger-{violet,orange}.png     referencias femeninas apiladas
     {violet,orange}/

@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
+import { STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
+import { createProceduralBackground } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import raceBikeGifUrl from '../../../art/source/sprites/results/male/orange/bike.gif?url';
+import redRaceBikeGifUrl from '../../../art/source/sprites/references/axem-red/axem-ranger-bike.gif?url';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { AVAILABLE_RANGER_VARIANTS, getCounterpartSelection } from '../../domain/rangers/rangerVariants.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
@@ -74,18 +77,38 @@ export class RaceScene extends Phaser.Scene {
 
   create() {
     createRaceTextures(this);
+    createTexture(this, 'bike-race-boost', 22, 22, (g) => {
+      g.fillStyle(0x174c68, 1).fillCircle(11, 11, 10);
+      g.lineStyle(2, 0x8ee8ff, 1).strokeCircle(11, 11, 8);
+      g.fillStyle(0xbaf5ff, 1).fillTriangle(12, 3, 7, 12, 12, 12);
+      g.fillTriangle(12, 10, 16, 10, 10, 19);
+    });
+    createTexture(this, 'bike-race-slow', 22, 22, (g) => {
+      g.fillStyle(0x6a2d42, 1).fillCircle(11, 11, 10);
+      g.lineStyle(2, 0xffb0a0, 1).strokeCircle(11, 11, 8);
+      g.fillStyle(0xffd1a5, 1).fillRect(5, 10, 12, 3);
+    });
     playRaceMusic(this, 'motorcycleRace');
     this.distance = 0;
+    this.raceDistance = Phaser.Math.Between(3800, 4800);
     this.speed = 210;
     this.boost = 100;
     this.countdownMs = COUNTDOWN_MS;
     this.finished = false;
-    this.selectingCharacter = true;
-    this.selectedVariant = { id: RANGER_IDS.VIOLET, gender: 'female' };
+    this.selectingCharacter = false;
+    this.selectedVariant = { id: RANGER_IDS.ORANGE, gender: 'male' };
     this.trackOffset = 0;
     this.sceneryOffset = 0;
     this.lastSceneryChunk = -1;
-    this.obstacles = MOTORCYCLE_RACE_OBSTACLES.map((item) => ({ ...item, resolved: false, hitRacers: new Set() }));
+    const obstacleKinds = ['barrier', 'oil', 'crate'];
+    this.obstacles = MOTORCYCLE_RACE_OBSTACLES.map((item, index, all) => ({
+      ...item,
+      distance: Math.round((index + 1) * this.raceDistance / (all.length + 1)),
+      lane: Phaser.Math.Between(0, MOTORCYCLE_LANE_COUNT - 1),
+      kind: Phaser.Utils.Array.GetRandom(obstacleKinds),
+      resolved: false,
+      hitRacers: new Set(),
+    }));
     this.keys = this.input.keyboard.addKeys({
       left: Phaser.Input.Keyboard.KeyCodes.LEFT,
       right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
@@ -99,6 +122,7 @@ export class RaceScene extends Phaser.Scene {
       escape: Phaser.Input.Keyboard.KeyCodes.ESC,
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
       restart: Phaser.Input.Keyboard.KeyCodes.R,
+      jump: Phaser.Input.Keyboard.KeyCodes.J,
     });
 
     this.add.dom(GAME_WIDTH - 38, 66).createFromHTML(
@@ -107,7 +131,16 @@ export class RaceScene extends Phaser.Scene {
     this.background = this.add.graphics().setDepth(0);
     this.track = this.add.graphics().setDepth(10);
     this.scenery = [];
-    this.#drawEnvironment();
+    const selectedStage = Phaser.Utils.Array.GetRandom(STAGE_TILESET_ASSETS);
+    if (selectedStage) {
+      const stageKey = 'race-stage-bike-' + this.game.loop.frame;
+      createProceduralBackground(this, selectedStage, {
+        key: stageKey,
+        seed: Phaser.Math.Between(1, 0x7fffffff),
+      });
+      this.add.image(0, 0, stageKey).setOrigin(0).setDepth(-100)
+        .setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+    }
     this.#drawTrack();
     this.hud = this.add.graphics().setDepth(80);
     this.title = this.#text('CARRERA AXEM · MOTOS', GAME_WIDTH / 2, 12, '#ffe1a5', 9);
@@ -117,18 +150,7 @@ export class RaceScene extends Phaser.Scene {
     this.distanceLabel = this.#text('J1 · 0 M', 63, 18, '#e7dcff', 5);
     this.nitroLabel = this.#text('NITRO', GAME_WIDTH - 48, 8, '#a8e8ff', 4);
 
-    this.selectionPreview = this.add.sprite(GAME_WIDTH / 2, 94,
-      spriteKeyFor(RANGER_IDS.VIOLET, 'female'))
-      .setOrigin(0.5, 0.82)
-      .setScale(0.9)
-      .setDepth(42);
-    this.selectionVehicle = this.add.image(GAME_WIDTH / 2, 103, 'bike-race-motorcycle')
-      .setOrigin(0.5, 0.75)
-      .setScale(0.85)
-      .setDepth(40);
-    this.selectionLabel = this.#text('J1 · AXEM VIOLETA',
-      GAME_WIDTH / 2, 134, '#e3d4ff', 7);
-    this.#refreshSelectionPreview();
+    this.#startRace();
   }
 
 
@@ -168,6 +190,8 @@ export class RaceScene extends Phaser.Scene {
       return;
     }
 
+    if (Phaser.Input.Keyboard.JustDown(this.keys.jump)) this.player.jumpMs = 620;
+    for (const racer of this.racers) racer.jumpMs = Math.max(0, (racer.jumpMs ?? 0) - delta);
     const accelerate = this.keys.right.isDown || this.keys.d.isDown;
     const brake = this.keys.left.isDown || this.keys.a.isDown;
     const boosting = this.keys.space.isDown && this.boost > 0;
@@ -181,7 +205,10 @@ export class RaceScene extends Phaser.Scene {
     this.player.laneSwitchMs = Math.max(0, this.player.laneSwitchMs - delta);
     if (this.player.laneSwitchMs === 0) this.player.lane = this.player.targetLane;
     const frame = Math.min(delta, 50) / 1000;
-    const targetSpeed = 172 + (accelerate ? 100 : 0) - (brake ? 70 : 0) + (boosting ? 90 : 0);
+    this.speedEffectMs = Math.max(0, this.speedEffectMs - delta);
+    if (this.speedEffectMs === 0) this.speedEffect = 0;
+    const targetSpeed = 172 + (accelerate ? 100 : 0) - (brake ? 70 : 0)
+      + (boosting ? 90 : 0) + this.speedEffect;
     this.speed = Phaser.Math.Linear(this.speed, clamp(targetSpeed, 85, 410), Math.min(1, frame * 3.2));
     this.distance += this.speed * frame;
     this.player.distance = this.distance;
@@ -191,12 +218,13 @@ export class RaceScene extends Phaser.Scene {
 
     this.#updateOpponents(time, frame);
     this.#updateObstacles(frame);
+    this.#updatePickups();
     this.#updateScenery();
     this.#drawTrack();
     this.#syncRacers(time);
     this.#drawHud();
 
-    if (this.racers.some((racer) => racer.distance >= RACE_DISTANCE)) {
+    if (this.racers.some((racer) => racer.distance >= this.raceDistance)) {
       const sorted = [...this.racers].sort((a, b) => b.distance - a.distance);
       this.#finish(sorted[0] === this.player);
     }
@@ -217,22 +245,34 @@ export class RaceScene extends Phaser.Scene {
 
   #startRace() {
     this.selectingCharacter = false;
-    this.selectionPreview.destroy();
-    this.selectionVehicle.destroy();
-    this.selectionLabel.destroy();
+    this.selectionPreview?.destroy();
+    this.selectionVehicle?.destroy();
+    this.selectionLabel?.destroy();
     this.status.setText('3').setFontSize(25);
-    this.instructions.setText('↑ / ↓ CAMBIAR CARRIL · → / D ACELERAR · ← / A FRENAR · ESPACIO NITRO')
+    this.instructions.setText('↑ / ↓ CARRIL · → / D ACELERAR · ← / A FRENAR · J SALTAR · ESPACIO NITRO')
       .setFontSize(5);
 
-    const opponentSelection = getCounterpartSelection(this.selectedVariant);
-    this.player = this.#createRacer(this.selectedVariant, 'J1', 0, true);
-    this.opponents = [1, 2, 3].map((number, index) =>
-      this.#createRacer(opponentSelection, 'IA ' + number, index + 1, false),
-    );
+    const orangeSelection = { id: RANGER_IDS.ORANGE, gender: 'male' };
+    this.player = this.#createRacer(orangeSelection, 'J1 · AXEM NARANJA', 1, true);
+    this.opponents = [
+      this.#createRacer(orangeSelection, 'IA · AXEM ROJO', 2, false),
+    ];
     this.racers = [this.player, ...this.opponents];
     this.obstacleSprites = this.obstacles.map((obstacle) =>
       this.add.image(0, 0, this.#obstacleTexture(obstacle.kind)).setDepth(30),
     );
+    this.pickups = [520, 1050, 1590, 2140, 2720, 3310].map((distance, index) => ({
+      distance,
+      lane: Phaser.Math.Between(0, MOTORCYCLE_LANE_COUNT - 1),
+      kind: index % 2 === 0 ? 'boost' : 'slow',
+      collected: false,
+    }));
+    this.pickupSprites = this.pickups.map((pickup) =>
+      this.add.image(0, 0, pickup.kind === 'boost' ? 'bike-race-boost' : 'bike-race-slow')
+        .setDepth(32),
+    );
+    this.speedEffect = 0;
+    this.speedEffectMs = 0;
     this.#drawHud();
   }
 
@@ -249,11 +289,17 @@ export class RaceScene extends Phaser.Scene {
       .setOrigin(0.5, 0.75)
       .setScale(MOTORCYCLE_LANE_SCALES[lane] * 0.78)
       .setDepth(34 + lane);
-    const labelText = this.#text(label, sprite.x, sprite.y - 27, isPlayer ? '#e3d4ff' : '#ffe0b2', 5);
+    sprite.setVisible(false);
+    vehicle.setVisible(false);
+    const racerBikeGifUrl = isPlayer ? raceBikeGifUrl : redRaceBikeGifUrl;
+    const gif = this.add.dom(sprite.x, sprite.y - 25).createFromHTML(
+      '<img src="' + racerBikeGifUrl + '" alt="' + label + '" style="width:62px;height:54px;object-fit:contain;image-rendering:pixelated;pointer-events:none;">',
+    ).setDepth(48);
+    const labelText = this.#text(label, sprite.x, sprite.y - 35, isPlayer ? '#ffc58e' : '#ff9b9b', 5);
     return {
-      rangerId, gender, label, lane, targetLane: lane, isPlayer, sprite, vehicle, labelText,
+      rangerId, gender, label, lane, targetLane: lane, isPlayer, sprite, vehicle, gif, labelText,
       distance: isPlayer ? 0 : lane * 18,
-      stunMs: 0, laneSwitchMs: 0, crashed: false,
+      stunMs: 0, jumpMs: 0, laneSwitchMs: 0, crashed: false,
     };
   }
 
@@ -300,12 +346,37 @@ export class RaceScene extends Phaser.Scene {
         const racerDistance = racer.isPlayer ? this.distance : racer.distance;
         const collisionX = racerX + (obstacle.distance - racerDistance) * 0.19;
         if (Math.abs(collisionX - racerX) < (obstacle.kind === 'oil' ? 18 : 20)) {
+          if (racer.isPlayer && racer.jumpMs > 0 && obstacle.kind !== 'oil') {
+            obstacle.hitRacers.add(racer.label);
+            continue;
+          }
           racer.stunMs = 720;
           if (racer.isPlayer) this.boost = Math.max(0, this.boost - 22);
           racer.distance -= 20;
           if (racer.isPlayer) this.distance = Math.max(0, this.distance - 20);
           obstacle.hitRacers.add(racer.label);
         }
+      }
+    });
+  }
+
+  #updatePickups() {
+    this.pickups.forEach((pickup, index) => {
+      const sprite = this.pickupSprites[index];
+      if (pickup.collected) {
+        sprite.setVisible(false);
+        return;
+      }
+      const x = PLAYER_X + (pickup.distance - this.distance) * 0.19;
+      sprite.setPosition(x, MOTORCYCLE_LANE_BASELINES[pickup.lane] - 9)
+        .setVisible(x > -24 && x < GAME_WIDTH + 24);
+      if (this.player.lane === pickup.lane && Math.abs(x - PLAYER_X) < 18) {
+        pickup.collected = true;
+        sprite.setVisible(false);
+        this.speedEffect = pickup.kind === 'boost' ? 105 : -75;
+        this.speedEffectMs = 1900;
+        if (pickup.kind === 'boost') this.boost = clamp(this.boost + 24, 0, 100);
+        this.cameras.main.flash(90, 110, pickup.kind === 'boost' ? 220 : 120, 255);
       }
     });
   }
@@ -377,7 +448,9 @@ export class RaceScene extends Phaser.Scene {
       racer.sprite.setPosition(x, targetY + (racer.stunMs > 0 ? Math.sin(time / 25) * 2 : 0));
       racer.sprite.setScale(MOTORCYCLE_LANE_SCALES[racer.lane] * (racer.isPlayer ? 0.78 : 0.7));
       racer.sprite.setAngle(Math.sin(time / 160 + racer.lane) * 1.5);
-      racer.labelText.setPosition(x, targetY - 27);
+      racer.labelText.setPosition(x, targetY - 35);
+      const jumpLift = racer.jumpMs > 0 ? Math.sin((1 - racer.jumpMs / 620) * Math.PI) * 15 : 0;
+      racer.gif?.setPosition(x, targetY - 20 - jumpLift);
       if (racer.vehicle) racer.vehicle.setPosition(x, targetY + 8).setScale(MOTORCYCLE_LANE_SCALES[racer.lane] * 0.78);
     }
   }
@@ -385,7 +458,7 @@ export class RaceScene extends Phaser.Scene {
   #drawHud() {
     this.hud.clear();
     this.hud.fillStyle(0x111725, 0.88).fillRoundedRect(8, 5, GAME_WIDTH - 16, 28, 4);
-    this.hud.fillStyle(0x9b85d1, 1).fillRect(17, 27, 132 * clamp(this.distance / RACE_DISTANCE, 0, 1), 2);
+    this.hud.fillStyle(0x9b85d1, 1).fillRect(17, 27, 132 * clamp(this.distance / this.raceDistance, 0, 1), 2);
     this.hud.fillStyle(0x172033, 1).fillRect(GAME_WIDTH - 76, 12, 56, 5);
     this.hud.fillStyle(0x78c9e8, 1).fillRect(GAME_WIDTH - 75, 13, 54 * this.boost / 100, 3);
     this.distanceLabel.setText('J1 · ' + Math.floor(this.distance) + ' M');

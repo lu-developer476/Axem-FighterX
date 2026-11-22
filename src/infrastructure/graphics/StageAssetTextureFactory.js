@@ -24,7 +24,7 @@ export function createStageAssetTextures(scene) {
   }
 }
 
-export function createProceduralBackground(scene, asset) {
+export function createProceduralBackground(scene, asset, options = {}) {
   const source = scene.textures.get(asset.key).getSourceImage();
   const tileWidth = asset.tileWidth ?? 32;
   const tileHeight = asset.tileHeight ?? 32;
@@ -39,10 +39,10 @@ export function createProceduralBackground(scene, asset) {
     : detectCornerBackground(sourcePixels, source.width, source.height);
   const tiles = findUsableTiles(sourcePixels, source.width, source.height, asset, backgroundColor);
   const palette = paletteFor(asset.id);
-  const key = proceduralTextureKeyForTileset(asset.key);
+  const key = options.key ?? proceduralTextureKeyForTileset(asset.key);
 
   createCanvasTexture(scene, key, ARENA.width, GAME_HEIGHT, (ctx, width, height) => {
-    const random = createRandom(asset.seed ?? 1);
+    const random = createRandom(options.seed ?? asset.seed ?? 1);
     const pick = () => tiles[Math.floor(random() * tiles.length)];
 
     ctx.imageSmoothingEnabled = false;

@@ -1,6 +1,13 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
+import landIdleGifUrl from '../../../art/source/sprites/results/male/orange/idle.gif?url';
+import landPoseGifUrl from '../../../art/source/sprites/results/male/orange/pose.gif?url';
 import landRunGifUrl from '../../../art/source/sprites/results/male/orange/run.gif?url';
+import landDashGifUrl from '../../../art/source/sprites/results/male/orange/dash.gif?url';
+import landJumpGifUrl from '../../../art/source/sprites/results/male/orange/jump.gif?url';
+import landRollGifUrl from '../../../art/source/sprites/results/male/orange/roll.gif?url';
+import { STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
+import { createProceduralBackground } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
@@ -125,15 +132,23 @@ export class LandRaceScene extends Phaser.Scene {
   create() {
     playRaceMusic(this, 'landRace');
     createLandRaceTextures(this);
+    const selectedStage = Phaser.Utils.Array.GetRandom(STAGE_TILESET_ASSETS);
+    if (selectedStage) {
+      const stageKey = 'race-stage-land-' + this.game.loop.frame;
+      createProceduralBackground(this, selectedStage, {
+        key: stageKey,
+        seed: Phaser.Math.Between(1, 0x7fffffff),
+      });
+      this.add.image(0, 0, stageKey).setOrigin(0).setDepth(-100)
+        .setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+    }
     this.#drawStadium();
-    this.add.dom(GAME_WIDTH - 38, 68).createFromHTML(
-      '<img src="' + landRunGifUrl + '" alt="Axem corriendo" style="width:52px;height:52px;object-fit:contain;image-rendering:pixelated;">',
-    ).setDepth(90);
-
     this.distance = 0;
+    this.finishDistance = Phaser.Math.Between(1250, 1600);
+    this.obstacles = this.#generateRaceObstacles();
     this.countdownMs = COUNTDOWN_MS;
     this.finished = false;
-    this.player = this.#createRacer(RANGER_IDS.VIOLET, RUNNER_LANES[0], true);
+    this.player = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[0], true);
     this.rival = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[1], false);
     this.#createTrackObjects();
 
@@ -153,7 +168,7 @@ export class LandRaceScene extends Phaser.Scene {
 
     this.hudGraphics = this.add.graphics().setDepth(80);
     this.title = this.#text('CARRERA TERRESTRE', GAME_WIDTH / 2, 20, '#ffe2aa', 11);
-    this.playerName = this.#text('J1 · AXEM VIOLETA', 87, 34, '#d9c6ff', 6);
+    this.playerName = this.#text('J1 · AXEM NARANJA', 87, 34, '#ffc58e', 6);
     this.rivalName = this.#text('RIVAL · AXEM NARANJA', 393, 34, '#ffc58e', 6);
     this.status = this.#text('3', GAME_WIDTH / 2, 120, '#fff0c9', 24);
     this.staminaLabel = this.#text('RESISTENCIA', GAME_WIDTH / 2, 70, '#b8e7f4', 5);
@@ -209,15 +224,12 @@ export class LandRaceScene extends Phaser.Scene {
     this.#syncRacer(this.rival);
     this.#drawHud();
 
-    if (this.player.distance >= FINISH_DISTANCE || this.rival.distance >= FINISH_DISTANCE) {
+    if (this.player.distance >= this.finishDistance || this.rival.distance >= this.finishDistance) {
       this.#finish(this.player.distance >= this.rival.distance);
     }
   }
 
   #drawStadium() {
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x11192b);
-    this.add.rectangle(GAME_WIDTH / 2, 78, GAME_WIDTH, 116, 0x263853);
-    this.add.rectangle(GAME_WIDTH / 2, 46, GAME_WIDTH, 58, 0x1b2941);
     this.add.image(82, 91, 'land-race-crowd').setScale(1.45).setAlpha(0.95);
     this.add.image(240, 91, 'land-race-crowd').setScale(1.45).setAlpha(0.95);
     this.add.image(398, 91, 'land-race-crowd').setScale(1.45).setAlpha(0.95);
@@ -266,9 +278,13 @@ export class LandRaceScene extends Phaser.Scene {
     const shadow = this.add.ellipse(TRACK_START_X, laneY + RUNNER_FOOT_OFFSET, 34, 6, 0x241b2a, 0.52)
       .setDepth(31);
 
+    const racerGif = this.add.dom(TRACK_START_X, laneY - 28).createFromHTML(
+      '<img src="' + landIdleGifUrl + '" alt="Axem Naranja" style="width:48px;height:68px;object-fit:contain;image-rendering:pixelated;pointer-events:none;">',
+    ).setDepth(44);
     const racer = {
       rangerId,
       gender: genderForRanger(rangerId),
+      gif: racerGif,
       laneY,
       isPlayer,
       sprite,
@@ -288,11 +304,29 @@ export class LandRaceScene extends Phaser.Scene {
     return racer;
   }
 
+
+  #generateRaceObstacles() {
+    const obstacles = [];
+    let distance = 145;
+    let index = 0;
+    while (distance < this.finishDistance - 90) {
+      const action = Phaser.Math.Between(0, 1) === 0 ? 'jump' : 'roll';
+      obstacles.push({
+        distance,
+        action,
+        type: action === 'jump' ? 'hurdle' : 'roll-gate',
+      });
+      distance += Phaser.Math.Between(145, 235);
+      index += 1;
+    }
+    return obstacles;
+  }
+
   #createTrackObjects() {
     for (const racer of [this.player, this.rival]) {
       racer.startBlock = this.add.image(TRACK_START_X - 11, racer.laneY + 17, 'land-race-start-block')
         .setDepth(30);
-      racer.obstacleSprites = LAND_RACE_OBSTACLES.map((obstacle) => {
+      racer.obstacleSprites = this.obstacles.map((obstacle) => {
         const texture = obstacle.type === 'hurdle' ? 'land-race-hurdle' : 'land-race-roll-gate';
         const y = racer.laneY + RUNNER_FOOT_OFFSET - (obstacle.type === 'hurdle' ? 8 : 4);
         return this.add.image(this.#worldToScreen(obstacle.distance), y, texture)
@@ -302,24 +336,23 @@ export class LandRaceScene extends Phaser.Scene {
   }
 
   #worldToScreen(distance) {
-    return TRACK_START_X + (distance / FINISH_DISTANCE) * TRACK_SPAN;
+    return TRACK_START_X + (distance / this.finishDistance) * TRACK_SPAN;
   }
 
   #setMode(racer, mode) {
     if (racer.mode === mode) return;
-    const baseTexture = spriteKeyFor(racer.rangerId, racer.gender);
-    const isMoving = mode === 'run' || mode === 'walk';
-    const runAnimation = 'axem-' + racer.gender + '-' + racer.rangerId + '-run';
+    const gifByMode = {
+      idle: landIdleGifUrl,
+      walk: landPoseGifUrl,
+      run: landRunGifUrl,
+      dash: landDashGifUrl,
+      jump: landJumpGifUrl,
+      roll: landRollGifUrl,
+    };
+    const image = racer.gif?.node?.querySelector('img');
+    if (image && gifByMode[mode]) image.src = gifByMode[mode];
     racer.sprite.stop();
-    racer.sprite.setTexture(baseTexture);
-    const scale = isMoving ? 0.82 : 0.9;
-    racer.sprite.setScale(scale);
-    racer.sprite.setAngle(0);
-    racer.sprite.setAlpha(mode === 'idle' ? 0.96 : 1);
-    if (isMoving && this.anims.exists(runAnimation)) {
-      racer.sprite.play(runAnimation);
-      racer.sprite.anims.timeScale = mode === 'walk' ? 0.58 : 1;
-    }
+    racer.sprite.setVisible(false);
     racer.mode = mode;
   }
 
@@ -342,7 +375,7 @@ export class LandRaceScene extends Phaser.Scene {
     const brake = Boolean(controls?.brake && !controls?.accelerate);
 
     if (!isPlayer) {
-      const nextObstacle = LAND_RACE_OBSTACLES[racer.obstacleIndex];
+      const nextObstacle = this.obstacles[racer.obstacleIndex];
       if (nextObstacle && nextObstacle.distance - racer.distance <= 92 &&
           nextObstacle.distance > racer.distance && racer.actionRemainingMs <= 0 &&
           racer.stumbleMs <= 0) {
@@ -377,7 +410,7 @@ export class LandRaceScene extends Phaser.Scene {
       if (racer.stumbleMs > 0) speed = 66;
       if (racer.actionMode === 'roll') speed *= 0.88;
       if (racer.stumbleMs <= 0 && racer.actionRemainingMs <= 0) {
-        this.#setMode(racer, accelerate && racer.stamina > 0 ? 'run' : 'walk');
+        this.#setMode(racer, accelerate && racer.stamina > 0 ? 'dash' : 'run');
       }
     } else {
       speed = 164 + Math.sin(this.time.now / 510) * 5;
@@ -387,7 +420,7 @@ export class LandRaceScene extends Phaser.Scene {
       racer.stamina = Math.min(STAMINA_MAX, racer.stamina + 8 * delta / 1000);
     }
 
-    racer.distance = Math.min(FINISH_DISTANCE, racer.distance + speed * delta / 1000);
+    racer.distance = Math.min(this.finishDistance, racer.distance + speed * delta / 1000);
 
     const obstacle = LAND_RACE_OBSTACLES[racer.obstacleIndex];
     if (obstacle && previousDistance < obstacle.distance && racer.distance >= obstacle.distance) {
@@ -410,7 +443,7 @@ export class LandRaceScene extends Phaser.Scene {
     const x = this.#worldToScreen(racer.distance);
     const groundY = racer.laneY + RUNNER_FOOT_OFFSET;
     const runPhase = racer.distance / 16;
-    const movingBob = racer.mode === 'run' || racer.mode === 'walk'
+    const movingBob = racer.mode === 'run' || racer.mode === 'walk' || racer.mode === 'dash'
       ? Math.abs(Math.sin(runPhase)) * 2.2
       : 0;
     let lift = 0;
@@ -420,9 +453,7 @@ export class LandRaceScene extends Phaser.Scene {
     }
 
     racer.sprite.setPosition(Math.round(x), Math.round(groundY - lift - movingBob));
-    racer.sprite.setAngle(
-      racer.mode === 'run' || racer.mode === 'walk' ? Math.sin(runPhase) * 1.8 : 0,
-    );
+    racer.gif?.setPosition(Math.round(x), Math.round(groundY - lift - movingBob - 31));
     racer.shadow.setPosition(Math.round(x), groundY + 1);
     racer.shadow.setScale(1 - lift / 90, 1);
     if (racer.actionMode === 'roll') racer.sprite.setScale(0.9, 0.68);
@@ -434,9 +465,9 @@ export class LandRaceScene extends Phaser.Scene {
     const drawProgress = (x, y, width, distance, color) => {
       this.hudGraphics.fillStyle(0x101626, 0.95).fillRect(x, y, width, 4);
       this.hudGraphics.fillStyle(color, 1).fillRect(x + 1, y + 1,
-        Math.round((width - 2) * Phaser.Math.Clamp(distance / FINISH_DISTANCE, 0, 1)), 2);
+        Math.round((width - 2) * Phaser.Math.Clamp(distance / this.finishDistance, 0, 1)), 2);
     };
-    drawProgress(26, 42, 122, this.player.distance, 0xb69be9);
+    drawProgress(26, 42, 122, this.player.distance, 0xf0a064);
     drawProgress(332, 42, 122, this.rival.distance, 0xf0a064);
     this.hudGraphics.fillStyle(0x121c2c, 1).fillRect(193, 77, 94, 5);
     this.hudGraphics.fillStyle(0x72c9e7, 1).fillRect(194, 78,

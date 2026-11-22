@@ -472,7 +472,7 @@ export class MenuScene extends Phaser.Scene {
 
   #showPreviousConfiguration() {
     if (this.matchSetup.versusMode === 'player-vs-ai') {
-      this.#showPlayerSide();
+      this.#moveSelectionBackToCharacters();
       return;
     }
     if (this.matchSetup.versusMode === 'player-vs-player') {
@@ -542,7 +542,6 @@ export class MenuScene extends Phaser.Scene {
     this.matchSetup = {};
     this.characterSlot = 0;
     this.#beginPage('', 282, 146);
-    this.#addHomeRangerArt();
     this.#addButton('JUGAR', 190, () => this.#showPlayModes(), { width: 194, height: 17 });
     this.#addButton('TUTORIAL', 211, () => this.#showControls(), { width: 194, height: 17 });
     this.#addButton('CRÉDITOS', 232, () => this.#showCredits(), { width: 194, height: 17 });
@@ -551,7 +550,7 @@ export class MenuScene extends Phaser.Scene {
 
   #showPlayModes() {
     this.page = 'play';
-    this.#beginPage('JUGAR', 330, 124);
+    this.#beginPage('JUGAR', 330, 168);
 
     // Las tres opciones comparten una columna compacta y una separación uniforme.
     this.#addButton('COMBATE', 143, () => this.#showVersusModes(), {
@@ -609,7 +608,7 @@ export class MenuScene extends Phaser.Scene {
 
   #showCombatModes() {
     this.page = 'combat';
-    this.#beginPage('MODO', 330, 124);
+    this.#beginPage('MODO', 330, 168);
     const chooseMode = (modeId) => {
       this.matchSetup.combatMode = modeId;
       this.matchSetup.characters = [];
@@ -709,12 +708,19 @@ export class MenuScene extends Phaser.Scene {
     }
 
     if (mode.id === 'player-vs-player') {
-      this.matchSetup.playerSides = { J1: null, J2: null };
+      // Asignación aleatoria y siempre opuesta: no se solicita elegir esquinas.
+      const firstSide = Phaser.Math.Between(0, 1) === 0 ? 'left' : 'right';
+      this.matchSetup.playerSides = {
+        J1: firstSide,
+        J2: firstSide === 'left' ? 'right' : 'left',
+      };
       this.matchSetup.playerSidesError = null;
-      this.#showPlayerCorners();
+      this.#showNextConfiguration();
       return;
     }
 
+    // La esquina del jugador humano frente a la IA también se decide al azar.
+    this.matchSetup.playerSide = Phaser.Math.Between(0, 1) === 0 ? 'J1' : 'J2';
     this.#showNextConfiguration();
   }
 
@@ -1175,13 +1181,13 @@ export class MenuScene extends Phaser.Scene {
     this.page = 'stages';
     const versus = getVersusMode(this.matchSetup.versusMode);
     const combat = getCombatMode(this.matchSetup.combatMode);
-    const pageSize = 8;
+    const pageSize = 4;
     const pageCount = Math.max(1, Math.ceil(STAGES.length / pageSize));
     this.stagePage = Math.max(0, Math.min(page, pageCount - 1));
     const pageStart = this.stagePage * pageSize;
     const visibleStages = STAGES.slice(pageStart, pageStart + pageSize);
 
-    this.#beginPage('ESCENARIOS', 420, 212);
+    this.#beginPage('ESCENARIOS', 420, 178);
     this.#addText(versus.label + ' · ' + combat.label, GAME_WIDTH / 2, 137, {
       fontSize: '6px',
       color: '#b7a9cb',
@@ -1199,13 +1205,13 @@ export class MenuScene extends Phaser.Scene {
     }
 
     visibleStages.forEach((stage, index) => {
-      const kindLabel = stage.kind === 'tileset' ? ' · TILESET' : '';
-      this.#addButton(stage.name.toUpperCase() + kindLabel, 157 + index * 10.5, () => {
+      const cleanName = stage.name.replace(/\s*[·-]\s*Tileset$/i, '');
+      this.#addButton(cleanName.toUpperCase(), 166 + index * 17, () => {
         this.#startSelectedFight(stage.id);
       }, {
         width: 300,
         fontSize: '6px',
-        height: 12,
+        height: 14,
       });
     });
 

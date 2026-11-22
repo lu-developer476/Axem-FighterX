@@ -2,7 +2,6 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { DEFAULT_STAGE_ID, STAGES } from '../../infrastructure/assets/stageAssetManifest.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
-import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
 import { getCharacterSelectionsByCorner } from '../../domain/match/playerAssignments.js';
 import { maleAnimationKey, spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
@@ -35,7 +34,6 @@ export class MenuScene extends Phaser.Scene {
     this.selectedIndex = 0;
     this.matchSetup = {};
     this.characterSlot = 0;
-    this.pendingCharacterId = null;
     this.panelWidth = 282;
     this.stagePage = 0;
   }
@@ -414,11 +412,6 @@ export class MenuScene extends Phaser.Scene {
       this.#showVersusModes();
       return;
     }
-    if (this.page === 'character-gender') {
-      this.pendingCharacterId = null;
-      this.#showCharacterModal();
-      return;
-    }
     if (this.page === 'characters') {
       if (this.characterSlot > 0) {
         this.characterSlot -= 1;
@@ -506,14 +499,12 @@ export class MenuScene extends Phaser.Scene {
 
   #showCharacterModal() {
     this.page = 'characters';
-    this.pendingCharacterId = null;
     this.#beginCharacterModal();
 
     RANGER_ORDER.forEach((rangerId, index) => {
       const title = rangerId === RANGER_IDS.ORANGE ? 'AXEM NARANJA' : 'AXEM VIOLETA';
       this.#addButton(title, 181, () => {
-        this.pendingCharacterId = rangerId;
-        this.#showCharacterGender();
+        this.#selectCharacter(rangerId, genderForRanger(rangerId));
       }, {
         width: 154,
         x: index === 0 ? 160 : 320,
@@ -522,23 +513,7 @@ export class MenuScene extends Phaser.Scene {
     });
   }
 
-  #showCharacterGender() {
-    if (!this.pendingCharacterId) {
-      this.#showCharacterModal();
-      return;
-    }
-    const rangerId = this.pendingCharacterId;
-    const gender = rangerId === RANGER_IDS.VIOLET ? 'female' : 'male';
-    this.page = 'character-gender';
-    this.#beginCharacterModal('VARIANTE CANÓNICA DISPONIBLE');
-    this.#addButton(gender === 'female' ? 'AXEM VIOLETA · FEMENINO' : 'AXEM NARANJA · MASCULINO',
-      181, () => this.#selectCharacter(rangerId, gender), {
-        width: 190, fontSize: '7px',
-      });
-  }
-
   #selectCharacter(rangerId, gender) {
-    this.pendingCharacterId = null;
     const mode = getVersusMode(this.matchSetup.versusMode);
     const selection = { id: rangerId, gender };
     if (mode.id === 'player-vs-player') {

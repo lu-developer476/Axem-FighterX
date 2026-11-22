@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import ASSET_STANDARDS from '../../../art/source/sprites/asset-standards.json';
+import PROCESSING_RULES from '../../../art/source/sprites/processing-rules.json';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const absolute = (relativePath) => path.join(ROOT, relativePath);
@@ -19,6 +20,30 @@ async function visibleBounds(relativePath) {
 }
 
 describe('Estándares centrales de recursos gráficos', () => {
+  it('mantiene los uploads Orange y Violet en sus rutas y fuera de references', async () => {
+    const sources = [
+      {
+        file: 'art/source/sprites/results/male/orange/source/super-axem-orange-upload.png',
+        excluded: 'male/orange/source/super-axem-orange-upload.png',
+        oldDirectory: 'art/source/sprites/references/axem-orange',
+      },
+      {
+        file: 'art/source/sprites/results/female/violet/source/super-axem-violet-upload.png',
+        excluded: 'female/violet/source/super-axem-violet-upload.png',
+        oldDirectory: 'art/source/sprites/references/axem-violet',
+      },
+    ];
+    for (const source of sources) {
+      const metadata = await sharp(absolute(source.file)).metadata();
+      expect(metadata.format).toBe('png');
+      expect(metadata.width).toBeGreaterThan(0);
+      expect(metadata.height).toBeGreaterThan(0);
+      expect(PROCESSING_RULES.processedPolicy.excludedFiles).toContain(source.excluded);
+      await expect(fs.access(absolute(source.oldDirectory))).rejects.toThrow();
+    }
+  });
+
+
   for (const [gender, family] of Object.entries(ASSET_STANDARDS.categories.characterArtwork.families)) {
     it('mantiene el mismo lienzo entre el master y el artwork ' + gender, async () => {
       const [master, artwork, prepared, derived] = await Promise.all([

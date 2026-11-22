@@ -1206,10 +1206,27 @@ async function transformMaleActionFrame(input, {
  * original conserva su color, transparencia, tamaño y pivote.
  */
 async function addGrayRollMotionBlur(input) {
+  // La estela conserva ecos grises suaves, desplazados hacia atrás.
   const echo = await sharp(input)
     .greyscale()
     .tint({ r: 148, g: 152, b: 160 })
     .blur(2.4)
+    .png()
+    .toBuffer();
+
+  // El cuerpo también se convierte en una mancha gris: no se superpone
+  // ningún fotograma nítido ni se dejan visibles rasgos o extremidades.
+  const blurredBody = await sharp(input)
+    .greyscale()
+    .tint({ r: 158, g: 162, b: 170 })
+    .blur(6.5)
+    .png()
+    .toBuffer();
+
+  const diffuseCore = await sharp(input)
+    .greyscale()
+    .tint({ r: 126, g: 130, b: 138 })
+    .blur(9)
     .png()
     .toBuffer();
 
@@ -1227,7 +1244,8 @@ async function addGrayRollMotionBlur(input) {
       { input: echo, left: 0, top: 5, opacity: 0.12 },
       { input: echo, left: 6, top: 4, opacity: 0.2 },
       { input: echo, left: 12, top: 3, opacity: 0.28 },
-      { input, left: 18, top: 3 },
+      { input: diffuseCore, left: 18, top: 3, opacity: 0.34 },
+      { input: blurredBody, left: 18, top: 3, opacity: 0.88 },
     ])
     .extract({
       left: 18,

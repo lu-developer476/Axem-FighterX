@@ -1432,8 +1432,11 @@ async function buildGender(gender, allowedColors) {
         'axem-pink-spritesheet.png',
         'axem-pink-pose.png',
       ];
-      const canonicalPosePath = path.join(
-        RESULTS(gender),
+      // Las poses canónicas femeninas viven dentro de results/female/<color>/.
+      // Mantener el color en la ruta evita depender del antiguo archivo en la raíz.
+      const canonicalPosePath = RESULTS(
+        gender,
+        color,
         'axem-ranger-' + color + '.png',
       );
       const canonicalPose = await fs.readFile(canonicalPosePath);
@@ -1475,7 +1478,7 @@ async function buildGender(gender, allowedColors) {
       await writeFemaleSequences(color, parts[0], manifest.female.groups);
       console.log(
         'Se conserva la imagen canónica femenina: ' +
-        path.relative(ROOT, RESULTS(gender, 'axem-ranger-' + color + '.png'))
+        path.relative(ROOT, canonicalPosePath)
       );
     }
 

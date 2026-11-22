@@ -116,7 +116,7 @@ async function validateSequenceIndex(indexPath, gender) {
       ? [{ data: entry, directory: sequenceDirectory }]
       : [
           { data: entry.sequence, directory: sequenceDirectory },
-          { data: entry.supplemental, directory: path.resolve(sequenceDirectory, '../supplemental') },
+          { data: entry.supplemental, directory: path.join(sequenceDirectory, '../supplemental') },
         ].filter(({ data }) => data);
 
     for (const { data: strip, directory } of strips) {

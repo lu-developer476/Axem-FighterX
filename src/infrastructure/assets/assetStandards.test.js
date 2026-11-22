@@ -90,7 +90,7 @@ describe('Estándares centrales de recursos gráficos', () => {
           ? [{ data: group, directory: sequenceDirectory }]
           : [
               { data: group.sequence, directory: sequenceDirectory },
-              { data: group.supplemental, directory: path.resolve(sequenceDirectory, '../supplemental') },
+              { data: group.supplemental, directory: path.join(sequenceDirectory, '../supplemental') },
             ].filter(({ data }) => data);
 
         for (const { data: strip, directory } of strips) {

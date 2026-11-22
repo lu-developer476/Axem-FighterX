@@ -22,6 +22,16 @@ describe('Asignaciones independientes de J1 y J2', () => {
       .toEqual([selections.J2, selections.J1]);
   });
 
+  it('permite combates espejo y conserva la identidad de cada jugador', () => {
+    const mirrorSelections = {
+      J1: { id: 'orange', gender: 'male' },
+      J2: { id: 'orange', gender: 'male' },
+    };
+
+    expect(getCharacterSelectionsByCorner(mirrorSelections, { J1: 'right', J2: 'left' }))
+      .toEqual([mirrorSelections.J2, mirrorSelections.J1]);
+  });
+
   it('rechaza las variantes eliminadas del catálogo', () => {
     const invalid = {
       J1: { id: 'orange', gender: 'female' },

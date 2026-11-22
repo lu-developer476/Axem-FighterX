@@ -203,7 +203,8 @@ async function repairOrange() {
       JSON.stringify(sourceBounds));
   }
 
-  // No se reescala Orange: se conserva su escala original y solo se limpia el fondo.
+  // No se reescala Orange: conserva dimensiones y colores. Solo se elimina el fondo
+  // conectado al borde y se suaviza el alfa periférico con un mínimo protegido.
   const output = await sharp(Buffer.from(orangePixels), {
     raw: { width: orangeDecoded.info.width, height: orangeDecoded.info.height, channels: 4 },
   }).png({ compressionLevel: 9, effort: 10 }).toBuffer();

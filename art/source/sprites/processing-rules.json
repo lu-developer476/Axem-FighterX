@@ -24,7 +24,11 @@
       "preserveNativeDimensions": true,
       "preserveAnimationFrames": true,
       "preserveAnimationTiming": true
-    }
+    },
+    "excludedFiles": [
+      "male/orange/super-axem-ranger-orange.png",
+      "female/violet/super-axem-ranger-violet.png"
+    ]
   },
   "pixelArt": {
     "resizeKernel": "nearest",

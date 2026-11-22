@@ -55,6 +55,19 @@ describe('Eliminación automática del fondo de sprites', () => {
     expect(image.data[(0 * 11 + 0) * 4 + 3]).toBe(0);
   });
 
+  it('no usa negro dominante como fondo porque puede ser lineart', () => {
+    const image = makeImage(9, 9, [0, 0, 0]);
+    for (let y = 2; y <= 6; y++) {
+      for (let x = 2; x <= 6; x++) setPixel(image, x, y, [245, 245, 245]);
+    }
+
+    const before = image.data.slice();
+    const result = removeSpriteBackground(image);
+
+    expect(result.removedPixels).toBe(0);
+    expect(image.data).toEqual(before);
+  });
+
   it('no modifica una imagen que ya tiene transparencia en el contorno', () => {
     const image = makeImage(9, 9, [255, 255, 255]);
     for (let x = 0; x < image.width; x++) {

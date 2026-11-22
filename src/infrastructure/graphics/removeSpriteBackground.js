@@ -68,6 +68,12 @@ export function removeSpriteBackground(imageData, {
     (((dominantBucket >> 5) & 31) << 3) + 4,
     ((dominantBucket & 31) << 3) + 4,
   ];
+  const brightness = (background[0] + background[1] + background[2]) / 3;
+  if (brightness < 96) {
+    // Un negro dominante suele ser lineart del personaje o una máscara ambigua.
+    // Se prefiere fallar cerrado antes que convertir esos detalles en transparencia.
+    return { removedPixels: 0, backgroundColor: null };
+  }
   const toleranceSquared = tolerance * tolerance;
   const isBackground = (pixelIndex) => {
     const offset = pixelIndex * 4;

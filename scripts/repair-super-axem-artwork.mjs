@@ -6,7 +6,6 @@ const ORANGE_UPLOAD_COMMIT = '93a9715bcd6868b100c5a129669ecf5de1d504ef';
 const VIOLET_UPLOAD_COMMIT = '864c7e9fd8da25c0a1ab848bfdf59817f8f4c843';
 const ORANGE_PATH = 'art/source/sprites/results/male/orange/super-axem-ranger-orange.png';
 const VIOLET_PATH = 'art/source/sprites/results/female/violet/super-axem-ranger-violet.png';
-const RED_REFERENCE_PATH = 'art/source/sprites/references/axem-red/super-axem-red.png';
 
 function readAtCommit(commit, path) {
   return execFileSync('git', ['show', commit + ':' + path], {
@@ -38,83 +37,52 @@ function isBlackLinework(red, green, blue) {
 }
 
 async function repairOrange() {
-  // Se usa el último PNG naranja subido, no una copia recoloreada desde Red.
+  // Se restaura byte por byte la última subida del artwork naranja.
+  // El normalizador global ahora lo excluye para no tocar su lineart negro.
   const orangeSource = readAtCommit(ORANGE_UPLOAD_COMMIT, ORANGE_PATH);
-  const redSource = await fs.readFile(RED_REFERENCE_PATH);
-
-  const [orangeMeta, redMeta] = await Promise.all([
-    sharp(orangeSource).metadata(),
-    sharp(redSource).metadata(),
-  ]);
+  const metadata = await sharp(orangeSource).metadata();
   if (
-    orangeMeta.width !== redMeta.width ||
-    orangeMeta.height !== redMeta.height ||
-    orangeMeta.width !== 857 ||
-    orangeMeta.height !== 1171
+    metadata.format !== 'png' ||
+    metadata.width !== 857 ||
+    metadata.height !== 1171
   ) {
     throw new Error(
-      'Orange y la referencia Red no comparten el lienzo esperado: ' +
-      orangeMeta.width + '×' + orangeMeta.height + ' / ' +
-      redMeta.width + '×' + redMeta.height,
+      'La última subida Orange debe ser PNG 857×1171; se encontró ' +
+      metadata.format + ' ' + metadata.width + '×' + metadata.height,
     );
   }
 
-  const [orangeRaw, redRaw] = await Promise.all([
-    sharp(orangeSource).ensureAlpha().raw().toBuffer(),
-    sharp(redSource).ensureAlpha().raw().toBuffer(),
-  ]);
-  const outputPixels = new Uint8Array(orangeRaw);
-  let alphaDifferences = 0;
-  let restoredBlackAlpha = 0;
-  let restoredBlackColor = 0;
-  let referenceBlackPixels = 0;
-
-  for (let offset = 0; offset < outputPixels.length; offset += 4) {
-    const redAlpha = redRaw[offset + 3];
-    const oldOrangeAlpha = outputPixels[offset + 3];
-    const blackLine = redAlpha >= 16 && isBlackLinework(
-      redRaw[offset], redRaw[offset + 1], redRaw[offset + 2],
+  const { data, info } = await sharp(orangeSource).ensureAlpha()
+    .raw().toBuffer({ resolveWithObject: true });
+  let visible = 0;
+  let transparent = 0;
+  let black = 0;
+  for (let offset = 0; offset < data.length; offset += 4) {
+    if (data[offset + 3] > 0) visible += 1;
+    else transparent += 1;
+    if (
+      data[offset + 3] > 0 &&
+      Math.max(data[offset], data[offset + 1], data[offset + 2]) <= 56 &&
+      Math.max(data[offset], data[offset + 1], data[offset + 2]) -
+        Math.min(data[offset], data[offset + 1], data[offset + 2]) <= 24
+    ) black += 1;
+  }
+  if (!visible || !transparent || !black) {
+    throw new Error(
+      'Orange no conserva transparencia o lineart negro verificable: ' +
+      JSON.stringify({ visible, transparent, black, width: info.width, height: info.height }),
     );
-
-    if (oldOrangeAlpha !== redAlpha) alphaDifferences += 1;
-    if (blackLine) {
-      referenceBlackPixels += 1;
-      if (oldOrangeAlpha < 16 && redAlpha >= 16) restoredBlackAlpha += 1;
-      if (
-        outputPixels[offset] !== redRaw[offset] ||
-        outputPixels[offset + 1] !== redRaw[offset + 1] ||
-        outputPixels[offset + 2] !== redRaw[offset + 2]
-      ) restoredBlackColor += 1;
-
-      // Repone solo el lineart negro de la referencia. El resto de RGB naranja
-      // queda intacto, conservando la paleta subida por el usuario.
-      outputPixels[offset] = redRaw[offset];
-      outputPixels[offset + 1] = redRaw[offset + 1];
-      outputPixels[offset + 2] = redRaw[offset + 2];
-    }
-
-    // La máscara de silueta usa la referencia original del mismo personaje.
-    outputPixels[offset + 3] = redAlpha;
   }
 
-  const output = await sharp(Buffer.from(outputPixels), {
-    raw: { width: orangeMeta.width, height: orangeMeta.height, channels: 4 },
-  }).png({ compressionLevel: 9, effort: 10 }).toBuffer();
-
-  const verify = await sharp(output).ensureAlpha().raw().toBuffer();
-  for (let offset = 0; offset < verify.length; offset += 4) {
-    if (verify[offset + 3] !== redRaw[offset + 3]) {
-      throw new Error('La máscara alfa de Orange no coincide con la referencia.');
-    }
+  await fs.writeFile(ORANGE_PATH, orangeSource);
+  const written = await fs.readFile(ORANGE_PATH);
+  if (!written.equals(orangeSource)) {
+    throw new Error('Orange no se restauró byte por byte desde la última subida.');
   }
-
-  await fs.writeFile(ORANGE_PATH, output);
   console.log(
-    'Orange reparado: paleta del último upload preservada; ' +
-    alphaDifferences + ' píxeles de alfa reconciliados; ' +
-    restoredBlackAlpha + ' píxeles negros recuperados por alfa; ' +
-    restoredBlackColor + ' valores negros de RGB restaurados de ' +
-    referenceBlackPixels + ' píxeles negros de referencia.',
+    'Orange restaurado sin recodificar ni recolorear: ' +
+    '857×1171; ' + black + ' píxeles de lineart negro; ' +
+    transparent + ' píxeles transparentes; bytes idénticos a la última subida.',
   );
 }
 

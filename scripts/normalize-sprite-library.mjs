@@ -10,6 +10,7 @@ const rules = JSON.parse(await fs.readFile(RULES_PATH, 'utf8'));
 const RESULTS_ROOT = path.join(ROOT, 'art', 'source', 'sprites', rules.processedPolicy.directory);
 const EXTENSIONS = new Set(rules.processedPolicy.extensions);
 const BACKGROUND_OPTIONS = rules.processedPolicy.backgroundRemoval;
+const EXCLUDED_FILES = new Set(rules.processedPolicy.excludedFiles ?? []);
 
 async function listImages(directory) {
   const entries = await fs.readdir(directory, { withFileTypes: true });
@@ -18,6 +19,11 @@ async function listImages(directory) {
     const absolute = path.join(directory, entry.name);
     if (entry.isDirectory()) files.push(...await listImages(absolute));
     else if (entry.isFile() && EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+      const relative = path.relative(RESULTS_ROOT, absolute).split(path.sep).join('/');
+      if (EXCLUDED_FILES.has(relative)) {
+        console.log(path.relative(ROOT, absolute) + ': artwork maestro preservado; sin keying automático.');
+        continue;
+      }
       files.push(absolute);
     }
   }

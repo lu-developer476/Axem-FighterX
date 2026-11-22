@@ -43,7 +43,7 @@ export function collectImageFiles(modules, keyPrefix) {
   const grouped = new Map();
   for (const [path, url] of Object.entries(modules)) {
     const parts = fileParts(path);
-    const normalizedPath = path.replaceAll('\\\\', '/');
+    const normalizedPath = path.replaceAll('\\', '/');
     const rootMarker = keyPrefix === 'stage-tileset-' ? '/tilesets/' : '/maps/';
     const rootIndex = normalizedPath.lastIndexOf(rootMarker);
     const relativePath = rootIndex >= 0

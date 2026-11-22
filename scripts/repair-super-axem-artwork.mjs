@@ -58,6 +58,42 @@ async function repairOrange() {
     .raw()
     .toBuffer({ resolveWithObject: true });
   const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
+  const borderHistogram = new Map();
+  const addBorderPixel = (x, y) => {
+    const offset = (y * info.width + x) * 4;
+    const key = [pixels[offset] >> 4, pixels[offset + 1] >> 4, pixels[offset + 2] >> 4].join(',');
+    const entry = borderHistogram.get(key) ?? { count: 0, red: 0, green: 0, blue: 0 };
+    entry.count += 1;
+    entry.red += pixels[offset];
+    entry.green += pixels[offset + 1];
+    entry.blue += pixels[offset + 2];
+    borderHistogram.set(key, entry);
+  };
+  for (let x = 0; x < info.width; x += 1) {
+    addBorderPixel(x, 0);
+    addBorderPixel(x, info.height - 1);
+  }
+  for (let y = 1; y < info.height - 1; y += 1) {
+    addBorderPixel(0, y);
+    addBorderPixel(info.width - 1, y);
+  }
+  const borderSummary = [...borderHistogram.values()]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8)
+    .map((entry) => ({
+      count: entry.count,
+      rgb: [
+        Math.round(entry.red / entry.count),
+        Math.round(entry.green / entry.count),
+        Math.round(entry.blue / entry.count),
+      ],
+    }));
+  console.log('Orange upload border diagnostic: ' + JSON.stringify({
+    format: metadata.format,
+    hasAlpha: metadata.hasAlpha,
+    borderPixels: (info.width + info.height - 2) * 2,
+    topColors: borderSummary,
+  }));
   const detected = detectCheckerboardColors(pixels, info.width, info.height);
   const keyed = removeCheckerboardBackground(pixels, info.width, info.height, detected.colors);
 

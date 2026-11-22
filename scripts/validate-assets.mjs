@@ -111,12 +111,16 @@ async function validateSequenceIndex(indexPath, gender) {
   }
 
   for (const entry of entries) {
+    const sequenceDirectory = path.dirname(indexPath);
     const strips = gender === 'male'
-      ? [entry]
-      : [entry.sequence, entry.supplemental].filter(Boolean);
+      ? [{ data: entry, directory: sequenceDirectory }]
+      : [
+          { data: entry.sequence, directory: sequenceDirectory },
+          { data: entry.supplemental, directory: path.resolve(sequenceDirectory, '../supplemental') },
+        ].filter(({ data }) => data);
 
-    for (const strip of strips) {
-      const file = path.join(path.dirname(indexPath), strip.file).split(path.sep).join('/');
+    for (const { data: strip, directory } of strips) {
+      const file = path.join(directory, strip.file).split(path.sep).join('/');
       await validatePng(
         file,
         {

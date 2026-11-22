@@ -85,9 +85,16 @@ describe('Estándares centrales de recursos gráficos', () => {
       const groups = JSON.parse(await fs.readFile(absolute(indexPath), 'utf8'));
       expect(Array.isArray(groups)).toBe(true);
       for (const group of groups) {
-        const strips = indexPath.includes('/male/') ? [group] : [group.sequence, group.supplemental].filter(Boolean);
-        for (const strip of strips) {
-          const imagePath = path.join(path.dirname(indexPath), strip.file);
+        const sequenceDirectory = path.dirname(indexPath);
+        const strips = indexPath.includes('/male/')
+          ? [{ data: group, directory: sequenceDirectory }]
+          : [
+              { data: group.sequence, directory: sequenceDirectory },
+              { data: group.supplemental, directory: path.resolve(sequenceDirectory, '../supplemental') },
+            ].filter(({ data }) => data);
+
+        for (const { data: strip, directory } of strips) {
+          const imagePath = path.join(directory, strip.file);
           const metadata = await sharp(absolute(imagePath)).metadata();
           expect(metadata.width).toBe(strip.cellWidth * strip.frameCount);
           expect(metadata.height).toBe(strip.cellHeight);

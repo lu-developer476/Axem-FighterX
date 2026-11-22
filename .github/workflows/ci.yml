@@ -35,6 +35,10 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Repair Super Axem artwork bounds and black details
+        if: github.ref == 'refs/heads/main' && github.event.head_commit.message == 'Repair Super Axem artwork bounds and black details'
+        run: node scripts/repair-super-axem-artwork.mjs
+
       - name: Confirmar sprites generados en main
         if: github.ref == 'refs/heads/main'
         run: |

@@ -459,16 +459,16 @@ Las reglas dimensionales viven en `asset-standards.json`. Los generadores, el ju
 
 | Categoría | Estándar | Regla |
 |---|---:|---|
-| Artwork Super Axem masculino | 857 × 1171 px | Orange usa el lienzo de su master Axem Red |
+| Artwork Super Axem masculino | 857 × 1171 px | Red derivado iguala la ocupación visual del upload original Orange |
 | Artwork Super Axem femenino | 745 × 1372 px | Violet usa el lienzo de su master Axem Pink |
 | Textura base de combate | 53 × 83 px | Lienzo fijo y transparente |
 | Retrato lateral de menú | 104 × 150 px | Lienzo fijo y transparente |
 | GIF de acción | 150 × 100 px por cuadro | Se conserva la cantidad de cuadros y sus tiempos |
 | Celda de tiras PNG derivadas de GIF | 86 × 57 px | Pivote de pies declarado en la configuración |
 
-### Artwork Super Axem: mismo lienzo, escala original
+### Artwork Super Axem: Orange fija la escala visual
 
-El master masculino `references/axem-red/super-axem-red.png` y el resultado `results/male/orange/super-axem-ranger-orange.png` usan exactamente **857 × 1171 px**. Orange se escala proporcionalmente con vecino más cercano para ocupar la misma caja visible que Red dentro del lienzo. Se centra horizontalmente y se alinea por la línea de apoyo de los pies. No se deforma ni se recorta el dibujo; su paleta original se conserva.
+El master masculino `references/axem-red/super-axem-red.png` y el resultado `results/male/orange/super-axem-ranger-orange.png` usan exactamente **857 × 1171 px**. Orange conserva la escala y la ocupación de su upload original; no se reduce para coincidir con el master Red. El pipeline genera una copia derivada de Red en `public/generated/super-axem-source-male.png`, escalada proporcionalmente con vecino más cercano para ocupar la misma caja visible que Orange. El derivado se centra horizontalmente y se alinea por la línea de apoyo de los pies. No se deforma ni se recorta el dibujo, y la referencia original Red permanece intacta.
 
 La misma regla incluye a la Ranger femenina Violeta: el master Pink y el resultado Violet usan **745 × 1372 px**. Cada familia conserva la proporción de su referencia; no se fuerza una relación de aspecto común entre el artwork masculino y el femenino.
 
@@ -476,7 +476,7 @@ Los masters de `references/` son inmutables. Los uploads originales de Orange y 
 
 ### Qué se normaliza y qué se conserva
 
-- Los artworks de personaje conservan el lienzo de su master. Orange ajusta su escala visible a la de Red mediante nearest-neighbor, con centrado horizontal y pies alineados; Violet mantiene la normalización de su familia. Nunca se aplica deformación ni recorte automático.
+- Los artworks de personaje conservan el lienzo de su master. Orange mantiene la escala de su upload original; el derivado Red ajusta proporcionalmente su ocupación visible a Orange mediante nearest-neighbor, con centrado horizontal y pies alineados. Violet mantiene la normalización de su familia. Nunca se aplica deformación ni recorte automático.
 - Las texturas de combate, retratos y GIF se generan con sus medidas de categoría.
 - Los atlas mantienen sus dimensiones y su distribución irregular. Las secuencias usan las celdas declaradas en sus respectivos `index.json`; no se inventa una cuadrícula global.
 - Armas, objetos, efectos, recursos suplementarios, fondos y tilesets conservan sus dimensiones nativas. Los fondos pueden tener proporciones distintas según la escena.

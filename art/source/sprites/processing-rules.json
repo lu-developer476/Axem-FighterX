@@ -25,6 +25,20 @@
       "preserveAnimationFrames": true,
       "preserveAnimationTiming": true
     },
+    "artworkEdgeTreatment": {
+      "male/orange/super-axem-ranger-orange.png": {
+        "edgeAlphaFloor": 216,
+        "fringeLimit": 44,
+        "coverageStart": 7,
+        "coverageRange": 32,
+        "preserveInteriorPixels": true,
+        "preserveRGB": true,
+        "resampling": false,
+        "blur": false,
+        "sharpen": false,
+        "description": "Quita solo el fondo oscuro conectado al borde. Suaviza el alfa periférico sin borrar píxeles del personaje ni alterar sus colores."
+      }
+    },
     "excludedFiles": [
       "male/orange/super-axem-ranger-orange.png",
       "male/orange/source/super-axem-orange-upload.png",

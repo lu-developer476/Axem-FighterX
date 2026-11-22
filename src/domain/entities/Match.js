@@ -20,6 +20,19 @@ export class Match {
    */
   constructor({ fighters, arena = ARENA, rng = Math.random, hazards = null }) {
     this.fighters = fighters;
+    const assignedCombatantIds = new Set();
+    this.fighters.forEach((fighter, index) => {
+      if (typeof fighter.combatantId !== 'string' || !fighter.combatantId || assignedCombatantIds.has(fighter.combatantId)) {
+        let suffix = 1;
+        let candidate = 'combatant-' + (index + 1);
+        while (assignedCombatantIds.has(candidate)) {
+          suffix += 1;
+          candidate = 'combatant-' + (index + 1) + '-' + suffix;
+        }
+        fighter.combatantId = candidate;
+      }
+      assignedCombatantIds.add(fighter.combatantId);
+    });
     this.arena = arena;
     this.rng = rng;
     this.hazards = hazards?.type === 'lava-vents' ? hazards : null;

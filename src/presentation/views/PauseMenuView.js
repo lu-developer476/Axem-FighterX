@@ -3,10 +3,12 @@ import { contentWidth, insetSize, mapPanelY, UI_SPACING } from './uiLayout.js';
 
 /** Menú superpuesto con paneles y botones de ancho coherente. */
 export class PauseMenuView {
-  constructor(scene, { onResume, onReturnToMenu }) {
+  constructor(scene, { onResume, onReturnToMenu, controls = null, controlsTitle = 'CONTROLES' }) {
     this.scene = scene;
     this.onResume = onResume;
     this.onReturnToMenu = onReturnToMenu;
+    this.minigameControls = Array.isArray(controls) ? [...controls] : null;
+    this.controlsTitle = controlsTitle;
     this.buttons = [];
     this.selectedIndex = 0;
     this.showingControls = false;
@@ -21,13 +23,28 @@ export class PauseMenuView {
     this.showingControls = false;
     this.#beginPanel('PAUSA', 170);
     this.#addButton('CONTINUAR', 116, this.onResume);
-    this.#addButton('TUTORIAL', 151, () => this.showControls());
+    this.#addButton(this.minigameControls ? 'CONTROLES' : 'TUTORIAL', 151, () => this.showControls());
     this.#addButton('VOLVER AL MENÚ', 186, this.onReturnToMenu);
     this.container.setVisible(true);
   }
 
   showControls(player = null) {
     this.showingControls = true;
+    if (this.minigameControls) {
+      const compact = this.minigameControls.length > 5;
+      this.#beginPanel(this.controlsTitle, 238);
+      const firstY = compact ? 103 : 110;
+      const lineGap = compact ? 15 : 22;
+      this.minigameControls.forEach((line, index) => {
+        this.#addText(line, firstY + lineGap * index, {
+          fontSize: compact ? '7px' : '8px',
+          color: index % 2 === 0 ? '#e7def5' : '#ffc17e',
+        });
+      });
+      this.#addButton('VOLVER A PAUSA', 242, () => this.showMenu(), { width: 178 });
+      this.container.setVisible(true);
+      return;
+    }
     this.#beginPanel(player ? 'TUTORIAL · ' + player : 'TUTORIAL', 238);
     if (!player) {
       this.#addText('SELECCIONÁ EL JUGADOR PARA CONSULTAR SUS CONTROLES', 108, {

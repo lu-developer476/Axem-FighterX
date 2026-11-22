@@ -15,7 +15,7 @@
     "requireAlpha": true,
     "backgroundRemoval": {
       "mode": "connected-border-color",
-      "tolerance": 28,
+      "tolerance": 24,
       "minBorderCoverage": 0.22,
       "preserveEnclosedPixels": true,
       "failWhenOpaqueAndUnknown": true

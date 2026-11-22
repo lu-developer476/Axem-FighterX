@@ -6,6 +6,8 @@ import landRunGifUrl from '../../../art/source/sprites/results/male/orange/run.g
 import landDashGifUrl from '../../../art/source/sprites/results/male/orange/dash.gif?url';
 import landJumpGifUrl from '../../../art/source/sprites/results/male/orange/jump.gif?url';
 import landRollGifUrl from '../../../art/source/sprites/results/male/orange/roll.gif?url';
+import redRaceRunGifUrl from '../../../art/source/sprites/references/axem-red/axem-ranger-run.gif?url';
+import { PauseMenuView } from '../views/PauseMenuView.js';
 import { STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { createProceduralBackground } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
@@ -166,12 +168,18 @@ export class LandRaceScene extends Phaser.Scene {
       escape: Phaser.Input.Keyboard.KeyCodes.ESC,
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
       restart: Phaser.Input.Keyboard.KeyCodes.R,
+      pause: Phaser.Input.Keyboard.KeyCodes.P,
+    });
+    this.pauseNavigationKeys = this.input.keyboard.addKeys({
+      up: Phaser.Input.Keyboard.KeyCodes.UP,
+      down: Phaser.Input.Keyboard.KeyCodes.DOWN,
+      enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
     });
 
     this.hudGraphics = this.add.graphics().setDepth(80);
     this.title = this.#text('CARRERA TERRESTRE', GAME_WIDTH / 2, 20, '#ffe2aa', 11);
     this.playerName = this.#text('J1 · AXEM NARANJA', 87, 34, '#ffc58e', 6);
-    this.rivalName = this.#text('RIVAL · AXEM NARANJA', 393, 34, '#ffc58e', 6);
+    this.rivalName = this.#text('RIVAL · AXEM RED', 393, 34, '#ffc58e', 6);
     this.status = this.#text('3', GAME_WIDTH / 2, 120, '#fff0c9', 24);
     this.staminaLabel = this.#text('RESISTENCIA', GAME_WIDTH / 2, 70, '#b8e7f4', 5);
     this.controls = this.#text(
@@ -182,11 +190,45 @@ export class LandRaceScene extends Phaser.Scene {
       5,
     );
     this.#drawHud();
+    this.paused = false;
+    this.pauseMenu = new PauseMenuView(this, {
+      onResume: () => this.#resume(),
+      onReturnToMenu: () => this.scene.start('MenuScene'),
+      controlsTitle: 'CONTROLES · CARRERA TERRESTRE',
+      controls: [
+        'D / → · CORRER',
+        'A / ← · FRENAR',
+        'W / ↑ · SALTAR',
+        'S / ↓ · RODAR',
+        'AL FINAL · ENTER MENÚ · R REPETIR',
+        'ESC · VOLVER AL MENÚ',
+      ],
+    });
   }
 
   update(_time, delta) {
+    if (this.paused) {
+      if (Phaser.Input.Keyboard.JustDown(this.keys.pause)) {
+        this.#resume();
+        return;
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.keys.escape)) {
+        if (this.pauseMenu.showingControls) this.pauseMenu.showMenu();
+        else this.#resume();
+        return;
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.pauseNavigationKeys.up)) this.pauseMenu.moveSelection(-1);
+      if (Phaser.Input.Keyboard.JustDown(this.pauseNavigationKeys.down)) this.pauseMenu.moveSelection(1);
+      if (Phaser.Input.Keyboard.JustDown(this.pauseNavigationKeys.enter)) this.pauseMenu.activateSelection();
+      return;
+    }
+
     if (Phaser.Input.Keyboard.JustDown(this.keys.escape)) {
       this.scene.start('MenuScene');
+      return;
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.pause)) {
+      this.#openPause();
       return;
     }
 
@@ -229,6 +271,22 @@ export class LandRaceScene extends Phaser.Scene {
     if (this.player.distance >= this.finishDistance || this.rival.distance >= this.finishDistance) {
       this.#finish(this.player.distance >= this.rival.distance);
     }
+  }
+
+  #openPause() {
+    if (this.paused) return;
+    this.paused = true;
+    this.tweens.pauseAll();
+    this.anims.pauseAll();
+    this.pauseMenu.showMenu();
+  }
+
+  #resume() {
+    if (!this.paused) return;
+    this.paused = false;
+    this.pauseMenu.hide();
+    this.tweens.resumeAll();
+    this.anims.resumeAll();
   }
 
   #drawStadium() {
@@ -280,12 +338,31 @@ export class LandRaceScene extends Phaser.Scene {
     const shadow = this.add.ellipse(TRACK_START_X, laneY + RUNNER_FOOT_OFFSET, 34, 6, 0x241b2a, 0.52)
       .setDepth(31);
 
+    const animationSources = isPlayer
+      ? {
+        idle: landIdleGifUrl,
+        walk: landPoseGifUrl,
+        run: landRunGifUrl,
+        dash: landDashGifUrl,
+        jump: landJumpGifUrl,
+        roll: landRollGifUrl,
+      }
+      : {
+        idle: redRaceRunGifUrl,
+        walk: redRaceRunGifUrl,
+        run: redRaceRunGifUrl,
+        dash: redRaceRunGifUrl,
+        jump: redRaceRunGifUrl,
+        roll: redRaceRunGifUrl,
+      };
+    const racerName = isPlayer ? 'Axem Naranja' : 'Axem Red';
     const racerGif = this.add.dom(TRACK_START_X, laneY - 28).createFromHTML(
-      '<img src="' + landIdleGifUrl + '" alt="Axem Naranja" style="width:48px;height:68px;object-fit:contain;image-rendering:pixelated;pointer-events:none;">',
+      '<img src="' + animationSources.idle + '" alt="' + racerName + '" style="width:48px;height:68px;object-fit:contain;image-rendering:pixelated;pointer-events:none;">',
     ).setDepth(44);
     const racer = {
       rangerId,
       gender: genderForRanger(rangerId),
+      animationSources,
       gif: racerGif,
       laneY,
       isPlayer,
@@ -343,16 +420,8 @@ export class LandRaceScene extends Phaser.Scene {
 
   #setMode(racer, mode) {
     if (racer.mode === mode) return;
-    const gifByMode = {
-      idle: landIdleGifUrl,
-      walk: landPoseGifUrl,
-      run: landRunGifUrl,
-      dash: landDashGifUrl,
-      jump: landJumpGifUrl,
-      roll: landRollGifUrl,
-    };
     const image = racer.gif?.node?.querySelector('img');
-    if (image && gifByMode[mode]) image.src = gifByMode[mode];
+    if (image && racer.animationSources?.[mode]) image.src = racer.animationSources[mode];
     racer.sprite.stop();
     racer.sprite.setVisible(false);
     racer.mode = mode;
@@ -478,7 +547,7 @@ export class LandRaceScene extends Phaser.Scene {
 
   #finish(playerWon) {
     this.finished = true;
-    this.status.setText(playerWon ? '¡J1 GANA LA CARRERA!' : '¡GANA AXEM NARANJA!')
+    this.status.setText(playerWon ? '¡J1 GANA LA CARRERA!' : '¡GANA AXEM RED!')
       .setFontSize(11)
       .setColor('#fff0c9');
     this.controls.setText('R · VOLVER A CORRER     ENTER / ESC · MENÚ').setColor('#fff0c9');

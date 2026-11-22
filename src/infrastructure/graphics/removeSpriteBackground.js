@@ -8,7 +8,7 @@
  * @returns {{ removedPixels: number, backgroundColor: [number, number, number] | null }}
  */
 export function removeSpriteBackground(imageData, {
-  tolerance = 44,
+  tolerance = 24,
   minBorderCoverage = 0.08,
 } = {}) {
   const { data, width, height } = imageData;

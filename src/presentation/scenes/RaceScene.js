@@ -8,6 +8,7 @@ import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { AVAILABLE_RANGER_VARIANTS, getCounterpartSelection } from '../../domain/rangers/rangerVariants.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
+import { PauseMenuView } from '../views/PauseMenuView.js';
 import {
   MOTORCYCLE_LANE_COUNT,
   MOTORCYCLE_LANE_BASELINES,
@@ -124,6 +125,12 @@ export class RaceScene extends Phaser.Scene {
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
       restart: Phaser.Input.Keyboard.KeyCodes.R,
       jump: Phaser.Input.Keyboard.KeyCodes.J,
+      pause: Phaser.Input.Keyboard.KeyCodes.P,
+    });
+    this.pauseNavigationKeys = this.input.keyboard.addKeys({
+      up: Phaser.Input.Keyboard.KeyCodes.UP,
+      down: Phaser.Input.Keyboard.KeyCodes.DOWN,
+      enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
     });
 
     this.add.dom(GAME_WIDTH - 38, 66).createFromHTML(
@@ -151,14 +158,49 @@ export class RaceScene extends Phaser.Scene {
       GAME_WIDTH / 2, GAME_HEIGHT - 7, '#f0dfc2', 6);
     this.distanceLabel = this.#text('J1 · 0 M', 63, 18, '#e7dcff', 5);
     this.nitroLabel = this.#text('NITRO', GAME_WIDTH - 48, 8, '#a8e8ff', 4);
+    this.paused = false;
+    this.pauseMenu = new PauseMenuView(this, {
+      onResume: () => this.#resume(),
+      onReturnToMenu: () => this.scene.start('MenuScene'),
+      controlsTitle: 'CONTROLES · CARRERA AXEM',
+      controls: [
+        '↑ / W · SUBIR DE CARRIL',
+        '↓ / S · BAJAR DE CARRIL',
+        '→ / D · ACELERAR',
+        '← / A · FRENAR',
+        'J · SALTAR · ESPACIO · NITRO',
+        'AL FINAL · ENTER MENÚ · R REPETIR',
+        'ESC · VOLVER AL MENÚ',
+      ],
+    });
 
     this.#startRace();
   }
 
 
   update(time, delta) {
+    if (this.paused) {
+      if (Phaser.Input.Keyboard.JustDown(this.keys.pause)) {
+        this.#resume();
+        return;
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.keys.escape)) {
+        if (this.pauseMenu.showingControls) this.pauseMenu.showMenu();
+        else this.#resume();
+        return;
+      }
+      if (Phaser.Input.Keyboard.JustDown(this.pauseNavigationKeys.up)) this.pauseMenu.moveSelection(-1);
+      if (Phaser.Input.Keyboard.JustDown(this.pauseNavigationKeys.down)) this.pauseMenu.moveSelection(1);
+      if (Phaser.Input.Keyboard.JustDown(this.pauseNavigationKeys.enter)) this.pauseMenu.activateSelection();
+      return;
+    }
+
     if (Phaser.Input.Keyboard.JustDown(this.keys.escape)) {
       this.scene.start('MenuScene');
+      return;
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.pause)) {
+      this.#openPause();
       return;
     }
     if (this.selectingCharacter) {
@@ -232,6 +274,22 @@ export class RaceScene extends Phaser.Scene {
     }
   }
 
+  #openPause() {
+    if (this.paused) return;
+    this.paused = true;
+    this.tweens.pauseAll();
+    this.anims.pauseAll();
+    this.pauseMenu.showMenu();
+  }
+
+  #resume() {
+    if (!this.paused) return;
+    this.paused = false;
+    this.pauseMenu.hide();
+    this.tweens.resumeAll();
+    this.anims.resumeAll();
+  }
+
   #refreshSelectionPreview() {
     const { id, gender } = this.selectedVariant;
     const isViolet = id === RANGER_IDS.VIOLET;
@@ -257,7 +315,7 @@ export class RaceScene extends Phaser.Scene {
     const orangeSelection = { id: RANGER_IDS.ORANGE, gender: 'male' };
     this.player = this.#createRacer(orangeSelection, 'J1 · AXEM NARANJA', 1, true);
     this.opponents = [
-      this.#createRacer(orangeSelection, 'IA · AXEM ROJO', 2, false),
+      this.#createRacer(orangeSelection, 'AXEM RED', 2, false),
     ];
     this.racers = [this.player, ...this.opponents];
     this.obstacleSprites = this.obstacles.map((obstacle) =>
@@ -468,7 +526,7 @@ export class RaceScene extends Phaser.Scene {
 
   #finish(playerWon) {
     this.finished = true;
-    this.status.setText(playerWon ? '¡J1 GANA LA CARRERA!' : '¡GANA LA IA!').setFontSize(11);
+    this.status.setText(playerWon ? '¡J1 GANA LA CARRERA!' : '¡GANA AXEM RED!').setFontSize(11);
     this.instructions.setText('R · REINICIAR     ENTER / ESC · MENÚ');
     this.cameras.main.flash(180, 255, 245, 218);
   }

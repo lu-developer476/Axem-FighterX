@@ -55,6 +55,22 @@ describe('Eliminación automática del fondo de sprites', () => {
     expect(image.data[(0 * 11 + 0) * 4 + 3]).toBe(0);
   });
 
+  it('conserva la silueta cuando un tono cercano al fondo conecta con el borde', () => {
+    const image = makeImage(11, 11, [0, 128, 128]);
+    const characterColor = [40, 128, 128];
+    for (let y = 3; y <= 7; y += 1) {
+      for (let x = 3; x <= 7; x += 1) setPixel(image, x, y, characterColor);
+    }
+    // Simula un contorno roto: el color del personaje toca el fondo exterior.
+    setPixel(image, 2, 5, characterColor);
+    setPixel(image, 1, 5, characterColor);
+
+    removeSpriteBackground(image);
+
+    expect(image.data[(5 * 11 + 5) * 4 + 3]).toBe(255);
+    expect(image.data[(0 * 11 + 0) * 4 + 3]).toBe(0);
+  });
+
   it('no usa negro dominante como fondo porque puede ser lineart', () => {
     const image = makeImage(9, 9, [0, 0, 0]);
     for (let y = 2; y <= 6; y++) {

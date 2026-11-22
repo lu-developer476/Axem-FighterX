@@ -562,8 +562,8 @@ async function recolorAndKey(input, gender, targetHue, toleranceOverride) {
     width: info.width,
     height: info.height,
   }, {
-    tolerance: toleranceOverride ?? (gender === 'male' ? 42 : 48),
-    minBorderCoverage: 0.025,
+    tolerance: toleranceOverride ?? 24,
+    minBorderCoverage: 0.08,
   });
 
   for (let offset = 0; offset < pixels.length; offset += 4) {
@@ -1470,7 +1470,7 @@ async function keyFemaleReferenceBackground(inputPath) {
     data: pixels,
     width: info.width,
     height: info.height,
-  }, { tolerance: 48, minBorderCoverage: 0.025 });
+  }, { tolerance: 24, minBorderCoverage: 0.08 });
   return sharp(Buffer.from(pixels), {
     raw: { width: info.width, height: info.height, channels: 4 },
   }).png().toBuffer();

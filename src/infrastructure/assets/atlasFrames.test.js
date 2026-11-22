@@ -136,20 +136,6 @@ describe('secuencias y recursos de la hoja femenina (Axem Pink)', () => {
 });
 
 describe('resultados de las variantes canónicas', () => {
-  it('exporta los recursos suplementarios masculinos de Axem Naranja', async () => {
-    const groups = atlasFrames.male.supplementalGroups;
-    const index = JSON.parse(await readFile(resultsPath('male', 'orange', 'supplemental', 'index.json'), 'utf8'));
-    expect(index).toHaveLength(groups.length);
-    for (const entry of index) {
-      const group = groups.find((candidate) => candidate.id === entry.id);
-      expect(entry.assetCount).toBe(group.assets.length);
-      const metadata = await sharp(resultsPath('male', 'orange', 'supplemental', entry.file)).metadata();
-      expect(metadata.width).toBe(entry.cellWidth * entry.assetCount);
-      expect(metadata.height).toBe(entry.cellHeight);
-      expect(metadata.hasAlpha).toBe(true);
-    }
-  });
-
   it('genera las tiras de secuencias masculinas de Axem Naranja', async () => {
     const index = JSON.parse(await readFile(resultsPath('male', 'orange', 'sequences', 'index.json'), 'utf8'));
     expect(index).toHaveLength(atlasFrames.male.groups.length);

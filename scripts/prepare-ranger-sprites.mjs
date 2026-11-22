@@ -1594,7 +1594,7 @@ async function buildGender(gender, allowedColors) {
       await writeResult(gender, color, 'double-axe.png', parts[3]);
       const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
       const sequenceIndex = await writeMaleSequences(color, parts[0], manifest.male.groups);
-      await writeMaleSupplemental(color, parts[0], manifest.male.supplementalGroups || []);
+      // La carpeta male/<color>/supplemental ya no se exporta (se eliminó del repositorio).
       await writeMaleAnimation(run.frames, color, 'run', run.delay, run.loop);
       await writeMaleAnimation(bike.frames, color, 'bike', bike.delay, bike.loop);
       await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop);

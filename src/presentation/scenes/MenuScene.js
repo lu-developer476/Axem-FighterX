@@ -551,17 +551,18 @@ export class MenuScene extends Phaser.Scene {
 
   #showPlayModes() {
     this.page = 'play';
-    this.#beginPage('JUGAR', 330, 168);
+    this.#beginPage('JUGAR', 330, 124);
 
-    this.#addButton('COMBATE', 157, () => this.#showVersusModes(), {
+    // Las tres opciones comparten una columna compacta y una separación uniforme.
+    this.#addButton('COMBATE', 143, () => this.#showVersusModes(), {
       width: 246,
       fontSize: '8px',
     });
-    this.#addButton('CARRERA', 181, () => this.#showRaceModes(), {
+    this.#addButton('CARRERA', 169, () => this.#showRaceModes(), {
       width: 246,
       fontSize: '8px',
     });
-    this.#addButton('VOLVER', 226, () => this.#showHome(), {
+    this.#addButton('VOLVER', 195, () => this.#showHome(), {
       width: 150,
       fontSize: '8px',
     });
@@ -608,7 +609,7 @@ export class MenuScene extends Phaser.Scene {
 
   #showCombatModes() {
     this.page = 'combat';
-    this.#beginPage('MODO', 330, 154);
+    this.#beginPage('MODO', 330, 124);
     const chooseMode = (modeId) => {
       this.matchSetup.combatMode = modeId;
       this.matchSetup.characters = [];
@@ -616,19 +617,21 @@ export class MenuScene extends Phaser.Scene {
       this.#showCharacterModal();
     };
 
-    // Los tres modos principales forman una columna continua, sin huecos entre cajas.
+    // Los tres modos ocupan una columna uniforme dentro del panel MODO.
+    // RONDAS conserva el mismo botón y selección que los demás; abre su submodal.
     const buttonStyle = {
       width: 230,
       fontSize: '8px',
       height: 16,
       shadowOffset: 0,
     };
-    this.#addButton('DEFINITIVO', 156, () => chooseMode('definitive'), buttonStyle);
-    this.#addButton('RONDAS', 173, () => this.#showRoundOptions(), buttonStyle);
-    this.#addButton('ENTRENAMIENTO', 189, () => chooseMode('training'), buttonStyle);
-    this.#addButton('VOLVER', 228, () => this.#showVersusModes(), {
+    this.#addButton('DEFINITIVO', 143, () => chooseMode('definitive'), buttonStyle);
+    this.#addButton('RONDAS', 169, () => this.#showRoundOptions(), buttonStyle);
+    this.#addButton('ENTRENAMIENTO', 195, () => chooseMode('training'), buttonStyle);
+    this.#addButton('VOLVER', 239, () => this.#showVersusModes(), {
       width: 150,
       fontSize: '7px',
+      shadowOffset: 0,
     });
   }
 

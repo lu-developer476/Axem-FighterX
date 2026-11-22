@@ -88,7 +88,8 @@ await tap('Escape'); // Escenario → segundo personaje
 await tap('Escape'); // Segundo personaje → primero
 await tap('Escape'); // Primer personaje → formato
 await tap('Escape'); // Formato → tipo de enfrentamiento
-await tap('Escape'); // Tipo de enfrentamiento → inicio
+await tap('Escape'); // Tipo de enfrentamiento → JUGAR
+await tap('Escape'); // JUGAR → inicio
 
 // Recorre los cuatro escenarios con diferentes formatos de combate.
 const stageShots = [

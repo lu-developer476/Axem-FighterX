@@ -476,7 +476,7 @@ Los masters de `references/` son inmutables. Los uploads originales de Orange y 
 
 ### Qué se normaliza y qué se conserva
 
-- Los artworks de personaje conservan el lienzo de su master. Orange mantiene la escala de su upload original; el derivado Red se escala proporcionalmente para caber en su caja visible mediante nearest-neighbor, con centrado horizontal y pies alineados. Violet mantiene la normalización de su familia. Nunca se aplica deformación ni recorte automático.
+- Los artworks de personaje conservan el lienzo de su master. Orange mantiene la escala de su upload original; el derivado Red se escala proporcionalmente para igualar la altura visible de Orange mediante nearest-neighbor, con centrado horizontal y pies alineados. Violet mantiene la normalización de su familia. Nunca se aplica deformación ni recorte automático.
 - Las texturas de combate, retratos y GIF se generan con sus medidas de categoría.
 - Los atlas mantienen sus dimensiones y su distribución irregular. Las secuencias usan las celdas declaradas en sus respectivos `index.json`; no se inventa una cuadrícula global.
 - Armas, objetos, efectos, recursos suplementarios, fondos y tilesets conservan sus dimensiones nativas. Los fondos pueden tener proporciones distintas según la escena.

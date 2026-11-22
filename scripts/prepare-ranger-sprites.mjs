@@ -16,10 +16,8 @@ const PALETTE_SOURCES = Object.freeze({
   male: [[0, 25], [335, 360]],
   female: [[300, 360]],
 });
-// Estas salidas femeninas contienen correcciones manuales de paleta validadas.
-// Se preservan desde el repositorio para que pretest/prebuild no las regenere
-// desde Axem Pink y sobrescriba los ajustes de Orange y Violet.
-const FEMALE_PRESERVED_PALETTE_ASSETS = new Set(['spritesheet.png']);
+// La hoja femenina se reconstruye desde la referencia Pink en cada build.
+// Así el resultado mejorado queda versionable y no depende de un PNG congelado.
 const BASE_SIZE = Object.freeze({ width: ASSET_STANDARDS.categories.combatTexture.width, height: ASSET_STANDARDS.categories.combatTexture.height });
 const ACTION_GIF_SIZE = Object.freeze({ width: ASSET_STANDARDS.categories.actionGif.width, height: ASSET_STANDARDS.categories.actionGif.height });
 const SEQUENCE_GIF_SCALE = 1.75;
@@ -1452,6 +1450,67 @@ async function buildMenuSuperPoses() {
   }
 }
 
+/**
+ * Iguala la escala visible de cada dibujo femenino con la referencia Red.
+ * Se escalan únicamente las regiones de personaje detectadas en el atlas,
+ * usando nearest-neighbor y manteniendo el lienzo original y el centro de cada
+ * región. Los píxeles fuera de los personajes permanecen transparentes.
+ */
+/**
+ * Elimina únicamente el fondo conectado al borde de la referencia Pink,
+ * conservando intacta su paleta original.
+ */
+async function keyFemaleReferenceBackground(inputPath) {
+  const { data, info } = await sharp(inputPath)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
+  removeSpriteBackground({
+    data: pixels,
+    width: info.width,
+    height: info.height,
+  }, { tolerance: 48, minBorderCoverage: 0.025 });
+  return sharp(Buffer.from(pixels), {
+    raw: { width: info.width, height: info.height, channels: 4 },
+  }).png().toBuffer();
+}
+
+async function normalizeFemaleSpriteScale(imageBuffer) {
+  const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
+  const femaleRegions = manifest.female.regions.filter((region) => region.kind === 'character');
+  const maleRegions = manifest.male.groups.flatMap((group) => group.frames);
+  const median = (values) => {
+    const sorted = [...values].sort((a, b) => a - b);
+    return sorted[Math.floor(sorted.length / 2)];
+  };
+  const targetHeight = median(maleRegions.map((region) => region.h));
+  const sourceHeight = median(femaleRegions.map((region) => region.h));
+  if (!targetHeight || !sourceHeight || !femaleRegions.length) {
+    throw new Error('No se pudo calcular la escala de personajes del atlas.');
+  }
+  const scale = targetHeight / sourceHeight;
+  const { width, height } = await sharp(imageBuffer).metadata();
+  const overlays = await Promise.all(femaleRegions.map(async (region) => {
+    const scaledWidth = Math.max(1, Math.round(region.w * scale));
+    const scaledHeight = Math.max(1, Math.round(region.h * scale));
+    const left = Math.max(0, Math.round(region.x + (region.w - scaledWidth) / 2));
+    const top = Math.max(0, Math.round(region.y + (region.h - scaledHeight) / 2));
+    return {
+      input: await sharp(imageBuffer)
+        .extract({ left: region.x, top: region.y, width: region.w, height: region.h })
+        .resize(scaledWidth, scaledHeight, { fit: 'fill', kernel: 'nearest' })
+        .png()
+        .toBuffer(),
+      left,
+      top,
+    };
+  }));
+  return sharp({
+    create: { width, height, channels: 4, background: TRANSPARENT },
+  }).composite(overlays).png().toBuffer();
+}
+
 async function buildGender(gender, allowedColors) {
   for (const [color, targetHue] of Object.entries(COLORS).filter(([color]) => allowedColors.includes(color))) {
     const parts = [];
@@ -1493,6 +1552,11 @@ async function buildGender(gender, allowedColors) {
         'axem-pink-spritesheet.png',
         'axem-pink-pose.png',
       ];
+      // Publica también una copia Pink normalizada, sin alterar la referencia original.
+      const pinkReferenceSheet = await normalizeFemaleSpriteScale(
+        await keyFemaleReferenceBackground(path.join(pinkReference, 'axem-pink-spritesheet.png')),
+      );
+      await writeResult(gender, 'pink', 'spritesheet.png', pinkReferenceSheet);
       // Las poses canónicas femeninas viven dentro de results/female/<color>/.
       // Mantener el color en la ruta evita depender del antiguo archivo en la raíz.
       canonicalPosePath = RESULTS(
@@ -1515,17 +1579,9 @@ async function buildGender(gender, allowedColors) {
 
       for (const file of files) {
         const outputName = file.replace(/^axem-pink-/, '');
-        const preservedPath = path.join(RESULTS(gender, color), outputName);
-        const hasPreservedPalette = FEMALE_PRESERVED_PALETTE_ASSETS.has(outputName)
-          && await fileExists(preservedPath);
         let corrected;
 
-        if (hasPreservedPalette) {
-          // Conserva la corrección manual cuando el archivo sigue versionado.
-          // Si se elimina, se reconstruye desde la referencia original en este build.
-          corrected = await fs.readFile(preservedPath);
-          console.log('Se conserva la paleta femenina ajustada: ' + path.relative(ROOT, preservedPath));
-        } else if (file === 'axem-pink-pose.png') {
+        if (file === 'axem-pink-pose.png') {
           // La pose final del usuario es la fuente canónica, no una reconstrucción.
           corrected = canonicalPose;
         } else {
@@ -1535,12 +1591,13 @@ async function buildGender(gender, allowedColors) {
             targetHue,
           );
           corrected = await harmonizeFemalePalette(recolored);
+          if (file === 'axem-pink-spritesheet.png') {
+            corrected = await normalizeFemaleSpriteScale(corrected);
+          }
         }
 
         parts.push(corrected);
-        if (!hasPreservedPalette) {
-          await writeResult(gender, color, outputName, corrected);
-        }
+        await writeResult(gender, color, outputName, corrected);
       }
       for (const [action, sourceName] of [
         ['run', 'axem-ranger-run.gif'],

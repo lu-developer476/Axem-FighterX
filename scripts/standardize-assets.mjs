@@ -94,7 +94,7 @@ async function readVisibleBounds(relativePath) {
 async function assertVisualBoundsMatch(family) {
   if (!family.visualBoundsReference) return;
   const [orange, red] = await Promise.all([
-    readVisibleBounds(family.visualBoundsReference), readVisibleBounds(family.derivedArtwork ?? family.preparedSource),
+    readVisibleBounds(family.visualBoundsReference), readVisibleBounds(family.preparedSource),
   ]);
   const tolerance = family.visualBoundsTolerance ?? 2;
   const ratioTolerance = family.visualBoundsRatioTolerance ?? 0.04;
@@ -123,9 +123,6 @@ async function main() {
   for (const [gender, family] of Object.entries(artwork.families)) {
     await assertMasterCanvas(family.reference, family.width, family.height, 'Master Super Axem ' + gender);
     changed += Number(await ensureCanvas(family.result, family.width, family.height, 'Artwork Super Axem ' + gender));
-    if (family.derivedArtwork) {
-      changed += Number(await ensureCanvas(family.derivedArtwork, family.width, family.height, 'Artwork derivado Super Axem ' + gender));
-    }
     changed += Number(await ensureCanvas(family.preparedSource, family.width, family.height, 'Fuente preparada Super Axem ' + gender));
     await assertVisualBoundsMatch(family);
   }

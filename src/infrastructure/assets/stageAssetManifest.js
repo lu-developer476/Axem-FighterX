@@ -39,11 +39,17 @@ function displayName(value) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function collectImageFiles(modules, keyPrefix) {
+export function collectImageFiles(modules, keyPrefix) {
   const grouped = new Map();
   for (const [path, url] of Object.entries(modules)) {
     const parts = fileParts(path);
-    const stem = slugifyAssetName(parts.stem);
+    const normalizedPath = path.replaceAll('\\\\', '/');
+    const rootMarker = keyPrefix === 'stage-tileset-' ? '/tilesets/' : '/maps/';
+    const rootIndex = normalizedPath.lastIndexOf(rootMarker);
+    const relativePath = rootIndex >= 0
+      ? normalizedPath.slice(rootIndex + rootMarker.length).replace(/\\.[^.]+$/, '')
+      : parts.stem;
+    const stem = slugifyAssetName(relativePath);
     if (!stem || typeof url !== 'string') continue;
     const entries = grouped.get(stem) ?? [];
     entries.push({ path, url, ...parts, stem });
@@ -58,6 +64,7 @@ function collectImageFiles(modules, keyPrefix) {
       const selected = entries[0];
       return {
         stem,
+        path: selected.path,
         filename: selected.filename,
         extension: selected.extension,
         url: selected.url,
@@ -79,8 +86,7 @@ export const STAGE_MAP_ASSETS = Object.freeze(mapFiles.map((asset) => Object.fre
 
 const tilesetFiles = collectImageFiles(TILESET_MODULES, 'stage-tileset-');
 export const STAGE_TILESET_ASSETS = Object.freeze(tilesetFiles.map((asset) => {
-  const selectedPath = Object.entries(TILESET_MODULES)
-    .find(([, url]) => url === asset.url)?.[0] ?? '';
+  const selectedPath = asset.path;
   const metadataPath = selectedPath.replace(/\.[^.]+$/, '.json');
   const metadata = TILESET_METADATA_MODULES[metadataPath] ?? {};
   const tileSize = Number(metadata.tileSize) || 32;

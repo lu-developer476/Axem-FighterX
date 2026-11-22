@@ -87,19 +87,14 @@ jobs:
         with:
           path: dist
 
-  deploy-pages:
-    name: Publicar jugable en GitHub Pages
+  wait-for-legacy-pages:
+    name: Esperar al publicador automático de Jekyll
     if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Esperar a que termine la publicación automática de Jekyll
         env:
@@ -109,9 +104,9 @@ jobs:
           set -euo pipefail
 
           legacy_run=""
-          # El workflow generado de Pages suele aparecer inmediatamente después del push.
-          # Si Pages ya está configurado para usar solo Actions, no habrá un build Jekyll que esperar.
-          for attempt in $(seq 1 6); do
+          # El workflow generado de Pages puede aparecer unos segundos después del push.
+          # Esta espera no reserva el entorno github-pages: deja libre el despliegue de Jekyll.
+          for attempt in $(seq 1 12); do
             runs="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?branch=main&per_page=100")"
             legacy_run="$(jq -r --arg sha "$EXPECTED_SHA" '
               [.workflow_runs[]
@@ -139,7 +134,7 @@ jobs:
                 echo "El build Jekyll paralelo terminó con estado: $conclusion"
                 exit 1
               fi
-              echo "Jekyll terminó. Ahora se publica el build Vite de dist."
+              echo "Jekyll terminó. Ahora el job siguiente puede publicar el build Vite de dist."
               exit 0
             fi
 
@@ -149,5 +144,17 @@ jobs:
           echo "El workflow Jekyll no terminó dentro del tiempo esperado."
           exit 1
 
+  deploy-pages:
+    name: Publicar jugable en GitHub Pages
+    if: github.ref == 'refs/heads/main'
+    needs: [build, wait-for-legacy-pages]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4

@@ -1205,8 +1205,67 @@ async function transformMaleActionFrame(input, {
  * Las copias desenfocadas quedan detrás y ligeramente desplazadas; el personaje
  * original conserva su color, transparencia, tamaño y pivote.
  */
-async function addGrayRollMotionBlur(input) {
-  // La estela conserva ecos grises suaves, desplazados hacia atrás.
+/**
+ * Dibuja una nube giratoria opaca que sustituye visualmente al cuerpo durante
+ * la rodada. La silueta del personaje queda completamente debajo de esta capa.
+ */
+async function createGrayRollSmokeCover(angle) {
+  const rotation = ((angle % 360) + 360) % 360;
+  const svg = Buffer.from(`
+    <svg width="150" height="100" viewBox="0 0 150 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="smoke" cx="48%" cy="40%" r="68%">
+          <stop offset="0" stop-color="#d9dce1"/>
+          <stop offset="0.48" stop-color="#aeb3bb"/>
+          <stop offset="1" stop-color="#686e77"/>
+        </radialGradient>
+        <linearGradient id="swirlLight" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#f0f2f5"/>
+          <stop offset="1" stop-color="#8b919a"/>
+        </linearGradient>
+      </defs>
+      <g transform="rotate(${rotation} 75 52)">
+        <!-- Masa cerrada y opaca: no deja ver el sprite que queda debajo. -->
+        <path
+          d="M 12 59
+             C 7 48, 14 34, 27 31
+             C 24 18, 39 8, 52 15
+             C 61 3, 79 5, 86 16
+             C 101 8, 117 18, 116 31
+             C 132 29, 143 42, 136 55
+             C 147 66, 137 82, 122 82
+             C 114 96, 96 97, 84 87
+             C 70 99, 51 92, 48 82
+             C 31 89, 15 78, 20 66
+             C 15 65, 12 63, 12 59 Z"
+          fill="url(#smoke)" opacity="1"/>
+        <ellipse cx="75" cy="53" rx="51" ry="32" fill="#9ba1aa" opacity="0.34"/>
+        <!-- Bandas de giro encima de la nube, también opacas en su trazo. -->
+        <path d="M 20 55 C 39 22, 89 15, 124 39"
+          fill="none" stroke="url(#swirlLight)" stroke-width="6"
+          stroke-linecap="round" opacity="0.94"/>
+        <path d="M 29 72 C 57 91, 108 79, 130 53"
+          fill="none" stroke="#5f6670" stroke-width="7"
+          stroke-linecap="round" opacity="0.88"/>
+        <path d="M 44 36 C 61 22, 94 24, 108 43 C 119 59, 101 72, 81 69"
+          fill="none" stroke="#e1e4e8" stroke-width="4.5"
+          stroke-linecap="round" opacity="0.9"/>
+        <path d="M 40 59 C 54 43, 77 40, 95 49"
+          fill="none" stroke="#747b85" stroke-width="5"
+          stroke-linecap="round" opacity="0.82"/>
+      </g>
+    </svg>
+  `);
+
+  return sharp(svg).png().toBuffer();
+}
+
+/**
+ * Mantiene los ecos grises detrás y coloca una nube giratoria opaca delante.
+ * La nube cubre el cuerpo completo: durante el giro no deben distinguirse
+ * cabeza, brazos, piernas ni detalles del personaje.
+ */
+async function addGrayRollMotionBlur(input, angle) {
   const echo = await sharp(input)
     .greyscale()
     .tint({ r: 148, g: 152, b: 160 })
@@ -1214,8 +1273,6 @@ async function addGrayRollMotionBlur(input) {
     .png()
     .toBuffer();
 
-  // El cuerpo también se convierte en una mancha gris: no se superpone
-  // ningún fotograma nítido ni se dejan visibles rasgos o extremidades.
   const blurredBody = await sharp(input)
     .greyscale()
     .tint({ r: 158, g: 162, b: 170 })
@@ -1230,8 +1287,10 @@ async function addGrayRollMotionBlur(input) {
     .png()
     .toBuffer();
 
+  const smokeCover = await createGrayRollSmokeCover(angle);
   const width = ACTION_GIF_SIZE.width + 18;
   const height = ACTION_GIF_SIZE.height + 6;
+
   return sharp({
     create: {
       width,
@@ -1246,6 +1305,8 @@ async function addGrayRollMotionBlur(input) {
       { input: echo, left: 12, top: 3, opacity: 0.28 },
       { input: diffuseCore, left: 18, top: 3, opacity: 0.34 },
       { input: blurredBody, left: 18, top: 3, opacity: 0.88 },
+      // Esta capa va al final y con opacidad total: tapa físicamente el sprite.
+      { input: smokeCover, left: 18, top: 3, opacity: 1 },
     ])
     .extract({
       left: 18,
@@ -1286,7 +1347,7 @@ async function buildMaleCombatEnhancementGifs(color) {
       offsetY: 2,
     });
   }));
-  const blurredRollFrames = await Promise.all(rollFrames.map(addGrayRollMotionBlur));
+  const blurredRollFrames = await Promise.all(rollFrames.map((frame, index) => addGrayRollMotionBlur(frame, rollAngles[index])));
   await writeMaleActionGif(color, 'roll', blurredRollFrames, blurredRollFrames.map(() => 45));
 
   // La pose KO se refleja horizontalmente para mantener la misma orientación

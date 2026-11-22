@@ -2,7 +2,6 @@ import fs from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import sharp from 'sharp';
 
-const ORANGE_UPLOAD_COMMIT = '93a9715bcd6868b100c5a129669ecf5de1d504ef';
 const VIOLET_UPLOAD_COMMIT = '864c7e9fd8da25c0a1ab848bfdf59817f8f4c843';
 const ORANGE_PATH = 'art/source/sprites/results/male/orange/super-axem-ranger-orange.png';
 const VIOLET_PATH = 'art/source/sprites/results/female/violet/super-axem-ranger-violet.png';
@@ -38,8 +37,9 @@ function isBlackLinework(red, green, blue) {
 }
 
 async function repairOrange() {
-  // Se usa el último PNG naranja subido, no una copia recoloreada desde Red.
-  const orangeSource = readAtCommit(ORANGE_UPLOAD_COMMIT, ORANGE_PATH);
+  // npm test ya procesó el último upload y quitó su fondo. Reparar sobre ese
+  // PNG evita volver a introducir el fondo opaco del archivo crudo.
+  const orangeSource = await fs.readFile(ORANGE_PATH);
   const redSource = await fs.readFile(RED_REFERENCE_PATH);
 
   const [orangeMeta, redMeta] = await Promise.all([
@@ -61,8 +61,11 @@ async function repairOrange() {
 
   // Normaliza ambos PNG a RGBA sRGB. Una referencia indexada o en escala
   // de grises puede decodificarse con 2 canales; asumir 4 desplazaba el alfa.
+  if (!orangeMeta.hasAlpha) {
+    throw new Error('Orange procesado perdió su canal alfa antes de la reparación.');
+  }
   const [orangeDecoded, redDecoded] = await Promise.all([
-    sharp(orangeSource).toColourspace('srgb').ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    sharp(orangeSource).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
     sharp(redSource).toColourspace('srgb').ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
   ]);
   if (orangeDecoded.info.channels !== 4 || redDecoded.info.channels !== 4) {
@@ -74,22 +77,17 @@ async function repairOrange() {
   const orangeRaw = orangeDecoded.data;
   const redRaw = redDecoded.data;
   const outputPixels = new Uint8Array(orangeRaw);
-  let alphaDifferences = 0;
-  let restoredBlackAlpha = 0;
   let restoredBlackColor = 0;
   let referenceBlackPixels = 0;
 
   for (let offset = 0; offset < outputPixels.length; offset += 4) {
-    const redAlpha = redRaw[offset + 3];
     const oldOrangeAlpha = outputPixels[offset + 3];
-    const blackLine = redAlpha >= 16 && isBlackLinework(
+    const blackLine = oldOrangeAlpha >= 16 && isBlackLinework(
       redRaw[offset], redRaw[offset + 1], redRaw[offset + 2],
     );
 
-    if (oldOrangeAlpha !== redAlpha) alphaDifferences += 1;
     if (blackLine) {
       referenceBlackPixels += 1;
-      if (oldOrangeAlpha < 16 && redAlpha >= 16) restoredBlackAlpha += 1;
       if (
         outputPixels[offset] !== redRaw[offset] ||
         outputPixels[offset + 1] !== redRaw[offset + 1] ||
@@ -130,11 +128,9 @@ async function repairOrange() {
   await fs.writeFile(ORANGE_PATH, output);
   console.log(
     'Orange reparado: paleta del último upload preservada; ' +
-    alphaDifferences + ' píxeles con diferencia alfa respecto a Red; ' +
-    restoredBlackAlpha + ' píxeles negros recuperados por alfa; ' +
-    restoredBlackColor + ' valores negros de RGB restaurados de ' +
-    referenceBlackPixels + ' píxeles negros de referencia; ' +
-    'transparencia original de Orange preservada exactamente.',
+    restoredBlackColor + ' valores negros de RGB restaurados entre ' +
+    referenceBlackPixels + ' píxeles negros visibles de referencia; ' +
+    'transparencia del PNG procesado preservada exactamente.',
   );
 }
 

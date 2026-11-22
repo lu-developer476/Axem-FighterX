@@ -69,6 +69,53 @@ describe('Eliminación del fondo cuadriculado de los artworks', () => {
     expect(data[(10 * width + 6) * 4 + 3]).toBe(255);
   });
 
+  it('suaviza el alfa del borde con un mínimo alto y conserva los píxeles y colores del personaje', () => {
+    const width = 15;
+    const height = 15;
+    const background = [1, 1, 1];
+    const data = new Uint8ClampedArray(width * height * 4);
+    for (let index = 0; index < width * height; index += 1) {
+      data.set([...background, 255], index * 4);
+    }
+
+    for (let y = 4; y <= 10; y += 1) {
+      for (let x = 4; x <= 10; x += 1) setPixel(data, width, x, y, [218, 76, 32]);
+    }
+
+    // Este píxel oscuro es lineart de borde, no fondo: permanece visible con alfa alto.
+    setPixel(data, width, 4, 7, [20, 20, 20]);
+    // Un píxel idéntico al fondo, pero completamente encerrado, debe conservarse.
+    setPixel(data, width, 7, 7, background);
+
+    const before = data.slice();
+    const result = removeCheckerboardBackground(data, width, height, [background], {
+      edgeAlphaFloor: 216,
+      fringeLimit: 44,
+      coverageStart: 7,
+      coverageRange: 32,
+    });
+
+    const edgeOffset = (7 * width + 4) * 4;
+    const enclosedOffset = (7 * width + 7) * 4;
+    expect(result.removedPixels).toBeGreaterThan(0);
+    expect(result.softenedPixels).toBeGreaterThan(0);
+
+    // El píxel del borde no se borra ni se aclara: solo recibe alfa parcial alto.
+    expect(data[edgeOffset + 3]).toBeGreaterThanOrEqual(216);
+    expect(data[edgeOffset + 3]).toBeLessThan(255);
+    expect(data.slice(edgeOffset, edgeOffset + 3)).toEqual(before.slice(edgeOffset, edgeOffset + 3));
+
+    // Los píxeles interiores, incluso si comparten el color del fondo, se conservan.
+    expect(data[enclosedOffset + 3]).toBe(255);
+    expect(data.slice(enclosedOffset, enclosedOffset + 3))
+      .toEqual(before.slice(enclosedOffset, enclosedOffset + 3));
+
+    // El resto del personaje mantiene sus valores RGB y alfa opaco.
+    const bodyOffset = (5 * width + 5) * 4;
+    expect(data.slice(bodyOffset, bodyOffset + 4)).toEqual(before.slice(bodyOffset, bodyOffset + 4));
+    expect(data[(0 * width + 0) * 4 + 3]).toBe(0);
+  });
+
   it('rechaza un borde negro dominante en vez de borrarlo como si fuera el fondo', () => {
     const width = 24;
     const height = 24;

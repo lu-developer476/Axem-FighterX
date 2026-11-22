@@ -21,8 +21,8 @@
           "preparedSource": "public/generated/super-axem-source-male.png",
           "width": 857,
           "height": 1171,
-          "note": "Orange se escala proporcionalmente con nearest-neighbor para ocupar la misma caja visible que Red; conserva el lienzo 857×1171 y su paleta original.",
-          "visualBoundsReference": "art/source/sprites/references/axem-red/super-axem-red.png",
+          "note": "Orange conserva la escala de su upload original. El derivado Red se escala proporcionalmente con nearest-neighbor para ocupar la misma caja visible que Orange, manteniendo 857×1171 px.",
+          "visualBoundsReference": "art/source/sprites/results/male/orange/super-axem-ranger-orange.png",
           "visualBoundsTolerance": 2,
           "alignment": "horizontal-center-and-feet-baseline"
         },

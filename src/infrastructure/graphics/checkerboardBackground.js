@@ -46,11 +46,12 @@ export function detectCheckerboardColors(data, width, height) {
   const first = toColor(firstEntry);
   const firstCoverage = firstEntry.count / borderPixels;
   const brightness = (first[0] + first[1] + first[2]) / 3;
+  const chroma = Math.max(...first) - Math.min(...first);
 
-  // Un contorno negro u oscuro puede ser lineart del personaje, no el fondo.
-  // Ante esa ambigüedad se aborta en vez de borrar partes del sprite.
+  // Un contorno negro/gris oscuro puede ser lineart del personaje, no el fondo.
+  // Los fondos oscuros saturados siguen siendo válidos; solo se rechaza el gris neutro.
   if (firstCoverage >= 0.65) {
-    if (brightness < 96) {
+    if (brightness < 96 && chroma <= 48) {
       throw new Error(
         'El color dominante del contorno es demasiado oscuro para considerarlo fondo; ' +
         'se canceló la eliminación para proteger los detalles negros del personaje.',

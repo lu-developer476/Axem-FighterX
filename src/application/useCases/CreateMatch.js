@@ -33,12 +33,14 @@ export function createDefaultMatch(
     { x: ARENA.spawnLeftX, y: ARENA.groundY },
     1,
     leftConfig.gender,
+    'combatant-left',
   );
   const right = createFighter(
     rightConfig.id,
     { x: ARENA.spawnRightX, y: ARENA.groundY },
     -1,
     rightConfig.gender,
+    'combatant-right',
   );
   return new Match({ fighters: [left, right], rng, arena, hazards });
 }

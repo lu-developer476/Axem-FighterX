@@ -142,14 +142,14 @@ function isBlackLinework(red, green, blue) {
 }
 
 async function repairOrange() {
-  // Se parte del upload original de Orange, antes de aplicar cualquier máscara.
+  // Orange conserva la escala y la ocupación de su upload original.
+  // El ajuste de escala se aplica al derivado Red en prepare-super-rangers.mjs.
   const orangeSource = await readPreservedOriginal(ORANGE_MASTER_PATH, ORANGE_UPLOAD_COMMIT, ORANGE_PATH);
   const redSource = await fs.readFile(RED_REFERENCE_PATH);
-  const [orangeMeta, redMeta, orangeDecoded, redDecoded] = await Promise.all([
+  const [orangeMeta, redMeta, orangeDecoded] = await Promise.all([
     sharp(orangeSource).metadata(),
     sharp(redSource).metadata(),
     sharp(orangeSource).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
-    sharp(redSource).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
   ]);
 
   if (orangeMeta.width !== 857 || orangeMeta.height !== 1171 ||
@@ -162,7 +162,6 @@ async function repairOrange() {
   const orangePixels = new Uint8ClampedArray(
     orangeDecoded.data.buffer, orangeDecoded.data.byteOffset, orangeDecoded.data.byteLength,
   );
-  const redPixels = redDecoded.data;
   let sourceBackgroundRemoved = 0;
 
   // Si el master Orange llegó opaco, retirar solo el fondo conectado al borde.
@@ -185,70 +184,35 @@ async function repairOrange() {
   }
 
   const sourceBounds = boundsFromAlpha(orangePixels, orangeDecoded.info.width, orangeDecoded.info.height);
-  const referenceBounds = boundsFromAlpha(redPixels, redDecoded.info.width, redDecoded.info.height);
   const sourceWidth = sourceBounds.right - sourceBounds.left;
   const sourceHeight = sourceBounds.bottom - sourceBounds.top;
-  const referenceWidth = referenceBounds.right - referenceBounds.left;
-  const referenceHeight = referenceBounds.bottom - referenceBounds.top;
-  if (sourceWidth < 100 || sourceHeight < 100 || referenceWidth < 100 || referenceHeight < 100) {
-    throw new Error('Los límites visibles no parecen artworks completos: Orange=' +
-      JSON.stringify(sourceBounds) + '; Red=' + JSON.stringify(referenceBounds));
+  if (sourceWidth < 100 || sourceHeight < 100) {
+    throw new Error('Los límites visibles del upload Orange no parecen un artwork completo: ' +
+      JSON.stringify(sourceBounds));
   }
 
-  // Escala uniforme por altura visible. El ancho se comprueba para impedir deformación.
-  const scale = referenceHeight / sourceHeight;
-  const scaledWidth = Math.round(sourceWidth * scale);
-  const scaledHeight = Math.round(sourceHeight * scale);
-  const widthDifference = Math.abs(scaledWidth - referenceWidth) / referenceWidth;
-  if (widthDifference > 0.04) {
-    throw new Error('Las proporciones visibles de Orange y Red difieren demasiado para escalar sin deformar: ' +
-      'ancho proyectado=' + scaledWidth + ', ancho Red=' + referenceWidth +
-      ', diferencia=' + (widthDifference * 100).toFixed(2) + '%.');
-  }
-
-  const left = Math.round(referenceBounds.left + (referenceWidth - scaledWidth) / 2);
-  const top = referenceBounds.bottom - scaledHeight;
-  if (left < 0 || top < 0 || left + scaledWidth > orangeMeta.width || top + scaledHeight > orangeMeta.height) {
-    throw new Error('La caja ajustada de Orange excede el lienzo: ' +
-      JSON.stringify({ left, top, scaledWidth, scaledHeight }));
-  }
-
-  const resizedArtwork = await sharp(Buffer.from(orangePixels), {
+  // No se reescala Orange: se conserva su escala original y solo se limpia el fondo.
+  const output = await sharp(Buffer.from(orangePixels), {
     raw: { width: orangeDecoded.info.width, height: orangeDecoded.info.height, channels: 4 },
-  }).extract({
-    left: sourceBounds.left, top: sourceBounds.top, width: sourceWidth, height: sourceHeight,
-  }).resize(scaledWidth, scaledHeight, { fit: 'fill', kernel: 'nearest' }).png().toBuffer();
-
-  const output = await sharp({
-    create: {
-      width: orangeMeta.width, height: orangeMeta.height, channels: 4,
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-    },
-  }).composite([{ input: resizedArtwork, left, top }])
-    .png({ compressionLevel: 9, effort: 10 }).toBuffer();
+  }).png({ compressionLevel: 9, effort: 10 }).toBuffer();
 
   const verified = await sharp(output).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const resultBounds = boundsFromAlpha(verified.data, verified.info.width, verified.info.height);
-  const resultWidth = resultBounds.right - resultBounds.left;
-  const resultHeight = resultBounds.bottom - resultBounds.top;
-  const referenceCenter = (referenceBounds.left + referenceBounds.right) / 2;
-  const resultCenter = (resultBounds.left + resultBounds.right) / 2;
-  if (Math.abs(resultWidth - referenceWidth) > 2 ||
-      Math.abs(resultHeight - referenceHeight) > 2 ||
-      Math.abs(resultBounds.bottom - referenceBounds.bottom) > 1 ||
-      Math.abs(resultCenter - referenceCenter) > 2) {
-    throw new Error('La caja visible final de Orange no coincide con Red: Orange=' +
-      JSON.stringify(resultBounds) + '; Red=' + JSON.stringify(referenceBounds));
+  if (
+    resultBounds.left !== sourceBounds.left ||
+    resultBounds.top !== sourceBounds.top ||
+    resultBounds.right !== sourceBounds.right ||
+    resultBounds.bottom !== sourceBounds.bottom
+  ) {
+    throw new Error('Orange cambió su ocupación visible al preservar el upload original: ' +
+      'fuente=' + JSON.stringify(sourceBounds) + '; resultado=' + JSON.stringify(resultBounds));
   }
 
   await fs.writeFile(ORANGE_PATH, output);
-  console.log('Orange ajustado a la ocupación visual de Red: lienzo=' + orangeMeta.width + '×' + orangeMeta.height +
-    '; escala uniforme=' + scale.toFixed(4) + '×; caja fuente=' + sourceWidth + '×' + sourceHeight +
-    '; caja final=' + resultWidth + '×' + resultHeight + '; Red=' + JSON.stringify(referenceBounds) +
-    '; Orange=' + JSON.stringify(resultBounds) + '; fondo quitado=' + sourceBackgroundRemoved +
-    ' px. Nearest-neighbor, centro horizontal y línea de pies alineados; sin deformación ni recorte.');
+  console.log('Orange conserva su escala original: lienzo=' + orangeMeta.width + '×' + orangeMeta.height +
+    '; caja visible=' + JSON.stringify(resultBounds) +
+    '; fondo quitado=' + sourceBackgroundRemoved + ' px. Sin resize, crop ni deformación.');
 }
-
 async function repairViolet() {
   // Se recupera la versión sin el margen superior artificial de 348 px.
   const violetSource = await readPreservedOriginal(VIOLET_MASTER_PATH, VIOLET_UPLOAD_COMMIT, VIOLET_PATH);

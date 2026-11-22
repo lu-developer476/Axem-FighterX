@@ -42,12 +42,16 @@ describe('FighterAnimator con ilustraciones Super Axem', () => {
 
   it('usa la ilustración rosa y poses procedurales en lugar de cambiar a hojas antiguas', () => {
     const { animator, sprite } = createAnimator('violet', 'female');
-    const walk = animator.update(fighter('walk'));
+    const walk = animator.update(fighter('walk', { stateTimeMs: 50 }));
+    const dash = animator.update(fighter('dash', { stateTimeMs: 120 }));
     const attack = animator.update(fighter('attack', { stateTimeMs: 180 }));
 
     expect(sprite.setTexture).toHaveBeenCalledWith('ranger-female-violet');
     expect(sprite.play).not.toHaveBeenCalled();
-    expect(walk.angle).toBe(7);
+    expect(Math.abs(walk.x)).toBeGreaterThan(0);
+    expect(Math.abs(walk.angle)).toBeLessThan(3);
+    expect(dash.x).toBeGreaterThan(5);
+    expect(dash.angle).toBeGreaterThan(12);
     expect(attack.angle).not.toBe(0);
   });
 

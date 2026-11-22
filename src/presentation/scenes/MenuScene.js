@@ -64,9 +64,29 @@ export class MenuScene extends Phaser.Scene {
   }
 
   #createBackdrop() {
-    this.add.rectangle(0, 0, GAME_WIDTH, 270, 0x000000, 1)
+    this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x090713, 1)
       .setOrigin(0, 0)
       .setDepth(-100);
+    this.add.rectangle(GAME_WIDTH / 2, 158, GAME_WIDTH, 224, 0x171027, 0.24)
+      .setDepth(-99);
+    this.add.rectangle(GAME_WIDTH / 2, 244, GAME_WIDTH, 1, 0x8861b0, 0.24)
+      .setDepth(-98);
+
+    // Estrellas discretas y deterministas: aportan profundidad sin competir con el menú.
+    for (let index = 0; index < 30; index += 1) {
+      const x = (index * 79 + 31) % GAME_WIDTH;
+      const y = 88 + ((index * 43 + 17) % 145);
+      const star = this.add.rectangle(x, y, index % 6 === 0 ? 2 : 1, 1, 0xc8b5ed, 0.34)
+        .setDepth(-97);
+      this.tweens.add({
+        targets: star,
+        alpha: { from: 0.12, to: index % 4 === 0 ? 0.55 : 0.32 },
+        duration: 1100 + (index % 5) * 260,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    }
 
     const titleTexture = this.textures.get('title-art').getSourceImage();
     const titleScale = Math.min(1, 436 / titleTexture.width, 78 / titleTexture.height);
@@ -74,31 +94,91 @@ export class MenuScene extends Phaser.Scene {
       .setScale(titleScale)
       .setAlpha(1)
       .setDepth(2);
-
-    this.add.rectangle(GAME_WIDTH / 2, 253, GAME_WIDTH, 28, 0x080710, 0.96)
-      .setStrokeStyle(1, 0x55456e, 0.78)
-      .setDepth(-1);
   }
 
 
-  /** Retratos Super Axem con escala y espacio uniformes en la portada. */
+  /** Retratos Super Axem reducidos, con un aura ambiental distinta por transformación. */
   #addHomeRangerArt() {
+    const addAura = (x, baseline, color) => {
+      const centerY = baseline - 43;
+      const glow = this.add.ellipse(x, centerY, 66, 82, color, 0.10);
+      const outerRing = this.add.ellipse(x, centerY, 76, 88, 0x000000, 0)
+        .setStrokeStyle(2, color, 0.48);
+      const innerRing = this.add.ellipse(x, centerY, 53, 72, 0x000000, 0)
+        .setStrokeStyle(1, color, 0.34);
+      const groundGlow = this.add.ellipse(x, baseline - 2, 64, 8, color, 0.18);
+      const motes = [
+        [-29, -47], [27, -58], [-22, -12], [31, -25],
+      ].map(([dx, dy], index) => {
+        const mote = this.add.circle(x + dx, centerY + dy, index % 2 === 0 ? 2 : 1, color, 0.76);
+        this.tweens.add({
+          targets: mote,
+          x: x - dx * 0.55,
+          y: centerY + dy + (index % 2 === 0 ? -12 : 10),
+          alpha: { from: 0.18, to: 0.82 },
+          duration: 1250 + index * 170,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+          delay: index * 120,
+        });
+        return mote;
+      });
+
+      this.ui.add([glow, outerRing, innerRing, groundGlow, ...motes]);
+      this.tweens.add({
+        targets: glow,
+        alpha: { from: 0.06, to: 0.17 },
+        scaleX: { from: 0.92, to: 1.12 },
+        scaleY: { from: 0.95, to: 1.08 },
+        duration: 1650,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      this.tweens.add({
+        targets: [outerRing, innerRing],
+        alpha: { from: 0.22, to: 0.56 },
+        scaleX: { from: 0.94, to: 1.07 },
+        scaleY: { from: 1.02, to: 0.94 },
+        duration: 1900,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      this.tweens.add({
+        targets: groundGlow,
+        alpha: { from: 0.10, to: 0.25 },
+        scaleX: { from: 0.86, to: 1.12 },
+        duration: 1400,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    };
+
+    const orangeX = GAME_WIDTH / 2 - 110;
+    const violetX = GAME_WIDTH / 2 + 110;
+    const baseline = 154;
+    addAura(orangeX, baseline, 0xff8b3d);
+    addAura(violetX, baseline, 0xa56bff);
+
     const orange = this.add.image(
-      GAME_WIDTH / 2 - 108,
-      160,
+      orangeX,
+      baseline,
       menuSpriteKeyFor(RANGER_IDS.ORANGE, 'male'),
     )
       .setOrigin(0.5, 1)
-      .setScale(0.72)
+      .setScale(0.47)
       .setDepth(1);
 
     const violet = this.add.image(
-      GAME_WIDTH / 2 + 108,
-      160,
+      violetX,
+      baseline,
       menuSpriteKeyFor(RANGER_IDS.VIOLET, 'female'),
     )
       .setOrigin(0.5, 1)
-      .setScale(0.72)
+      .setScale(0.47)
       .setDepth(1);
 
     this.ui.add([orange, violet]);
@@ -120,25 +200,23 @@ export class MenuScene extends Phaser.Scene {
       targetTop: panelTop + UI_SPACING.modalTopInset,
       targetBottom: panelBottom - UI_SPACING.modalBottomInset - 9,
     };
-    const shadow = this.add.rectangle(GAME_WIDTH / 2 + 3, panelY + 3, width, height, 0x06040b, 0.92);
-    const panel = this.add.rectangle(GAME_WIDTH / 2, panelY, width, height, 0x100d1e, 0.98)
-      .setStrokeStyle(1, 0x9277a8, 0.95);
+    const isHome = this.page === 'home';
+    const shadow = this.add.rectangle(
+      GAME_WIDTH / 2 + 3, panelY + 3, width, height, 0x06040b, isHome ? 0.16 : 0.92,
+    );
+    const panel = this.add.rectangle(
+      GAME_WIDTH / 2, panelY, width, height, 0x100d1e, isHome ? 0.22 : 0.98,
+    ).setStrokeStyle(isHome ? 0 : 1, 0x9277a8, isHome ? 0 : 0.95);
     const inset = this.add.rectangle(
-      GAME_WIDTH / 2,
-      panelY,
-      insetSize(width),
-      insetSize(height),
-      0x000000,
-      0,
-    )
-      .setStrokeStyle(1, 0x3a2c50, 0.9);
+      GAME_WIDTH / 2, panelY, insetSize(width), insetSize(height), 0x000000, 0,
+    ).setStrokeStyle(isHome ? 0 : 1, 0x3a2c50, isHome ? 0 : 0.9);
     const accent = this.add.rectangle(
       GAME_WIDTH / 2,
       panelTop + UI_SPACING.modalHeaderRuleInset,
       width - 24,
       1,
       0xd3a66d,
-      0.72,
+      isHome ? 0.24 : 0.72,
     );
     this.ui.add([shadow, panel, inset, accent]);
 
@@ -297,38 +375,6 @@ export class MenuScene extends Phaser.Scene {
       : y;
   }
 
-  #addFooter() {
-    // Franja compacta y separada del panel principal para evitar solapamientos.
-    if (this.page !== 'home') return;
-    const footerY = GAME_HEIGHT - 12;
-    const footerFontSize = '6px';
-    const prefix = this.add.text(0, footerY, '© 2026 Todos los derechos reservados - Diseño y Programación por ', {
-      fontFamily: 'monospace',
-      fontStyle: 'normal',
-      fontSize: footerFontSize,
-      color: '#c4bbd2',
-    }).setOrigin(0, 0.5).setDepth(30);
-
-    const author = this.add.text(0, footerY, 'Lucas Montenegro ®', {
-      fontFamily: 'monospace',
-      fontStyle: 'normal',
-      fontSize: footerFontSize,
-      color: '#f2c77e',
-    }).setOrigin(0, 0.5).setDepth(30).setInteractive({ useHandCursor: true });
-
-    const totalWidth = prefix.width + author.width;
-    const startX = Math.max(UI_SPACING.footerGutter, Math.round((GAME_WIDTH - totalWidth) / 2));
-    prefix.setX(startX);
-    author.setX(startX + prefix.width);
-    author.on('pointerover', () => author.setColor('#fff1bc'));
-    author.on('pointerout', () => author.setColor('#f2c77e'));
-    author.on('pointerdown', () => {
-      window.open('https://www.linkedin.com/in/l-montenegro/', '_blank', 'noopener,noreferrer');
-    });
-
-    this.ui.add([prefix, author]);
-  }
-
   #refreshButtons() {
     this.buttons.forEach((button, index) => {
       const selected = index === this.selectedIndex;
@@ -459,10 +505,15 @@ export class MenuScene extends Phaser.Scene {
     this.characterSlot = 0;
     this.#beginPage('', 282, 146);
     this.#addHomeRangerArt();
-    this.#addButton('JUGAR', 190, () => this.#showPlayModes());
-    this.#addButton('TUTORIAL', 211, () => this.#showControls());
-    this.#addButton('CRÉDITOS', 232, () => this.#showCredits());
-    this.#addFooter();
+    this.#addText('SUPER AXEM · NUEVAS FORMAS', GAME_WIDTH / 2, 108, {
+      fontSize: '5px',
+      color: '#c9b7e4',
+      letterSpacing: 1,
+    });
+    this.#addButton('JUGAR', 190, () => this.#showPlayModes(), { width: 194, height: 17 });
+    this.#addButton('TUTORIAL', 211, () => this.#showControls(), { width: 194, height: 17 });
+    this.#addButton('CRÉDITOS', 232, () => this.#showCredits(), { width: 194, height: 17 });
+    
   }
 
   #showPlayModes() {
@@ -519,7 +570,7 @@ export class MenuScene extends Phaser.Scene {
     });
 
     this.#addButton('VOLVER', 226, () => this.#showPlayModes(), { width: 150, fontSize: '8px' });
-    this.#addFooter();
+    
   }
 
   #showCombatModes() {
@@ -536,7 +587,7 @@ export class MenuScene extends Phaser.Scene {
     });
 
     this.#addButton('VOLVER', 226, () => this.#showVersusModes(), { width: 150, fontSize: '8px' });
-    this.#addFooter();
+    
   }
 
   #showCharacterModal() {
@@ -807,7 +858,7 @@ export class MenuScene extends Phaser.Scene {
         height: 13,
       });
     }
-    this.#addFooter();
+    
   }
 
   #showControls() {
@@ -840,23 +891,35 @@ export class MenuScene extends Phaser.Scene {
       fontSize: '5px',
     });
     this.#addButton('VOLVER', 245, () => this.#showHome());
-    this.#addFooter();
+    
   }
 
   #showCredits() {
     this.page = 'credits';
-    this.#beginPage('CRÉDITOS');
+    this.#beginPage('CRÉDITOS', 330, 168);
     this.#addText('Videojuego de pelea retro no oficial.', GAME_WIDTH / 2, 153, {
       fontSize: '5px',
     });
     this.#addText('Experiencia de usuario garantizada.', GAME_WIDTH / 2, 169, {
       fontSize: '5px',
     });
-    this.#addText('Diseño y programación: Lucas Montenegro', GAME_WIDTH / 2, 188, {
+    this.#addText('© 2026 Todos los derechos reservados', GAME_WIDTH / 2, 188, {
       fontSize: '5px',
-      color: '#f2c77e',
+      color: '#c4bbd2',
     });
-    this.#addButton('VOLVER', 213, () => this.#showHome());
-    this.#addFooter();
+    this.#addText('Diseño y Programación por', GAME_WIDTH / 2, 204, {
+      fontSize: '5px',
+      color: '#c4bbd2',
+    });
+    const author = this.#addText('Lucas Montenegro ®', GAME_WIDTH / 2, 218, {
+      fontSize: '6px',
+      color: '#f2c77e',
+    }).setInteractive({ useHandCursor: true });
+    author.on('pointerover', () => author.setColor('#fff1bc'));
+    author.on('pointerout', () => author.setColor('#f2c77e'));
+    author.on('pointerdown', () => {
+      window.open('https://www.linkedin.com/in/l-montenegro/', '_blank', 'noopener,noreferrer');
+    });
+    this.#addButton('VOLVER', 239, () => this.#showHome());
   }
 }

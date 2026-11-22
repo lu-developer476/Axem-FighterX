@@ -9,13 +9,16 @@ describe('poses por código', () => {
     expect(poseFor('idle', 1500, 9000)).toEqual(NEUTRAL_POSE);
   });
 
-  it('la caminata conserva una inclinación estable sin ondulaciones', () => {
+  it('la caminata alterna pasos pequeños sin exagerar la inclinación ni deformar el sprite', () => {
     const first = poseFor('walk', 0, 0);
-    const later = poseFor('walk', 700, 5000);
-    expect(first).toEqual({ ...NEUTRAL_POSE, angle: 7 });
-    expect(later).toEqual(first);
-    expect(first.scaleX).toBe(1);
-    expect(first.scaleY).toBe(1);
+    const opposite = poseFor('walk', 95, 5000);
+    expect(first).not.toEqual(opposite);
+    expect(Math.abs(first.angle)).toBeLessThan(3);
+    expect(Math.abs(opposite.angle)).toBeLessThan(3);
+    expect(Math.abs(first.x)).toBeLessThanOrEqual(1.5);
+    expect(Math.abs(opposite.x)).toBeLessThanOrEqual(1.5);
+    expect(first.scaleX).toBeCloseTo(1.012);
+    expect(first.scaleY).toBeCloseTo(0.988);
   });
 
   it('el ataque carga hacia atrás, golpea hacia adelante y vuelve a neutro', () => {

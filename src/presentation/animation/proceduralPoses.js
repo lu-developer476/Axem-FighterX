@@ -35,8 +35,7 @@ const FLASH_MS = 90;
 export function poseFor(state, timeMs, elapsedMs) {
   switch (state) {
     case 'walk':
-      // Mantiene una leve inclinación de avance, sin deformaciones ni bamboleo.
-      return { ...NEUTRAL_POSE, angle: 7 };
+      return walkPose(timeMs);
     case 'dash':
       return dashPose(timeMs);
     case 'attack':
@@ -69,6 +68,20 @@ export function poseFor(state, timeMs, elapsedMs) {
 /** Pose neutra con destello, para cuando una hoja de sprites hace la animación. */
 export function flashOnlyPose(state, timeMs) {
   return { ...NEUTRAL_POSE, flash: (state === 'hurt' || state === 'ko' || state === 'block-hit') && timeMs < FLASH_MS };
+}
+
+function walkPose(t) {
+  const phase = (t / 190) * Math.PI * 2;
+  const stride = Math.sin(phase);
+  const lift = Math.max(0, Math.cos(phase));
+  return {
+    ...NEUTRAL_POSE,
+    x: stride * 1.5,
+    y: -lift * 1.1,
+    angle: stride * 2.2,
+    scaleX: 1 + lift * 0.012,
+    scaleY: 1 - lift * 0.012,
+  };
 }
 
 function attackPose(t) {

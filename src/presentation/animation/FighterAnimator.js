@@ -21,10 +21,7 @@ export class FighterAnimator {
   }
 
   update(fighter) {
-    const currentState = fighter.state === 'dash' && this.gender !== 'male'
-      ? 'walk'
-      : fighter.state;
-    const visualState = this.forcedState ?? currentState;
+    const visualState = this.forcedState ?? fighter.state;
     if (visualState !== this.state) this.#enter(visualState);
     return poseFor(
       visualState,

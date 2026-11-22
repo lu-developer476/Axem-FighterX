@@ -98,6 +98,12 @@ export class PreloadScene extends Phaser.Scene {
       if (rangerId === RANGER_IDS.ORANGE) {
         this.load.image(menuSpriteKeyFor(rangerId), menuSpriteUrlFor(rangerId));
       }
+      if (rangerId === RANGER_IDS.VIOLET) {
+        this.load.image(
+          menuSpriteKeyFor(rangerId, 'female'),
+          menuSpriteUrlFor(rangerId, 'female'),
+        );
+      }
       if (rangerId === RANGER_IDS.ORANGE) for (const action of ['run', 'bike', 'double-axe']) {
         this.load.spritesheet(maleAnimationKey(rangerId, action), maleAnimationUrl(rangerId, action), {
           frameWidth: 53,

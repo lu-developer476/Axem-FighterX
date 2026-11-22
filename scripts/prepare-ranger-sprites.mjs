@@ -1273,40 +1273,50 @@ async function createGrayRollSmokeTrail() {
   const svg = Buffer.from(`
     <svg width="150" height="100" viewBox="0 0 150 100" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="trailLight" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#e1e4e9" stop-opacity="0.05"/>
-          <stop offset="0.45" stop-color="#c4c9d1" stop-opacity="0.72"/>
-          <stop offset="1" stop-color="#888f99" stop-opacity="0.12"/>
+        <linearGradient id="plume" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#aeb4bd" stop-opacity="0.04"/>
+          <stop offset="0.28" stop-color="#c8cdd4" stop-opacity="0.42"/>
+          <stop offset="0.72" stop-color="#a4aab3" stop-opacity="0.82"/>
+          <stop offset="1" stop-color="#777e88" stop-opacity="0.12"/>
         </linearGradient>
-        <linearGradient id="trailDark" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#737a84" stop-opacity="0.08"/>
-          <stop offset="0.55" stop-color="#666e78" stop-opacity="0.7"/>
-          <stop offset="1" stop-color="#aeb4bd" stop-opacity="0.1"/>
+        <linearGradient id="plumeShade" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#747b85" stop-opacity="0"/>
+          <stop offset="0.58" stop-color="#747b85" stop-opacity="0.55"/>
+          <stop offset="1" stop-color="#626a75" stop-opacity="0.1"/>
         </linearGradient>
       </defs>
-      <!-- Tres bandas anchas y difusas, prolongadas hacia atrás. -->
-      <path d="M -4 29 C 17 19, 31 35, 51 32 C 68 29, 82 22, 104 30
-               C 83 40, 69 42, 51 39 C 29 35, 16 43, -4 42 Z"
-        fill="url(#trailLight)" opacity="0.88"/>
-      <path d="M -6 47 C 16 36, 34 49, 56 45 C 78 41, 91 36, 116 45
-               C 95 55, 77 59, 56 54 C 34 49, 16 60, -6 60 Z"
-        fill="url(#trailDark)" opacity="0.9"/>
-      <path d="M -3 69 C 18 57, 34 68, 55 64 C 76 60, 93 52, 119 61
-               C 96 74, 77 77, 55 72 C 34 67, 16 80, -3 81 Z"
-        fill="url(#trailLight)" opacity="0.76"/>
-      <path d="M 1 39 C 24 31, 36 42, 57 38 S 88 28, 111 37"
-        fill="none" stroke="#e2e5e9" stroke-width="3.5"
-        stroke-linecap="round" opacity="0.52"/>
-      <path d="M 0 59 C 22 50, 38 60, 59 56 S 92 47, 119 55"
-        fill="none" stroke="#5d6570" stroke-width="4"
+      <!-- Cola continua: nace ancha junto al giro y se afina hacia atrás. -->
+      <path d="M 0 48
+        C 17 40, 28 43, 42 40
+        C 53 37, 62 42, 77 45
+        C 61 49, 53 53, 39 52
+        C 24 52, 14 59, 0 56 Z"
+        fill="url(#plume)"/>
+      <path d="M 0 47
+        C 21 45, 34 35, 50 39
+        C 62 42, 68 46, 81 46
+        C 62 48, 48 48, 35 50
+        C 19 52, 10 53, 0 51 Z"
+        fill="#d8dce2" opacity="0.36"/>
+      <path d="M 0 57
+        C 20 54, 31 48, 46 50
+        C 60 52, 67 49, 82 48
+        C 65 55, 55 59, 40 57
+        C 23 55, 13 63, 0 62 Z"
+        fill="url(#plumeShade)"/>
+      <!-- Mechones finos que dan lectura de humo arrastrado, no de líneas. -->
+      <path d="M 1 42 C 20 34, 32 39, 48 37 S 67 42, 78 44"
+        fill="none" stroke="#e1e4e9" stroke-width="4"
         stroke-linecap="round" opacity="0.48"/>
-      <path d="M 4 78 C 25 68, 41 77, 61 72 S 92 64, 119 70"
-        fill="none" stroke="#e0e3e8" stroke-width="2.5"
-        stroke-linecap="round" opacity="0.38"/>
+      <path d="M 0 61 C 17 57, 31 55, 43 57 S 64 53, 78 49"
+        fill="none" stroke="#737b85" stroke-width="5"
+        stroke-linecap="round" opacity="0.48"/>
+      <path d="M 3 51 C 18 47, 28 48, 41 45 S 59 46, 70 47"
+        fill="none" stroke="#f0f1f4" stroke-width="2"
+        stroke-linecap="round" opacity="0.52"/>
     </svg>
   `);
-
-  return sharp(svg).blur(1.8).png().toBuffer();
+  return sharp(svg).blur(2.8).png().toBuffer();
 }
 
 /**
@@ -1355,10 +1365,12 @@ async function addGrayRollMotionBlur(input, angle) {
       { input: diffuseCore, left: 0, top: 0, opacity: 0.34 },
       { input: blurredBody, left: 0, top: 0, opacity: 0.88 },
       // Nube principal delante del cuerpo, con opacidad total.
-      { input: smokeCover, left: 0, top: 0, opacity: 1 },
-      // La estela se dibuja al final para mantener sus bandas visibles
-      // sobre el humo, prolongándose hacia la izquierda del movimiento.
+      // Cola larga y afinada detrás del giro; queda parcialmente oculta
+      // bajo la nube, por eso parece nacer de ella y prolongarse hacia atrás.
       { input: smokeTrail, left: 0, top: 0, opacity: 1 },
+      // La nube se reduce y desplaza ligeramente a la derecha para dejar
+      // espacio real a la cola de humo dentro del lienzo de 150×100.
+      { input: await sharp(smokeCover).resize(118, 78).png().toBuffer(), left: 22, top: 11, opacity: 1 },
     ])
     .png()
     .toBuffer();

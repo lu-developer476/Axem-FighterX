@@ -1265,67 +1265,88 @@ async function createGrayRollSmokeCover(angle) {
  * el borde posterior del giro y se prolonga hacia la izquierda como en una
  * rodada rápida de Sonic: ancha junto al círculo, irregular y difusa al alejarse.
  */
-async function createGrayRollSmokeTrail() {
-  const svg = Buffer.from(`
+async function createGrayRollSmokeTrail(frameIndex = 0) {
+  // Cada cuadro desplaza los remolinos hacia atrás; el reinicio ocurre junto
+  // con el cierre de la vuelta (frame 8), para que el GIF pueda repetirse.
+  const phase = ((frameIndex % 8) + 8) % 8;
+  const drift = Math.round(phase * 1.7);
+  const groundY = ACTION_GIF_SIZE.height - SEQUENCE_GIF_FEET_MARGIN;
+  const groundOffset = groundY - 96;
+  const svg = `
     <svg width="150" height="100" viewBox="0 0 150 100" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="dustFade" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#99958d" stop-opacity="0.12"/>
-          <stop offset="0.22" stop-color="#aaa69e" stop-opacity="0.42"/>
-          <stop offset="0.62" stop-color="#c2beb6" stop-opacity="0.78"/>
-          <stop offset="1" stop-color="#d4d0c8" stop-opacity="0.92"/>
+        <linearGradient id="groundDust" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#a9a59d" stop-opacity="0.10"/>
+          <stop offset="0.35" stop-color="#c2beb6" stop-opacity="0.48"/>
+          <stop offset="0.78" stop-color="#d5d1c9" stop-opacity="0.82"/>
+          <stop offset="1" stop-color="#c6c2ba" stop-opacity="0.72"/>
         </linearGradient>
-        <linearGradient id="dustShadow" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#777d86" stop-opacity="0.05"/>
-          <stop offset="1" stop-color="#777d86" stop-opacity="0.58"/>
+        <linearGradient id="groundDustShade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#767d86" stop-opacity="0.08"/>
+          <stop offset="1" stop-color="#626a74" stop-opacity="0.48"/>
         </linearGradient>
         <radialGradient id="dustPuff">
-          <stop offset="0" stop-color="#d9d5cd" stop-opacity="0.78"/>
-          <stop offset="1" stop-color="#a7a39b" stop-opacity="0.08"/>
+          <stop offset="0" stop-color="#e0dcd4" stop-opacity="0.82"/>
+          <stop offset="1" stop-color="#aaa69e" stop-opacity="0.04"/>
         </radialGradient>
       </defs>
+      <g transform="translate(0 ${groundOffset})">
+        <!-- Sombra de contacto: la estela nace en el mismo plano del suelo. -->
+        <ellipse cx="35" cy="94.5" rx="39" ry="2.4"
+          fill="#525963" opacity="0.27"/>
 
-      <!-- Cuerpo de la estela: se ensancha al acercarse al círculo. -->
-      <path d="M 68 36
-        C 57 30, 48 32, 40 36
-        C 31 30, 21 32, 16 39
-        C 7 37, 0 43, 2 49
-        C -2 56, 5 63, 14 60
-        C 22 67, 32 62, 39 57
-        C 49 61, 58 57, 69 63
-        C 60 54, 59 45, 68 36 Z"
-        fill="url(#dustFade)"/>
+        <!-- Masa baja y horizontal: nunca queda suspendida a media altura. -->
+        <path d="M 76 78
+          C 67 73, 59 76, 53 82
+          C 45 76, 36 79, 31 85
+          C 23 81, 15 84, 12 89
+          C 5 87, 0 91, 0 94
+          C 8 96, 17 95, 25 96
+          C 34 93, 42 96, 50 94
+          C 59 91, 67 95, 74 92
+          C 81 89, 82 83, 76 78 Z"
+          fill="url(#groundDust)"/>
+        <path d="M 0 93
+          C 14 90, 24 92, 35 91
+          C 47 90, 58 93, 70 91
+          C 77 90, 81 92, 84 94
+          C 71 96, 63 96, 51 96
+          C 36 96, 24 96, 11 96
+          C 5 96, 1 95, 0 93 Z"
+          fill="url(#groundDustShade)" opacity="0.68"/>
 
-      <!-- Sombra suave en la parte inferior para dar volumen de polvo. -->
-      <path d="M 4 51
-        C 17 46, 27 50, 39 49
-        C 50 48, 58 54, 68 59
-        C 56 57, 49 62, 38 58
-        C 26 56, 17 64, 7 58 Z"
-        fill="url(#dustShadow)" opacity="0.58"/>
+        <!-- Puffs rodantes: se desplazan lateralmente cuadro a cuadro. -->
+        <g transform="translate(-${drift} 0)">
+          <ellipse cx="13" cy="89" rx="12" ry="7"
+            fill="url(#dustPuff)" opacity="0.68"/>
+          <ellipse cx="31" cy="87" rx="13" ry="9"
+            fill="#d0ccc4" opacity="0.48"/>
+          <ellipse cx="48" cy="88" rx="14" ry="8"
+            fill="url(#dustPuff)" opacity="0.62"/>
+          <path d="M 0 88 C 12 82, 21 84, 32 87
+            C 43 90, 53 85, 65 88
+            C 52 91, 43 93, 31 91
+            C 18 89, 8 94, 0 93 Z"
+            fill="#e1ddd5" opacity="0.42"/>
+          <path d="M 4 95 C 18 91, 26 94, 38 93
+            C 49 92, 56 95, 67 94
+            C 54 97, 44 96, 33 96
+            C 20 96, 12 97, 4 95 Z"
+            fill="#7a818a" opacity="0.27"/>
+          <circle cx="9" cy="82" r="3" fill="#c9c5bd" opacity="0.34"/>
+          <circle cx="25" cy="80" r="2.4" fill="#dedad2" opacity="0.42"/>
+          <circle cx="44" cy="82" r="2.8" fill="#b9b5ad" opacity="0.34"/>
+        </g>
 
-      <!-- Bultos y remolinos de polvo, no rayas dibujadas sobre el círculo. -->
-      <ellipse cx="14" cy="46" rx="13" ry="9" fill="url(#dustPuff)" opacity="0.70"/>
-      <ellipse cx="29" cy="39" rx="12" ry="8" fill="url(#dustPuff)" opacity="0.58"/>
-      <ellipse cx="31" cy="56" rx="15" ry="8" fill="#c9c5bd" opacity="0.38"/>
-      <ellipse cx="47" cy="43" rx="16" ry="9" fill="#d5d1c9" opacity="0.42"/>
-
-      <!-- Mechones anchos y difusos que prolongan el rastro hacia atrás. -->
-      <path d="M 1 40 C 14 33, 25 35, 39 39 C 47 41, 54 39, 64 40
-        C 49 42, 38 43, 25 41 C 15 40, 8 45, 1 46 Z"
-        fill="#e0dcd4" opacity="0.44"/>
-      <path d="M 0 60 C 14 55, 23 57, 35 55 C 47 53, 54 57, 66 61
-        C 51 59, 42 63, 29 62 C 17 61, 9 66, 0 64 Z"
-        fill="#858b94" opacity="0.30"/>
-
-      <!-- Partículas que refuerzan la lectura de polvo arrastrado. -->
-      <circle cx="8" cy="34" r="3.2" fill="#c9c5bd" opacity="0.30"/>
-      <circle cx="19" cy="67" r="2.6" fill="#a8a49c" opacity="0.34"/>
-      <circle cx="39" cy="29" r="2.2" fill="#d8d4cc" opacity="0.42"/>
-      <circle cx="48" cy="68" r="2.5" fill="#aaa69e" opacity="0.28"/>
+        <!-- Nacimiento compacto junto a la base del círculo; queda detrás de él. -->
+        <ellipse cx="70" cy="89" rx="12" ry="7"
+          fill="#d0ccc4" opacity="0.46"/>
+        <ellipse cx="74" cy="94" rx="11" ry="2"
+          fill="#777e87" opacity="0.24"/>
+      </g>
     </svg>
-  `);
-  return sharp(svg).blur(2.2).png().toBuffer();
+  `;
+  return sharp(Buffer.from(svg)).blur(1.8).png().toBuffer();
 }
 
 /**
@@ -1333,8 +1354,8 @@ async function createGrayRollSmokeTrail() {
  * después el círculo giratorio que lo tapa parcialmente en su punto de origen.
  * No se reutiliza ni se desenfoca el sprite del Axem: el cuerpo desaparece.
  */
-async function addGrayRollMotionBlur(_input, angle) {
-  const smokeTrail = await createGrayRollSmokeTrail();
+async function addGrayRollMotionBlur(_input, angle, frameIndex = 0) {
+  const smokeTrail = await createGrayRollSmokeTrail(frameIndex);
   const smokeCover = await createGrayRollSmokeCover(angle);
 
   return sharp({
@@ -1382,7 +1403,7 @@ async function buildMaleCombatEnhancementGifs(color) {
       offsetY: 2,
     });
   }));
-  const blurredRollFrames = await Promise.all(rollFrames.map((frame, index) => addGrayRollMotionBlur(frame, rollAngles[index])));
+  const blurredRollFrames = await Promise.all(rollFrames.map((frame, index) => addGrayRollMotionBlur(frame, rollAngles[index], index)));
   await writeMaleActionGif(color, 'roll', blurredRollFrames, blurredRollFrames.map(() => 45));
 
   // La pose KO se refleja horizontalmente para mantener la misma orientación

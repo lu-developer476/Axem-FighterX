@@ -296,7 +296,7 @@ export class FightScene extends Phaser.Scene {
   }
 
   #showResult(winnerId) {
-    const winnerIndex = this.match.fighters.findIndex((fighter) => fighter.id === winnerId);
+    const winnerIndex = this.match.fighters.findIndex((fighter) => fighter.combatantId === winnerId);
     const winner = winnerIndex >= 0 ? this.match.fighters[winnerIndex] : null;
     if (winner) this.views[winnerIndex]?.showVictory();
     const outcome = winner ? winner.id + 'Wins' : 'draw';

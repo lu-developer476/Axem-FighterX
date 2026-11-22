@@ -23,9 +23,100 @@ const REFERENCES = Object.freeze([
   },
 ]);
 
+function boundsFromAlpha(data, width, height) {
+  let left = width, top = height, right = -1, bottom = -1;
+  for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
+    if (data[(y * width + x) * 4 + 3] < 16) continue;
+    left = Math.min(left, x); top = Math.min(top, y);
+    right = Math.max(right, x + 1); bottom = Math.max(bottom, y + 1);
+  }
+  if (right <= left || bottom <= top) throw new Error('El artwork no tiene píxeles visibles.');
+  return { left, top, right, bottom };
+}
+
+async function scaleRedToOrange(sourceBuffer, family, label) {
+  if (!family.visualBoundsReference) return sourceBuffer;
+
+  const [source, target] = await Promise.all([
+    sharp(sourceBuffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    sharp(path.join(ROOT, family.visualBoundsReference), { failOn: 'error' })
+      .ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+  ]);
+  if (
+    source.info.width !== family.width || source.info.height !== family.height ||
+    target.info.width !== family.width || target.info.height !== family.height
+  ) {
+    throw new Error(label + ': Red y Orange deben conservar el lienzo ' +
+      family.width + 'x' + family.height + '.');
+  }
+
+  const sourceBounds = boundsFromAlpha(source.data, source.info.width, source.info.height);
+  const targetBounds = boundsFromAlpha(target.data, target.info.width, target.info.height);
+  const sourceWidth = sourceBounds.right - sourceBounds.left;
+  const sourceHeight = sourceBounds.bottom - sourceBounds.top;
+  const targetWidth = targetBounds.right - targetBounds.left;
+  const targetHeight = targetBounds.bottom - targetBounds.top;
+
+  // Escala uniforme por altura visible, sin deformar el pixel art. El ancho
+  // proyectado se valida antes de escribir para evitar una coincidencia falsa.
+  const scale = targetHeight / sourceHeight;
+  const scaledWidth = Math.round(sourceWidth * scale);
+  const scaledHeight = Math.round(sourceHeight * scale);
+  const widthDifference = Math.abs(scaledWidth - targetWidth) / targetWidth;
+  if (widthDifference > 0.04) {
+    throw new Error('Las proporciones visibles de Red y Orange difieren demasiado para escalar sin deformar: ' +
+      'ancho proyectado=' + scaledWidth + ', ancho Orange=' + targetWidth +
+      ', diferencia=' + (widthDifference * 100).toFixed(2) + '%.');
+  }
+
+  const left = Math.round(targetBounds.left + (targetWidth - scaledWidth) / 2);
+  const top = targetBounds.bottom - scaledHeight;
+  if (left < 0 || top < 0 ||
+      left + scaledWidth > family.width || top + scaledHeight > family.height) {
+    throw new Error(label + ': la caja ajustada excede el lienzo: ' +
+      JSON.stringify({ left, top, scaledWidth, scaledHeight }));
+  }
+
+  const resizedArtwork = await sharp(sourceBuffer).extract({
+    left: sourceBounds.left,
+    top: sourceBounds.top,
+    width: sourceWidth,
+    height: sourceHeight,
+  }).resize(scaledWidth, scaledHeight, { fit: 'fill', kernel: 'nearest' }).png().toBuffer();
+
+  const output = await sharp({
+    create: {
+      width: family.width, height: family.height, channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  }).composite([{ input: resizedArtwork, left, top }])
+    .png({ compressionLevel: 9, effort: 10 }).toBuffer();
+
+  const verified = await sharp(output).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const resultBounds = boundsFromAlpha(verified.data, verified.info.width, verified.info.height);
+  const tolerance = family.visualBoundsTolerance ?? 2;
+  const deltas = {
+    left: Math.abs(resultBounds.left - targetBounds.left),
+    top: Math.abs(resultBounds.top - targetBounds.top),
+    right: Math.abs(resultBounds.right - targetBounds.right),
+    bottom: Math.abs(resultBounds.bottom - targetBounds.bottom),
+  };
+  if (Object.values(deltas).some((delta) => delta > tolerance)) {
+    throw new Error(label + ': el Red derivado no ocupa la misma caja visible que Orange: ' +
+      'Orange=' + JSON.stringify(targetBounds) + '; Red=' + JSON.stringify(resultBounds) +
+      '; diferencias=' + JSON.stringify(deltas) + '; tolerancia=' + tolerance + ' px.');
+  }
+
+  console.log(label + ': escala uniforme=' + scale.toFixed(4) + '×; caja Red=' +
+    JSON.stringify(sourceBounds) + '; caja Orange=' + JSON.stringify(targetBounds) +
+    '; derivado=' + JSON.stringify(resultBounds) + '. Nearest-neighbor, centro horizontal y pies alineados.');
+  return output;
+}
+
 async function prepareReference({ file, label, gender }) {
   // Los masters de references nunca se reescriben. Se prepara una copia de
-  // trabajo con el mismo lienzo, sin trim, crop, resize ni desplazamiento del arte.
+  // trabajo en el mismo lienzo. El Red masculino se escala proporcionalmente
+  // para igualar la ocupación visual del artwork Orange original.
   const source = await fs.readFile(file);
   const metadata = await sharp(source, { failOn: 'error' }).metadata();
   const family = CHARACTER_ARTWORK.families[gender];
@@ -59,9 +150,14 @@ async function prepareReference({ file, label, gender }) {
     }
   }
 
-  const output = await sharp(Buffer.from(pixels), {
+  let output = await sharp(Buffer.from(pixels), {
     raw: { width: info.width, height: info.height, channels: 4 },
   }).png({ compressionLevel: 9, effort: 10 }).toBuffer();
+
+  const family = CHARACTER_ARTWORK.families[gender];
+  if (gender === 'male') {
+    output = await scaleRedToOrange(output, family, label);
+  }
 
   const resultMetadata = await sharp(output).metadata();
   const { data: verified } = await sharp(output).ensureAlpha().raw().toBuffer({ resolveWithObject: true });

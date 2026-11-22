@@ -57,9 +57,9 @@ async function scaleRedToOrange(sourceBuffer, family, label) {
   const targetWidth = targetBounds.right - targetBounds.left;
   const targetHeight = targetBounds.bottom - targetBounds.top;
 
-  // Escala uniforme para que Red quepa por completo en la caja visible de Orange.
-  // Se prioriza el ancho cuando las proporciones difieren; nunca se deforma ni recorta.
-  const scale = Math.min(targetWidth / sourceWidth, targetHeight / sourceHeight);
+  // Escala uniforme por altura para igualar el alto visible y la línea de pies.
+  // El ancho puede diferir hasta un 4 %; nunca se deforma ni recorta el pixel art.
+  const scale = targetHeight / sourceHeight;
   const scaledWidth = Math.round(sourceWidth * scale);
   const scaledHeight = Math.round(sourceHeight * scale);
 

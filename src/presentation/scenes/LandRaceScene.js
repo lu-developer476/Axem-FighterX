@@ -21,6 +21,7 @@ const RUNNER_LANES = Object.freeze([170, 218]);
 const RUNNER_FOOT_OFFSET = 13;
 const COUNTDOWN_MS = 3000;
 const STAMINA_MAX = 100;
+const LAND_RACE_TILESET_IDS = Object.freeze(['cave-tileset', 'cave1-tileset']);
 
 export const LAND_RACE_OBSTACLES = Object.freeze([
   Object.freeze({ distance: 190, action: 'jump', type: 'hurdle' }),
@@ -132,7 +133,8 @@ export class LandRaceScene extends Phaser.Scene {
   create() {
     playRaceMusic(this, 'landRace');
     createLandRaceTextures(this);
-    const selectedStage = Phaser.Utils.Array.GetRandom(STAGE_TILESET_ASSETS);
+    const raceTilesets = STAGE_TILESET_ASSETS.filter((asset) => LAND_RACE_TILESET_IDS.includes(asset.id));
+    const selectedStage = Phaser.Utils.Array.GetRandom(raceTilesets);
     if (selectedStage) {
       const stageKey = 'race-stage-land-' + this.game.loop.frame;
       createProceduralBackground(this, selectedStage, {
@@ -422,7 +424,7 @@ export class LandRaceScene extends Phaser.Scene {
 
     racer.distance = Math.min(this.finishDistance, racer.distance + speed * delta / 1000);
 
-    const obstacle = LAND_RACE_OBSTACLES[racer.obstacleIndex];
+    const obstacle = this.obstacles[racer.obstacleIndex];
     if (obstacle && previousDistance < obstacle.distance && racer.distance >= obstacle.distance) {
       const cleared = racer.actionMode === obstacle.action && racer.actionRemainingMs > 0;
       if (cleared) {

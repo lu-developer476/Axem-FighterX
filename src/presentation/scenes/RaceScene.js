@@ -21,6 +21,7 @@ const PLAYER_X = 112;
 const OPPONENT_X = 170;
 const COUNTDOWN_MS = 3000;
 const LANE_SWITCH_MS = 145;
+const RACE_TILESET_IDS = Object.freeze(['sidescroll-tileset', 'space-merc-tileset']);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 function createTexture(scene, key, width, height, draw) {
@@ -131,7 +132,8 @@ export class RaceScene extends Phaser.Scene {
     this.background = this.add.graphics().setDepth(0);
     this.track = this.add.graphics().setDepth(10);
     this.scenery = [];
-    const selectedStage = Phaser.Utils.Array.GetRandom(STAGE_TILESET_ASSETS);
+    const raceTilesets = STAGE_TILESET_ASSETS.filter((asset) => RACE_TILESET_IDS.includes(asset.id));
+    const selectedStage = Phaser.Utils.Array.GetRandom(raceTilesets);
     if (selectedStage) {
       const stageKey = 'race-stage-bike-' + this.game.loop.frame;
       createProceduralBackground(this, selectedStage, {

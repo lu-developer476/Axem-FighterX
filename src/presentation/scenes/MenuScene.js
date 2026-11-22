@@ -552,18 +552,11 @@ export class MenuScene extends Phaser.Scene {
     this.page = 'play';
     this.#beginPage('JUGAR', 330, 168);
 
-    // Las tres opciones comparten una columna compacta y una separación uniforme.
-    this.#addButton('COMBATE', 143, () => this.#showVersusModes(), {
-      width: 246,
-      fontSize: '8px',
-    });
-    this.#addButton('CARRERA', 169, () => this.#showRaceModes(), {
-      width: 246,
-      fontSize: '8px',
-    });
-    this.#addButton('VOLVER', 195, () => this.#showHome(), {
-      width: 150,
-      fontSize: '8px',
+    const buttonStyle = { width: 230, fontSize: '8px', height: 16, shadowOffset: 0 };
+    this.#addButton('COMBATE', 156, () => this.#showVersusModes(), buttonStyle);
+    this.#addButton('CARRERA', 182, () => this.#showRaceModes(), buttonStyle);
+    this.#addButton('VOLVER', 239, () => this.#showHome(), {
+      width: 150, fontSize: '7px', shadowOffset: 0,
     });
   }
 
@@ -571,17 +564,11 @@ export class MenuScene extends Phaser.Scene {
     this.page = 'race';
     this.#beginPage('CARRERA', 330, 168);
 
-    this.#addButton('CARRERA AXEM', 157, () => this.scene.start('RaceScene'), {
-      width: 246,
-      fontSize: '8px',
-    });
-    this.#addButton('CARRERA TERRESTRE', 181, () => this.scene.start('LandRaceScene'), {
-      width: 246,
-      fontSize: '8px',
-    });
-    this.#addButton('VOLVER', 226, () => this.#showPlayModes(), {
-      width: 150,
-      fontSize: '8px',
+    const buttonStyle = { width: 230, fontSize: '8px', height: 16, shadowOffset: 0 };
+    this.#addButton('CARRERA AXEM', 156, () => this.scene.start('RaceScene'), buttonStyle);
+    this.#addButton('CARRERA TERRESTRE', 182, () => this.scene.start('LandRaceScene'), buttonStyle);
+    this.#addButton('VOLVER', 239, () => this.#showPlayModes(), {
+      width: 150, fontSize: '7px', shadowOffset: 0,
     });
   }
 
@@ -595,14 +582,17 @@ export class MenuScene extends Phaser.Scene {
     };
     this.#beginPage('COMBATE', 330, 168);
 
+    const buttonStyle = { width: 230, fontSize: '8px', height: 16, shadowOffset: 0 };
     VERSUS_MODES.forEach((mode, index) => {
-      this.#addButton(mode.label, 151 + index * 22, () => {
+      this.#addButton(mode.label, 143 + index * 26, () => {
         this.matchSetup.versusMode = mode.id;
         this.#showCombatModes();
-      }, { width: 246, fontSize: '8px' });
+      }, buttonStyle);
     });
 
-    this.#addButton('VOLVER', 226, () => this.#showPlayModes(), { width: 150, fontSize: '8px' });
+    this.#addButton('VOLVER', 239, () => this.#showPlayModes(), {
+      width: 150, fontSize: '7px', shadowOffset: 0,
+    });
     
   }
 
@@ -636,7 +626,7 @@ export class MenuScene extends Phaser.Scene {
 
   #showRoundOptions() {
     this.page = 'combat-rounds';
-    this.#beginPage('RONDAS', 330, 154);
+    this.#beginPage('RONDAS', 330, 168);
     const chooseRounds = (modeId) => {
       this.matchSetup.combatMode = modeId;
       this.matchSetup.characters = [];
@@ -644,17 +634,11 @@ export class MenuScene extends Phaser.Scene {
       this.#showCharacterModal();
     };
 
-    this.#addButton('2 RONDAS', 166, () => chooseRounds('two-rounds'), {
-      width: 230,
-      fontSize: '8px',
-    });
-    this.#addButton('5 RONDAS', 192, () => chooseRounds('five-rounds'), {
-      width: 230,
-      fontSize: '8px',
-    });
-    this.#addButton('VOLVER', 228, () => this.#showCombatModes(), {
-      width: 150,
-      fontSize: '7px',
+    const buttonStyle = { width: 230, fontSize: '8px', height: 16, shadowOffset: 0 };
+    this.#addButton('2 RONDAS', 156, () => chooseRounds('two-rounds'), buttonStyle);
+    this.#addButton('5 RONDAS', 182, () => chooseRounds('five-rounds'), buttonStyle);
+    this.#addButton('VOLVER', 239, () => this.#showCombatModes(), {
+      width: 150, fontSize: '7px', shadowOffset: 0,
     });
   }
 

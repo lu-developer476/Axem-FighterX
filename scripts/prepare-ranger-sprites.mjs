@@ -1215,7 +1215,7 @@ async function transformMaleActionFrame(input, {
  */
 async function createGrayRollSmokeCover(angle) {
   const rotation = ((angle % 360) + 360) % 360;
-  const svg = \`
+  const svg = `
     <svg width="150" height="100" viewBox="0 0 150 100" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <radialGradient id="rollCloud" cx="43%" cy="37%" r="70%">
@@ -1256,7 +1256,7 @@ async function createGrayRollSmokeCover(angle) {
           stroke-linecap="round" opacity="0.86"/>
       </g>
     </svg>
-  \`;
+  `;
   return sharp(Buffer.from(svg.replace("__ANGLE__", String(rotation)))).png().toBuffer();
 }
 
@@ -1266,7 +1266,7 @@ async function createGrayRollSmokeCover(angle) {
  * rodada rápida de Sonic: ancha junto al círculo, irregular y difusa al alejarse.
  */
 async function createGrayRollSmokeTrail() {
-  const svg = Buffer.from(\`
+  const svg = Buffer.from(`
     <svg width="150" height="100" viewBox="0 0 150 100" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="dustFade" x1="0" y1="0" x2="1" y2="0">
@@ -1324,7 +1324,7 @@ async function createGrayRollSmokeTrail() {
       <circle cx="39" cy="29" r="2.2" fill="#d8d4cc" opacity="0.42"/>
       <circle cx="48" cy="68" r="2.5" fill="#aaa69e" opacity="0.28"/>
     </svg>
-  \`);
+  `);
   return sharp(svg).blur(2.2).png().toBuffer();
 }
 

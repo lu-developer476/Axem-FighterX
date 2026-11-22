@@ -1265,11 +1265,60 @@ async function createGrayRollSmokeCover(angle) {
  * La nube cubre el cuerpo completo: durante el giro no deben distinguirse
  * cabeza, brazos, piernas ni detalles del personaje.
  */
+/**
+ * Estela de humo visible detrás de la nube. Las bandas atraviesan solo la
+ * superficie del humo y salen por el borde izquierdo, como rastro de velocidad.
+ */
+async function createGrayRollSmokeTrail() {
+  const svg = Buffer.from(`
+    <svg width="150" height="100" viewBox="0 0 150 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="trailLight" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#e1e4e9" stop-opacity="0.05"/>
+          <stop offset="0.45" stop-color="#c4c9d1" stop-opacity="0.72"/>
+          <stop offset="1" stop-color="#888f99" stop-opacity="0.12"/>
+        </linearGradient>
+        <linearGradient id="trailDark" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#737a84" stop-opacity="0.08"/>
+          <stop offset="0.55" stop-color="#666e78" stop-opacity="0.7"/>
+          <stop offset="1" stop-color="#aeb4bd" stop-opacity="0.1"/>
+        </linearGradient>
+      </defs>
+      <!-- Tres bandas anchas y difusas, prolongadas hacia atrás. -->
+      <path d="M -4 29 C 17 19, 31 35, 51 32 C 68 29, 82 22, 104 30
+               C 83 40, 69 42, 51 39 C 29 35, 16 43, -4 42 Z"
+        fill="url(#trailLight)" opacity="0.88"/>
+      <path d="M -6 47 C 16 36, 34 49, 56 45 C 78 41, 91 36, 116 45
+               C 95 55, 77 59, 56 54 C 34 49, 16 60, -6 60 Z"
+        fill="url(#trailDark)" opacity="0.9"/>
+      <path d="M -3 69 C 18 57, 34 68, 55 64 C 76 60, 93 52, 119 61
+               C 96 74, 77 77, 55 72 C 34 67, 16 80, -3 81 Z"
+        fill="url(#trailLight)" opacity="0.76"/>
+      <path d="M 1 39 C 24 31, 36 42, 57 38 S 88 28, 111 37"
+        fill="none" stroke="#e2e5e9" stroke-width="3.5"
+        stroke-linecap="round" opacity="0.52"/>
+      <path d="M 0 59 C 22 50, 38 60, 59 56 S 92 47, 119 55"
+        fill="none" stroke="#5d6570" stroke-width="4"
+        stroke-linecap="round" opacity="0.48"/>
+      <path d="M 4 78 C 25 68, 41 77, 61 72 S 92 64, 119 70"
+        fill="none" stroke="#e0e3e8" stroke-width="2.5"
+        stroke-linecap="round" opacity="0.38"/>
+    </svg>
+  `);
+
+  return sharp(svg).blur(1.8).png().toBuffer();
+}
+
+/**
+ * Construye la rodada en el lienzo final. Los ecos desplazados y las bandas
+ * de humo permanecen dentro del cuadro visible; la nube opaca queda delante
+ * del personaje, tapándolo por completo sin borrar la estela.
+ */
 async function addGrayRollMotionBlur(input, angle) {
   const echo = await sharp(input)
     .greyscale()
     .tint({ r: 148, g: 152, b: 160 })
-    .blur(2.4)
+    .blur(5.2)
     .png()
     .toBuffer();
 
@@ -1288,32 +1337,29 @@ async function addGrayRollMotionBlur(input, angle) {
     .toBuffer();
 
   const smokeCover = await createGrayRollSmokeCover(angle);
-  const width = ACTION_GIF_SIZE.width + 18;
-  const height = ACTION_GIF_SIZE.height + 6;
+  const smokeTrail = await createGrayRollSmokeTrail();
 
   return sharp({
     create: {
-      width,
-      height,
+      width: ACTION_GIF_SIZE.width,
+      height: ACTION_GIF_SIZE.height,
       channels: 4,
       background: TRANSPARENT,
     },
   })
     .composite([
-      { input: echo, left: 0, top: 5, opacity: 0.12 },
-      { input: echo, left: 6, top: 4, opacity: 0.2 },
-      { input: echo, left: 12, top: 3, opacity: 0.28 },
-      { input: diffuseCore, left: 18, top: 3, opacity: 0.34 },
-      { input: blurredBody, left: 18, top: 3, opacity: 0.88 },
-      // Esta capa va al final y con opacidad total: tapa físicamente el sprite.
-      { input: smokeCover, left: 18, top: 3, opacity: 1 },
+      // Ecos de movimiento a la izquierda: el desplazamiento ya no se recorta.
+      { input: echo, left: -22, top: 8, opacity: 0.18 },
+      { input: echo, left: -13, top: 5, opacity: 0.22 },
+      { input: echo, left: -5, top: 2, opacity: 0.27 },
+      { input: diffuseCore, left: 0, top: 0, opacity: 0.34 },
+      { input: blurredBody, left: 0, top: 0, opacity: 0.88 },
+      // Nube principal delante del cuerpo, con opacidad total.
+      { input: smokeCover, left: 0, top: 0, opacity: 1 },
+      // La estela se dibuja al final para mantener sus bandas visibles
+      // sobre el humo, prolongándose hacia la izquierda del movimiento.
+      { input: smokeTrail, left: 0, top: 0, opacity: 1 },
     ])
-    .extract({
-      left: 18,
-      top: 3,
-      width: ACTION_GIF_SIZE.width,
-      height: ACTION_GIF_SIZE.height,
-    })
     .png()
     .toBuffer();
 }

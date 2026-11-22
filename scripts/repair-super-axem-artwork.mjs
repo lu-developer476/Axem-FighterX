@@ -59,10 +59,20 @@ async function repairOrange() {
     );
   }
 
-  const [orangeRaw, redRaw] = await Promise.all([
-    sharp(orangeSource).ensureAlpha().raw().toBuffer(),
-    sharp(redSource).ensureAlpha().raw().toBuffer(),
+  // Normaliza ambos PNG a RGBA sRGB. Una referencia indexada o en escala
+  // de grises puede decodificarse con 2 canales; asumir 4 desplazaba el alfa.
+  const [orangeDecoded, redDecoded] = await Promise.all([
+    sharp(orangeSource).toColourspace('srgb').ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    sharp(redSource).toColourspace('srgb').ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
   ]);
+  if (orangeDecoded.info.channels !== 4 || redDecoded.info.channels !== 4) {
+    throw new Error(
+      'Orange/Red deben decodificarse como RGBA; canales: ' +
+      orangeDecoded.info.channels + '/' + redDecoded.info.channels,
+    );
+  }
+  const orangeRaw = orangeDecoded.data;
+  const redRaw = redDecoded.data;
   const outputPixels = new Uint8Array(orangeRaw);
   let alphaDifferences = 0;
   let restoredBlackAlpha = 0;
@@ -93,28 +103,36 @@ async function repairOrange() {
       outputPixels[offset + 2] = redRaw[offset + 2];
     }
 
-    // La máscara de silueta usa la referencia original del mismo personaje.
-    outputPixels[offset + 3] = redAlpha;
+    // Une las máscaras en vez de sustituir la de Orange: no elimina ningún
+    // píxel visible del upload aunque haya pequeñas diferencias de contorno.
+    outputPixels[offset + 3] = Math.max(oldOrangeAlpha, redAlpha);
   }
 
   const output = await sharp(Buffer.from(outputPixels), {
     raw: { width: orangeMeta.width, height: orangeMeta.height, channels: 4 },
   }).png({ compressionLevel: 9, effort: 10 }).toBuffer();
 
-  const verify = await sharp(output).ensureAlpha().raw().toBuffer();
+  const verifyDecoded = await sharp(output).toColourspace('srgb').ensureAlpha()
+    .raw().toBuffer({ resolveWithObject: true });
+  if (verifyDecoded.info.channels !== 4) {
+    throw new Error('Orange reparado no pudo verificarse como RGBA.');
+  }
+  const verify = verifyDecoded.data;
   for (let offset = 0; offset < verify.length; offset += 4) {
-    if (verify[offset + 3] !== redRaw[offset + 3]) {
-      throw new Error('La máscara alfa de Orange no coincide con la referencia.');
+    const expectedAlpha = Math.max(orangeRaw[offset + 3], redRaw[offset + 3]);
+    if (verify[offset + 3] !== expectedAlpha) {
+      throw new Error('La máscara alfa combinada de Orange no se conservó.');
     }
   }
 
   await fs.writeFile(ORANGE_PATH, output);
   console.log(
     'Orange reparado: paleta del último upload preservada; ' +
-    alphaDifferences + ' píxeles de alfa reconciliados; ' +
+    alphaDifferences + ' píxeles con diferencia alfa respecto a Red; ' +
     restoredBlackAlpha + ' píxeles negros recuperados por alfa; ' +
     restoredBlackColor + ' valores negros de RGB restaurados de ' +
-    referenceBlackPixels + ' píxeles negros de referencia.',
+    referenceBlackPixels + ' píxeles negros de referencia; ' +
+    'alfa combinada sin descartar píxeles del upload.',
   );
 }
 
@@ -130,7 +148,7 @@ async function repairViolet() {
   }
 
   const { data: sourceRaw, info: sourceInfo } = await sharp(violetSource)
-    .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    .toColourspace('srgb').ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const sourceBounds = boundsFromAlpha(sourceRaw, sourceInfo.width, sourceInfo.height);
 
   // Mantiene la proporción del arte: escala a 1366 px de alto, recorta únicamente
@@ -167,7 +185,7 @@ async function repairViolet() {
 
   const resultMeta = await sharp(output).metadata();
   const { data: resultRaw, info: resultInfo } = await sharp(output)
-    .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    .toColourspace('srgb').ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const resultBounds = boundsFromAlpha(resultRaw, resultInfo.width, resultInfo.height);
 
   if (resultMeta.width !== 745 || resultMeta.height !== 1372 || !resultMeta.hasAlpha) {

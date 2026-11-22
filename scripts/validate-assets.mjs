@@ -47,7 +47,7 @@ async function readVisibleBounds(relativePath) {
 async function assertVisualBoundsMatch(family) {
   if (!family.visualBoundsReference) return;
   const [orange, red] = await Promise.all([
-    readVisibleBounds(family.visualBoundsReference), readVisibleBounds(family.preparedSource),
+    readVisibleBounds(family.visualBoundsReference), readVisibleBounds(family.derivedArtwork ?? family.preparedSource),
   ]);
   const tolerance = family.visualBoundsTolerance ?? 2;
   const ratioTolerance = family.visualBoundsRatioTolerance ?? 0.04;
@@ -74,8 +74,11 @@ async function validateArtwork() {
     const dimensions = { width: family.width, height: family.height };
     await validatePng(family.reference, dimensions, 'Master Super Axem ' + gender, false);
     await validatePng(family.result, dimensions, 'Artwork Super Axem ' + gender, true);
-    await assertVisualBoundsMatch(family);
+    if (family.derivedArtwork) {
+      await validatePng(family.derivedArtwork, dimensions, 'Artwork derivado Super Axem ' + gender, true);
+    }
     await validatePng(family.preparedSource, dimensions, 'Fuente preparada Super Axem ' + gender, true);
+    await assertVisualBoundsMatch(family);
   }
 }
 

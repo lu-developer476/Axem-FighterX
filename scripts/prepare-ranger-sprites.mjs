@@ -25,7 +25,7 @@ const SEQUENCE_GIF_SCALE = 1.75;
 const SEQUENCE_GIF_FEET_MARGIN = 4;
 /** Altura visible estándar del personaje de pie, común a todas las animaciones masculinas. */
 const STANDARD_STANDING_HEIGHT = 78;
-const MENU_SIZE = Object.freeze({ width: 78, height: 112 });
+const MENU_SIZE = Object.freeze({ width: 104, height: 150 });
 const MENU_POSE_REFERENCES = Object.freeze([
   SOURCE('sprites', 'references', 'axem-red', 'axem-red-spritesheet.png'),
 ]);
@@ -1570,6 +1570,25 @@ async function buildMenuMalePoses() {
   }
 }
 
+/** Genera una pose femenina limpia y ampliada, sin el arma que reduce la silueta en combate. */
+async function buildMenuFemalePose() {
+  const sourcePath = RESULTS('female', 'violet', 'levitate.png');
+  const outputPath = path.join(GENERATED, 'menu-ranger-female-violet.png');
+  const output = await sharp(sourcePath)
+    .ensureAlpha()
+    .trim({ background: TRANSPARENT, threshold: 1 })
+    .resize(MENU_SIZE.width, MENU_SIZE.height, {
+      fit: 'contain',
+      kernel: 'nearest',
+      background: TRANSPARENT,
+    })
+    .png()
+    .toBuffer();
+
+  await fs.writeFile(outputPath, output);
+  console.log('Generada pose lateral ' + path.relative(ROOT, outputPath));
+}
+
 async function buildGender(gender, allowedColors) {
   for (const [color, targetHue] of Object.entries(COLORS).filter(([color]) => allowedColors.includes(color))) {
     const parts = [];
@@ -1692,6 +1711,7 @@ async function main() {
   await buildGender('male', ['orange']);
   await buildGender('female', ['violet']);
   await buildMenuMalePoses();
+  await buildMenuFemalePose();
 }
 
 main().catch((error) => {

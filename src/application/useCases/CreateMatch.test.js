@@ -14,6 +14,26 @@ describe('createDefaultMatch', () => {
     ]);
   });
 
+  it('asigna identidades de combate distintas aunque ambos elijan el mismo Axem', () => {
+    const selection = { id: 'violet', gender: 'female' };
+    const match = createDefaultMatch(() => 0.999, [selection, selection]);
+    const [left, right] = match.fighters;
+
+    expect(left.id).toBe('violet');
+    expect(right.id).toBe('violet');
+    expect(left.combatantId).not.toBe(right.combatantId);
+
+    right.health = 1;
+    right.takeHit({ damage: 1, fromDirection: 1 });
+    const events = match.step([
+      { x: 0, y: 0, z: 0 },
+      { x: 0, y: 0, z: 0 },
+    ], 16);
+
+    expect(match.winnerId).toBe(left.combatantId);
+    expect(events.find((event) => event.type === 'match-over')?.winnerId).toBe(left.combatantId);
+  });
+
   it('no asigna colores ni géneros predeterminados cuando faltan selecciones', () => {
     expect(() => createDefaultMatch()).toThrow(/dos selecciones explícitas/);
     expect(() => createDefaultMatch(Math.random, [{ id: 'violet', gender: 'male' }]))

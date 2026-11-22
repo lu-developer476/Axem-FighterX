@@ -156,7 +156,7 @@ async function repairViolet() {
   // margen transparente lateral y agrega 3 px transparentes arriba y abajo.
   const scaledHeight = 1366;
   const scaledWidth = Math.round(metadata.width * scaledHeight / metadata.height);
-  const cropLeft = Math.floor((scaledWidth - 745) / 2);
+  const cropLeft = Math.floor((scaledWidth - 745) / 2) - 1; // 1 px a la derecha: balancea los márgenes visibles.
   const scaleX = scaledWidth / metadata.width;
   const scaleY = scaledHeight / metadata.height;
   const projected = {

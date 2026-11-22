@@ -11,6 +11,9 @@ const variants = Object.freeze([
 const generatedSpritePath = ({ id, gender }) =>
   fileURLToPath(new URL(`../../../public/generated/ranger-${gender}-${id}.png`, import.meta.url));
 
+const generatedMenuVioletPath = () =>
+  fileURLToPath(new URL('../../../public/generated/menu-ranger-female-violet.png', import.meta.url));
+
 describe('Variantes canónicas de Axem Rangers', () => {
   it('solo mantiene Axem Violeta femenino y Axem Naranja masculino', () => {
     expect(genderForRanger('violet')).toBe('female');
@@ -29,8 +32,22 @@ describe('Variantes canónicas de Axem Rangers', () => {
     });
   }
 
+  it('genera una pose de menú violeta grande, transparente y con píxeles visibles', async () => {
+    const file = generatedMenuVioletPath();
+    const metadata = await sharp(file).metadata();
+    expect(metadata.format).toBe('png');
+    expect(metadata.width).toBe(104);
+    expect(metadata.height).toBe(150);
+    expect(metadata.hasAlpha).toBe(true);
+
+    const { data } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const visiblePixels = Array.from({ length: data.length / 4 }, (_, index) => data[index * 4 + 3])
+      .filter((alpha) => alpha > 0).length;
+    expect(visiblePixels).toBeGreaterThan(900);
+  });
+
   it('mantiene los GIF de carrera y combate del Axem Naranja masculino', async () => {
-    for (const action of ['run', 'bike', 'double-axe', 'idle', 'jump', 'roll', 'guard', 'ko']) {
+    for (const action of ['run', 'bike', 'double-axe', 'idle', 'jump', 'roll', 'guard', 'ko', 'charge', 'pose', 'battle-pose']) {
       const file = fileURLToPath(new URL(
         `../../../art/source/sprites/results/male/orange/${action}.gif`,
         import.meta.url,

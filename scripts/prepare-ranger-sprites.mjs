@@ -10,6 +10,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = (...parts) => path.join(ROOT, 'art', 'source', ...parts);
 const RESULTS = (...parts) => path.join(ROOT, 'art', 'source', 'sprites', 'results', ...parts);
 const GENERATED = path.join(ROOT, 'public', 'generated');
+const ASSET_STANDARDS = JSON.parse(await fs.readFile(SOURCE('sprites', 'asset-standards.json'), 'utf8'));
 const COLORS = Object.freeze({ violet: 273, orange: 22 });
 const PALETTE_SOURCES = Object.freeze({
   male: [[0, 25], [335, 360]],
@@ -19,13 +20,13 @@ const PALETTE_SOURCES = Object.freeze({
 // Se preservan desde el repositorio para que pretest/prebuild no las regenere
 // desde Axem Pink y sobrescriba los ajustes de Orange y Violet.
 const FEMALE_PRESERVED_PALETTE_ASSETS = new Set(['spritesheet.png']);
-const BASE_SIZE = Object.freeze({ width: 53, height: 83 });
-const ACTION_GIF_SIZE = Object.freeze({ width: 150, height: 100 });
+const BASE_SIZE = Object.freeze({ width: ASSET_STANDARDS.categories.combatTexture.width, height: ASSET_STANDARDS.categories.combatTexture.height });
+const ACTION_GIF_SIZE = Object.freeze({ width: ASSET_STANDARDS.categories.actionGif.width, height: ASSET_STANDARDS.categories.actionGif.height });
 const SEQUENCE_GIF_SCALE = 1.75;
 const SEQUENCE_GIF_FEET_MARGIN = 4;
 /** Altura visible estándar del personaje de pie, común a todas las animaciones masculinas. */
 const STANDARD_STANDING_HEIGHT = 78;
-const MENU_SIZE = Object.freeze({ width: 104, height: 150 });
+const MENU_SIZE = Object.freeze({ width: ASSET_STANDARDS.categories.menuPortrait.width, height: ASSET_STANDARDS.categories.menuPortrait.height });
 const TRANSPARENT = Object.freeze({ r: 0, g: 0, b: 0, alpha: 0 });
 const ATLAS_FRAMES_PATH = path.join(ROOT, 'src', 'infrastructure', 'assets', 'atlasFrames.json');
 const KI_AURA_SHEET_PATH = path.join(
@@ -1423,12 +1424,12 @@ async function buildMenuSuperPoses() {
     {
       gender: 'male',
       color: 'orange',
-      file: SOURCE('sprites', 'references', 'axem-red', 'super-axem-red.png'),
+      file: path.join(GENERATED, 'super-axem-source-male.png'),
     },
     {
       gender: 'female',
       color: 'violet',
-      file: SOURCE('sprites', 'references', 'axem-pink', 'super-axem-pink.png'),
+      file: path.join(GENERATED, 'super-axem-source-female.png'),
     },
   ];
 
@@ -1484,7 +1485,7 @@ async function buildGender(gender, allowedColors) {
       await buildMaleActionGifs(color, sequenceIndex);
       await buildMaleSharedExtraGifs(color);
       await writeMaleGameStrips(color);
-      baseSource = await fs.readFile(SOURCE('sprites', 'references', 'axem-red', 'super-axem-red.png'));
+      baseSource = await fs.readFile(path.join(GENERATED, 'super-axem-source-male.png'));
     } else {
       const pinkReference = SOURCE('sprites', 'references', 'axem-pink');
       const files = [
@@ -1529,7 +1530,7 @@ async function buildGender(gender, allowedColors) {
           await writeResult(gender, color, outputName, corrected);
         }
       }
-      baseSource = await fs.readFile(SOURCE('sprites', 'references', 'axem-pink', 'super-axem-pink.png'));
+      baseSource = await fs.readFile(path.join(GENERATED, 'super-axem-source-female.png'));
     }
 
     if (gender === 'female') {

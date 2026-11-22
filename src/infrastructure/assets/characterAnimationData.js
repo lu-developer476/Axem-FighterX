@@ -1,4 +1,5 @@
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
+import ASSET_STANDARDS from '../../../art/source/sprites/asset-standards.json';
 
 /** Estados del luchador; las poses de combate se aplican de forma procedural. */
 export const ANIMATION_STATES = Object.freeze([
@@ -16,9 +17,9 @@ const CHARACTER_DATA = Object.freeze({
     male: 1,
     female: 1,
   }),
-  displayHeight: 83,
+  displayHeight: ASSET_STANDARDS.categories.combatTexture.height,
   // Alto fijo de cada celda de animación: no depende del frame activo.
-  frameHeight: 83,
+  frameHeight: ASSET_STANDARDS.categories.combatTexture.height,
   sheets: Object.freeze({}),
 });
 
@@ -45,10 +46,16 @@ export const GIF_ACTIONS = Object.freeze([
   'jump', 'teleport', 'charge', 'battle-pose', 'pose',
   'guard', 'roll', 'ko',
 ]);
-export const GIF_CELL = Object.freeze({ width: 86, height: 57 });
+export const GIF_CELL = Object.freeze({
+  width: ASSET_STANDARDS.categories.actionFrameCell.width,
+  height: ASSET_STANDARDS.categories.actionFrameCell.height,
+});
 /**
  * Las hojas de carrera (53×83) apoyan los pies 27 px sobre el borde inferior de la celda
  * y se dibujan con origen en ese borde. Para que los pies queden en el mismo punto, las
  * hojas GIF (pies en la fila 55 de 57) usan un origen vertical equivalente.
  */
-export const GIF_ORIGIN_Y = (55 + 27) / GIF_CELL.height;
+export const GIF_ORIGIN_Y = (
+  ASSET_STANDARDS.categories.actionFrameCell.feetY +
+  ASSET_STANDARDS.categories.combatTexture.feetY
+) / GIF_CELL.height;

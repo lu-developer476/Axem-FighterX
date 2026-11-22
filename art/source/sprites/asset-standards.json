@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "sourcePolicy": {
+    "directory": "art/source/sprites/references",
+    "immutable": true,
+    "description": "Las referencias son masters de origen. El pipeline genera derivados y nunca escribe sobre estos archivos."
+  },
+  "categories": {
+    "characterArtwork": {
+      "format": "png",
+      "canvasPolicy": "match-family-master",
+      "preserveArtworkScale": true,
+      "allowResampling": false,
+      "allowCropping": false,
+      "mismatchCorrection": "transparent-padding-only",
+      "alignment": "center",
+      "families": {
+        "male": {
+          "reference": "art/source/sprites/references/axem-red/super-axem-red.png",
+          "result": "art/source/sprites/results/male/orange/super-axem-ranger-orange.png",
+          "preparedSource": "public/generated/super-axem-source-male.png",
+          "width": 857,
+          "height": 1171,
+          "note": "Orange conserva su escala visual original, aunque la silueta ocupe menos área que la referencia Red."
+        },
+        "female": {
+          "reference": "art/source/sprites/references/axem-pink/super-axem-pink.png",
+          "result": "art/source/sprites/results/female/violet/super-axem-ranger-violet.png",
+          "preparedSource": "public/generated/super-axem-source-female.png",
+          "width": 745,
+          "height": 1372
+        }
+      }
+    },
+    "combatTexture": {
+      "width": 53,
+      "height": 83,
+      "alphaRequired": true,
+      "outputs": [
+        "public/generated/ranger-male-orange.png",
+        "public/generated/ranger-female-violet.png"
+      ],
+      "feetY": 27
+    },
+    "menuPortrait": {
+      "width": 104,
+      "height": 150,
+      "alphaRequired": true,
+      "outputs": [
+        "public/generated/menu-ranger-male-orange.png",
+        "public/generated/menu-ranger-female-violet.png"
+      ]
+    },
+    "actionGif": {
+      "width": 150,
+      "height": 100,
+      "alphaRequired": true,
+      "directory": "art/source/sprites/results/male/orange",
+      "recursive": false,
+      "preserveFrameCount": true,
+      "preserveFrameTiming": true
+    },
+    "actionFrameCell": {
+      "width": 86,
+      "height": 57,
+      "feetY": 55
+    },
+    "atlasSheet": {
+      "policy": "match-family-master",
+      "preserveIrregularLayout": true,
+      "allowResampling": false,
+      "allowCropping": false,
+      "families": [
+        {
+          "reference": "art/source/sprites/references/axem-red/axem-red-spritesheet.png",
+          "result": "art/source/sprites/results/male/orange/spritesheet.png"
+        },
+        {
+          "reference": "art/source/sprites/references/axem-pink/axem-pink-spritesheet.png",
+          "result": "art/source/sprites/results/female/violet/spritesheet.png"
+        }
+      ]
+    },
+    "sequenceStrips": {
+      "policy": "dimensions-from-index",
+      "indexes": [
+        "art/source/sprites/results/male/orange/sequences/index.json",
+        "art/source/sprites/results/female/violet/sequences/index.json"
+      ],
+      "description": "Cada grupo declara su propio tamaño de celda; no se fuerza una cuadrícula común."
+    },
+    "otherProcessedSprites": {
+      "policy": "preserve-native-dimensions",
+      "alphaRequired": true,
+      "description": "Armas, objetos, recursos suplementarios y efectos conservan sus dimensiones de origen."
+    },
+    "backgrounds": {
+      "policy": "preserve-source-aspect-ratio",
+      "crop": "explicit-per-stage-only",
+      "description": "Los fondos y tilesets no se estiran a un lienzo global; cada escena define su encuadre."
+    }
+  }
+}

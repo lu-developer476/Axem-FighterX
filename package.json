@@ -5,15 +5,17 @@
   "type": "module",
   "description": "Juego de pelea retro con Phaser, desplegable en Vercel",
   "scripts": {
-    "predev": "node scripts/analyze-atlas.mjs && node scripts/prepare-super-rangers.mjs && node scripts/prepare-favicons.mjs && node scripts/prepare-title-art.mjs && node scripts/prepare-ranger-sprites.mjs && node scripts/normalize-sprite-library.mjs",
-    "pretest": "node scripts/analyze-atlas.mjs && node scripts/prepare-super-rangers.mjs && node scripts/prepare-ranger-sprites.mjs && node scripts/normalize-sprite-library.mjs",
-    "prepare:sprites": "node scripts/analyze-atlas.mjs && node scripts/prepare-super-rangers.mjs && node scripts/prepare-ranger-sprites.mjs && node scripts/normalize-sprite-library.mjs",
+    "predev": "node scripts/analyze-atlas.mjs && node scripts/prepare-super-rangers.mjs && node scripts/prepare-favicons.mjs && node scripts/prepare-title-art.mjs && node scripts/prepare-ranger-sprites.mjs && node scripts/normalize-sprite-library.mjs && node scripts/standardize-assets.mjs && node scripts/validate-assets.mjs",
+    "pretest": "node scripts/analyze-atlas.mjs && node scripts/prepare-super-rangers.mjs && node scripts/prepare-ranger-sprites.mjs && node scripts/normalize-sprite-library.mjs && node scripts/standardize-assets.mjs && node scripts/validate-assets.mjs",
+    "prepare:sprites": "node scripts/analyze-atlas.mjs && node scripts/prepare-super-rangers.mjs && node scripts/prepare-ranger-sprites.mjs && node scripts/normalize-sprite-library.mjs && node scripts/standardize-assets.mjs && node scripts/validate-assets.mjs",
     "dev": "vite",
-    "prebuild": "node scripts/analyze-atlas.mjs && node scripts/prepare-super-rangers.mjs && node scripts/prepare-favicons.mjs && node scripts/prepare-title-art.mjs && node scripts/prepare-ranger-sprites.mjs && node scripts/normalize-sprite-library.mjs",
+    "prebuild": "node scripts/analyze-atlas.mjs && node scripts/prepare-super-rangers.mjs && node scripts/prepare-favicons.mjs && node scripts/prepare-title-art.mjs && node scripts/prepare-ranger-sprites.mjs && node scripts/normalize-sprite-library.mjs && node scripts/standardize-assets.mjs && node scripts/validate-assets.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "capture": "node scripts/capture.mjs"
+    "capture": "node scripts/capture.mjs",
+    "standardize:assets": "node scripts/standardize-assets.mjs && node scripts/validate-assets.mjs",
+    "validate:assets": "node scripts/validate-assets.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0"

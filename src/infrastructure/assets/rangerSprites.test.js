@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { genderForRanger, isAvailableRangerVariant } from '../../domain/rangers/rangerVariants.js';
+import ASSET_STANDARDS from '../../../art/source/sprites/asset-standards.json';
 
 const variants = Object.freeze([
   { id: 'violet', gender: 'female' },
@@ -29,8 +30,8 @@ describe('Variantes canónicas de Axem Rangers', () => {
     it(`${variant.gender}/${variant.id} genera una textura transparente de 53×83 px`, async () => {
       const metadata = await sharp(generatedSpritePath(variant)).metadata();
       expect(metadata.format).toBe('png');
-      expect(metadata.width).toBe(53);
-      expect(metadata.height).toBe(83);
+      expect(metadata.width).toBe(ASSET_STANDARDS.categories.combatTexture.width);
+      expect(metadata.height).toBe(ASSET_STANDARDS.categories.combatTexture.height);
       expect(metadata.hasAlpha).toBe(true);
     });
   }
@@ -42,8 +43,8 @@ describe('Variantes canónicas de Axem Rangers', () => {
     const file = getFile();
     const metadata = await sharp(file).metadata();
     expect(metadata.format).toBe('png');
-    expect(metadata.width).toBe(104);
-    expect(metadata.height).toBe(150);
+    expect(metadata.width).toBe(ASSET_STANDARDS.categories.menuPortrait.width);
+    expect(metadata.height).toBe(ASSET_STANDARDS.categories.menuPortrait.height);
     expect(metadata.hasAlpha).toBe(true);
 
     const { data } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
@@ -60,8 +61,8 @@ describe('Variantes canónicas de Axem Rangers', () => {
       ));
       const metadata = await sharp(file, { animated: true }).metadata();
       expect(metadata.format).toBe('gif');
-      expect(metadata.width).toBe(150);
-      expect(metadata.pageHeight).toBe(100);
+      expect(metadata.width).toBe(ASSET_STANDARDS.categories.actionGif.width);
+      expect(metadata.pageHeight).toBe(ASSET_STANDARDS.categories.actionGif.height);
       expect(metadata.pages).toBeGreaterThan(1);
       expect(metadata.hasAlpha).toBe(true);
     }

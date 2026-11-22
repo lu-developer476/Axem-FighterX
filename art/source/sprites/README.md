@@ -452,3 +452,33 @@ transiciones mediante poses procedurales.
 Para la carrera no se duplican los fotogramas de bicicleta: se registran cadencias
 independientes para espera, aceleración, frenado, nitro y resultados. La inclinación
 del ciclista acompaña la entrada y el estado final.
+
+## Estándar centralizado de recursos gráficos
+
+Las reglas dimensionales viven en `asset-standards.json`. Los generadores, el juego, las pruebas y los validadores leen esa configuración en lugar de mantener medidas independientes.
+
+| Categoría | Estándar | Regla |
+|---|---:|---|
+| Artwork Super Axem masculino | 857 × 1171 px | Orange usa el lienzo de su master Axem Red |
+| Artwork Super Axem femenino | 745 × 1372 px | Violet usa el lienzo de su master Axem Pink |
+| Textura base de combate | 53 × 83 px | Lienzo fijo y transparente |
+| Retrato lateral de menú | 104 × 150 px | Lienzo fijo y transparente |
+| GIF de acción | 150 × 100 px por cuadro | Se conserva la cantidad de cuadros y sus tiempos |
+| Celda de tiras PNG derivadas de GIF | 86 × 57 px | Pivote de pies declarado en la configuración |
+
+### Artwork Super Axem: mismo lienzo, escala original
+
+El master masculino `references/axem-red/super-axem-red.png` y el resultado `results/male/orange/super-axem-ranger-orange.png` usan exactamente **857 × 1171 px**. Orange conserva la escala de su dibujo: puede ocupar menos área visible dentro del lienzo que Red. La estandarización iguala las dimensiones del archivo, no agranda la silueta.
+
+La misma regla incluye a la Ranger femenina Violeta: el master Pink y el resultado Violet usan **745 × 1372 px**. Cada familia conserva la proporción de su referencia; no se fuerza una relación de aspecto común entre el artwork masculino y el femenino.
+
+Los masters de `references/` son inmutables. `prepare-super-rangers.mjs` crea copias de trabajo en `public/generated/super-axem-source-male.png` y `public/generated/super-axem-source-female.png`, conservando el lienzo original. Los generadores de texturas y retratos consumen esas copias, no reescriben las referencias.
+
+### Qué se normaliza y qué se conserva
+
+- Los artworks de personaje solo pueden recibir padding transparente para completar el lienzo de su master. No se aplica resize, recorte ni deformación. Si el arte excede el lienzo, el proceso falla en vez de cortar píxeles.
+- Las texturas de combate, retratos y GIF se generan con sus medidas de categoría.
+- Los atlas mantienen sus dimensiones y su distribución irregular. Las secuencias usan las celdas declaradas en sus respectivos `index.json`; no se inventa una cuadrícula global.
+- Armas, objetos, efectos, recursos suplementarios, fondos y tilesets conservan sus dimensiones nativas. Los fondos pueden tener proporciones distintas según la escena.
+
+`standardize-assets.mjs` aplica el padding transparente permitido y `validate-assets.mjs` comprueba los masters, las variantes Orange/Violet, los retratos, las texturas, los GIF y las tiras de secuencia. Ambos se ejecutan automáticamente en `npm test`, `npm run build` y `npm run prepare:sprites`.

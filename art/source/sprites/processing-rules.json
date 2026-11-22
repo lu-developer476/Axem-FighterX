@@ -27,7 +27,9 @@
     },
     "excludedFiles": [
       "male/orange/super-axem-ranger-orange.png",
-      "female/violet/super-axem-ranger-violet.png"
+      "male/orange/source/super-axem-orange-upload.png",
+      "female/violet/super-axem-ranger-violet.png",
+      "female/violet/source/super-axem-violet-upload.png"
     ]
   },
   "pixelArt": {

@@ -51,15 +51,20 @@ await shot('02-modal-seleccion-personaje');
 await tap('Enter'); // J1 elige Axem → selector de J2
 await wait(120);
 await shot('03-modal-segundo-personaje');
-await tap('ArrowDown');
-await tap('Enter'); // J2 elige Axem
+await tap('Enter'); // J2 elige el mismo Axem: combate espejo
 await shot('03b-modal-esquinas');
-await tap('Enter'); // J1 elige la esquina izquierda
-for (let down = 0; down < 3; down++) await tap('ArrowDown');
-await tap('Enter'); // J2 elige la esquina derecha
+await tap('ArrowDown');
+await tap('Enter'); // J1 elige la esquina derecha
+await tap('ArrowDown');
+await tap('ArrowDown');
+await tap('Enter'); // J2 elige la esquina izquierda
 for (let down = 0; down < 5; down++) await tap('ArrowDown');
-await tap('Enter'); // Confirmar ambas esquinas → escenarios
-for (let back = 0; back < 6; back++) await tap('Escape'); // Regresar al inicio
+await tap('Enter'); // Confirmar esquinas opuestas → escenarios
+await tap('Enter'); // Primer escenario → cinemática
+await tap('Escape'); // Iniciar combate espejo con J1 a la derecha
+await wait(500);
+await shot('03c-combate-espejo-j1-derecha');
+await tap('Escape'); // Volver al menú
 
 // Comprueba también el modal de dos participantes para IA vs IA.
 await tap('Enter');

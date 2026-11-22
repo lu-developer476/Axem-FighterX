@@ -15,17 +15,55 @@ const readableFontSize = (value = '10px') => {
   return Number.isFinite(size) ? Math.max(8, Math.round(size * 1.25)) + 'px' : value;
 };
 const TRAINING_COLORS = Object.freeze([
-  { label: 'NEGRO', color: '#111111' },
   { label: 'GRIS', color: '#555555' },
-  { label: 'BLANCO', color: '#f5f5f5' },
-  { label: 'ROJO', color: '#a83232' },
-  { label: 'NARANJA', color: '#e87524' },
-  { label: 'AMARILLO', color: '#d6b83f' },
-  { label: 'VERDE', color: '#28734b' },
   { label: 'TURQUESA', color: '#238b8b' },
-  { label: 'AZUL', color: '#2457a6' },
-  { label: 'VIOLETA', color: '#663399' },
 ]);
+
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+const hexToHsv = (hex) => {
+  const normalized = /^#[\da-f]{6}$/i.test(hex) ? hex.slice(1) : '555555';
+  const red = Number.parseInt(normalized.slice(0, 2), 16) / 255;
+  const green = Number.parseInt(normalized.slice(2, 4), 16) / 255;
+  const blue = Number.parseInt(normalized.slice(4, 6), 16) / 255;
+  const maximum = Math.max(red, green, blue);
+  const minimum = Math.min(red, green, blue);
+  const delta = maximum - minimum;
+  let hue = 0;
+
+  if (delta !== 0) {
+    if (maximum === red) hue = 60 * (((green - blue) / delta) % 6);
+    else if (maximum === green) hue = 60 * ((blue - red) / delta + 2);
+    else hue = 60 * ((red - green) / delta + 4);
+  }
+
+  return {
+    h: (hue + 360) % 360,
+    s: maximum === 0 ? 0 : delta / maximum,
+    v: maximum,
+  };
+};
+
+const hsvToHex = ({ h, s, v }) => {
+  const hue = ((h % 360) + 360) % 360;
+  const chroma = v * s;
+  const segment = hue / 60;
+  const secondary = chroma * (1 - Math.abs((segment % 2) - 1));
+  const match = v - chroma;
+  let rgb;
+
+  if (segment < 1) rgb = [chroma, secondary, 0];
+  else if (segment < 2) rgb = [secondary, chroma, 0];
+  else if (segment < 3) rgb = [0, chroma, secondary];
+  else if (segment < 4) rgb = [0, secondary, chroma];
+  else if (segment < 5) rgb = [secondary, 0, chroma];
+  else rgb = [chroma, 0, secondary];
+
+  return '#' + rgb.map((channel) => Math.round((channel + match) * 255)
+    .toString(16).padStart(2, '0')).join('');
+};
+
+const hexToColorNumber = (hex) => Number.parseInt(hex.slice(1), 16);
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -54,6 +92,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   update() {
+    if (this.page === 'training-color-picker') return;
     if (Phaser.Input.Keyboard.JustDown(this.keys.up)) this.#moveSelection(-1);
     if (Phaser.Input.Keyboard.JustDown(this.keys.down)) this.#moveSelection(1);
     if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) this.#activateSelection();
@@ -70,7 +109,7 @@ export class MenuScene extends Phaser.Scene {
 
     const titleTexture = this.textures.get('title-art').getSourceImage();
     const titleScale = Math.min(1, 436 / titleTexture.width, 78 / titleTexture.height);
-    this.add.image(GAME_WIDTH / 2, 42, 'title-art')
+    this.titleArt = this.add.image(GAME_WIDTH / 2, 42, 'title-art')
       .setScale(titleScale)
       .setAlpha(1)
       .setDepth(2);
@@ -164,6 +203,8 @@ export class MenuScene extends Phaser.Scene {
     this.ui.add([orange, violet]);
   }
   #beginPage(title, width = 282, height = 120) {
+    this.#clearTrainingPickerKeyboard();
+    this.trainingColorPicker = null;
     this.ui.removeAll(true);
     this.buttons = [];
     this.selectedIndex = 0;
@@ -181,11 +222,12 @@ export class MenuScene extends Phaser.Scene {
       targetBottom: panelBottom - UI_SPACING.modalBottomInset - 9,
     };
     const isHome = this.page === 'home';
+    this.titleArt?.setVisible(isHome);
     const shadow = this.add.rectangle(
       GAME_WIDTH / 2 + 3, panelY + 3, width, height, 0x06040b, isHome ? 0.16 : 0.92,
     );
     const panel = this.add.rectangle(
-      GAME_WIDTH / 2, panelY, width, height, 0x100d1e, isHome ? 0.22 : 0.98,
+      GAME_WIDTH / 2, panelY, width, height, isHome ? 0x000000 : 0x100d1e, isHome ? 1 : 0.98,
     ).setStrokeStyle(isHome ? 0 : 1, 0x9277a8, isHome ? 0 : 0.95);
     const inset = this.add.rectangle(
       GAME_WIDTH / 2, panelY, insetSize(width), insetSize(height), 0x000000, 0,
@@ -196,7 +238,7 @@ export class MenuScene extends Phaser.Scene {
       width - 24,
       1,
       0xd3a66d,
-      isHome ? 0.24 : 0.72,
+      isHome ? 0 : 0.72,
     );
     this.ui.add([shadow, panel, inset, accent]);
 
@@ -210,6 +252,8 @@ export class MenuScene extends Phaser.Scene {
   }
 
   #beginCharacterModal(title = 'SELECCIONAR PERSONAJE') {
+    this.#clearTrainingPickerKeyboard();
+    this.trainingColorPicker = null;
     this.ui.removeAll(true);
     this.buttons = [];
     this.selectedIndex = 0;
@@ -277,13 +321,19 @@ export class MenuScene extends Phaser.Scene {
     return text;
   }
 
-  #addButton(title, y, action, { width = 210, fontSize = '8px', x = GAME_WIDTH / 2, height = 16 } = {}) {
+  #addButton(title, y, action, {
+    width = 210,
+    fontSize = '8px',
+    x = GAME_WIDTH / 2,
+    height = 16,
+    shadowOffset = 2,
+  } = {}) {
     // El fondo, la etiqueta y el área interactiva comparten exactamente el mismo ancho y centro.
     y = this.#mapPanelY(y);
     const buttonWidth = Math.floor(Math.min(width, Math.max(112, contentWidth(this.panelWidth))));
     const buttonHeight = height;
     const labelFontSize = readableFontSize(fontSize);
-    const shadow = this.add.rectangle(x, y + 2, buttonWidth, buttonHeight, 0x090612, 0.98);
+    const shadow = this.add.rectangle(x, y + shadowOffset, buttonWidth, buttonHeight, 0x090612, 0.98);
     const box = this.add.rectangle(x, y, buttonWidth, buttonHeight, 0x211a32, 0.98)
       .setStrokeStyle(1, 0x76618f, 1);
     const highlight = this.add.rectangle(x, y - 8, buttonWidth - 6, 1, 0xb69acb, 0.3);
@@ -446,6 +496,10 @@ export class MenuScene extends Phaser.Scene {
       this.#showVersusModes();
       return;
     }
+    if (this.page === 'combat-rounds') {
+      this.#showCombatModes();
+      return;
+    }
     if (this.page === 'characters') {
       if (this.characterSlot > 0) {
         this.characterSlot -= 1;
@@ -462,6 +516,10 @@ export class MenuScene extends Phaser.Scene {
     if (this.page === 'player-corners') {
       this.characterSlot = 1;
       this.#showCharacterModal();
+      return;
+    }
+    if (this.page === 'training-color-picker') {
+      this.#cancelTrainingColorPicker();
       return;
     }
     if (this.page === 'training-colors') {
@@ -550,19 +608,52 @@ export class MenuScene extends Phaser.Scene {
 
   #showCombatModes() {
     this.page = 'combat';
-    this.#beginPage('MODO', 330, 168);
+    this.#beginPage('MODO', 330, 154);
+    const chooseMode = (modeId) => {
+      this.matchSetup.combatMode = modeId;
+      this.matchSetup.characters = [];
+      this.characterSlot = 0;
+      this.#showCharacterModal();
+    };
 
-    COMBAT_MODES.forEach((mode, index) => {
-      this.#addButton(mode.label, 143 + index * 19, () => {
-        this.matchSetup.combatMode = mode.id;
-        this.matchSetup.characters = [];
-        this.characterSlot = 0;
-        this.#showCharacterModal();
-      }, { width: 230, fontSize: '8px' });
+    // Los tres modos principales forman una columna continua, sin huecos entre cajas.
+    const buttonStyle = {
+      width: 230,
+      fontSize: '8px',
+      height: 16,
+      shadowOffset: 0,
+    };
+    this.#addButton('DEFINITIVO', 156, () => chooseMode('definitive'), buttonStyle);
+    this.#addButton('RONDAS', 173, () => this.#showRoundOptions(), buttonStyle);
+    this.#addButton('ENTRENAMIENTO', 189, () => chooseMode('training'), buttonStyle);
+    this.#addButton('VOLVER', 228, () => this.#showVersusModes(), {
+      width: 150,
+      fontSize: '7px',
     });
+  }
 
-    this.#addButton('VOLVER', 226, () => this.#showVersusModes(), { width: 150, fontSize: '8px' });
-    
+  #showRoundOptions() {
+    this.page = 'combat-rounds';
+    this.#beginPage('RONDAS', 330, 154);
+    const chooseRounds = (modeId) => {
+      this.matchSetup.combatMode = modeId;
+      this.matchSetup.characters = [];
+      this.characterSlot = 0;
+      this.#showCharacterModal();
+    };
+
+    this.#addButton('2 RONDAS', 166, () => chooseRounds('two-rounds'), {
+      width: 230,
+      fontSize: '8px',
+    });
+    this.#addButton('5 RONDAS', 192, () => chooseRounds('five-rounds'), {
+      width: 230,
+      fontSize: '8px',
+    });
+    this.#addButton('VOLVER', 228, () => this.#showCombatModes(), {
+      width: 150,
+      fontSize: '7px',
+    });
   }
 
   #showCharacterModal() {
@@ -662,7 +753,7 @@ export class MenuScene extends Phaser.Scene {
   #showPlayerCorners() {
     this.page = 'player-corners';
     const sides = this.matchSetup.playerSides ?? { J1: null, J2: null };
-    this.#beginPage('ESQUINAS DE INICIO', 430, 214);
+    this.#beginPage('ESQUINAS DE INICIO', 430, 190);
 
     this.#addText('JUGADOR 1', 142, { fontSize: '7px', color: '#d9a9ff' });
     this.#addButton((sides.J1 === 'left' ? '✓ ' : '') + 'IZQUIERDA', 160, () => {
@@ -720,23 +811,18 @@ export class MenuScene extends Phaser.Scene {
 
   #showTrainingColors() {
     this.page = 'training-colors';
-    this.matchSetup.trainingBackgroundColor ??= '#111111';
+    this.matchSetup.trainingBackgroundColor ??= '#555555';
     this.#beginPage('FONDO DE ENTRENAMIENTO', 430, 188);
-    this.#addText('COLOR SELECCIONADO: ' + this.matchSetup.trainingBackgroundColor.toUpperCase(), GAME_WIDTH / 2, 141, {
-      fontSize: '6px',
-      color: '#b7a9cb',
-    });
-
-    this.selectedIndex = TRAINING_COLORS.findIndex((item) => item.color === this.matchSetup.trainingBackgroundColor);
-    if (this.selectedIndex < 0) this.selectedIndex = TRAINING_COLORS.length;
-    const centers = [92, 166, 240, 314, 388];
+    const selectedColorIndex = TRAINING_COLORS.findIndex(
+      (item) => item.color === this.matchSetup.trainingBackgroundColor,
+    );
+    this.selectedIndex = selectedColorIndex;
+    const centers = [180, 300];
     TRAINING_COLORS.forEach(({ label, color }, index) => {
-      const row = index < 5 ? 0 : 1;
-      const column = index % 5;
-      this.#addColorOption(label, color, centers[column], 152 + row * 28);
+      this.#addColorOption(label, color, centers[index], 169);
     });
 
-    this.#addButton('ELEGIR OTRO COLOR', 210, () => this.#openNativeColorPicker(), {
+    this.#addButton('MÁS COLORES', 205, () => this.#showTrainingColorPicker(), {
       width: 170,
       fontSize: '7px',
     });
@@ -750,33 +836,336 @@ export class MenuScene extends Phaser.Scene {
     });
   }
 
-  #openNativeColorPicker() {
-    if (typeof document === 'undefined') return;
 
-    const input = document.createElement('input');
-    input.type = 'color';
-    input.value = this.matchSetup.trainingBackgroundColor ?? '#111111';
-    input.setAttribute('aria-label', 'Elegir color del fondo de entrenamiento');
-    input.style.cssText = [
-      'position:fixed',
-      'left:50%',
-      'top:50%',
-      'width:2px',
-      'height:2px',
-      'opacity:0',
-      'z-index:100000',
-    ].join(';');
-    document.body.appendChild(input);
+  #showTrainingColorPicker() {
+    this.page = 'training-color-picker';
+    const initialColor = this.matchSetup.trainingBackgroundColor ?? '#555555';
+    this.#beginPage('PERSONALIZAR COLOR', 430, 214);
+    this.trainingColorPicker = {
+      color: initialColor.toLowerCase(),
+      hex: initialColor.slice(1).toUpperCase(),
+      hsv: hexToHsv(initialColor),
+      hexEditing: false,
+      replaceHexOnType: false,
+      palette: {
+        x: 155,
+        y: this.#mapPanelY(176),
+        width: 238,
+        height: 78,
+      },
+      hueBar: {
+        x: 155,
+        y: this.#mapPanelY(219),
+        width: 238,
+        height: 10,
+      },
+    };
 
-    const cleanup = () => input.remove();
-    input.addEventListener('change', () => {
-      this.matchSetup.trainingBackgroundColor = input.value.toLowerCase();
-      cleanup();
-      if (this.scene.isActive()) this.#showTrainingColors();
-    }, { once: true });
-    input.addEventListener('cancel', cleanup, { once: true });
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanup);
-    input.click();
+    this.#addText('SATURACIÓN / BRILLO', 155, 145, {
+      fontSize: '6px',
+      color: '#c9b7dc',
+    });
+    this.#addText('VISTA PREVIA', 366, 145, {
+      fontSize: '6px',
+      color: '#c9b7dc',
+    });
+    this.#addText('TONO', 155, 207, {
+      fontSize: '6px',
+      color: '#c9b7dc',
+    });
+    this.#addText('CÓDIGO HEX', 366, 188, {
+      fontSize: '6px',
+      color: '#c9b7dc',
+    });
+
+    const { palette, hueBar } = this.trainingColorPicker;
+    this.trainingPickerPaletteGraphics = this.add.graphics();
+    this.trainingPickerHueGraphics = this.add.graphics();
+    this.ui.add([this.trainingPickerPaletteGraphics, this.trainingPickerHueGraphics]);
+
+    const paletteHit = this.add.rectangle(
+      palette.x, palette.y, palette.width, palette.height, 0xffffff, 0,
+    ).setInteractive({ useHandCursor: true });
+    const updatePalette = (pointer) => this.#updateTrainingPickerFromPalette(pointer);
+    paletteHit.on('pointerdown', updatePalette);
+    paletteHit.on('pointermove', (pointer) => {
+      if (pointer.isDown) updatePalette(pointer);
+    });
+    this.ui.add(paletteHit);
+
+    const hueHit = this.add.rectangle(
+      hueBar.x, hueBar.y, hueBar.width, hueBar.height + 8, 0xffffff, 0,
+    ).setInteractive({ useHandCursor: true });
+    const updateHue = (pointer) => this.#updateTrainingPickerHue(pointer);
+    hueHit.on('pointerdown', updateHue);
+    hueHit.on('pointermove', (pointer) => {
+      if (pointer.isDown) updateHue(pointer);
+    });
+    this.ui.add(hueHit);
+
+    const previewY = this.#mapPanelY(168);
+    this.trainingPickerPreviewFrame = this.add.rectangle(366, previewY, 116, 56, 0x0d0a17, 1)
+      .setStrokeStyle(1, 0xd3a66d, 1);
+    this.trainingPickerPreview = this.add.rectangle(366, previewY, 108, 48, hexToColorNumber(initialColor), 1)
+      .setStrokeStyle(1, 0xf0dfbd, 0.75);
+    this.ui.add([this.trainingPickerPreviewFrame, this.trainingPickerPreview]);
+
+    const hexFieldY = this.#mapPanelY(207);
+    this.trainingPickerHexFrame = this.add.rectangle(366, hexFieldY, 116, 25, 0x171222, 1)
+      .setStrokeStyle(1, 0x76618f, 1);
+    this.trainingPickerHexText = this.add.text(366, hexFieldY, '#' + this.trainingColorPicker.hex, {
+      fontFamily: 'monospace',
+      fontSize: readableFontSize('8px'),
+      color: '#fff0c9',
+      align: 'center',
+    }).setOrigin(0.5);
+    const hexHit = this.add.rectangle(366, hexFieldY, 116, 25, 0xffffff, 0)
+      .setInteractive({ useHandCursor: true });
+    hexHit.on('pointerdown', () => {
+      const picker = this.trainingColorPicker;
+      picker.hexEditing = true;
+      picker.replaceHexOnType = true;
+      this.#refreshTrainingColorPicker();
+    });
+    this.ui.add([this.trainingPickerHexFrame, this.trainingPickerHexText, hexHit]);
+
+    this.trainingPickerHint = this.#addText('CLIC EN HEX PARA ESCRIBIR', 366, 226, {
+      fontSize: '5px',
+      color: '#8f86ae',
+    });
+
+    this.#addButton('CANCELAR', 237, () => this.#cancelTrainingColorPicker(), {
+      width: 132,
+      x: 165,
+      fontSize: '7px',
+    });
+    this.#addButton('CONFIRMAR', 237, () => this.#confirmTrainingColorPicker(), {
+      width: 142,
+      x: 315,
+      fontSize: '7px',
+    });
+
+    this.trainingPickerKeyHandler = (event) => this.#handleTrainingPickerKeyboard(event);
+    this.input.keyboard.on('keydown', this.trainingPickerKeyHandler);
+    this.trainingPickerShutdownHandler = () => this.#clearTrainingPickerKeyboard();
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.trainingPickerShutdownHandler);
+    this.#refreshTrainingColorPicker();
+  }
+
+  #drawTrainingPickerPalette() {
+    const picker = this.trainingColorPicker;
+    if (!picker || !this.trainingPickerPaletteGraphics) return;
+    const { x, y, width, height } = picker.palette;
+    const columns = 24;
+    const rows = 12;
+    const cellWidth = width / columns;
+    const cellHeight = height / rows;
+    const graphics = this.trainingPickerPaletteGraphics;
+    graphics.clear();
+
+    for (let row = 0; row < rows; row += 1) {
+      const value = 1 - row / (rows - 1);
+      for (let column = 0; column < columns; column += 1) {
+        const saturation = column / (columns - 1);
+        graphics.fillStyle(hexToColorNumber(hsvToHex({
+          h: picker.hsv.h,
+          s: saturation,
+          v: value,
+        })), 1);
+        graphics.fillRect(
+          x - width / 2 + column * cellWidth,
+          y - height / 2 + row * cellHeight,
+          cellWidth + 0.6,
+          cellHeight + 0.6,
+        );
+      }
+    }
+
+    const markerX = x - width / 2 + picker.hsv.s * width;
+    const markerY = y - height / 2 + (1 - picker.hsv.v) * height;
+    graphics.lineStyle(3, 0x110d1b, 1);
+    graphics.strokeRect(markerX - 5, markerY - 5, 10, 10);
+    graphics.lineStyle(1, 0xffffff, 1);
+    graphics.strokeRect(markerX - 4, markerY - 4, 8, 8);
+    graphics.lineStyle(1, 0xe2c58f, 1);
+    graphics.strokeRect(x - width / 2, y - height / 2, width, height);
+  }
+
+  #drawTrainingPickerHue() {
+    const picker = this.trainingColorPicker;
+    if (!picker || !this.trainingPickerHueGraphics) return;
+    const { x, y, width, height } = picker.hueBar;
+    const graphics = this.trainingPickerHueGraphics;
+    const segments = 48;
+    const segmentWidth = width / segments;
+    graphics.clear();
+
+    for (let index = 0; index < segments; index += 1) {
+      graphics.fillStyle(hexToColorNumber(hsvToHex({
+        h: (index / segments) * 360,
+        s: 1,
+        v: 1,
+      })), 1);
+      graphics.fillRect(
+        x - width / 2 + index * segmentWidth,
+        y - height / 2,
+        segmentWidth + 0.5,
+        height,
+      );
+    }
+
+    const markerX = x - width / 2 + (picker.hsv.h / 360) * width;
+    graphics.lineStyle(3, 0x110d1b, 1);
+    graphics.lineBetween(markerX, y - height / 2 - 3, markerX, y + height / 2 + 3);
+    graphics.lineStyle(1, 0xffffff, 1);
+    graphics.lineBetween(markerX, y - height / 2 - 2, markerX, y + height / 2 + 2);
+    graphics.lineStyle(1, 0xe2c58f, 1);
+    graphics.strokeRect(x - width / 2, y - height / 2, width, height);
+  }
+
+  #refreshTrainingColorPicker() {
+    const picker = this.trainingColorPicker;
+    if (!picker) return;
+    this.#drawTrainingPickerPalette();
+    this.#drawTrainingPickerHue();
+    this.trainingPickerPreview?.setFillStyle(hexToColorNumber(picker.color), 1);
+    this.trainingPickerHexText?.setText(
+      (picker.hexEditing ? 'EDITAR ' : '') +
+      '#' + picker.hex.padEnd(6, '_'),
+    );
+    this.trainingPickerHexFrame?.setStrokeStyle(
+      1,
+      picker.hexEditing ? 0xf0bd72 : 0x76618f,
+      1,
+    );
+    this.trainingPickerHint?.setText(
+      picker.hexEditing ? 'ESCRIBÍ 6 DÍGITOS · ENTER' : 'CLIC EN HEX PARA ESCRIBIR',
+    );
+    this.trainingPickerHint?.setColor(picker.hexEditing ? '#f0bd72' : '#8f86ae');
+  }
+
+  #applyTrainingPickerHsv(hsv) {
+    const picker = this.trainingColorPicker;
+    if (!picker) return;
+    picker.hsv = {
+      h: ((hsv.h % 360) + 360) % 360,
+      s: clamp(hsv.s, 0, 1),
+      v: clamp(hsv.v, 0, 1),
+    };
+    picker.color = hsvToHex(picker.hsv);
+    picker.hex = picker.color.slice(1).toUpperCase();
+    picker.hexEditing = false;
+    picker.replaceHexOnType = false;
+    this.#refreshTrainingColorPicker();
+  }
+
+  #applyTrainingPickerHex(hex) {
+    const picker = this.trainingColorPicker;
+    if (!picker || !/^#[\da-f]{6}$/i.test(hex)) return;
+    picker.color = hex.toLowerCase();
+    picker.hex = hex.slice(1).toUpperCase();
+    picker.hsv = hexToHsv(picker.color);
+    picker.replaceHexOnType = false;
+    this.#refreshTrainingColorPicker();
+  }
+
+  #updateTrainingPickerFromPalette(pointer) {
+    const picker = this.trainingColorPicker;
+    if (!picker) return;
+    const { x, y, width, height } = picker.palette;
+    this.#applyTrainingPickerHsv({
+      ...picker.hsv,
+      s: (clamp(pointer.x, x - width / 2, x + width / 2) - (x - width / 2)) / width,
+      v: 1 - (clamp(pointer.y, y - height / 2, y + height / 2) - (y - height / 2)) / height,
+    });
+  }
+
+  #updateTrainingPickerHue(pointer) {
+    const picker = this.trainingColorPicker;
+    if (!picker) return;
+    const { x, width } = picker.hueBar;
+    const progress = (clamp(pointer.x, x - width / 2, x + width / 2) - (x - width / 2)) / width;
+    this.#applyTrainingPickerHsv({ ...picker.hsv, h: progress * 360 });
+  }
+
+  #handleTrainingPickerKeyboard(event) {
+    if (this.page !== 'training-color-picker') return;
+    const picker = this.trainingColorPicker;
+    if (!picker) return;
+
+    if (event.key === 'Escape') {
+      event.preventDefault?.();
+      this.#cancelTrainingColorPicker();
+      return;
+    }
+
+    if (picker.hexEditing) {
+      if (event.key === 'Enter') {
+        event.preventDefault?.();
+        if (picker.hex.length === 6) {
+          picker.hexEditing = false;
+          picker.replaceHexOnType = false;
+          this.#refreshTrainingColorPicker();
+        } else {
+          this.trainingPickerHint?.setText('COMPLETÁ LOS 6 DÍGITOS HEX');
+          this.trainingPickerHint?.setColor('#ff9b9b');
+        }
+        return;
+      }
+      if (event.key === 'Backspace') {
+        event.preventDefault?.();
+        if (picker.replaceHexOnType) {
+          picker.hex = '';
+          picker.replaceHexOnType = false;
+        } else {
+          picker.hex = picker.hex.slice(0, -1);
+        }
+        this.#refreshTrainingColorPicker();
+        return;
+      }
+      if (/^[\da-f]$/i.test(event.key) && (picker.replaceHexOnType || picker.hex.length < 6)) {
+        event.preventDefault?.();
+        picker.hex = (picker.replaceHexOnType ? '' : picker.hex) + event.key.toUpperCase();
+        picker.replaceHexOnType = false;
+        if (picker.hex.length === 6) this.#applyTrainingPickerHex('#' + picker.hex);
+        else this.#refreshTrainingColorPicker();
+        return;
+      }
+      if (event.key.length === 1) event.preventDefault?.();
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault?.();
+      this.#moveSelection(-1);
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault?.();
+      this.#moveSelection(1);
+    } else if (event.key === 'Enter') {
+      event.preventDefault?.();
+      this.#activateSelection();
+    }
+  }
+
+  #clearTrainingPickerKeyboard() {
+    if (this.trainingPickerKeyHandler && this.input?.keyboard) {
+      this.input.keyboard.off('keydown', this.trainingPickerKeyHandler);
+    }
+    this.trainingPickerKeyHandler = null;
+    if (this.trainingPickerShutdownHandler) {
+      this.events.off(Phaser.Scenes.Events.SHUTDOWN, this.trainingPickerShutdownHandler);
+    }
+    this.trainingPickerShutdownHandler = null;
+  }
+
+  #confirmTrainingColorPicker() {
+    if (!this.trainingColorPicker) return;
+    this.matchSetup.trainingBackgroundColor = this.trainingColorPicker.color;
+    this.#showTrainingColors();
+  }
+
+  #cancelTrainingColorPicker() {
+    this.#showTrainingColors();
   }
 
   #showStages(page = 0) {

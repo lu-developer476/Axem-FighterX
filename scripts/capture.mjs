@@ -51,8 +51,12 @@ await shot('01c-menu-carrera');
 await tap('Escape'); // CARRERA → JUGAR
 await tap('Enter'); // JUGAR → COMBATE
 await tap('ArrowDown'); // Jugador vs Jugador
-await tap('Enter');
-await tap('Enter'); // Definitivo → primer selector
+await tap('Enter'); // Abrir el menú de formatos
+await tap('ArrowDown'); // DEFINITIVO → RONDAS
+await tap('Enter'); // Abrir el modal independiente de rondas
+await shot('01d-modal-rondas');
+await tap('Escape'); // RONDAS → MODO
+await tap('Enter'); // DEFINITIVO → primer selector
 await shot('02-modal-seleccion-personaje');
 await tap('Enter'); // J1 elige Axem → selector de J2
 await wait(120);

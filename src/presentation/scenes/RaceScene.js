@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
+import raceBikeGifUrl from '../../../art/source/sprites/results/male/orange/bike.gif?url';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { AVAILABLE_RANGER_VARIANTS, getCounterpartSelection } from '../../domain/rangers/rangerVariants.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
@@ -100,6 +101,9 @@ export class RaceScene extends Phaser.Scene {
       restart: Phaser.Input.Keyboard.KeyCodes.R,
     });
 
+    this.add.dom(GAME_WIDTH - 38, 66).createFromHTML(
+      '<img src="' + raceBikeGifUrl + '" alt="Axem en motocicleta" style="width:52px;height:52px;object-fit:contain;image-rendering:pixelated;">',
+    ).setDepth(90);
     this.background = this.add.graphics().setDepth(0);
     this.track = this.add.graphics().setDepth(10);
     this.scenery = [];

@@ -126,7 +126,7 @@ export function selectStageMusicTrack(stageId, tracks = MUSIC_TRACKS) {
   );
   const generic = tracks.filter((track) => !isMenuTrack(track) && !stageScoped.includes(track));
   if (generic.length) return generic[stageIndex % generic.length];
-  return selectMenuMusicTrack(tracks);
+  return null;
 }
 
 export function getMenuMusicTrack() {
@@ -192,10 +192,11 @@ export function playMenuMusic(scene) {
 }
 
 export function playStageMusic(scene, stageId) {
-  const explicitCombatTrack = selectMusicForMode('combat');
-  playMusic(scene, explicitCombatTrack?.id ?? getStageMusicTrack(stageId));
+  const track = selectMusicForMode('combat') ?? selectStageMusicTrack(stageId);
+  playMusic(scene, track?.id ?? null);
 }
 
 export function playRaceMusic(scene, mode = 'motorcycleRace') {
-  playMusic(scene, selectMusicForMode(mode)?.id ?? getMenuMusicTrack());
+  const track = selectMusicForMode(mode);
+  playMusic(scene, track?.id ?? null);
 }

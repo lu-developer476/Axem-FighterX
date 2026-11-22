@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
+import landRunGifUrl from '../../../art/source/sprites/results/male/orange/run.gif?url';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
@@ -125,6 +126,9 @@ export class LandRaceScene extends Phaser.Scene {
     playRaceMusic(this, 'landRace');
     createLandRaceTextures(this);
     this.#drawStadium();
+    this.add.dom(GAME_WIDTH - 38, 68).createFromHTML(
+      '<img src="' + landRunGifUrl + '" alt="Axem corriendo" style="width:52px;height:52px;object-fit:contain;image-rendering:pixelated;">',
+    ).setDepth(90);
 
     this.distance = 0;
     this.countdownMs = COUNTDOWN_MS;

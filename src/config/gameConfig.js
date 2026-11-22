@@ -16,6 +16,7 @@ export const createGameConfig = (scenes) => ({
   antialias: false,
   antialiasGL: false,
   roundPixels: true,
+  dom: { createContainer: true },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

@@ -26,42 +26,28 @@ export class PauseMenuView {
     this.container.setVisible(true);
   }
 
-  showControls() {
+  showControls(player = null) {
     this.showingControls = true;
-    this.#beginPanel('TUTORIAL', 250);
-    this.#addText('J1 · TERRENO ← A · → D · ↑ W · ↓ S · VUELO SUBIR Q / BAJAR E', 76, {
-      fontSize: '8px',
-      color: '#d9a9ff',
-    });
-    this.#addText('J1 · HACHAZO F · TELETRANSPORTE G · DASH C · BLOQUEO V · ESQUIVA X · ESPECIAL Z', 96, {
-      fontSize: '7px',
-      color: '#d9a9ff',
-    });
-    this.#addText('J2 · TERRENO IZQ ← · DER → · ARRIBA ↑ · ABAJO ↓ · VUELO SUBIR I / BAJAR O', 116, {
-      fontSize: '7px',
-      color: '#ffc17e',
-    });
-    this.#addText('J2 · HACHAZO L · TELETRANSPORTE K · DASH H · BLOQUEO N · ESQUIVA J · ESPECIAL M', 136, {
-      fontSize: '7px',
-      color: '#ffc17e',
-    });
-    this.#addText('OBJETOS · VIDA · FURIA · RAPIDEZ · ESCUDO', 164, {
-      fontSize: '9px',
-      color: '#e7d6a8',
-    });
-    this.#addText('P · ABRIR / CERRAR PAUSA', 184, {
-      fontSize: '9px',
-      color: '#fff0c9',
-    });
-    this.#addText('R · REINICIAR EL COMBATE', 204, {
-      fontSize: '9px',
-      color: '#aaa0bd',
-    });
-    this.#addText('ESC · VOLVER AL COMBATE / CERRAR TUTORIAL', 222, {
-      fontSize: '8px',
-      color: '#aaa0bd',
-    });
-    this.#addButton('VOLVER A PAUSA', 242, () => this.showMenu(), { width: 178 });
+    this.#beginPanel(player ? 'TUTORIAL · ' + player : 'TUTORIAL', 238);
+    if (!player) {
+      this.#addText('SELECCIONÁ EL JUGADOR PARA CONSULTAR SUS CONTROLES', 108, {
+        fontSize: '8px', color: '#e7def5',
+      });
+      this.#addButton('J1', 151, () => this.showControls('J1'), { width: 210 });
+      this.#addButton('J2', 184, () => this.showControls('J2'), { width: 210 });
+      this.#addButton('VOLVER A PAUSA', 224, () => this.showMenu(), { width: 178 });
+    } else {
+      const isJ1 = player === 'J1';
+      const color = isJ1 ? '#d9a9ff' : '#ffc17e';
+      this.#addText(isJ1
+        ? 'TERRENO · IZQUIERDA A · DERECHA D · ARRIBA W · ABAJO S'
+        : 'TERRENO · IZQUIERDA ← · DERECHA → · ARRIBA ↑ · ABAJO ↓', 112, { fontSize: '8px', color });
+      this.#addText(isJ1 ? 'VUELO · SUBIR Q · BAJAR E' : 'VUELO · SUBIR I · BAJAR O', 143, { fontSize: '9px', color });
+      this.#addText(isJ1 ? 'HACHAZO F · TELETRANSPORTE G · DASH C' : 'HACHAZO L · TELETRANSPORTE K · DASH H', 174, { fontSize: '8px', color });
+      this.#addText(isJ1 ? 'BLOQUEO V · ESQUIVA X · ATAQUE ESPECIAL Z' : 'BLOQUEO N · ESQUIVA J · ATAQUE ESPECIAL M', 205, { fontSize: '8px', color });
+      this.#addText('OBJETOS · VIDA · FURIA · RAPIDEZ · ESCUDO', 225, { fontSize: '7px', color: '#e7d6a8' });
+      this.#addButton('VOLVER A JUGADORES', 244, () => this.showControls(), { width: 190 });
+    }
     this.container.setVisible(true);
   }
 

@@ -3,7 +3,7 @@ import { DASH, DODGE, FighterState, TIMINGS, attackTotalMs, specialAttackTotalMs
 import { PICKUP_TYPES, POWER_UPS } from './PowerUpPickup.js';
 
 /** Caja del cuerpo. La posición del luchador son sus pies, centrados. */
-export const BODY = Object.freeze({ width: 36, height: 84 });
+export const BODY = Object.freeze({ width: 30, height: 70 });
 
 const KNOCKBACK_FRICTION = 700; // px/s²
 const ATTACK_LUNGE = 0.9; // fracción de moveSpeed durante la fase activa

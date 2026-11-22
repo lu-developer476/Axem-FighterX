@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createFighter } from '../rangers/createFighter.js';
-import { ARENA } from '../arena/arena.js';
+import { ARENA, FLIGHT } from '../arena/arena.js';
+import { BODY } from './Fighter.js';
 import { FighterState, TIMINGS } from './FighterState.js';
 
 const make = (id = 'violet', x = 100) => createFighter(id, { x, y: ARENA.groundY });
@@ -73,11 +74,11 @@ describe('Fighter: movimiento y orientación', () => {
     const fighter = make();
     fighter.update({ ...idle, z: 1 }, 5000);
     expect(fighter.position.z).toBe(fighter.maxAltitude);
-    expect(fighter.position.z).toBeLessThanOrEqual(ARENA.groundY - 84 - 8 - fighter.stats.hoverAmplitude);
+    expect(fighter.position.z).toBeLessThanOrEqual(ARENA.groundY - BODY.height - FLIGHT.skyMargin - fighter.stats.hoverAmplitude);
 
     fighter.position.y = ARENA.minY;
     fighter.clampTo({ minX: ARENA.minX, maxX: ARENA.maxX, minY: ARENA.minY, maxY: ARENA.groundY });
-    expect(fighter.position.z).toBeLessThanOrEqual(ARENA.minY - 84 - 8 - fighter.stats.hoverAmplitude);
+    expect(fighter.position.z).toBeLessThanOrEqual(ARENA.minY - BODY.height - FLIGHT.skyMargin - fighter.stats.hoverAmplitude);
   });
 
   it('la levitación puede tocar el suelo y elevarse dentro de su amplitud', () => {

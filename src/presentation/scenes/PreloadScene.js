@@ -36,26 +36,19 @@ export class PreloadScene extends Phaser.Scene {
       applyPointFilter(texture.key, texture);
     });
     this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x0b0818).setOrigin(0);
-    this.add.text(GAME_WIDTH / 2, 91, 'Axem FighterX', {
-      fontFamily: 'monospace',
-      fontSize: '28px',
-      color: '#f4d18b',
-      stroke: '#3b2149',
-      strokeThickness: 3,
-    }).setOrigin(0.5);
-    this.add.text(GAME_WIDTH / 2, 119, 'PREPARANDO EL COMBATE', {
+    this.add.text(GAME_WIDTH / 2, 105, 'PREPARANDO EL COMBATE', {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#b9afd2',
       letterSpacing: 2,
     }).setOrigin(0.5);
 
-    const status = this.add.text(GAME_WIDTH / 2, 145, 'CARGANDO RECURSOS...', {
+    const status = this.add.text(GAME_WIDTH / 2, 131, 'CARGANDO RECURSOS...', {
       fontFamily: 'monospace',
       fontSize: '10px',
       color: '#8f86ae',
     }).setOrigin(0.5);
-    const percentage = this.add.text(GAME_WIDTH / 2, 177, '0%', {
+    const percentage = this.add.text(GAME_WIDTH / 2, 163, '0%', {
       fontFamily: 'monospace',
       fontSize: '10px',
       color: '#f4d18b',
@@ -66,13 +59,13 @@ export class PreloadScene extends Phaser.Scene {
       const progress = Phaser.Math.Clamp(value, 0, 1);
       progressBar.clear();
       progressBar.fillStyle(0x241b3b, 1);
-      progressBar.fillRect(137, 159, 206, 7);
+      progressBar.fillRect(137, 145, 206, 7);
       progressBar.lineStyle(1, 0x75638f, 1);
-      progressBar.strokeRect(137, 159, 206, 7);
+      progressBar.strokeRect(137, 145, 206, 7);
       progressBar.fillStyle(0xd68b65, 1);
-      progressBar.fillRect(140, 162, 200 * progress, 1);
+      progressBar.fillRect(140, 148, 200 * progress, 1);
       progressBar.fillStyle(0xf3c878, 1);
-      progressBar.fillRect(140, 163, 200 * progress, 1);
+      progressBar.fillRect(140, 149, 200 * progress, 1);
       percentage.setText(Math.round(progress * 100) + '%');
     };
 
@@ -115,6 +108,7 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create() {
+    document.title = 'Súper Axem Rangers FighterX';
     createStageAssetTextures(this);
     createFxTextures(this);
     registerFxAnimations(this);

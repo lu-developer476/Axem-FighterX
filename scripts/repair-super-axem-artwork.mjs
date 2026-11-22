@@ -103,10 +103,10 @@ async function repairOrange() {
       outputPixels[offset + 2] = redRaw[offset + 2];
     }
 
-    // Une las máscaras en vez de sustituir la de Orange: no elimina ningún
-    // píxel visible del upload aunque haya pequeñas diferencias de contorno.
-    // La unión se comprueba después de codificar el PNG para evitar pérdidas.
-    outputPixels[offset + 3] = Math.max(oldOrangeAlpha, redAlpha);
+    // El alfa de Red no se usa: su referencia puede tener un canal de
+    // transparencia distinto o no equivalente. Orange conserva su alfa exacto.
+    // Solo se recuperan valores RGB del lineart negro en el dibujo original.
+    outputPixels[offset + 3] = oldOrangeAlpha;
   }
 
   const output = await sharp(Buffer.from(outputPixels), {
@@ -120,9 +120,9 @@ async function repairOrange() {
   }
   const verify = verifyDecoded.data;
   for (let offset = 0; offset < verify.length; offset += 4) {
-    const expectedAlpha = Math.max(orangeRaw[offset + 3], redRaw[offset + 3]);
+    const expectedAlpha = orangeRaw[offset + 3];
     if (verify[offset + 3] !== expectedAlpha) {
-      throw new Error('La máscara alfa combinada de Orange no se conservó.');
+      throw new Error('La transparencia original de Orange no se conservó.');
     }
   }
 
@@ -133,7 +133,7 @@ async function repairOrange() {
     restoredBlackAlpha + ' píxeles negros recuperados por alfa; ' +
     restoredBlackColor + ' valores negros de RGB restaurados de ' +
     referenceBlackPixels + ' píxeles negros de referencia; ' +
-    'alfa combinada sin descartar píxeles del upload.',
+    'transparencia original de Orange preservada exactamente.',
   );
 }
 

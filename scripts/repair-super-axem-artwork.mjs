@@ -8,8 +8,8 @@ const VIOLET_UPLOAD_COMMIT = '864c7e9fd8da25c0a1ab848bfdf59817f8f4c843';
 const ORANGE_PATH = 'art/source/sprites/results/male/orange/super-axem-ranger-orange.png';
 const VIOLET_PATH = 'art/source/sprites/results/female/violet/super-axem-ranger-violet.png';
 const RED_REFERENCE_PATH = 'art/source/sprites/references/axem-red/super-axem-red.png';
-const ORANGE_MASTER_PATH = 'art/source/sprites/references/axem-orange/super-axem-orange-upload.png';
-const VIOLET_MASTER_PATH = 'art/source/sprites/references/axem-violet/super-axem-violet-upload.png';
+const ORANGE_MASTER_PATH = 'art/source/sprites/results/male/orange/source/super-axem-orange-upload.png';
+const VIOLET_MASTER_PATH = 'art/source/sprites/results/female/violet/source/super-axem-violet-upload.png';
 
 async function readPreservedOriginal(filePath, commit, sourcePath) {
   try {

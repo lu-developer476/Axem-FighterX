@@ -42,8 +42,14 @@ await page.waitForSelector('canvas', { timeout: 15_000 });
 await wait(1500);
 await shot('01-inicio');
 
-// Comprueba el modal de selección doble para Jugador vs Jugador.
-await tap('Enter'); // Inicio → tipo de enfrentamiento
+// Comprueba los submenús JUGAR y CARRERA antes de iniciar el combate.
+await tap('Enter'); // Inicio → JUGAR
+await shot('01b-menu-jugar');
+await tap('ArrowDown'); // JUGAR → CARRERA
+await tap('Enter');
+await shot('01c-menu-carrera');
+await tap('Escape'); // CARRERA → JUGAR
+await tap('Enter'); // JUGAR → COMBATE
 await tap('ArrowDown'); // Jugador vs Jugador
 await tap('Enter');
 await tap('Enter'); // Definitivo → primer selector
@@ -67,7 +73,8 @@ await shot('03c-combate-espejo-j1-derecha');
 await tap('Escape'); // Volver al menú
 
 // Comprueba también el modal de dos participantes para IA vs IA.
-await tap('Enter');
+await tap('Enter'); // Inicio → JUGAR
+await tap('Enter'); // JUGAR → COMBATE
 await tap('ArrowDown');
 await tap('ArrowDown');
 await tap('Enter'); // IA vs IA
@@ -95,7 +102,8 @@ const stageShots = [
 ];
 
 for (let index = 0; index < stageShots.length; index++) {
-  await tap('Enter'); // Inicio → tipo de enfrentamiento
+  await tap('Enter'); // Inicio → JUGAR
+  await tap('Enter'); // JUGAR → COMBATE
   await tap('Enter'); // Jugador vs IA
   const combatModeIndex = index % 3;
   for (let down = 0; down < combatModeIndex; down++) await tap('ArrowDown');
@@ -119,7 +127,8 @@ for (let index = 0; index < stageShots.length; index++) {
 }
 
 // Comprueba el modo de entrenamiento y el fondo sólido predeterminado.
-await tap('Enter'); // Inicio → tipo de enfrentamiento
+await tap('Enter'); // Inicio → JUGAR
+await tap('Enter'); // JUGAR → COMBATE
 await tap('Enter'); // Jugador vs IA
 await tap('ArrowDown');
 await tap('ArrowDown');
@@ -138,7 +147,8 @@ await tap('Escape'); // Entrenamiento → menú
 await wait(180);
 
 // Inicia una partida completa en Ruinas de medianoche.
-await tap('Enter'); // Inicio → enfrentamiento
+await tap('Enter'); // Inicio → JUGAR
+await tap('Enter'); // JUGAR → COMBATE
 await tap('Enter'); // Jugador vs IA
 await tap('Enter'); // Definitivo
 await tap('Enter'); // Elegir Axem
@@ -209,7 +219,9 @@ await shot('23-reinicio');
 // Comprueba que la carrera terrestre está disponible desde el menú y que las animaciones responden.
 await tap('Escape'); // Combate → menú
 await wait(180);
-await tap('ArrowDown');
+await tap('Enter'); // Inicio → JUGAR
+await tap('ArrowDown'); // JUGAR → CARRERA
+await tap('Enter'); // Abrir modalidades de carrera
 await tap('ArrowDown'); // CARRERA TERRESTRE
 await tap('Enter');
 await wait(3200); // Cuenta regresiva
@@ -225,8 +237,10 @@ await tap('Escape');
 await wait(150);
 
 // Comprueba la carrera de motos: cuatro carriles, tres IA, obstáculos y nitro.
-await tap('ArrowDown'); // Menú → CARRERA AXEM
-await tap('Enter');
+await tap('Enter'); // Inicio → JUGAR
+await tap('ArrowDown'); // JUGAR → CARRERA
+await tap('Enter'); // Abrir modalidades de carrera
+await tap('Enter'); // CARRERA AXEM
 await tap('ArrowRight'); // J1 elige Axem Naranja masculino
 await shot('30-seleccion-axem-carrera-motos');
 await tap('Enter'); // Confirmar personaje elegido

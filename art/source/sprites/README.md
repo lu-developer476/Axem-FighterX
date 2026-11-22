@@ -472,7 +472,7 @@ El master masculino `references/axem-red/super-axem-red.png` y el resultado `res
 
 La misma regla incluye a la Ranger femenina Violeta: el master Pink y el resultado Violet usan **745 × 1372 px**. Cada familia conserva la proporción de su referencia; no se fuerza una relación de aspecto común entre el artwork masculino y el femenino.
 
-Los masters de `references/` son inmutables. Los uploads originales de Orange y Violet quedan preservados en `references/axem-orange/` y `references/axem-violet/`. `prepare-super-rangers.mjs` crea copias de trabajo en `public/generated/super-axem-source-male.png` y `public/generated/super-axem-source-female.png`, conservando el lienzo original. Los generadores de texturas y retratos consumen esas copias, no reescriben las referencias.
+Los masters de `references/` son inmutables y contienen únicamente las referencias base Red y Pink. Los uploads originales de Orange y Violet se conservan dentro de sus propias rutas de variante: `results/male/orange/source/super-axem-orange-upload.png` y `results/female/violet/source/super-axem-violet-upload.png`. `prepare-super-rangers.mjs` crea copias de trabajo en `public/generated/super-axem-source-male.png` y `public/generated/super-axem-source-female.png`, conservando el lienzo original. Los generadores de texturas y retratos consumen esas copias. Los uploads fuente están excluidos de la normalización automática.
 
 ### Qué se normaliza y qué se conserva
 

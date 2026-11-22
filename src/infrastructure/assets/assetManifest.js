@@ -13,10 +13,11 @@ export const sheetTextureKey = (rangerId, state, gender = genderForRanger(ranger
   'motion-' + gender + '-' + rangerId + '-' + state;
 
 /** Texturas laterales del menú: poses masculinas extraídas de Axem Red. */
-export const menuSpriteKeyFor = (rangerId) => 'menu-ranger-male-' + rangerId;
+export const menuSpriteKeyFor = (rangerId, gender = 'male') =>
+  'menu-ranger-' + gender + '-' + rangerId;
 
-export const menuSpriteUrlFor = (rangerId) =>
-  import.meta.env.BASE_URL + 'generated/menu-ranger-male-' + rangerId + '.png';
+export const menuSpriteUrlFor = (rangerId, gender = 'male') =>
+  import.meta.env.BASE_URL + 'generated/menu-ranger-' + gender + '-' + rangerId + '.png';
 
 export const maleAnimationKey = (rangerId, action) =>
   'axem-' + rangerId + '-' + action;

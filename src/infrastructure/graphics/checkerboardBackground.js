@@ -51,7 +51,7 @@ export function detectCheckerboardColors(data, width, height) {
   // Un contorno negro/gris oscuro puede ser lineart del personaje, no el fondo.
   // Los fondos oscuros saturados siguen siendo válidos; solo se rechaza el gris neutro.
   if (firstCoverage >= 0.65) {
-    if (brightness < 96 && chroma <= 48) {
+    if (brightness < 48 && chroma <= 24) {
       throw new Error(
         'El color dominante del contorno es demasiado oscuro para considerarlo fondo; ' +
         'se canceló la eliminación para proteger los detalles negros del personaje.',

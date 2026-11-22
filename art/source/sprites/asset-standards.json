@@ -16,7 +16,7 @@
       "alignment": "center",
       "families": {
         "male": {
-          "reference": "art/source/sprites/references/axem-red/super-axem-red.png",
+          "reference": "art/source/sprites/references/axem-red/super-axem-ranger-red.png",
           "result": "art/source/sprites/results/male/orange/super-axem-ranger-orange.png",
           "preparedSource": "public/generated/super-axem-source-male.png",
           "width": 857,

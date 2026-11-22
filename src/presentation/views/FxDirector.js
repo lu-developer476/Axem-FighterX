@@ -86,28 +86,28 @@ export class FxDirector {
   update(fighters, deltaMs) {
     for (const fighter of fighters) {
       if (fighter.state === FighterState.DASH) {
-        const elapsed = (this.dashTimers.get(fighter.id) ?? DASH_DUST_INTERVAL_MS) + deltaMs;
+        const elapsed = (this.dashTimers.get(fighter.combatantId) ?? DASH_DUST_INTERVAL_MS) + deltaMs;
         if (elapsed >= DASH_DUST_INTERVAL_MS) {
           const x = fighter.position.x - fighter.facing * 17;
           this.#play('dust', x, fighter.position.y - 5, { scale: 1.1, depth: FX_DEPTH - 10 });
           this.#playWhitePuff(x, fighter.position.y - 7, 0.12, 370);
           this.#scatter(x, fighter.position.y - 4, 2, FX_PARTICLES.rubble, 0xc5b49b, -fighter.facing);
-          this.dashTimers.set(fighter.id, 0);
-        } else this.dashTimers.set(fighter.id, elapsed);
-        this.dustTimers.set(fighter.id, DUST_INTERVAL_MS);
+          this.dashTimers.set(fighter.combatantId, 0);
+        } else this.dashTimers.set(fighter.combatantId, elapsed);
+        this.dustTimers.set(fighter.combatantId, DUST_INTERVAL_MS);
         continue;
       }
-      this.dashTimers.set(fighter.id, DASH_DUST_INTERVAL_MS);
+      this.dashTimers.set(fighter.combatantId, DASH_DUST_INTERVAL_MS);
       if (fighter.state !== FighterState.WALK) {
-        this.dustTimers.set(fighter.id, DUST_INTERVAL_MS);
+        this.dustTimers.set(fighter.combatantId, DUST_INTERVAL_MS);
         continue;
       }
-      const elapsed = (this.dustTimers.get(fighter.id) ?? 0) + deltaMs;
+      const elapsed = (this.dustTimers.get(fighter.combatantId) ?? 0) + deltaMs;
       if (elapsed >= DUST_INTERVAL_MS) {
         this.#play('dust', fighter.position.x - fighter.facing * 12, fighter.position.y - 6, { flipX: fighter.facing === 1, depth: FX_DEPTH - 10 });
         this.#stepParticles(fighter.position.x, fighter.position.y - 5);
-        this.dustTimers.set(fighter.id, 0);
-      } else this.dustTimers.set(fighter.id, elapsed);
+        this.dustTimers.set(fighter.combatantId, 0);
+      } else this.dustTimers.set(fighter.combatantId, elapsed);
     }
   }
 

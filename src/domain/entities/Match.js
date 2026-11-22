@@ -156,8 +156,8 @@ export class Match {
       attacker.hasHitThisAttack = true;
       events.push({
         type: 'hit',
-        attackerId: attacker.id,
-        targetId: target.id,
+        attackerId: attacker.combatantId,
+        targetId: target.combatantId,
         damage: target.lastDamageTaken,
         blocked: target.lastHitBlocked,
         x: point.x,
@@ -200,13 +200,13 @@ export class Match {
 
     if (this.hazardPhase === 'eruption') {
       for (const fighter of this.fighters) {
-        if (!fighter.isAlive || this.hazardHitIds.has(fighter.id)) continue;
+        if (!fighter.isAlive || this.hazardHitIds.has(fighter.combatantId)) continue;
         const insideVent = Math.abs(fighter.position.x - ventX) <= this.hazards.radiusX
           && Math.abs(fighter.position.y - this.arena.groundY) <= this.hazards.depthTolerance;
         const aboveEruption = (fighter.position.z ?? 0) >= this.hazards.safeAltitude;
         if (!insideVent || aboveEruption) continue;
 
-        this.hazardHitIds.add(fighter.id);
+        this.hazardHitIds.add(fighter.combatantId);
         const landed = fighter.takeHit({
           damage: this.hazards.damage,
           fromDirection: Math.sign(fighter.position.x - ventX) || 1,
@@ -260,7 +260,7 @@ export class Match {
           if (healed <= 0) continue;
           events.push({
             type: 'heal',
-            id: fighter.id,
+            id: fighter.combatantId,
             amount: healed,
             x: fighter.position.x,
             y: fighter.position.y - 42,
@@ -301,7 +301,7 @@ export class Match {
     const [a, b] = this.fighters;
     if (a.isAlive && b.isAlive) return;
     this.status = 'over';
-    this.winnerId = a.isAlive ? a.id : b.isAlive ? b.id : null;
+    this.winnerId = a.isAlive ? a.combatantId : b.isAlive ? b.combatantId : null;
     events.push({ type: 'match-over', winnerId: this.winnerId });
   }
 }

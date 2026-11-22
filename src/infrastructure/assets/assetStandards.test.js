@@ -69,6 +69,46 @@ describe('Estándares centrales de recursos gráficos', () => {
     });
   }
 
+  it('aplica transparencia y suavizado de borde a Orange sin alterar sus píxeles ni nitidez', async () => {
+    const family = ASSET_STANDARDS.categories.characterArtwork.families.male;
+    const edgeRule = PROCESSING_RULES.processedPolicy.artworkEdgeTreatment[
+      'male/orange/super-axem-ranger-orange.png'
+    ];
+    const [source, output] = await Promise.all([
+      sharp(absolute('art/source/sprites/results/male/orange/source/super-axem-orange-upload.png'))
+        .ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+      sharp(absolute(family.result)).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    ]);
+
+    expect([output.info.width, output.info.height]).toEqual([857, 1171]);
+    expect(edgeRule.edgeAlphaFloor).toBeGreaterThanOrEqual(216);
+    expect(edgeRule.preserveInteriorPixels).toBe(true);
+    expect(edgeRule.preserveRGB).toBe(true);
+    expect(edgeRule.resampling).toBe(false);
+    expect(edgeRule.blur).toBe(false);
+    expect(edgeRule.sharpen).toBe(false);
+
+    let transparentPixels = 0;
+    let softenedPixels = 0;
+    for (let offset = 0; offset < output.data.length; offset += 4) {
+      const alpha = output.data[offset + 3];
+      const sourceAlpha = source.data[offset + 3];
+      if (alpha === 0) transparentPixels += 1;
+      if (alpha > 0 && alpha < 255) {
+        softenedPixels += 1;
+        expect(alpha).toBeGreaterThanOrEqual(edgeRule.edgeAlphaFloor);
+      }
+      // La transformación actúa sobre alfa; RGB, resolución y bloques de píxel quedan intactos.
+      expect(Array.from(output.data.slice(offset, offset + 3)))
+        .toEqual(Array.from(source.data.slice(offset, offset + 3)));
+      if (sourceAlpha > 0 && alpha > 0) {
+        expect(alpha).toBeGreaterThanOrEqual(edgeRule.edgeAlphaFloor);
+      }
+    }
+    expect(transparentPixels).toBeGreaterThan(0);
+    expect(softenedPixels).toBeGreaterThan(0);
+  });
+
   it('hace que el Red derivado ocupe la misma caja visible que Orange', async () => {
     const family = ASSET_STANDARDS.categories.characterArtwork.families.male;
     const [master, orange, orangeBounds, redBounds] = await Promise.all([

@@ -29,9 +29,10 @@ import { resolveLandRaceAnimationSources } from '../../domain/race/landRaceAnima
 import { PauseMenuView } from '../views/PauseMenuView.js';
 import { STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseAssets.js';
+import { RACE_COURSE_ENVIRONMENT } from '../../infrastructure/assets/raceCourseEnvironment.js';
 import {
   createLoopingMapTexture,
-  createLoopingRaceTextures,
+  createCuratedRaceEnvironmentLayers,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
@@ -126,13 +127,12 @@ export class LandRaceScene extends Phaser.Scene {
           height: GAME_HEIGHT,
         })
       : null;
-    const environmentKeys = createLoopingRaceTextures(this, courseAssets.tilesets, {
-      prefix: courseTexturePrefix + '-environment',
-      trackTop: LAND_RACE_LANE_Y - 8,
-      patternWidth: 1024,
-      seed: 29,
-      transparentBackground: true,
-    });
+    const environmentLayers = createCuratedRaceEnvironmentLayers(
+      this,
+      courseAssets.tilesets,
+      RACE_COURSE_ENVIRONMENT.terrestrial,
+      { prefix: courseTexturePrefix + '-props' },
+    );
     this.stageLayers = [];
     if (mapKey) {
       this.stageLayers.push({
@@ -142,13 +142,12 @@ export class LandRaceScene extends Phaser.Scene {
         factor: 0.12,
       });
     }
-    const environmentSpeeds = [0.22, 0.34, 0.46];
-    environmentKeys.forEach((key, index) => {
+    environmentLayers.forEach(({ key, scrollFactor, alpha }, index) => {
       const layer = this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, key)
         .setOrigin(0)
-        .setDepth(-90 + index)
-        .setAlpha(0.88);
-      this.stageLayers.push({ layer, factor: environmentSpeeds[index] ?? 0.38 });
+        .setDepth(-92 + index)
+        .setAlpha(alpha);
+      this.stageLayers.push({ layer, factor: scrollFactor });
     });
 
     this.distance = 0;

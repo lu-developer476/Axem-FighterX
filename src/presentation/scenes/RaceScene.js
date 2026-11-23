@@ -7,9 +7,10 @@ import {
   resolveRaceCourseAssets,
   resolveRaceCourseObjects,
 } from '../../infrastructure/assets/raceCourseAssets.js';
+import { RACE_COURSE_ENVIRONMENT } from '../../infrastructure/assets/raceCourseEnvironment.js';
 import {
   createLoopingMapTexture,
-  createLoopingRaceTextures,
+  createCuratedRaceEnvironmentLayers,
   createTilesetObjectTextures,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
@@ -121,13 +122,12 @@ export class RaceScene extends Phaser.Scene {
       throw new Error('No se pudieron componer los cuatro mapas de Carrera Axem en el orden previsto.');
     }
     const courseTexturePrefix = 'bike-course-' + this.game.loop.frame;
-    const environmentKeys = createLoopingRaceTextures(this, raceTilesets, {
-      prefix: courseTexturePrefix + '-environment',
-      trackTop: 150,
-      patternWidth: 1024,
-      seed: 41,
-      transparentBackground: true,
-    });
+    const environmentLayers = createCuratedRaceEnvironmentLayers(
+      this,
+      raceTilesets,
+      RACE_COURSE_ENVIRONMENT.axem,
+      { prefix: courseTexturePrefix + '-props' },
+    );
     this.stageLayers = [{
       layer: this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, mapKey)
         .setOrigin(0)
@@ -135,13 +135,13 @@ export class RaceScene extends Phaser.Scene {
         .setAlpha(1),
       factor: MOTORCYCLE_WORLD_SCALE,
     }];
-    environmentKeys.forEach((key, index) => {
+    environmentLayers.forEach(({ key, scrollFactor, alpha }, index) => {
       this.stageLayers.push({
         layer: this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, key)
           .setOrigin(0)
-          .setDepth(-90 + index)
-          .setAlpha(0.72),
-        factor: 0.24 + index * 0.06,
+          .setDepth(-92 + index)
+          .setAlpha(alpha),
+        factor: scrollFactor,
       });
     });
     this.hud = this.add.graphics().setDepth(80);

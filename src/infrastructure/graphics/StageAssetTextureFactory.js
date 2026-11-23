@@ -120,152 +120,108 @@ export function createProceduralBackground(scene, asset, options = {}) {
  * Construye patrones largos a partir de tiles repetibles para usarlos como fondos
  * en movimiento. La carrera puede avanzar sin mover horizontalmente a los corredores.
  */
-export function createLoopingRaceTextures(scene, assets, {
-  prefix = 'race-loop',
-  trackTop = 140,
-  patternWidth = 1024,
-  seed = 1,
-  transparentBackground = false,
+export function createCuratedRaceEnvironmentLayers(scene, assets, groups, {
+  prefix = 'race-environment',
+  height = GAME_HEIGHT,
 } = {}) {
-  const available = (assets ?? []).filter((asset) => scene.textures.exists(asset.key));
-  return available.map((asset, index) => {
+  const assetsById = new Map((assets ?? []).map((asset) => [asset.id, asset]));
+  const preparedAssets = new Map();
+
+  const prepareAsset = (assetId) => {
+    if (preparedAssets.has(assetId)) return preparedAssets.get(assetId);
+    const asset = assetsById.get(assetId);
+    if (!asset) throw new Error('Falta el tileset ambiental "' + assetId + '".');
+    if (!scene.textures.exists(asset.key)) {
+      throw new Error('No se pudo cargar la hoja ambiental "' + assetId + '".');
+    }
+
     const source = scene.textures.get(asset.key).getSourceImage();
-    const tileWidth = asset.tileWidth ?? 32;
-    const tileHeight = asset.tileHeight ?? 32;
     const sourceCanvas = document.createElement('canvas');
     sourceCanvas.width = source.width;
     sourceCanvas.height = source.height;
     const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+    if (!sourceContext) throw new Error('No se pudo preparar el canvas de "' + assetId + '".');
     sourceContext.drawImage(source, 0, 0);
-    const sourcePixels = sourceContext.getImageData(0, 0, source.width, source.height).data;
+    const pixels = sourceContext.getImageData(0, 0, source.width, source.height).data;
     const backgroundColor = asset.backgroundColor && asset.backgroundColor !== 'auto'
       ? parseHexColor(asset.backgroundColor)
-      : detectCornerBackground(sourcePixels, source.width, source.height);
-    const tiles = findUsableTiles(sourcePixels, source.width, source.height, asset, backgroundColor);
-    if (!tiles.length) return null;
+      : detectCornerBackground(pixels, source.width, source.height);
+    const prepared = Object.freeze({ source, backgroundColor, width: source.width, height: source.height });
+    preparedAssets.set(assetId, prepared);
+    return prepared;
+  };
 
-    const width = Math.max(tileWidth * 8, Math.ceil(patternWidth / tileWidth) * tileWidth);
-    const key = prefix + '-' + index;
-    const palette = paletteFor(asset.id);
-    createCanvasTexture(scene, key, width, GAME_HEIGHT, (ctx) => {
-      const random = createRandom((seed + index * 7919) >>> 0);
-      const pick = () => tiles[Math.floor(random() * tiles.length)];
-      const columns = Math.floor(width / tileWidth);
-
-      if (index === 0 && !transparentBackground) {
-        const gradient = ctx.createLinearGradient(0, 0, 0, trackTop);
-        gradient.addColorStop(0, palette.skyTop);
-        gradient.addColorStop(1, palette.skyBottom);
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, GAME_HEIGHT);
-        drawFarHorizon(ctx, width, trackTop, palette, random);
-      }
-
-      // La primera y última columna de cada fila comparten el mismo tile:
-      // al repetirse el TileSprite no aparece una costura vertical.
-      for (let y = 42; y + tileHeight <= trackTop; y += tileHeight) {
-        const seamTile = pick();
-        for (let column = 0; column < columns; column += 1) {
-          const tile = column === 0 || column === columns - 1 ? seamTile : pick();
-          ctx.globalAlpha = index === 0 ? 0.24 + random() * 0.2 : 0.34 + random() * 0.28;
-          drawTile(ctx, source, tile, tileWidth, tileHeight, column * tileWidth, y);
-        }
-      }
-
-      if (index === 0 && !transparentBackground) {
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = palette.ground;
-        ctx.fillRect(0, trackTop, width, GAME_HEIGHT - trackTop);
-        ctx.fillStyle = palette.accent;
-        ctx.fillRect(0, trackTop, width, 2);
-        for (let y = trackTop + tileHeight; y < GAME_HEIGHT; y += tileHeight) {
-          const seamTile = pick();
-          for (let column = 0; column < columns; column += 1) {
-            const tile = column === 0 || column === columns - 1 ? seamTile : pick();
-            ctx.globalAlpha = 0.14 + random() * 0.12;
-            drawTile(ctx, source, tile, tileWidth, tileHeight, column * tileWidth, y);
-          }
-        }
-      }
-
-      ctx.globalAlpha = 1;
-      if (backgroundColor) removeKeyedBackground(ctx, width, GAME_HEIGHT, backgroundColor);
-    });
-    return key;
-  }).filter(Boolean);
-}
-
-/**
- * Crea una superficie de carrera repetible usando tiles reales del escenario.
- * Cada carril toma motivos y paleta del tileset correspondiente.
- */
-export function createTilesetRaceTrackTexture(scene, assets, {
-  key = 'race-track-tileset', width = 1024, laneCount = 2, laneHeight = 60, seed = 1,
-} = {}) {
-  const prepared = (assets ?? [])
-    .filter((asset) => scene.textures.exists(asset.key))
-    .map((asset) => {
-      const sourceImage = scene.textures.get(asset.key).getSourceImage();
-      const sourceCanvas = document.createElement('canvas');
-      sourceCanvas.width = sourceImage.width;
-      sourceCanvas.height = sourceImage.height;
-      const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
-      sourceContext.drawImage(sourceImage, 0, 0);
-      const pixels = sourceContext.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height).data;
-      const backgroundColor = asset.backgroundColor && asset.backgroundColor !== 'auto'
-        ? parseHexColor(asset.backgroundColor)
-        : detectCornerBackground(pixels, sourceCanvas.width, sourceCanvas.height);
-      const tiles = findUsableTiles(pixels, sourceCanvas.width, sourceCanvas.height, asset, backgroundColor);
-      if (!tiles.length) return null;
-      if (backgroundColor) removeKeyedBackground(sourceContext, sourceCanvas.width, sourceCanvas.height, backgroundColor);
-      return {
-        source: sourceCanvas, tiles, tileWidth: asset.tileWidth ?? 32, tileHeight: asset.tileHeight ?? 32,
-        palette: paletteFor(asset.id), seed: stableTrackSeed(asset.id),
-      };
-    })
-    .filter(Boolean);
-
-  if (!prepared.length) return null;
-  const safeWidth = Math.max(256, Math.floor(width));
-  const safeLaneCount = Math.max(1, Math.floor(laneCount));
-  const safeLaneHeight = Math.max(16, Math.floor(laneHeight));
-
-  createCanvasTexture(scene, key, safeWidth, safeLaneCount * safeLaneHeight, (ctx) => {
-    ctx.imageSmoothingEnabled = false;
-    for (let lane = 0; lane < safeLaneCount; lane += 1) {
-      const tileset = prepared[lane % prepared.length];
-      const random = createRandom((seed + tileset.seed + lane * 7919) >>> 0);
-      const pick = () => tileset.tiles[Math.floor(random() * tileset.tiles.length)];
-      const top = lane * safeLaneHeight;
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = tileset.palette.ground;
-      ctx.fillRect(0, top, safeWidth, safeLaneHeight);
-      for (let y = 0; y < safeLaneHeight; y += tileset.tileHeight) {
-        for (let x = 0; x < safeWidth; x += tileset.tileWidth) {
-          ctx.globalAlpha = 0.88 + random() * 0.12;
-          drawTile(ctx, tileset.source, pick(), tileset.tileWidth, tileset.tileHeight, x, top + y);
-        }
-      }
-      ctx.globalAlpha = 0.36;
-      ctx.fillStyle = tileset.palette.ground;
-      ctx.fillRect(0, top, safeWidth, 3);
-      ctx.fillStyle = tileset.palette.accent;
-      ctx.globalAlpha = 0.88;
-      ctx.fillRect(0, top, safeWidth, 1);
-      ctx.fillRect(0, top + safeLaneHeight - 1, safeWidth, 1);
+  return Object.freeze((groups ?? []).map((group, groupIndex) => {
+    if (!group.id || !Array.isArray(group.placements) || group.placements.length === 0) {
+      throw new TypeError('Cada capa ambiental necesita un ID y al menos un objeto.');
     }
-    ctx.globalAlpha = 1;
-  });
-  return key;
-}
+    const width = Math.max(256, Math.floor(group.patternWidth ?? 1800));
+    const key = prefix + '-' + group.id;
 
-function stableTrackSeed(value = '') {
-  let hash = 2166136261;
-  for (const character of String(value)) {
-    hash ^= character.charCodeAt(0);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
+    for (const item of group.placements) {
+      const source = prepareAsset(item.assetId);
+      const rect = item.source ?? {};
+      const target = item.target ?? {};
+      const sourceValues = [rect.x, rect.y, rect.width, rect.height];
+      const targetValues = [target.x, target.y, target.width, target.height];
+      if (!sourceValues.every(Number.isFinite) ||
+          !targetValues.every(Number.isFinite) ||
+          !sourceValues.every(Number.isInteger) ||
+          rect.x < 0 || rect.y < 0 || rect.width < 1 || rect.height < 1 ||
+          rect.x + rect.width > source.width || rect.y + rect.height > source.height ||
+          target.x < 0 || target.y < 0 || target.width < 1 || target.height < 1 ||
+          !Number.isFinite(item.alpha ?? 1) || (item.alpha ?? 1) < 0 || (item.alpha ?? 1) > 1) {
+        throw new RangeError('Recorte o ubicación inválida para el objeto "' + item.kind + '".');
+      }
+    }
+
+    createCanvasTexture(scene, key, width, height, (ctx) => {
+      ctx.clearRect(0, 0, width, height);
+      for (const item of group.placements) {
+        const prepared = prepareAsset(item.assetId);
+        const { x: sourceX, y: sourceY, width: sourceWidth, height: sourceHeight } = item.source;
+        const crop = document.createElement('canvas');
+        crop.width = sourceWidth;
+        crop.height = sourceHeight;
+        const cropContext = crop.getContext('2d', { willReadFrequently: true });
+        if (!cropContext) throw new Error('No se pudo recortar el objeto "' + item.kind + '".');
+        cropContext.imageSmoothingEnabled = false;
+        cropContext.drawImage(
+          prepared.source,
+          sourceX, sourceY, sourceWidth, sourceHeight,
+          0, 0, sourceWidth, sourceHeight,
+        );
+        if (prepared.backgroundColor) {
+          removeKeyedBackground(cropContext, sourceWidth, sourceHeight, prepared.backgroundColor);
+        }
+
+        const target = item.target;
+        ctx.save();
+        ctx.globalAlpha = item.alpha ?? 1;
+        if (item.flipX) {
+          ctx.translate(target.x + target.width, target.y);
+          ctx.scale(-1, 1);
+          ctx.drawImage(crop, 0, 0, sourceWidth, sourceHeight, 0, 0, target.width, target.height);
+        } else {
+          ctx.drawImage(
+            crop,
+            0, 0, sourceWidth, sourceHeight,
+            target.x, target.y, target.width, target.height,
+          );
+        }
+        ctx.restore();
+      }
+    });
+
+    return Object.freeze({
+      id: group.id,
+      key,
+      scrollFactor: group.scrollFactor,
+      alpha: group.alpha ?? 1,
+      patternWidth: width,
+      groupIndex,
+    });
+  }));
 }
 
 /** Compone mapas terminados en una panorámica horizontal para las carreras. */

@@ -123,7 +123,7 @@ export class PauseMenuView {
     const panelTop = panelY - height / 2;
     const panelBottom = panelY + height / 2;
 
-    const shade = this.scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.78)
+    const shade = this.scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.96)
       .setInteractive();
     const shadow = this.scene.add.rectangle(GAME_WIDTH / 2 + 3, panelY + 3, this.panelWidth, height, 0x06040b, 0.96);
     const panel = this.scene.add.rectangle(GAME_WIDTH / 2, panelY, this.panelWidth, height, 0x100d1e, 0.99)

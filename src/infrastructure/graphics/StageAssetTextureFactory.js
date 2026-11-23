@@ -125,7 +125,7 @@ export function createLoopingRaceTextures(scene, assets, {
   patternWidth = 1024,
   seed = 1,
 } = {}) {
-  const available = (assets ?? []).filter((asset) => scene.textures.exists(asset.key)).slice(0, 2);
+  const available = (assets ?? []).filter((asset) => scene.textures.exists(asset.key));
   return available.map((asset, index) => {
     const source = scene.textures.get(asset.key).getSourceImage();
     const tileWidth = asset.tileWidth ?? 32;

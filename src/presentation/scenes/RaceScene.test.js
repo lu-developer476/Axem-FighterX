@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { RACE_DISTANCE_OPTIONS } from '../../domain/race/raceCourseRules.js';
 import {
   MOTORCYCLE_LANE_BASELINES,
   MOTORCYCLE_LANE_COUNT,
@@ -7,6 +8,9 @@ import {
 } from '../../domain/race/motorcycleRaceRules.js';
 
 describe('Carrera de motos de cuatro carriles', () => {
+  it('permite elegir una distancia total de pista continua', () => {
+    expect(RACE_DISTANCE_OPTIONS.map(({ value }) => value)).toEqual([1000, 2000, 5000, 10000]);
+  });
   it('reserva cuatro carriles con profundidad visual creciente', () => {
     expect(MOTORCYCLE_LANE_COUNT).toBe(4);
     expect(MOTORCYCLE_LANE_BASELINES).toHaveLength(4);

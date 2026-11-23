@@ -19,15 +19,16 @@ import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
 
-const RUNNER_LANES = Object.freeze([170, 218]);
-const PLAYER_RUNNER_X = 116;
-const RIVAL_RUNNER_X = 164;
+const RUNNER_LANES = Object.freeze([151, 181, 211, 241]);
+const RUNNER_LANE_SCALES = Object.freeze([0.68, 0.78, 0.9, 1.02]);
+const PLAYER_RUNNER_X = 76;
+const RIVAL_RUNNER_X = 76;
 const LAND_OBJECT_SCALE = 0.14;
 const LAND_RACE_LOOP_DISTANCE = 1200;
 const RUNNER_FOOT_OFFSET = 13;
 const COUNTDOWN_MS = 3000;
 const STAMINA_MAX = 100;
-const LAND_RACE_TILESET_IDS = Object.freeze(['cave-tileset', 'cave1-tileset']);
+const LAND_RACE_TILESET_IDS = Object.freeze(['cave-tileset', 'cave1-tileset', 'cave2-tileset']);
 
 export const LAND_RACE_OBSTACLES = Object.freeze([
   Object.freeze({ distance: 190, action: 'jump', type: 'hurdle' }),
@@ -158,7 +159,7 @@ export class LandRaceScene extends Phaser.Scene {
       this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, key)
         .setOrigin(0)
         .setDepth(-100 + index)
-        .setAlpha(index === 0 ? 0.9 : 0.58),
+        .setAlpha(index === 0 ? 0.96 : 0.68),
     );
     this.sceneryTextures = createTilesetStampTextures(this, raceTilesets, {
       prefix: 'land-prop-' + this.game.loop.frame,
@@ -206,8 +207,8 @@ export class LandRaceScene extends Phaser.Scene {
 
     this.#drawStadium();
     this.hudGraphics = this.add.graphics().setDepth(80);
-    this.playerName = this.#text('J1 · AXEM NARANJA', PLAYER_RUNNER_X, 34, '#ffc58e', 6);
-    this.rivalName = this.#text('RIVAL · AXEM RED', RIVAL_RUNNER_X, 34, '#ff9b9b', 6);
+    this.playerName = this.#text('J1 · AXEM NARANJA', 118, 34, '#ffc58e', 6);
+    this.rivalName = this.#text('RIVAL · AXEM RED', 360, 34, '#ff9b9b', 6);
     this.status = this.#text('ELEGÍ LA DISTANCIA', GAME_WIDTH / 2, 120, '#fff0c9', 12);
     this.staminaLabel = this.#text('RESISTENCIA', GAME_WIDTH / 2, 70, '#b8e7f4', 5);
     this.controls = this.#text(
@@ -250,8 +251,9 @@ export class LandRaceScene extends Phaser.Scene {
     this.finished = false;
     this.selectingDistance = false;
     this.pauseMenu.hide();
-    this.player = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[0], true);
-    this.rival = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[1], false);
+    this.player = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[1], true);
+    this.rival = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[2], false);
+    this.rival.distance = 60;
     this.runners = [this.player, this.rival];
     this.#createTrackObjects();
     this.status.setText('3').setFontSize(24);
@@ -347,7 +349,13 @@ export class LandRaceScene extends Phaser.Scene {
     this.paused = true;
     this.tweens.pauseAll();
     this.anims.pauseAll();
-    this.runners.forEach((racer) => racer.gif?.setVisible(false));
+    this.runners.forEach((racer) => {
+      racer.gif?.setVisible(false);
+      racer.sprite?.setVisible(false);
+      racer.shadow?.setVisible(false);
+    });
+    this.playerName?.setVisible(false);
+    this.rivalName?.setVisible(false);
     this.pauseMenu.showMenu();
   }
 
@@ -357,14 +365,19 @@ export class LandRaceScene extends Phaser.Scene {
     this.pauseMenu.hide();
     this.tweens.resumeAll();
     this.anims.resumeAll();
-    this.runners.forEach((racer) => racer.gif?.setVisible(true));
+    this.runners.forEach((racer) => {
+      racer.gif?.setVisible(true);
+      racer.shadow?.setVisible(true);
+    });
+    this.playerName?.setVisible(true);
+    this.rivalName?.setVisible(true);
   }
 
   #drawStadium() {
     this.add.rectangle(GAME_WIDTH / 2, 143, GAME_WIDTH, 18, 0x326344).setDepth(2);
     this.add.rectangle(GAME_WIDTH / 2, 153, GAME_WIDTH, 5, 0x7a985d).setDepth(3);
-    this.add.rectangle(GAME_WIDTH / 2, 199, GAME_WIDTH, 98, 0x9c4c4d).setDepth(2);
-    this.add.rectangle(GAME_WIDTH / 2, 199, GAME_WIDTH, 92, 0xad5b56).setDepth(3);
+    this.add.rectangle(GAME_WIDTH / 2, 198, GAME_WIDTH, 132, 0x9c4c4d).setDepth(2);
+    this.add.rectangle(GAME_WIDTH / 2, 198, GAME_WIDTH, 126, 0xad5b56).setDepth(3);
     this.trackGraphics = this.add.graphics().setDepth(8);
     this.startLineGraphics = this.add.graphics().setDepth(18);
     this.#drawTrack();
@@ -374,39 +387,39 @@ export class LandRaceScene extends Phaser.Scene {
     const graphics = this.trackGraphics;
     graphics.clear();
     graphics.lineStyle(1, 0xf2dfc5, 0.75);
-    graphics.lineBetween(0, 194, GAME_WIDTH, 194);
-    graphics.lineBetween(0, 148, GAME_WIDTH, 148);
-    graphics.lineBetween(0, 244, GAME_WIDTH, 244);
-    for (let x = -28; x < GAME_WIDTH + 28; x += 28) {
-      const markX = x - this.trackOffset;
-      graphics.fillStyle(0xf4dfc2, 0.35).fillRect(markX, 171, 12, 1);
-      graphics.fillRect(markX + 12, 218, 12, 1);
+    for (let lane = 0; lane <= RUNNER_LANES.length; lane += 1) {
+      const y = 137 + lane * 29;
+      graphics.lineBetween(0, y, GAME_WIDTH, y);
     }
-
+    for (let lane = 0; lane < RUNNER_LANES.length; lane += 1) {
+      const y = RUNNER_LANES[lane];
+      for (let x = -28; x < GAME_WIDTH + 28; x += 28) {
+        const markX = x - this.trackOffset;
+        graphics.fillStyle(0xf4dfc2, 0.32).fillRect(markX, y + 7, 12, 1);
+      }
+    }
     this.startLineGraphics.clear();
-    const scroll = this.distance * LAND_OBJECT_SCALE;
-    const playerLineX = PLAYER_RUNNER_X - scroll;
-    const rivalLineX = RIVAL_RUNNER_X - scroll;
-    if (rivalLineX > -12) {
-      const playerFootLine = RUNNER_LANES[0] + RUNNER_FOOT_OFFSET;
-      const rivalFootLine = RUNNER_LANES[1] + RUNNER_FOOT_OFFSET;
-      this.startLineGraphics.lineStyle(3, 0xffedc6, 0.96);
-      this.startLineGraphics.lineBetween(playerLineX, playerFootLine, rivalLineX, rivalFootLine);
-      this.startLineGraphics.lineStyle(1, 0x483c42, 0.9);
-      this.startLineGraphics.lineBetween(playerLineX + 3, playerFootLine, rivalLineX + 3, rivalFootLine);
-    }
+    this.startLineGraphics.lineStyle(3, 0xffedc6, 0.96);
+    this.startLineGraphics.lineBetween(64, 137, 64, 253);
+    this.startLineGraphics.lineStyle(1, 0x483c42, 0.9);
+    this.startLineGraphics.lineBetween(68, 137, 68, 253);
   }
 
   #runnerX(racer) {
-    return racer.isPlayer ? PLAYER_RUNNER_X : RIVAL_RUNNER_X;
+    if (racer.isPlayer) return PLAYER_RUNNER_X;
+    const lead = Phaser.Math.Clamp((racer.distance - (this.player?.distance ?? 0)) * LAND_OBJECT_SCALE, 10, 34);
+    return RIVAL_RUNNER_X + lead;
   }
 
   #createRacer(rangerId, laneY, isPlayer) {
     const idleKey = spriteKeyFor(rangerId, genderForRanger(rangerId));
-    const runnerX = isPlayer ? PLAYER_RUNNER_X : RIVAL_RUNNER_X;
+    const laneIndex = RUNNER_LANES.indexOf(laneY);
+    const laneScale = RUNNER_LANE_SCALES[Math.max(0, laneIndex)];
+    const runnerX = isPlayer ? PLAYER_RUNNER_X : RIVAL_RUNNER_X + 10;
     const sprite = this.add.sprite(runnerX, laneY + RUNNER_FOOT_OFFSET, idleKey)
       .setOrigin(0.5, 1)
-      .setDepth(42);
+      .setScale(laneScale)
+      .setDepth(42 + laneIndex);
     const shadow = this.add.ellipse(runnerX, laneY + RUNNER_FOOT_OFFSET, 34, 6, 0x241b2a, 0.52)
       .setDepth(31);
 
@@ -430,13 +443,15 @@ export class LandRaceScene extends Phaser.Scene {
     const racerName = isPlayer ? 'Axem Naranja' : 'Axem Red';
     const racerGif = this.add.dom(runnerX, laneY - 28).createFromHTML(
       '<img src="' + animationSources.idle + '" alt="' + racerName + '" style="width:48px;height:68px;object-fit:contain;image-rendering:pixelated;pointer-events:none;">',
-    ).setDepth(44);
+    ).setScale(laneScale).setDepth(44 + laneIndex);
     const racer = {
       rangerId,
       gender: genderForRanger(rangerId),
       animationSources,
       gif: racerGif,
       laneY,
+      laneIndex,
+      laneScale,
       isPlayer,
       sprite,
       shadow,
@@ -672,12 +687,17 @@ export class LandRaceScene extends Phaser.Scene {
       lift = Math.sin(progress * Math.PI) * 27;
     }
 
-    racer.sprite.setPosition(Math.round(x), Math.round(groundY - lift - movingBob));
-    racer.gif?.setPosition(Math.round(x), Math.round(groundY - lift - movingBob - 31));
+    racer.sprite.setPosition(Math.round(x), Math.round(groundY - lift - movingBob))
+      .setDepth(42 + racer.laneIndex)
+      .setScale(racer.laneScale * (racer.actionMode === 'roll' ? 0.9 : 1));
+    racer.gif?.setPosition(Math.round(x), Math.round(groundY - lift - movingBob - 31))
+      .setDepth(44 + racer.laneIndex);
     racer.shadow.setPosition(Math.round(x), groundY + 1);
     racer.shadow.setScale(1 - lift / 90, 1);
-    if (racer.actionMode === 'roll') racer.sprite.setScale(0.9, 0.68);
-    else racer.sprite.setScale(racer.mode === 'run' || racer.mode === 'walk' ? 0.82 : 0.9);
+    const poseScale = racer.actionMode === 'roll'
+      ? 0.9
+      : (racer.mode === 'run' || racer.mode === 'walk' ? 0.82 : 0.9);
+    racer.sprite.setScale(racer.laneScale * poseScale, racer.laneScale * (racer.actionMode === 'roll' ? 0.68 : 1));
   }
 
   #drawHud() {

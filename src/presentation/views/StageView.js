@@ -5,7 +5,7 @@ import {
   getStage,
 } from '../../infrastructure/assets/stageAssetManifest.js';
 
-/** Dibuja el mapa o el fondo procedural que corresponde al escenario seleccionado. */
+/** Dibuja el mapa seleccionado; entrenamiento reutiliza practice-zone y aplica el color elegido. */
 export class StageView {
   constructor(scene, stageId = DEFAULT_STAGE_ID, { backgroundColor = null } = {}) {
     this.scene = scene;
@@ -15,21 +15,6 @@ export class StageView {
     this.solidBackground = typeof backgroundColor === 'string' && /^#[\da-f]{6}$/i.test(backgroundColor)
       ? backgroundColor
       : null;
-
-    if (this.solidBackground) {
-      scene.add.rectangle(
-        0,
-        0,
-        ARENA.width,
-        GAME_HEIGHT,
-        Number.parseInt(this.solidBackground.slice(1), 16),
-        1,
-      )
-        .setOrigin(0, 0)
-        .setScrollFactor(0)
-        .setDepth(-100);
-      return;
-    }
 
     const textureKey = this.stage?.backgroundKey ?? this.stage?.proceduralKey;
     if (!textureKey || !scene.textures.exists(textureKey)) {
@@ -51,6 +36,14 @@ export class StageView {
       .setDisplaySize(displayWidth, displayHeight)
       .setScrollFactor(1)
       .setDepth(-100);
+
+    if (this.solidBackground) {
+      scene.add.rectangle(0, 0, ARENA.width, GAME_HEIGHT,
+        Number.parseInt(this.solidBackground.slice(1), 16), 0.34)
+        .setOrigin(0, 0)
+        .setScrollFactor(1)
+        .setDepth(-99);
+    }
   }
 
   handleEvents() {}

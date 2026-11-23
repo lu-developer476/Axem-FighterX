@@ -105,9 +105,10 @@ export class FightScene extends Phaser.Scene {
 
     this.updateMatch = new UpdateMatch({ match: this.match, inputs });
 
-    this.stage = new StageView(this, this.stageDefinition.id, {
-      backgroundColor: this.matchSetup.trainingBackgroundColor ?? null,
-    });
+    this.stage = new StageView(this,
+      this.matchSetup.trainingBackgroundColor ? 'practice-zone' : this.stageDefinition.id,
+      { backgroundColor: this.matchSetup.trainingBackgroundColor ?? null },
+    );
     this.pickupView = new PickupView(this);
     this.views = this.match.fighters.map((fighter) => new FighterView(this, fighter));
     this.fx = new FxDirector(this);

@@ -27,6 +27,7 @@ describe('Variantes canónicas de Axem Rangers', () => {
     }
     expect(isAvailableRangerVariant('orange', 'female')).toBe(false);
     expect(isAvailableRangerVariant('violet', 'male')).toBe(false);
+    expect(isAvailableRangerVariant('red', 'male')).toBe(false);
   });
 
   for (const variant of variants) {
@@ -66,6 +67,36 @@ describe('Variantes canónicas de Axem Rangers', () => {
       '../../../art/source/sprites/results/female/orange',
       import.meta.url,
     )))).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('genera GIF propios del Axem Red desde su atlas y sus referencias originales', async () => {
+    const actions = [
+      'idle', 'walk', 'run', 'dash', 'jump', 'punch-01', 'punch-02', 'punch-03',
+      'hit', 'hurt', 'teleport', 'battle-pose', 'bike', 'double-axe',
+    ];
+    for (const action of actions) {
+      const file = fileURLToPath(new URL(
+        `../../../art/source/sprites/results/male/red/${action}.gif`,
+        import.meta.url,
+      ));
+      const metadata = await sharp(file, { animated: true }).metadata();
+      expect(metadata.format, action).toBe('gif');
+      expect(metadata.width, action).toBe(ASSET_STANDARDS.categories.actionGif.width);
+      expect(metadata.pageHeight, action).toBe(ASSET_STANDARDS.categories.actionGif.height);
+      expect(metadata.pages, action).toBeGreaterThan(1);
+      expect(metadata.hasAlpha, action).toBe(true);
+    }
+    const redRun = fileURLToPath(new URL(
+      '../../../art/source/sprites/results/male/red/run.gif', import.meta.url,
+    ));
+    const orangeRun = fileURLToPath(new URL(
+      '../../../art/source/sprites/results/male/orange/run.gif', import.meta.url,
+    ));
+    const [redFrame, orangeFrame] = await Promise.all([
+      sharp(redRun, { page: 0, pages: 1 }).png().toBuffer(),
+      sharp(orangeRun, { page: 0, pages: 1 }).png().toBuffer(),
+    ]);
+    expect(redFrame.equals(orangeFrame)).toBe(false);
   });
 
   it('mantiene los GIF de carrera y combate del Axem Naranja masculino', async () => {

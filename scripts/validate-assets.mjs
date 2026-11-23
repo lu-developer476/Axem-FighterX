@@ -103,21 +103,31 @@ async function validateAtlasSheets() {
   }
 }
 
+async function collectActionGifs(directory, recursive = false) {
+  const entries = await fs.readdir(directory, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isFile() && path.extname(entry.name).toLowerCase() === '.gif') {
+      files.push(fullPath);
+    } else if (recursive && entry.isDirectory()) {
+      files.push(...await collectActionGifs(fullPath, true));
+    }
+  }
+  return files;
+}
+
 async function validateActionGifs() {
   const category = standards.categories.actionGif;
   const directory = absolute(category.directory);
-  const entries = await fs.readdir(directory, { withFileTypes: true });
-  const files = entries
-    .filter((entry) => entry.isFile() && path.extname(entry.name).toLowerCase() === '.gif')
-    .map((entry) => entry.name)
-    .sort();
+  const files = (await collectActionGifs(directory, category.recursive === true)).sort();
 
   if (!files.length) {
     throw new Error('No se encontraron GIF de acción en ' + category.directory + '.');
   }
 
   for (const filename of files) {
-    const relativePath = path.join(category.directory, filename).split(path.sep).join('/');
+    const relativePath = path.relative(ROOT, filename).split(path.sep).join('/');
     const metadata = await sharp(absolute(relativePath), { animated: true, failOn: 'error' }).metadata();
     assertEqual(metadata.format, 'gif', relativePath + ' formato');
     assertEqual(metadata.width, category.width, relativePath + ' ancho');
@@ -185,7 +195,7 @@ async function main() {
 
   console.log(
     'Recursos gráficos validados: artwork, texturas, retratos, atlas y ' +
-    gifCount + ' GIF de acción. Los recursos sin tamaño fijo conservan su resolución nativa.',
+    gifCount + ' GIF de acción de Orange y Red. Los recursos sin tamaño fijo conservan su resolución nativa.',
   );
 }
 

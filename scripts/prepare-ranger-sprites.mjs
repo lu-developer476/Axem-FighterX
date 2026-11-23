@@ -630,6 +630,39 @@ async function extractGifFrames(file, gender, targetHue) {
   return { frames, width: metadata.width, height: pageHeight, delay: metadata.delay, loop: metadata.loop ?? 0 };
 }
 
+async function readRawGifFrames(file) {
+  const metadata = await sharp(file, { animated: true }).metadata();
+  const count = Math.max(1, metadata.pages || 1);
+  const frames = [];
+  for (let page = 0; page < count; page += 1) {
+    const decoded = await sharp(file, { page, pages: 1 })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const pixels = new Uint8ClampedArray(
+      decoded.data.buffer,
+      decoded.data.byteOffset,
+      decoded.data.byteLength,
+    );
+    removeSpriteBackground({
+      data: pixels,
+      width: decoded.info.width,
+      height: decoded.info.height,
+    }, {
+      tolerance: ATLAS_SOURCES.male.tolerance,
+      minBorderCoverage: 0.08,
+    });
+    frames.push(await sharp(Buffer.from(pixels), {
+      raw: {
+        width: decoded.info.width,
+        height: decoded.info.height,
+        channels: 4,
+      },
+    }).png().toBuffer());
+  }
+  return { frames, delay: metadata.delay, loop: metadata.loop ?? 0 };
+}
+
 async function makeHorizontalStrip(frames, width, height) {
   const layers = frames.map((input, index) => ({
     input,
@@ -1644,6 +1677,79 @@ async function buildGender(gender, allowedColors) {
   }
 }
 
+async function buildRedRangerGifs() {
+  const sourceDirectory = SOURCE('sprites', 'references', 'axem-red');
+  const sourceSheet = path.join(sourceDirectory, 'axem-red-spritesheet.png');
+  const decoded = await sharp(sourceSheet)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const pixels = new Uint8ClampedArray(
+    decoded.data.buffer,
+    decoded.data.byteOffset,
+    decoded.data.byteLength,
+  );
+
+  // Axem Red keeps its original red palette; only the teal source background is removed.
+  removeSpriteBackground({
+    data: pixels,
+    width: decoded.info.width,
+    height: decoded.info.height,
+  }, {
+    tolerance: ATLAS_SOURCES.male.tolerance,
+    minBorderCoverage: 0.08,
+  });
+  const keyedSheet = await sharp(Buffer.from(pixels), {
+    raw: {
+      width: decoded.info.width,
+      height: decoded.info.height,
+      channels: 4,
+    },
+  }).png().toBuffer();
+
+  const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
+  const sequenceIndex = await writeMaleSequences('red', keyedSheet, manifest.male.groups);
+  const groups = new Map();
+  for (const entry of sequenceIndex) {
+    groups.set(entry.id, await readMaleSequenceFrames('red', entry));
+  }
+  const frames = (...ids) => ids.flatMap((id) => {
+    const group = groups.get(id);
+    if (!group) throw new Error('No existe ' + id + ' en el atlas original de Axem Red.');
+    return group;
+  });
+
+  await writeMaleSequenceGif(frames('group-01', 'group-02'), 'red', 'idle', 105);
+  await writeMaleSequenceGif(frames('group-02'), 'red', 'walk', 105);
+  await writeMaleSequenceGif(frames('group-03'), 'red', 'punch-01', 90);
+  await writeMaleSequenceGif(frames('group-04'), 'red', 'punch-02', 90);
+  await writeMaleSequenceGif(frames('group-05'), 'red', 'punch-03', 90);
+  await writeMaleSequenceGif(
+    frames('group-09', 'group-08', 'group-07', 'group-06'),
+    'red',
+    'battle-pose',
+    115,
+  );
+  await writeMaleSequenceGif(frames('group-10'), 'red', 'run', 80);
+  await writeMaleSequenceGif(frames('group-11'), 'red', 'dash', 80);
+  await writeMaleSequenceGif(frames('group-12'), 'red', 'jump', 100);
+  await writeMaleSequenceGif(groups.get('group-13').slice(0, 2), 'red', 'hit', 120);
+  await writeMaleSequenceGif(groups.get('group-13').slice(3, 6), 'red', 'hurt', 150);
+  await writeMaleSequenceGif(frames('group-14'), 'red', 'teleport', 100);
+
+  // Bike and double-axe masters are also Red originals, never recolored Orange files.
+  for (const [action, sourceName] of [
+    ['bike', 'axem-ranger-bike.gif'],
+    ['double-axe', 'axem-ranger-double-axe.gif'],
+  ]) {
+    const animation = await readRawGifFrames(path.join(sourceDirectory, sourceName));
+    await writeMaleAnimation(animation.frames, 'red', action, animation.delay, animation.loop);
+  }
+
+  // These sheets are temporary inputs for GIF assembly, not distributed game assets.
+  await fs.rm(RESULTS('male', 'red', 'sequences'), { recursive: true, force: true });
+}
+
 async function main() {
   await fs.mkdir(GENERATED, { recursive: true });
   const retiredSpriteDirectories = [
@@ -1688,6 +1794,7 @@ async function main() {
   ));
   await buildGender('male', ['orange']);
   await buildGender('female', ['violet']);
+  await buildRedRangerGifs();
   await buildMenuSuperPoses();
   // Las tiras auxiliares solo existen durante la generación; no quedan versionadas.
   await Promise.all(retiredSpriteDirectories.map((directory) =>

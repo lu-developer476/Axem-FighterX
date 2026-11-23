@@ -1,6 +1,6 @@
 export const MOTORCYCLE_LANE_COUNT = 4;
 export const MOTORCYCLE_LANE_BASELINES = Object.freeze([151, 181, 211, 241]);
-export const MOTORCYCLE_LANE_SCALES = Object.freeze([0.62, 0.76, 0.9, 1.04]);
+export const MOTORCYCLE_LANE_SCALES = Object.freeze([0.64, 0.8, 0.96, 1.12]);
 export const MOTORCYCLE_RACE_OBSTACLES = Object.freeze([
   Object.freeze({ kind: 'barrier', lane: 0, distance: 420 }),
   Object.freeze({ kind: 'oil', lane: 2, distance: 610 }),

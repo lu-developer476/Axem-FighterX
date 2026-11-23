@@ -9,7 +9,7 @@ Hay dos géneros, cada uno con su hoja de referencia. **Violet** y **Orange** so
 
 La orientación nativa se conserva en todas las imágenes de cada fuente: Axem Red masculino, incluidos el retrato base y los GIF de acción, apunta a la derecha; Axem Pink femenino apunta a la izquierda. El renderizador espeja cada sprite solo cuando el luchador necesita mirar hacia el lado contrario.
 
-Las referencias nunca se modifican. La pose suelta femenina `axem-pink-pose.png` y los GIF de Axem Red (`axem-ranger-run.gif`, `axem-ranger-bike.gif`, `axem-ranger-double-axe.gif`) se recolorean con el mismo proceso. Las referencias sueltas femeninas `axem-pink-battle-pose.png` y `axem-pink-levitate.png` ya no forman parte del pipeline y se eliminaron.
+Las referencias nunca se modifican. Los GIF de Axem Red se generan en su paleta original: las secuencias de carrera y combate se extraen de `axem-red-spritesheet.png`, mientras que bicicleta y doble hacha parten de sus GIF maestros. Orange y Violet siguen siendo derivados cromáticos independientes; Red no se obtiene recoloreando a Orange. Las referencias sueltas femeninas `axem-pink-battle-pose.png` y `axem-pink-levitate.png` ya no forman parte del pipeline y se eliminaron.
 
 ## Cómo se generan los resultados
 
@@ -18,13 +18,15 @@ Las referencias nunca se modifican. La pose suelta femenina `axem-pink-pose.png`
 ```
 results/
   male/
-    {violet,orange}/
-      spritesheet.png                     hoja de Axem Red, mismas coordenadas que la referencia
-      run.png  bike.png  double-axe.png   tiras PNG para el pipeline del juego
-      run.gif  bike.gif  double-axe.gif   GIF originales de carrera, bicicleta y doble hacha
-      pose.gif punch-01.gif punch-02.gif punch-03.gif battle-pose.gif
-      run.gif dash.gif jump.gif hit.gif hurt.gif teleport.gif (Violet y Orange)
-      sequences/group-01.png … group-14.png + index.json
+    orange/
+      spritesheet.png  run.png  bike.png  double-axe.png
+      run.gif  bike.gif  double-axe.gif  pose.gif  battle-pose.gif
+      dash.gif  jump.gif  hit.gif  hurt.gif  teleport.gif
+      punch-01.gif  punch-02.gif  punch-03.gif
+    red/
+      idle.gif  walk.gif  run.gif  dash.gif  jump.gif
+      punch-01.gif  punch-02.gif  punch-03.gif  battle-pose.gif
+      hit.gif  hurt.gif  teleport.gif  bike.gif  double-axe.gif
   female/
     axem-ranger-{violet,orange}.png     referencias femeninas apiladas
     {violet,orange}/
@@ -39,7 +41,7 @@ La hoja femenina `spritesheet.png` conserva su corrección manual de paleta cuan
 
 El `charge.gif` masculino conserva los tres cuadros de preparación y luego sostiene el quinto (último) sprite de `sequences/group-09.png` mientras anima cuatro fotogramas de la hoja `super-saiyan-aura.webp`. El aura que aparece en el GIF es la misma hoja que se muestra en `super-saiyan-aura.svg`: un aro de llamas doradas envolventes, con borde blanco-amarillo, centro transparente y chispas ascendentes. Cada celda de 64×64 px se amplía con nearest-neighbor y se coloca detrás del ranger, sin recolorearla ni recortar sus llamas laterales. Es arte original creado para Axem-FighterX con estética Super Saiyan de Dragon Ball Z, no un recorte de sprites oficiales; la procedencia está documentada en `art/source/effects/dragon-ball-style/SOURCE.md`.
 
-Los GIF masculinos de bicicleta y doble hacha conservan sus lienzos de **150 × 100 px**. Los 11 GIF base de cada variante masculina se generan desde las secuencias clasificadas; todos los GIF de acción usan lienzos de **150 × 100 px**, transparencia y escalado nearest-neighbor para conservar el pixel-art. El pivote de los pies se centra horizontalmente y mantiene una línea de suelo fija para evitar saltos entre fotogramas.
+Los GIF masculinos de bicicleta y doble hacha conservan sus lienzos de **150 × 100 px**. Los GIF de Orange se generan desde las secuencias clasificadas y el pack propio de Red se compone desde el atlas original sin recolorear. Todos los GIF de acción usan lienzos de **150 × 100 px**, transparencia y escalado nearest-neighbor para conservar el pixel-art. El pivote de los pies se centra horizontalmente y mantiene una línea de suelo fija para evitar saltos entre fotogramas.
 
 
 ## Regla global de transparencia y pixel art

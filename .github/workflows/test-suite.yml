@@ -26,7 +26,7 @@ jobs:
           cache: npm
 
       - name: Instalar dependencias
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       # Ejecuta las pruebas del flujo modificado sin depender de la generación de sprites.
       - name: Ejecutar pruebas de controles y asignaciones

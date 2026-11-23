@@ -8,6 +8,16 @@ import PROCESSING_RULES from '../../../art/source/sprites/processing-rules.json'
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const absolute = (relativePath) => path.join(ROOT, relativePath);
+async function collectGifFiles(directory, recursive = false) {
+  const entries = await fs.readdir(directory, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isFile() && entry.name.toLowerCase().endsWith('.gif')) files.push(fullPath);
+    else if (recursive && entry.isDirectory()) files.push(...await collectGifFiles(fullPath, true));
+  }
+  return files;
+}
 async function visibleBounds(relativePath) {
   const { data, info } = await sharp(absolute(relativePath)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   let left = info.width, top = info.height, right = -1, bottom = -1;
@@ -20,8 +30,14 @@ async function visibleBounds(relativePath) {
 }
 
 describe('Estándares centrales de recursos gráficos', () => {
-  it('no crea una carpeta results/male/red para el artwork de Red', async () => {
-    await expect(fs.access(absolute('art/source/sprites/results/male/red'))).rejects.toThrow();
+  it('mantiene los GIF de Red separados del artwork de los personajes jugables', async () => {
+    const directory = absolute('art/source/sprites/results/male/red');
+    const entries = await fs.readdir(directory, { withFileTypes: true });
+    const gifs = entries.filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.gif'));
+    const pngs = entries.filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.png'));
+    expect(gifs.length).toBeGreaterThan(0);
+    expect(pngs).toHaveLength(0);
+    expect(entries.every((entry) => entry.isFile())).toBe(true);
     expect(ASSET_STANDARDS.categories.characterArtwork.families.male).not.toHaveProperty('derivedArtwork');
   });
 
@@ -151,10 +167,10 @@ describe('Estándares centrales de recursos gráficos', () => {
 
   it('mantiene los GIF de acción en su lienzo estándar y con sus cuadros', async () => {
     const category = ASSET_STANDARDS.categories.actionGif;
-    const files = (await fs.readdir(absolute(category.directory))).filter((name) => name.toLowerCase().endsWith('.gif'));
+    const files = await collectGifFiles(absolute(category.directory), category.recursive === true);
     expect(files.length).toBeGreaterThan(0);
-    for (const name of files) {
-      const metadata = await sharp(absolute(path.join(category.directory, name)), { animated: true }).metadata();
+    for (const file of files) {
+      const metadata = await sharp(file, { animated: true }).metadata();
       expect(metadata.format).toBe('gif');
       expect(metadata.width).toBe(category.width);
       expect(metadata.pageHeight ?? metadata.height).toBe(category.height);

@@ -16,9 +16,13 @@ describe('Descubrimiento automático de escenarios', () => {
     expect(STAGE_TILESET_ASSETS.length).toBeGreaterThanOrEqual(1);
     expect(STAGE_MAP_ASSETS.every(({ url, key }) => typeof url === 'string' && key.startsWith('stage-map-'))).toBe(true);
     expect(STAGE_TILESET_ASSETS.every(({ url, key }) => typeof url === 'string' && key.startsWith('stage-tileset-'))).toBe(true);
-    expect(STAGE_MAP_ASSETS.map(({ filename }) => filename)).toContain('castle.png');
-    expect(STAGE_MAP_ASSETS.map(({ filename }) => filename)).toContain('cave-1.png');
-    expect(STAGE_TILESET_ASSETS.map(({ filename }) => filename)).toContain('cave1-tileset.png');
+    const mapFilenames = STAGE_MAP_ASSETS.map(({ filename }) => filename);
+    const tilesetFilenames = STAGE_TILESET_ASSETS.map(({ filename }) => filename);
+    expect(mapFilenames).toContain('cave-1.png');
+    expect(mapFilenames).toContain('cave-2.png');
+    expect(mapFilenames).not.toContain('castle.png');
+    expect(tilesetFilenames).toContain('cave1-tileset.png');
+    expect(tilesetFilenames).not.toContain('cave-tileset.png');
   });
 
   it('mantiene separados archivos con el mismo nombre en carpetas distintas y prioriza PNG por variante', () => {

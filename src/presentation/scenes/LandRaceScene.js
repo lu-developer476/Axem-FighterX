@@ -27,12 +27,8 @@ import redRaceDashGifUrl from '../../../art/source/sprites/references/axem-red/d
 import redRaceJumpGifUrl from '../../../art/source/sprites/references/axem-red/jump.gif?url';
 import { resolveLandRaceAnimationSources } from '../../domain/race/landRaceAnimationRules.js';
 import { PauseMenuView } from '../views/PauseMenuView.js';
-import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseAssets.js';
-import {
-  createLoopingMapTexture,
-  createLoopingRaceTextures,
-} from '../../infrastructure/graphics/StageAssetTextureFactory.js';
+import { createLoopingMapTexture } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
@@ -116,24 +112,16 @@ export class LandRaceScene extends Phaser.Scene {
     playRaceMusic(this, 'landRace');
     this.session = new RaceSession({ countdownDurationMs: COUNTDOWN_MS });
 
-    const { maps: courseMaps } = resolveRaceCourseAssets(
-      'terrestrial',
-      STAGE_MAP_ASSETS,
-      STAGE_TILESET_ASSETS,
-    );
+    const courseAssets = resolveRaceCourseAssets('terrestrial', [], []);
     this.courseObjectSpecs = LAND_RACE_OBJECT_SPECS;
     this.courseObjectTextures = createLandRaceObjectTextures(this);
-    const mapKey = createLoopingMapTexture(this, courseMaps, {
-      key: 'land-course-' + this.game.loop.frame,
-      height: GAME_HEIGHT,
-    });
-    const worldKeys = mapKey
-      ? [mapKey]
-      : createLoopingRaceTextures(this, raceTilesets, {
-          prefix: 'land-world-' + this.game.loop.frame,
-          trackTop: 146,
-          seed: 601,
-        });
+    const mapKey = this.textures.exists(courseAssets.backgroundKey)
+      ? createLoopingMapTexture(this, [{ key: courseAssets.backgroundKey }], {
+          key: 'land-course-' + this.game.loop.frame,
+          height: GAME_HEIGHT,
+        })
+      : null;
+    const worldKeys = mapKey ? [mapKey] : [];
     this.stageLayers = worldKeys.map((key, index) =>
       this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, key)
         .setOrigin(0)
@@ -504,7 +492,7 @@ export class LandRaceScene extends Phaser.Scene {
       LAND_OBJECT_SCALE,
     );
     this.stageLayers.forEach((layer, index) => {
-      layer.tilePositionX = cameraDistance * (index === 0 ? LAND_OBJECT_SCALE : 0.28);
+      layer.tilePositionX = cameraDistance * (index === 0 ? 0.22 : 0.28);
     });
   }
 

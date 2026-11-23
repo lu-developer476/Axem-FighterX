@@ -4,8 +4,9 @@ export const RACE_COURSE_ASSETS = Object.freeze({
     tilesetIds: Object.freeze(['sidescroll-tileset']),
   }),
   terrestrial: Object.freeze({
-    mapIds: Object.freeze(['sidescroll-1', 'sidescroll-2', 'sidescroll-3', 'sidescroll-4']),
-    tilesetIds: Object.freeze(['sidescroll-tileset']),
+    mapIds: Object.freeze([]),
+    tilesetIds: Object.freeze([]),
+    backgroundKey: 'land-course-parallax',
   }),
 });
 
@@ -32,6 +33,7 @@ export function resolveRaceCourseAssets(courseId, mapAssets, tilesetAssets) {
   return Object.freeze({
     maps: Object.freeze(resolve(course.mapIds, mapAssets, 'mapa')),
     tilesets: Object.freeze(resolve(course.tilesetIds, tilesetAssets, 'tileset')),
+    backgroundKey: course.backgroundKey ?? null,
   });
 }
 

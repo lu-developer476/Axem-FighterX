@@ -26,11 +26,11 @@ describe('Asignación de escenarios y objetos de carrera', () => {
     expect(assets.tilesets.map(({ id }) => id)).toEqual(['sidescroll-tileset']);
   });
 
-  it('asigna mapas exteriores y tileset pixel platformer a Carrera Terrestre', () => {
+  it('usa el fondo parallax gratuito para Carrera Terrestre sin reutilizar los mapas de Axem', () => {
     const assets = resolveRaceCourseAssets('terrestrial', maps, tilesets);
-    expect(assets.maps.map(({ id }) => id)).toEqual(['sidescroll-1', 'sidescroll-2', 'sidescroll-3', 'sidescroll-4']);
-    expect(assets.tilesets.map(({ id }) => id)).toEqual(['sidescroll-tileset']);
-    expect(assets.tilesets[0]).toMatchObject({ width: 1280, height: 1024, tileWidth: 32, tileHeight: 32 });
+    expect(assets.maps).toEqual([]);
+    expect(assets.tilesets).toEqual([]);
+    expect(assets.backgroundKey).toBe('land-course-parallax');
   });
 
   it('mantiene los objetos propios de Carrera Axem en su tileset sidescroll', () => {
@@ -64,7 +64,7 @@ describe('Asignación de escenarios y objetos de carrera', () => {
   });
 
   it('falla con claridad cuando falta un recurso o el circuito', () => {
-    expect(() => resolveRaceCourseAssets('terrestrial', maps, []))
+    expect(() => resolveRaceCourseAssets('axem', maps, []))
       .toThrow('Falta el recurso de tileset: sidescroll-tileset');
     expect(() => resolveRaceCourseObjects('axem', [tilesets[0]]))
       .toThrow('Falta el tileset "sidescroll-tileset" para el objeto "hurdle".');
@@ -77,8 +77,9 @@ describe('Asignación de escenarios y objetos de carrera', () => {
   it('mantiene separados los recursos de Axem y Terrestre', () => {
     expect(RACE_COURSE_ASSETS.axem.mapIds).toEqual(['sidescroll-1', 'sidescroll-2', 'sidescroll-3', 'sidescroll-4']);
     expect(RACE_COURSE_ASSETS.axem.tilesetIds).toEqual(['sidescroll-tileset']);
-    expect(RACE_COURSE_ASSETS.terrestrial.mapIds).toEqual(['sidescroll-1', 'sidescroll-2', 'sidescroll-3', 'sidescroll-4']);
-    expect(RACE_COURSE_ASSETS.terrestrial.tilesetIds).toEqual(['sidescroll-tileset']);
+    expect(RACE_COURSE_ASSETS.terrestrial.mapIds).toEqual([]);
+    expect(RACE_COURSE_ASSETS.terrestrial.tilesetIds).toEqual([]);
+    expect(RACE_COURSE_ASSETS.terrestrial.backgroundKey).toBe('land-course-parallax');
     expect(RACE_COURSE_OBJECTS.axem.every(({ assetId }) => assetId === 'sidescroll-tileset')).toBe(true);
     expect(RACE_COURSE_OBJECTS.terrestrial).toEqual([]);
   });

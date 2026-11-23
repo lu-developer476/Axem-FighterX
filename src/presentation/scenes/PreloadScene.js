@@ -13,7 +13,7 @@ import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory
 import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { createStageAssetTextures } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import whitePuffAtlasUrl from '../../../art/source/effects/kenney-smoke-particles/white-puff-atlas.png';
-import terrestrialRaceTilesetUrl from '../../../art/source/environments/race-terrestrial/tileset.png?url';
+import landRaceParallaxUrl from '../../../art/source/environments/free-platformer-parallax.jpg?url';
 import axemRaceBoostPickupUrl from '../../../art/source/sprites/race-pickups/axem-boost.svg?url';
 import axemRaceSlowPickupUrl from '../../../art/source/sprites/race-pickups/axem-slow.svg?url';
 import { registerFxAnimations } from '../animation/registerFxAnimations.js';
@@ -75,7 +75,7 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('title-art', import.meta.env.BASE_URL + 'generated/title.png');
     Object.values(STAGE_MAP_ASSETS).forEach(({ key, url }) => this.load.image(key, url));
     Object.values(STAGE_TILESET_ASSETS).forEach(({ key, url }) => this.load.image(key, url));
-    this.load.image('terrestrial-race-tileset', terrestrialRaceTilesetUrl);
+    this.load.image('land-course-parallax', landRaceParallaxUrl);
     this.load.image('axem-pickup-boost', axemRaceBoostPickupUrl);
     this.load.image('axem-pickup-slow', axemRaceSlowPickupUrl);
     Object.values(KENNEY_FX).forEach(({ key, url }) => this.load.image(key, url));

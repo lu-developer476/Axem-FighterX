@@ -1,11 +1,13 @@
-Kenney — Pixel Platformer (v1.2)
-https://kenney.nl/assets/pixel-platformer
+CraftPix — Free Platformer Game Tileset Pixel Art
+https://craftpix.net/freebies/free-platformer-game-tileset-pixel-art/
 
-Selected atlas and both sample Tiled layouts are released under Creative
-Commons Zero 1.0 Universal (CC0 1.0):
-https://creativecommons.org/publicdomain/zero/1.0/
+The terrestrial race uses the pack's free parallax background image:
+art/source/environments/free-platformer-parallax.jpg
 
-The map layouts are based on the pack's Sample A and Sample B Tiled maps.
-They are stored as JSON tile layers for the game's canvas renderer. Character
-layers were omitted because the race scene supplies its own runners.
+CraftPix Freebie License:
+https://craftpix.net/file-licenses/
 
+The freebie license permits modification and use in personal and commercial
+projects, including games. Attribution is not required; credit is appreciated.
+The original art files may not be resold or redistributed separately from the
+game or other finished product.

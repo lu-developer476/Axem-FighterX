@@ -10,7 +10,6 @@ import {
 import {
   createLoopingMapTexture,
   createLoopingRaceTextures,
-  createTilesetRaceTrackTexture,
   createTilesetObjectTextures,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
@@ -61,6 +60,24 @@ function createRaceTextures(scene) {
     g.fillTriangle(37, 12, 25, 2, 25, 26);
   });
 
+  // Los tilesets de cueva solo contienen terreno/estructuras/rocas. Los pickups
+  // tienen iconografía propia para no confundir una decoración con un efecto.
+  createTexture(scene, 'axem-pickup-boost', 36, 36, (g) => {
+    g.fillStyle(0x101820, 1).fillRoundedRect(1, 1, 34, 34, 4);
+    g.lineStyle(2, 0x75e8f3, 1).strokeRoundedRect(2, 2, 32, 32, 4);
+    g.fillStyle(0x12616a, 1).fillRoundedRect(6, 6, 24, 24, 3);
+    g.fillStyle(0xfff0b7, 1);
+    g.fillTriangle(7, 8, 18, 18, 7, 28);
+    g.fillTriangle(17, 8, 28, 18, 17, 28);
+  });
+  createTexture(scene, 'axem-pickup-slow', 36, 36, (g) => {
+    g.fillStyle(0x101820, 1).fillRoundedRect(1, 1, 34, 34, 4);
+    g.lineStyle(2, 0xff8b72, 1).strokeRoundedRect(2, 2, 32, 32, 4);
+    g.fillStyle(0x702d37, 1).fillRoundedRect(6, 6, 24, 24, 3);
+    g.fillStyle(0xffeadf, 1).fillRect(16, 7, 4, 12);
+    g.fillTriangle(8, 17, 28, 17, 18, 29);
+  });
+
 }
 
 export class RaceScene extends Phaser.Scene {
@@ -78,7 +95,6 @@ export class RaceScene extends Phaser.Scene {
     this.boost = 100;
     this.selectingCharacter = false;
     this.selectedVariant = { id: RANGER_IDS.ORANGE, gender: 'male' };
-    this.trackOffset = 0;
     this.lastSceneryChunk = -1;
     this.obstacles = [];
     this.keys = this.input.keyboard.addKeys({
@@ -103,7 +119,6 @@ export class RaceScene extends Phaser.Scene {
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
     });
 
-    this.track = this.add.graphics().setDepth(10);
     const { maps: courseMaps, tilesets: raceTilesets } = resolveRaceCourseAssets(
       'axem',
       STAGE_MAP_ASSETS,
@@ -131,19 +146,6 @@ export class RaceScene extends Phaser.Scene {
         .setDepth(-100 + index)
         .setAlpha(index === 0 ? 1 : 0.58),
     );
-    const raceTrackKey = createTilesetRaceTrackTexture(this, raceTilesets, {
-      key: 'bike-track-' + this.game.loop.frame,
-      width: 1024,
-      laneCount: MOTORCYCLE_LANE_COUNT,
-      laneHeight: 60,
-      seed: 809,
-    });
-    this.trackSurface = raceTrackKey
-      ? this.add.tileSprite(24, 143, GAME_WIDTH - 48, 120, raceTrackKey)
-        .setOrigin(0)
-        .setDepth(9)
-      : null;
-    this.#drawTrack();
     this.hud = this.add.graphics().setDepth(80);
     this.status = this.#text('ELEGÍ LA DISTANCIA', GAME_WIDTH / 2, 48, '#fff0c9', 10);
     this.distanceLabel = this.#text('0 M', 105, GAME_HEIGHT - 20, '#e7dcff', 5);
@@ -265,11 +267,9 @@ export class RaceScene extends Phaser.Scene {
     this.distance += this.speed * frame;
     this.player.distance = this.distance;
     this.boost = clamp(this.boost + (boosting ? -34 : 16) * frame, 0, 100);
-    this.trackOffset = (this.trackOffset + this.speed * frame * 0.9) % 34;
     this.stageLayers.forEach((layer, index) => {
       layer.tilePositionX = this.distance * (index === 0 ? 0.14 : 0.34);
     });
-    if (this.trackSurface) this.trackSurface.tilePositionX = this.distance * 0.9;
     if (boosting && (!this.wasBoosting || time - this.lastNitroFlashAt >= 120)) {
       this.#emitNitroFlash(time);
     }
@@ -278,7 +278,6 @@ export class RaceScene extends Phaser.Scene {
     this.#updateOpponents(time, frame);
     this.#updateObstacles(frame);
     this.#updatePickups();
-    this.#drawTrack();
     this.#syncRacers(time);
     this.#drawHud();
 
@@ -334,7 +333,6 @@ export class RaceScene extends Phaser.Scene {
     this.pauseMenu.hide();
     this.raceDistance = distance;
     this.distance = 0;
-    this.trackOffset = 0;
     this.lastSceneryChunk = -1;
     this.obstacles = repeatCoursePattern(MOTORCYCLE_RACE_OBSTACLES, this.raceDistance, {
       cycleDistance: 3600,
@@ -378,9 +376,17 @@ export class RaceScene extends Phaser.Scene {
       collected: false,
     }));
     this.pickupSprites = this.pickups.map((pickup) =>
-      this.add.image(0, 0, this.courseObjectTextures[pickup.kind])
-        .setDepth(32)
-        .setTint(pickup.kind === 'boost' ? 0x9cecff : 0xffb2a0),
+      this.add.image(0, 0, pickup.kind === 'boost' ? 'axem-pickup-boost' : 'axem-pickup-slow')
+        .setDepth(32),
+    );
+    this.pickupLabels = this.pickups.map((pickup) =>
+      this.add.text(0, 0, pickup.kind === 'boost' ? 'ACELERA' : 'FRENA', {
+        fontFamily: 'monospace',
+        fontSize: '6px',
+        color: pickup.kind === 'boost' ? '#9cecff' : '#ffb2a0',
+        stroke: '#10131d',
+        strokeThickness: 3,
+      }).setOrigin(0.5).setDepth(35),
     );
     this.speedEffect = 0;
     this.speedEffectMs = 0;
@@ -491,20 +497,26 @@ export class RaceScene extends Phaser.Scene {
   #updatePickups() {
     this.pickups.forEach((pickup, index) => {
       const sprite = this.pickupSprites[index];
+      const label = this.pickupLabels[index];
       if (pickup.collected) {
         sprite.setVisible(false);
+        label.setVisible(false);
         return;
       }
       const playerX = this.#racerX(this.player);
       const x = this.#worldX(pickup.distance);
       const y = MOTORCYCLE_LANE_BASELINES[pickup.lane] - 9;
+      const visible = x > -34 && x < GAME_WIDTH + 34;
       sprite.setPosition(x, y)
-        .setScale(MOTORCYCLE_LANE_SCALES[pickup.lane] * 0.68)
+        .setScale(MOTORCYCLE_LANE_SCALES[pickup.lane] * 0.72)
         .setDepth(32 + pickup.lane)
-        .setVisible(x > -24 && x < GAME_WIDTH + 24);
+        .setVisible(visible);
+      label.setPosition(x, y + 20)
+        .setVisible(visible);
       if (this.player.lane === pickup.lane && Math.abs(x - playerX) < 18) {
         pickup.collected = true;
         sprite.setVisible(false);
+        label.setVisible(false);
         this.speedEffect = pickup.kind === 'boost' ? 105 : -75;
         this.speedEffectMs = 1900;
         if (pickup.kind === 'boost') this.boost = clamp(this.boost + 24, 0, 100);
@@ -513,28 +525,6 @@ export class RaceScene extends Phaser.Scene {
     });
   }
 
-
-  #drawTrack() {
-    const g = this.track;
-    g.clear();
-    // Se conserva visible el pavimento construido con los tiles del escenario.
-    g.fillStyle(0x101820, 0.16).fillRect(24, 143, GAME_WIDTH - 48, 120);
-    for (let lane = 0; lane < MOTORCYCLE_LANE_COUNT; lane += 1) {
-      const y = 143 + lane * 60;
-      const inset = 24;
-      const spacing = 36 + lane * 5;
-      const dashWidth = 14 + lane * 3;
-      const offset = (this.trackOffset * (1 + lane * 0.1)) % spacing;
-      for (let x = inset - offset; x < GAME_WIDTH - inset; x += spacing) {
-        g.fillStyle(0xe5d9bc, 0.46 + lane * 0.05).fillRect(x, y + 29, dashWidth, 2);
-      }
-    }
-    g.lineStyle(2, 0xf1d8a8, 0.92).lineBetween(24, 143, 8, 263);
-    g.lineBetween(GAME_WIDTH - 24, 143, GAME_WIDTH - 8, 263);
-    g.lineStyle(2, 0xc9c9b5, 0.74).lineBetween(24, 203, GAME_WIDTH - 24, 203);
-    g.lineStyle(3, 0xffedc6, 0.96).lineBetween(64, 143, 64, 263);
-    g.lineStyle(1, 0x483c42, 0.9).lineBetween(68, 143, 68, 263);
-  }
 
   #syncRacers(time) {
     for (const racer of this.racers) {

@@ -1,6 +1,4 @@
 export const RACE_DISTANCE_OPTIONS = Object.freeze([
-  Object.freeze({ label: '1 KM', value: 1000 }),
-  Object.freeze({ label: '2 KM', value: 2000 }),
   Object.freeze({ label: '5 KM', value: 5000 }),
   Object.freeze({ label: '10 KM', value: 10000 }),
 ]);

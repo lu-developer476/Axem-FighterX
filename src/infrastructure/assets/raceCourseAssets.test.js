@@ -32,14 +32,13 @@ describe('Asignación de escenarios y objetos de carrera', () => {
     expect(assets.tilesets.map(({ id }) => id)).toEqual(['sidescroll-tileset']);
   });
 
-  it('resuelve solo obstáculos y pickups del tileset correspondiente', () => {
+  it('resuelve obstáculos de cueva sin reutilizar decoraciones como consumibles', () => {
     const axem = resolveRaceCourseObjects('axem', tilesets.slice(0, 2));
     expect(axem.map(({ id, role, asset }) => [id, role, asset.id])).toEqual([
       ['rock-wall', 'obstacle', 'cave2-tileset'],
       ['stone-pillar', 'obstacle', 'cave1-tileset'],
-      ['boost', 'pickup', 'cave1-tileset'],
-      ['slow', 'pickup', 'cave2-tileset'],
     ]);
+    expect(axem.every(({ role }) => role === 'obstacle')).toBe(true);
     const terrestrial = resolveRaceCourseObjects('terrestrial', [tilesets[2]]);
     expect(terrestrial.map(({ id, role, asset }) => [id, role, asset.id])).toEqual([
       ['hurdle', 'obstacle', 'sidescroll-tileset'],

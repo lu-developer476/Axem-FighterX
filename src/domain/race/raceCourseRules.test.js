@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from './raceCourseRules.js';
 
 describe('Configuración de distancias de los minijuegos', () => {
-  it('ofrece distancias comunes y crecientes para ambas carreras', () => {
-    expect(RACE_DISTANCE_OPTIONS.map(({ value }) => value)).toEqual([1000, 2000, 5000, 10000]);
+  it('ofrece únicamente recorridos de 5 y 10 kilómetros', () => {
+    expect(RACE_DISTANCE_OPTIONS).toEqual([
+      { label: '5 KM', value: 5000 },
+      { label: '10 KM', value: 10000 },
+    ]);
   });
 
   it('repite el mismo patrón a lo largo de todo el recorrido elegido', () => {

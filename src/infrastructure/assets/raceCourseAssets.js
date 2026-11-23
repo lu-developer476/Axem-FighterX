@@ -17,8 +17,6 @@ export const RACE_COURSE_OBJECTS = Object.freeze({
   axem: Object.freeze([
     Object.freeze({ id: 'rock-wall', role: 'obstacle', assetId: 'cave2-tileset', x: 128, y: 0, width: 96, height: 64 }),
     Object.freeze({ id: 'stone-pillar', role: 'obstacle', assetId: 'cave1-tileset', x: 416, y: 32, width: 64, height: 96 }),
-    Object.freeze({ id: 'boost', role: 'pickup', assetId: 'cave1-tileset', x: 320, y: 352, width: 32, height: 32 }),
-    Object.freeze({ id: 'slow', role: 'pickup', assetId: 'cave2-tileset', x: 256, y: 64, width: 64, height: 64 }),
   ]),
   terrestrial: Object.freeze([
     Object.freeze({ id: 'hurdle', role: 'obstacle', assetId: 'sidescroll-tileset', x: 960, y: 160, width: 64, height: 64 }),

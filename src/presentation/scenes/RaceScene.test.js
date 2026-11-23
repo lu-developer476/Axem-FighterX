@@ -8,8 +8,8 @@ import {
 } from '../../domain/race/motorcycleRaceRules.js';
 
 describe('Carrera Axem de dos carriles', () => {
-  it('permite elegir una distancia total de pista continua', () => {
-    expect(RACE_DISTANCE_OPTIONS.map(({ value }) => value)).toEqual([1000, 2000, 5000, 10000]);
+  it('limita las opciones de carrera a 5 y 10 kilómetros', () => {
+    expect(RACE_DISTANCE_OPTIONS.map(({ value }) => value)).toEqual([5000, 10000]);
   });
   it('reserva dos carriles con profundidad visual creciente', () => {
     expect(MOTORCYCLE_LANE_COUNT).toBe(2);

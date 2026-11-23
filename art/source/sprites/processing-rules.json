@@ -3,7 +3,7 @@
   "sourcePolicy": {
     "directory": "references",
     "treatment": "preserve-originals",
-    "description": "Los archivos de references son masters de origen; no se sobrescriben. Los generadores existentes los convierten a resultados transparentes."
+    "description": "Los archivos maestros de references se preservan; el GIF maestro de Orange vive en axem-orange y los GIF finales de Axem Red se generan con nombres diferenciados en axem-red y se validan junto a los resultados."
   },
   "processedPolicy": {
     "directory": "results",

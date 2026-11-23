@@ -1,6 +1,10 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
-import { TREADMILL_RUNNER_X } from '../../domain/race/treadmillRaceRules.js';
+import {
+  TREADMILL_RUNNER_X,
+  LAND_RACE_LANES,
+  LAND_RACE_LANE_SCALES,
+} from '../../domain/race/treadmillRaceRules.js';
 import { getRaceCameraDistance, getRaceRunnerX } from '../../domain/race/raceLanePresentation.js';
 import landIdleGifUrl from '../../../art/source/sprites/results/male/orange/idle.gif?url';
 import landPoseGifUrl from '../../../art/source/sprites/results/male/orange/pose.gif?url';
@@ -8,7 +12,7 @@ import landRunGifUrl from '../../../art/source/sprites/results/male/orange/run.g
 import landDashGifUrl from '../../../art/source/sprites/results/male/orange/dash.gif?url';
 import landJumpGifUrl from '../../../art/source/sprites/results/male/orange/jump.gif?url';
 import landRollGifUrl from '../../../art/source/sprites/results/male/orange/roll.gif?url';
-import redRaceRunGifUrl from '../../../art/source/sprites/results/male/red/run.gif?url';
+import redRaceRunGifUrl from '../../../art/source/sprites/references/axem-red/run.gif?url';
 import { PauseMenuView } from '../views/PauseMenuView.js';
 import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseAssets.js';
@@ -23,8 +27,8 @@ import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
 
-const RUNNER_LANES = Object.freeze([151, 181, 211, 241]);
-const RUNNER_LANE_SCALES = Object.freeze([0.64, 0.8, 0.96, 1.12]);
+const RUNNER_LANES = LAND_RACE_LANES;
+const RUNNER_LANE_SCALES = LAND_RACE_LANE_SCALES;
 const PLAYER_RUNNER_X = TREADMILL_RUNNER_X;
 const LAND_OBJECT_SCALE = 0.14;
 const LAND_RACE_LOOP_DISTANCE = 1200;
@@ -245,8 +249,8 @@ export class LandRaceScene extends Phaser.Scene {
     this.pickups = this.#generateRacePickups();
     this.session.start(distance, COUNTDOWN_MS);
     this.pauseMenu.hide();
-    this.player = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[1], true);
-    this.rival = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[2], false);
+    this.player = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[0], true);
+    this.rival = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[1], false);
     // Ambos arrancan exactamente sobre la misma línea; la distancia solo mueve la cinta.
     this.player.distance = 0;
     this.rival.distance = 0;
@@ -384,16 +388,15 @@ export class LandRaceScene extends Phaser.Scene {
   #drawTrack() {
     const graphics = this.trackGraphics;
     graphics.clear();
-    // Cuatro bandas de profundidad: las calles cercanas ganan anchura,
-    // contraste y tamaño de marcas al aproximarse al espectador.
+    // Dos calles amplias que ocupan la pista completa.
     for (let lane = 0; lane < RUNNER_LANES.length; lane += 1) {
-      const y = 137 + lane * 29;
+      const y = 137 + lane * 58;
       const inset = 24 - lane * 4;
       const width = GAME_WIDTH - inset * 2;
       graphics.fillStyle(lane % 2 === 0 ? 0x813f43 : 0x984d50, 0.28 + lane * 0.08)
-        .fillRect(inset, y, width, 28);
+        .fillRect(inset, y, width, 56);
       graphics.fillStyle(0x352d34, 0.08 + lane * 0.035)
-        .fillRect(inset, y + 24, width, 4);
+        .fillRect(inset, y + 52, width, 4);
       if (lane > 0) {
         graphics.lineStyle(1 + lane * 0.15, 0xf2dfc5, 0.42 + lane * 0.12);
         graphics.lineBetween(inset + 4, y, GAME_WIDTH - inset - 4, y);

@@ -9,11 +9,11 @@ Hay dos géneros, cada uno con su hoja de referencia. **Violet** y **Orange** so
 
 La orientación nativa se conserva en todas las imágenes de cada fuente: Axem Red masculino, incluidos el retrato base y los GIF de acción, apunta a la derecha; Axem Pink femenino apunta a la izquierda. El renderizador espeja cada sprite solo cuando el luchador necesita mirar hacia el lado contrario.
 
-Las referencias nunca se modifican. Los GIF de Axem Red se generan en su paleta original: las secuencias de carrera y combate se extraen de `axem-red-spritesheet.png`, mientras que bicicleta y doble hacha parten de sus GIF maestros. Orange y Violet siguen siendo derivados cromáticos independientes; Red no se obtiene recoloreando a Orange. Las referencias sueltas femeninas `axem-pink-battle-pose.png` y `axem-pink-levitate.png` ya no forman parte del pipeline y se eliminaron.
+Los archivos maestros de Axem Red se preservan. Sus GIF de acción derivados se guardan junto a ellos en `references/axem-red/`, con nombres diferenciados de los GIF maestros: las secuencias se extraen de `axem-red-spritesheet.png`, mientras que bicicleta y doble hacha parten de sus GIF originales. El GIF maestro de batalla de Orange se conserva en `references/axem-orange/battle-pose.gif`. Orange y Violet siguen siendo derivados cromáticos independientes; Red no se obtiene recoloreando a Orange. Las referencias sueltas femeninas `axem-pink-battle-pose.png` y `axem-pink-levitate.png` ya no forman parte del pipeline y se eliminaron.
 
 ## Cómo se generan los resultados
 
-`npm run prepare:sprites` (también corre antes de `dev`, `build` y `test`) quita el fondo, cambia solo el tono de la familia cromática del traje (violeta 273°, naranja 22°, conservando luminosidad y saturación) y escribe en `results/`:
+`npm run prepare:sprites` (también corre antes de `dev`, `build` y `test`) quita el fondo, cambia solo el tono de la familia cromática del traje (violeta 273°, naranja 22°, conservando luminosidad y saturación) y escribe los resultados cromáticos en `results/` y los GIF finales de Red en `references/axem-red/`:
 
 ```
 results/
@@ -23,16 +23,20 @@ results/
       run.gif  bike.gif  double-axe.gif  pose.gif  battle-pose.gif
       dash.gif  jump.gif  hit.gif  hurt.gif  teleport.gif
       punch-01.gif  punch-02.gif  punch-03.gif
-    red/
-      idle.gif  walk.gif  run.gif  dash.gif  jump.gif
-      punch-01.gif  punch-02.gif  punch-03.gif  battle-pose.gif
-      hit.gif  hurt.gif  teleport.gif  bike.gif  double-axe.gif
   female/
     axem-ranger-{violet,orange}.png     referencias femeninas apiladas
     {violet,orange}/
       spritesheet.png  pose.png
       sequences/group-01.png … group-06.png + index.json
       supplemental/group-01.png … group-07.png (armas, efectos, íconos y siluetas)
+
+references/axem-red/
+  idle.gif  walk.gif  run.gif  dash.gif  jump.gif
+  punch-01.gif  punch-02.gif  punch-03.gif  hit.gif  hurt.gif
+  teleport.gif  bike.gif
+
+references/axem-orange/
+  battle-pose.gif
 ```
 
 Los retratos laterales del menú se generan directamente desde la referencia original `references/axem-red/axem-red-spritesheet.png`; no se necesita una vista previa duplicada en `results/male/`. El recoloreado del cabello recorre cada componente rubio de todas las poses, incluso cuando está separado del casco o la cara, para evitar que queden mechones originales sin procesar.

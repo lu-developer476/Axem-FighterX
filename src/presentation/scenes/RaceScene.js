@@ -11,7 +11,7 @@ import {
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
 import raceBikeGifUrl from '../../../art/source/sprites/results/male/orange/bike.gif?url';
-import redRaceBikeGifUrl from '../../../art/source/sprites/results/male/red/bike.gif?url';
+import redRaceBikeGifUrl from '../../../art/source/sprites/references/axem-red/bike.gif?url';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { AVAILABLE_RANGER_VARIANTS, getCounterpartSelection } from '../../domain/rangers/rangerVariants.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
@@ -371,9 +371,9 @@ export class RaceScene extends Phaser.Scene {
     this.selectionLabel?.destroy();
     this.status.setText('3').setFontSize(25);
     const orangeSelection = { id: RANGER_IDS.ORANGE, gender: 'male' };
-    this.player = this.#createRacer(orangeSelection, 'J1 · AXEM NARANJA', 1, true);
+    this.player = this.#createRacer(orangeSelection, 'J1 · AXEM NARANJA', 0, true);
     this.opponents = [
-      this.#createRacer(orangeSelection, 'AXEM RED', 2, false),
+      this.#createRacer(orangeSelection, 'AXEM RED', 1, false),
     ];
     // Ambos arrancan en la misma vertical y con distancia cero.
     this.player.distance = 0;
@@ -384,10 +384,10 @@ export class RaceScene extends Phaser.Scene {
     );
     this.pickups = repeatCoursePattern([
       { distance: 280, kind: 'boost', lane: 0 },
-      { distance: 840, kind: 'slow', lane: 2 },
+      { distance: 840, kind: 'slow', lane: 1 },
       { distance: 1380, kind: 'boost', lane: 1 },
-      { distance: 1940, kind: 'boost', lane: 3 },
-      { distance: 2500, kind: 'slow', lane: 2 },
+      { distance: 1940, kind: 'boost', lane: 0 },
+      { distance: 2500, kind: 'slow', lane: 1 },
       { distance: 3100, kind: 'boost', lane: 1 },
     ], this.raceDistance, {
       cycleDistance: 3400,
@@ -468,7 +468,7 @@ export class RaceScene extends Phaser.Scene {
         obstacle.lane === racer.lane && obstacle.distance - racer.distance < 125 &&
         obstacle.distance - racer.distance > 0);
       if (upcoming && racer.laneSwitchMs <= 0 && Math.random() < 0.045) {
-        this.#changeLane(racer, racer.lane === 3 ? -1 : 1);
+        this.#changeLane(racer, racer.lane === MOTORCYCLE_LANE_COUNT - 1 ? -1 : 1);
       }
       if (racer.stunMs > 0) racer.stunMs = Math.max(0, racer.stunMs - frame * 1000);
       if (racer.laneSwitchMs === 0) racer.lane = racer.targetLane;
@@ -578,14 +578,14 @@ export class RaceScene extends Phaser.Scene {
     g.clear();
     g.fillStyle(0x252a30, 1).fillRect(0, 139, GAME_WIDTH, 131);
     g.fillStyle(0x333a40, 1).fillRect(0, 143, GAME_WIDTH, 122);
-    // Las calles se ensanchan hacia el frente; marcas y sombras crecen por carril.
+    // Dos calles amplias que ocupan toda la profundidad de la pista.
     for (let lane = 0; lane < MOTORCYCLE_LANE_COUNT; lane += 1) {
-      const y = 143 + lane * 30;
+      const y = 143 + lane * 60;
       const inset = 24 - lane * 4;
       const width = GAME_WIDTH - inset * 2;
       const shade = lane % 2 === 0 ? 0x3a4248 : 0x30383f;
-      g.fillStyle(shade, 0.48 + lane * 0.1).fillRect(inset, y, width, 29);
-      g.fillStyle(0x101820, 0.08 + lane * 0.035).fillRect(inset, y + 25, width, 4);
+      g.fillStyle(shade, 0.48 + lane * 0.1).fillRect(inset, y, width, 59);
+      g.fillStyle(0x101820, 0.08 + lane * 0.035).fillRect(inset, y + 54, width, 5);
       if (lane > 0) {
         g.lineStyle(1 + lane * 0.15, 0xb8b9a9, 0.48 + lane * 0.1);
         g.lineBetween(inset + 4, y, GAME_WIDTH - inset - 4, y);
@@ -595,7 +595,7 @@ export class RaceScene extends Phaser.Scene {
       const offset = (this.trackOffset * (1 + lane * 0.1)) % spacing;
       for (let x = inset - offset; x < GAME_WIDTH - inset; x += spacing) {
         g.fillStyle(0xe5d9bc, 0.26 + lane * 0.035)
-          .fillRect(x, y + 13, dashWidth, 1 + lane * 0.25);
+          .fillRect(x, y + 29, dashWidth, 1 + lane * 0.25);
       }
     }
     g.lineStyle(2, 0xf1d8a8, 0.92).lineBetween(24, 143, 8, 263);

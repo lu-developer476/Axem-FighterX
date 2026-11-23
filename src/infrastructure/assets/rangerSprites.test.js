@@ -21,12 +21,19 @@ const generatedMenuOrangePath = () =>
 
 const resultGifPath = (color, action) =>
   fileURLToPath(new URL(
-    `../../../art/source/sprites/results/male/${color}/${action}.gif`,
+    color === 'red'
+      ? `../../../art/source/sprites/references/axem-red/${action}.gif`
+      : `../../../art/source/sprites/results/male/${color}/${action}.gif`,
     import.meta.url,
   ));
 
 const resultGifDirectory = (color) =>
-  fileURLToPath(new URL(`../../../art/source/sprites/results/male/${color}`, import.meta.url));
+  fileURLToPath(new URL(
+    color === 'red'
+      ? '../../../art/source/sprites/references/axem-red'
+      : `../../../art/source/sprites/results/male/${color}`,
+    import.meta.url,
+  ));
 
 describe('Variantes canónicas de Axem Rangers', () => {
   it('mantiene solo Orange masculino y Violet femenino', () => {
@@ -98,10 +105,10 @@ describe('Variantes canónicas de Axem Rangers', () => {
       'bike.gif', 'dash.gif', 'hit.gif', 'hurt.gif', 'idle.gif', 'jump.gif',
       'punch-01.gif', 'punch-02.gif', 'punch-03.gif', 'run.gif', 'teleport.gif', 'walk.gif',
     ].sort();
-    expect((await readdir(resultGifDirectory('red'))).filter((name) => name.endsWith('.gif')).sort())
-      .toEqual(expectedRedGifs);
+    expect((await readdir(resultGifDirectory('red')))
+      .filter((name) => expectedRedGifs.includes(name)).sort()).toEqual(expectedRedGifs);
     const redRun = fileURLToPath(new URL(
-      '../../../art/source/sprites/results/male/red/run.gif', import.meta.url,
+      '../../../art/source/sprites/references/axem-red/run.gif', import.meta.url,
     ));
     const orangeRun = fileURLToPath(new URL(
       '../../../art/source/sprites/results/male/orange/run.gif', import.meta.url,

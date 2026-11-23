@@ -30,14 +30,23 @@ async function visibleBounds(relativePath) {
 }
 
 describe('Estándares centrales de recursos gráficos', () => {
-  it('mantiene los GIF de Red separados del artwork de los personajes jugables', async () => {
-    const directory = absolute('art/source/sprites/results/male/red');
+  it('mantiene los GIF de Red junto a sus referencias y fuera de results', async () => {
+    const directory = absolute('art/source/sprites/references/axem-red');
     const entries = await fs.readdir(directory, { withFileTypes: true });
-    const gifs = entries.filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.gif'));
-    const pngs = entries.filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.png'));
-    expect(gifs.length).toBeGreaterThan(0);
-    expect(pngs).toHaveLength(0);
-    expect(entries.every((entry) => entry.isFile())).toBe(true);
+    const expectedGifs = [
+      'bike.gif', 'dash.gif', 'hit.gif', 'hurt.gif', 'idle.gif', 'jump.gif',
+      'punch-01.gif', 'punch-02.gif', 'punch-03.gif', 'run.gif', 'teleport.gif', 'walk.gif',
+    ].sort();
+    const gifs = entries
+      .filter((entry) => entry.isFile() && expectedGifs.includes(entry.name))
+      .map((entry) => entry.name)
+      .sort();
+    expect(gifs).toEqual(expectedGifs);
+    expect(entries.some((entry) => entry.name === 'axem-red-spritesheet.png')).toBe(true);
+    expect(entries.some((entry) => entry.name === 'super-axem-ranger-red.png')).toBe(true);
+
+    const resultsDirectory = absolute('art/source/sprites/results/male/red');
+    await expect(fs.readdir(resultsDirectory)).resolves.toHaveLength(0);
     expect(ASSET_STANDARDS.categories.characterArtwork.families.male).not.toHaveProperty('derivedArtwork');
   });
 

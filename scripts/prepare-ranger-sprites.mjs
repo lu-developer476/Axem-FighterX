@@ -34,7 +34,11 @@ const KI_AURA_GRID = Object.freeze({ columns: 2, rows: 2, cellWidth: 64, cellHei
 const KI_AURA_HOLD_DELAY = 180;
 
 async function writeResult(gender, color, relativePath, buffer) {
-  const target = path.join(RESULTS(gender, color), relativePath);
+  const isRedActionGif = gender === 'male' && color === 'red' &&
+    relativePath.endsWith('.gif') && !relativePath.includes(path.sep);
+  const target = isRedActionGif
+    ? SOURCE('sprites', 'references', 'axem-red', relativePath)
+    : path.join(RESULTS(gender, color), relativePath);
   await fs.mkdir(path.dirname(target), { recursive: true });
   await fs.writeFile(target, buffer);
   console.log('Generado ' + path.relative(ROOT, target));
@@ -1039,7 +1043,7 @@ async function buildMaleKiAuraHoldFrames(sourceFrame) {
 
 async function readMaleGifFrames(color, filename) {
   const file = color === 'orange' && filename === 'battle-pose.gif'
-    ? SOURCE('sprites', 'masters', 'male', 'orange', 'battle-pose.gif')
+    ? SOURCE('sprites', 'references', 'axem-orange', 'battle-pose.gif')
     : RESULTS('male', color, filename);
   const metadata = await sharp(file, { animated: true }).metadata();
   const count = Math.max(1, metadata.pages || 1);

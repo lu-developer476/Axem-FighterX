@@ -3,7 +3,7 @@
   "sourcePolicy": {
     "directory": "art/source/sprites/references",
     "immutable": true,
-    "description": "Las referencias son masters de origen. El pipeline genera derivados y nunca escribe sobre estos archivos."
+    "description": "Los archivos maestros de origen son inmutables. El GIF maestro de Orange se conserva en references/axem-orange y los GIF derivados de Axem Red se generan junto a sus masters con nombres diferenciados."
   },
   "categories": {
     "characterArtwork": {

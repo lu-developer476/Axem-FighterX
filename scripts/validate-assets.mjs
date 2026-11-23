@@ -120,7 +120,16 @@ async function collectActionGifs(directory, recursive = false) {
 async function validateActionGifs() {
   const category = standards.categories.actionGif;
   const directory = absolute(category.directory);
-  const files = (await collectActionGifs(directory, category.recursive === true)).sort();
+  const redActionNames = [
+    'bike.gif', 'dash.gif', 'hit.gif', 'hurt.gif', 'idle.gif', 'jump.gif',
+    'punch-01.gif', 'punch-02.gif', 'punch-03.gif', 'run.gif', 'teleport.gif', 'walk.gif',
+  ];
+  const redActionDirectory = absolute('art/source/sprites/references/axem-red');
+  const redActionFiles = redActionNames.map((name) => path.join(redActionDirectory, name));
+  const files = [
+    ...(await collectActionGifs(directory, category.recursive === true)),
+    ...redActionFiles,
+  ].sort();
 
   if (!files.length) {
     throw new Error('No se encontraron GIF de acción en ' + category.directory + '.');

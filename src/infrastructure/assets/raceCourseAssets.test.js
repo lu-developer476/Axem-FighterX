@@ -24,12 +24,10 @@ describe('Asignación de escenarios y objetos de carrera', () => {
     expect(assets.tilesets.map(({ id }) => id)).toEqual(['sidescroll-tileset']);
   });
 
-  it('reserva mapas laterales y su tileset para Carrera Terrestre', () => {
+  it('reserva los mapas de cueva y ambos tilesets para Carrera Terrestre', () => {
     const assets = resolveRaceCourseAssets('terrestrial', maps, tilesets);
-    expect(assets.maps.map(({ id }) => id)).toEqual([
-      'sidescroll-1', 'sidescroll-2', 'sidescroll-3', 'sidescroll-4',
-    ]);
-    expect(assets.tilesets.map(({ id }) => id)).toEqual(['sidescroll-tileset']);
+    expect(assets.maps.map(({ id }) => id)).toEqual(['cave-1', 'cave-2']);
+    expect(assets.tilesets.map(({ id }) => id)).toEqual(['cave1-tileset', 'cave2-tileset']);
   });
 
   it('resuelve obstáculos contextuales de Carrera Axem desde el tileset sidescroll', () => {
@@ -39,11 +37,11 @@ describe('Asignación de escenarios y objetos de carrera', () => {
       ['roll-gate', 'obstacle', 'sidescroll-tileset'],
     ]);
     expect(axem.every(({ role }) => role === 'obstacle')).toBe(true);
-    const terrestrial = resolveRaceCourseObjects('terrestrial', [tilesets[2]]);
+    const terrestrial = resolveRaceCourseObjects('terrestrial', [tilesets[0], tilesets[1]]);
     expect(terrestrial.map(({ id, role, asset }) => [id, role, asset.id])).toEqual([
-      ['hurdle', 'obstacle', 'sidescroll-tileset'],
-      ['roll-gate', 'obstacle', 'sidescroll-tileset'],
-      ['stamina', 'pickup', 'sidescroll-tileset'],
+      ['hurdle', 'obstacle', 'cave2-tileset'],
+      ['roll-gate', 'obstacle', 'cave1-tileset'],
+      ['stamina', 'pickup', 'cave1-tileset'],
     ]);
     expect(terrestrial.slice(0, 2).map(({ action, instruction }) => [action, instruction])).toEqual([
       ['jump', 'SALTAR'],
@@ -65,16 +63,22 @@ describe('Asignación de escenarios y objetos de carrera', () => {
   it('falla con claridad cuando falta el tileset o el circuito', () => {
     expect(() => resolveRaceCourseObjects('axem', [tilesets[0]]))
       .toThrow('Falta el tileset "sidescroll-tileset" para el objeto "hurdle".');
+    expect(() => resolveRaceCourseObjects('terrestrial', [tilesets[0]]))
+      .toThrow('Falta el tileset "cave2-tileset" para el objeto "hurdle".');
     expect(() => resolveRaceCourseObjects('unknown', tilesets))
       .toThrow('No existen objetos para el circuito "unknown".');
     expect(() => resolveRaceCourseAssets('unknown', maps, tilesets))
       .toThrow('No existe el circuito "unknown".');
   });
 
-  it('mantiene Carrera Axem vinculada a los fondos y objetos sidescroll', () => {
-    expect(RACE_COURSE_ASSETS.axem.mapIds).toEqual(RACE_COURSE_ASSETS.terrestrial.mapIds);
+  it('mantiene separados los recursos de Axem y Terrestre', () => {
+    expect(RACE_COURSE_ASSETS.axem.mapIds).toEqual(['sidescroll-1', 'sidescroll-2', 'sidescroll-3', 'sidescroll-4']);
     expect(RACE_COURSE_ASSETS.axem.tilesetIds).toEqual(['sidescroll-tileset']);
+    expect(RACE_COURSE_ASSETS.terrestrial.mapIds).toEqual(['cave-1', 'cave-2']);
+    expect(RACE_COURSE_ASSETS.terrestrial.tilesetIds).toEqual(['cave1-tileset', 'cave2-tileset']);
     expect(RACE_COURSE_OBJECTS.axem.every(({ assetId }) => assetId === 'sidescroll-tileset')).toBe(true);
-    expect(RACE_COURSE_OBJECTS.terrestrial.every(({ assetId }) => assetId === 'sidescroll-tileset')).toBe(true);
+    expect(RACE_COURSE_OBJECTS.terrestrial.map(({ assetId }) => assetId)).toEqual([
+      'cave2-tileset', 'cave1-tileset', 'cave1-tileset',
+    ]);
   });
 });

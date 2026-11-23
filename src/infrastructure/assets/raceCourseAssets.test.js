@@ -24,12 +24,12 @@ describe('Asignación de escenarios y objetos de carrera', () => {
     expect(assets.tilesets.map(({ id }) => id)).toEqual(['cave1-tileset', 'cave2-tileset']);
   });
 
-  it('usa cave-1 como recorrido y cave-2 como salida de Carrera Terrestre', () => {
+  it('reserva mapas laterales y su tileset para Carrera Terrestre', () => {
     const assets = resolveRaceCourseAssets('terrestrial', maps, tilesets);
     expect(assets.maps.map(({ id }) => id)).toEqual([
-      'cave-1', 'cave-2',
+      'sidescroll-1', 'sidescroll-2', 'sidescroll-3', 'sidescroll-4',
     ]);
-    expect(assets.tilesets.map(({ id }) => id)).toEqual(['cave1-tileset', 'cave2-tileset']);
+    expect(assets.tilesets.map(({ id }) => id)).toEqual(['sidescroll-tileset']);
   });
 
   it('resuelve obstáculos de cueva sin reutilizar decoraciones como consumibles', () => {
@@ -40,7 +40,15 @@ describe('Asignación de escenarios y objetos de carrera', () => {
     ]);
     expect(axem.every(({ role }) => role === 'obstacle')).toBe(true);
     const terrestrial = resolveRaceCourseObjects('terrestrial', [tilesets[2]]);
-    expect(terrestrial).toEqual([]);
+    expect(terrestrial.map(({ id, role, asset }) => [id, role, asset.id])).toEqual([
+      ['hurdle', 'obstacle', 'sidescroll-tileset'],
+      ['roll-gate', 'obstacle', 'sidescroll-tileset'],
+      ['stamina', 'pickup', 'sidescroll-tileset'],
+    ]);
+    expect(terrestrial.slice(0, 2).map(({ action, instruction }) => [action, instruction])).toEqual([
+      ['jump', 'SALTAR'],
+      ['roll', 'RODAR'],
+    ]);
   });
 
   it('mantiene cada recorte dentro del tileset y alineado a la cuadrícula', () => {
@@ -65,8 +73,8 @@ describe('Asignación de escenarios y objetos de carrera', () => {
 
   it('mantiene los recursos separados por circuito', () => {
     expect(RACE_COURSE_ASSETS.axem.mapIds).not.toContain('sidescroll-1');
-    expect(RACE_COURSE_ASSETS.terrestrial.mapIds).toEqual(['cave-1', 'cave-2']);
+    expect(RACE_COURSE_ASSETS.terrestrial.mapIds).not.toContain('cave-1');
     expect(RACE_COURSE_OBJECTS.axem.some(({ assetId }) => assetId === 'sidescroll-tileset')).toBe(false);
-    expect(RACE_COURSE_OBJECTS.terrestrial).toEqual([]);
+    expect(RACE_COURSE_OBJECTS.terrestrial.every(({ assetId }) => assetId === 'sidescroll-tileset')).toBe(true);
   });
 });

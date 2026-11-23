@@ -272,8 +272,6 @@ export function createLoopingMapTexture(scene, assets, {
   height = GAME_HEIGHT,
   cropTop = 0,
   cropHeight = null,
-  width: targetWidth = null,
-  finalSectionWidth = 0,
 } = {}) {
   const available = (assets ?? []).filter((asset) => scene.textures.exists(asset.key));
   if (!available.length) return null;
@@ -291,25 +289,14 @@ export function createLoopingMapTexture(scene, assets, {
       width: Math.max(1, Math.round(source.width * height / sectionHeight)),
     };
   });
-  const naturalWidth = sections.reduce((total, section) => total + section.width, 0);
-  const width = Number.isFinite(targetWidth) && targetWidth > 0
-    ? Math.max(1, Math.floor(targetWidth))
-    : naturalWidth;
-  const fixedFinalWidth = Math.min(width, Math.max(0, Math.floor(finalSectionWidth)));
-  const flexibleWidth = width - fixedFinalWidth;
-  const naturalFlexibleWidth = sections.slice(0, -1).reduce((total, section) => total + section.width, 0);
+  const width = sections.reduce((total, section) => total + section.width, 0);
   createCanvasTexture(scene, key, width, height, (ctx) => {
     let left = 0;
-    sections.forEach((section, index) => {
-      const sectionWidth = index === sections.length - 1 && fixedFinalWidth > 0
-        ? fixedFinalWidth
-        : (fixedFinalWidth > 0 && index < sections.length - 1
-          ? flexibleWidth * section.width / Math.max(1, naturalFlexibleWidth)
-          : width * section.width / Math.max(1, naturalWidth));
+    for (const section of sections) {
       ctx.drawImage(section.source, 0, section.top, section.source.width, section.sectionHeight,
-        left, 0, sectionWidth, height);
-      left += sectionWidth;
-    });
+        left, 0, section.width, height);
+      left += section.width;
+    }
   });
   return key;
 }

@@ -4,8 +4,8 @@ export const RACE_COURSE_ASSETS = Object.freeze({
     tilesetIds: Object.freeze(['cave1-tileset', 'cave2-tileset']),
   }),
   terrestrial: Object.freeze({
-    mapIds: Object.freeze(['cave-1', 'cave-2']),
-    tilesetIds: Object.freeze(['cave1-tileset', 'cave2-tileset']),
+    mapIds: Object.freeze(['sidescroll-1', 'sidescroll-2', 'sidescroll-3', 'sidescroll-4']),
+    tilesetIds: Object.freeze(['sidescroll-tileset']),
   }),
 });
 
@@ -18,7 +18,31 @@ export const RACE_COURSE_OBJECTS = Object.freeze({
     Object.freeze({ id: 'rock-wall', role: 'obstacle', assetId: 'cave2-tileset', x: 128, y: 0, width: 96, height: 64 }),
     Object.freeze({ id: 'stone-pillar', role: 'obstacle', assetId: 'cave1-tileset', x: 416, y: 32, width: 64, height: 96 }),
   ]),
-  terrestrial: Object.freeze([]),
+  terrestrial: Object.freeze([
+    Object.freeze({
+      id: 'hurdle',
+      role: 'obstacle',
+      action: 'jump',
+      instruction: 'SALTAR',
+      assetId: 'sidescroll-tileset',
+      x: 960,
+      y: 160,
+      width: 64,
+      height: 64,
+    }),
+    Object.freeze({
+      id: 'roll-gate',
+      role: 'obstacle',
+      action: 'roll',
+      instruction: 'RODAR',
+      assetId: 'sidescroll-tileset',
+      x: 1088,
+      y: 160,
+      width: 32,
+      height: 96,
+    }),
+    Object.freeze({ id: 'stamina', role: 'pickup', assetId: 'sidescroll-tileset', x: 896, y: 448, width: 32, height: 64 }),
+  ]),
 });
 
 export function resolveRaceCourseAssets(courseId, mapAssets, tilesetAssets) {

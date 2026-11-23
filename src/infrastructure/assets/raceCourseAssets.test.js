@@ -45,6 +45,10 @@ describe('Asignación de escenarios y objetos de carrera', () => {
       ['roll-gate', 'obstacle', 'sidescroll-tileset'],
       ['stamina', 'pickup', 'sidescroll-tileset'],
     ]);
+    expect(terrestrial.slice(0, 2).map(({ action, instruction }) => [action, instruction])).toEqual([
+      ['jump', 'SALTAR'],
+      ['roll', 'RODAR'],
+    ]);
   });
 
   it('mantiene cada recorte dentro del tileset y alineado a la cuadrícula', () => {

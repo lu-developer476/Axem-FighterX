@@ -56,25 +56,6 @@ export const LAND_RACE_OBSTACLES = Object.freeze([
 
 const ACTION_DURATION_MS = Object.freeze({ jump: 680, roll: 650 });
 
-function createTexture(scene, key, width, height, draw) {
-  if (scene.textures.exists(key)) return;
-  const graphics = scene.make.graphics({ x: 0, y: 0, add: false });
-  draw(graphics);
-  graphics.generateTexture(key, width, height);
-  graphics.destroy();
-}
-
-/** Bloque de salida pixel-art; obstáculos y consumibles provienen del tileset. */
-function createLandRaceTextures(scene) {
-  createTexture(scene, 'land-race-start-block', 24, 12, (graphics) => {
-    graphics.fillStyle(0x272b3b, 1).fillRect(2, 7, 20, 5);
-    graphics.fillStyle(0xe0b46e, 1).fillRect(4, 4, 7, 4);
-    graphics.fillRect(14, 2, 7, 6);
-    graphics.fillStyle(0xf7e3b4, 1).fillRect(5, 4, 5, 1);
-    graphics.fillRect(15, 2, 5, 1);
-  });
-}
-
 export class LandRaceScene extends Phaser.Scene {
   constructor() {
     super('LandRaceScene');
@@ -83,16 +64,16 @@ export class LandRaceScene extends Phaser.Scene {
   create() {
     playRaceMusic(this, 'landRace');
     this.session = new RaceSession({ countdownDurationMs: COUNTDOWN_MS });
-    createLandRaceTextures(this);
 
     const { maps: courseMaps, tilesets: raceTilesets } = resolveRaceCourseAssets(
       'terrestrial',
       STAGE_MAP_ASSETS,
       STAGE_TILESET_ASSETS,
     );
+    this.courseObjectSpecs = resolveRaceCourseObjects('terrestrial', raceTilesets);
     this.courseObjectTextures = createTilesetObjectTextures(
       this,
-      resolveRaceCourseObjects('terrestrial', raceTilesets),
+      this.courseObjectSpecs,
       { prefix: 'land-course-object-' + this.game.loop.frame },
     );
     const mapKey = createLoopingMapTexture(this, courseMaps, {
@@ -117,7 +98,6 @@ export class LandRaceScene extends Phaser.Scene {
 
     this.distance = 0;
     this.finishDistance = 0;
-    this.trackOffset = 0;
     this.player = null;
     this.rival = null;
     this.runners = [];
@@ -142,7 +122,6 @@ export class LandRaceScene extends Phaser.Scene {
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
     });
 
-    this.#drawStadium();
     this.hudGraphics = this.add.graphics().setDepth(80);
     this.playerName = this.#text('J1 · AXEM NARANJA', 118, 34, '#ffc58e', 6);
     this.rivalName = this.#text('RIVAL · AXEM RED', 360, 34, '#ff9b9b', 6);
@@ -171,7 +150,6 @@ export class LandRaceScene extends Phaser.Scene {
   #startRace(distance) {
     this.finishDistance = distance;
     this.distance = 0;
-    this.trackOffset = 0;
     this.obstacles = this.#generateRaceObstacles();
     this.pickups = this.#generateRacePickups();
     this.session.start(distance, COUNTDOWN_MS);
@@ -302,49 +280,6 @@ export class LandRaceScene extends Phaser.Scene {
     this.rivalName?.setVisible(true);
   }
 
-  #drawStadium() {
-    this.add.rectangle(GAME_WIDTH / 2, 143, GAME_WIDTH, 18, 0x326344).setDepth(2);
-    this.add.rectangle(GAME_WIDTH / 2, 153, GAME_WIDTH, 5, 0x7a985d).setDepth(3);
-    this.add.rectangle(GAME_WIDTH / 2, 198, GAME_WIDTH, 132, 0x9c4c4d).setDepth(2);
-    this.add.rectangle(GAME_WIDTH / 2, 198, GAME_WIDTH, 126, 0xad5b56).setDepth(3);
-    this.trackGraphics = this.add.graphics().setDepth(8);
-    this.startLineGraphics = this.add.graphics().setDepth(18);
-    this.#drawTrack();
-  }
-
-  #drawTrack() {
-    const graphics = this.trackGraphics;
-    graphics.clear();
-    // Dos calles amplias que ocupan la pista completa.
-    for (let lane = 0; lane < RUNNER_LANES.length; lane += 1) {
-      const y = 137 + lane * 58;
-      const inset = 24 - lane * 4;
-      const width = GAME_WIDTH - inset * 2;
-      graphics.fillStyle(lane % 2 === 0 ? 0x813f43 : 0x984d50, 0.28 + lane * 0.08)
-        .fillRect(inset, y, width, 56);
-      graphics.fillStyle(0x352d34, 0.08 + lane * 0.035)
-        .fillRect(inset, y + 52, width, 4);
-      if (lane > 0) {
-        graphics.lineStyle(1 + lane * 0.15, 0xf2dfc5, 0.42 + lane * 0.12);
-        graphics.lineBetween(inset + 4, y, GAME_WIDTH - inset - 4, y);
-      }
-      const spacing = 28 + lane * 5;
-      const markWidth = 10 + lane * 3;
-      const offset = (this.trackOffset * (1 + lane * 0.12)) % spacing;
-      for (let x = inset - offset; x < GAME_WIDTH - inset; x += spacing) {
-        graphics.fillStyle(0xf4dfc2, 0.28 + lane * 0.04)
-          .fillRect(x, RUNNER_LANES[lane] + 7, markWidth, 1 + lane * 0.3);
-      }
-    }
-    graphics.lineStyle(2, 0xf2dfc5, 0.82).lineBetween(24, 137, 8, 253);
-    graphics.lineBetween(GAME_WIDTH - 24, 137, GAME_WIDTH - 8, 253);
-    this.startLineGraphics.clear();
-    this.startLineGraphics.lineStyle(3, 0xffedc6, 0.96);
-    this.startLineGraphics.lineBetween(64, 137, 64, 253);
-    this.startLineGraphics.lineStyle(1, 0x483c42, 0.9);
-    this.startLineGraphics.lineBetween(68, 137, 68, 253);
-  }
-
   #runnerX(racer) {
     const playerDistance = this.player?.distance ?? 0;
     const cameraDistance = getRaceCameraDistance(
@@ -417,6 +352,7 @@ export class LandRaceScene extends Phaser.Scene {
       stumbleMs: 0,
       obstacleIndex: 0,
       obstacleSprites: [],
+      obstacleLabels: [],
     };
     this.#setMode(racer, 'idle');
     return racer;
@@ -444,14 +380,27 @@ export class LandRaceScene extends Phaser.Scene {
   #createTrackObjects() {
     for (const racer of this.runners) {
       const runnerX = this.#runnerX(racer);
-      racer.startBlock = this.add.image(runnerX - 11, racer.laneY + 17, 'land-race-start-block')
-        .setScale(racer.laneScale)
-        .setDepth(30 + racer.laneIndex);
       racer.obstacleSprites = this.obstacles.map((obstacle) =>
         this.add.image(runnerX, racer.laneY, this.courseObjectTextures[obstacle.type])
           .setScale(racer.laneScale * (obstacle.type === 'hurdle' ? 0.62 : 0.5))
           .setDepth(34 + racer.laneIndex),
       );
+      racer.obstacleLabels = this.obstacles.map((obstacle) => {
+        const definition = this.courseObjectSpecs.find(({ id }) => id === obstacle.type);
+        const isJump = definition?.action === 'jump';
+        const instruction = (isJump ? '↑ ' : '↓ ') + (definition?.instruction ?? 'OBSTÁCULO');
+        return this.add.text(runnerX, racer.laneY - 18, instruction, {
+          fontFamily: 'monospace',
+          fontSize: '7px',
+          fontStyle: 'bold',
+          color: isJump ? '#ffdc8b' : '#a8eeff',
+          backgroundColor: '#10131d',
+          padding: { left: 3, right: 3, top: 1, bottom: 1 },
+          stroke: '#10131d',
+          strokeThickness: 2,
+          align: 'center',
+        }).setOrigin(0.5).setDepth(48 + racer.laneIndex);
+      });
     }
     this.pickupSprites = this.pickups.map(() =>
       this.add.image(PLAYER_RUNNER_X, this.player.laneY - 27, this.courseObjectTextures.stamina)
@@ -462,19 +411,21 @@ export class LandRaceScene extends Phaser.Scene {
 
   #syncTrackObjects(racer) {
     const runnerX = this.#runnerX(racer);
-    const startX = runnerX - racer.distance * LAND_OBJECT_SCALE - 11;
-    racer.startBlock?.setPosition(startX, racer.laneY + 17)
-      .setScale(racer.laneScale)
-      .setDepth(30 + racer.laneIndex)
-      .setVisible(racer.distance < 35 && startX > -30);
     racer.obstacleSprites.forEach((sprite, index) => {
       const obstacle = this.obstacles[index];
       const x = runnerX + (obstacle.distance - racer.distance) * LAND_OBJECT_SCALE;
-      sprite.setPosition(x, racer.laneY + RUNNER_FOOT_OFFSET -
-        (obstacle.action === 'jump' ? 8 : 4))
-        .setScale(racer.laneScale)
-        .setDepth(34 + racer.laneIndex);
-      sprite.setVisible(index >= racer.obstacleIndex && x > -36 && x < GAME_WIDTH + 36);
+      const y = racer.laneY + RUNNER_FOOT_OFFSET -
+        (obstacle.action === 'jump' ? 8 : 4);
+      const visible = index >= racer.obstacleIndex && x > -36 && x < GAME_WIDTH + 36;
+      const obstacleScale = obstacle.type === 'hurdle' ? 0.62 : 0.5;
+      sprite.setPosition(x, y)
+        .setScale(racer.laneScale * obstacleScale)
+        .setDepth(34 + racer.laneIndex)
+        .setVisible(visible);
+      racer.obstacleLabels[index]
+        ?.setPosition(x, y - 24)
+        .setDepth(48 + racer.laneIndex)
+        .setVisible(visible);
     });
   }
 
@@ -500,11 +451,9 @@ export class LandRaceScene extends Phaser.Scene {
   }
 
   #updateEnvironment() {
-    this.trackOffset = (this.distance * 0.56) % 28;
     this.stageLayers.forEach((layer, index) => {
       layer.tilePositionX = this.distance * (index === 0 ? 0.12 : 0.28);
     });
-    this.#drawTrack();
 
   }
 
@@ -595,10 +544,10 @@ export class LandRaceScene extends Phaser.Scene {
         this.#setMode(racer, 'walk');
       }
       racer.obstacleSprites[racer.obstacleIndex]?.setVisible(false);
+      racer.obstacleLabels[racer.obstacleIndex]?.setVisible(false);
       racer.obstacleIndex += 1;
     }
 
-    if (racer.startBlock && racer.distance > 35) racer.startBlock.setVisible(false);
   }
 
   #syncRacer(racer) {

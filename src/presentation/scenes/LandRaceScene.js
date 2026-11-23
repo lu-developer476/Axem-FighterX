@@ -12,13 +12,22 @@ import landRunGifUrl from '../../../art/source/sprites/results/male/orange/run.g
 import landDashGifUrl from '../../../art/source/sprites/results/male/orange/dash.gif?url';
 import landJumpGifUrl from '../../../art/source/sprites/results/male/orange/jump.gif?url';
 import landRollGifUrl from '../../../art/source/sprites/results/male/orange/roll.gif?url';
+import redRaceIdleGifUrl from '../../../art/source/sprites/references/axem-red/idle.gif?url';
+import redRaceWalkGifUrl from '../../../art/source/sprites/references/axem-red/walk.gif?url';
 import redRaceRunGifUrl from '../../../art/source/sprites/references/axem-red/run.gif?url';
+import redRaceDashGifUrl from '../../../art/source/sprites/references/axem-red/dash.gif?url';
+import redRaceJumpGifUrl from '../../../art/source/sprites/references/axem-red/jump.gif?url';
+import { resolveLandRaceAnimationSources } from '../../domain/race/landRaceAnimationRules.js';
 import { PauseMenuView } from '../views/PauseMenuView.js';
 import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
-import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseAssets.js';
+import {
+  resolveRaceCourseAssets,
+  resolveRaceCourseObjects,
+} from '../../infrastructure/assets/raceCourseAssets.js';
 import {
   createLoopingMapTexture,
   createLoopingRaceTextures,
+  createTilesetObjectTextures,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
@@ -55,94 +64,14 @@ function createTexture(scene, key, width, height, draw) {
   graphics.destroy();
 }
 
-/** Sprites pixel-art propios de una pista de atletismo; no modifican las colisiones del combate. */
+/** Bloque de salida pixel-art; obstáculos y consumibles provienen del tileset. */
 function createLandRaceTextures(scene) {
-  createTexture(scene, 'land-race-crowd', 160, 34, (graphics) => {
-    graphics.fillStyle(0x20243b, 1).fillRect(0, 0, 160, 34);
-    const colors = [0xe8a36c, 0x8e83cf, 0x7cc1a4, 0xe7d28c, 0xd57a83, 0x8ab7db];
-    for (let row = 0; row < 4; row += 1) {
-      for (let column = 0; column < 32; column += 1) {
-        const x = column * 5 + (row % 2) * 2;
-        const y = 3 + row * 7;
-        const color = colors[(column * 3 + row * 5) % colors.length];
-        graphics.fillStyle(0x151a2b, 1).fillRect(x, y + 2, 4, 4);
-        graphics.fillStyle(color, 1).fillRect(x + 1, y, 3, 4);
-        graphics.fillStyle(0xf0d9c0, 1).fillRect(x + 1, y - 1, 2, 2);
-      }
-    }
-  });
-
-  createTexture(scene, 'land-race-hurdle', 34, 24, (graphics) => {
-    graphics.fillStyle(0x353344, 1).fillRect(5, 5, 3, 18);
-    graphics.fillRect(26, 5, 3, 18);
-    graphics.fillStyle(0xe9e3d5, 1).fillRect(3, 4, 29, 4);
-    graphics.fillStyle(0xd66c58, 1).fillRect(7, 4, 5, 4);
-    graphics.fillRect(18, 4, 5, 4);
-    graphics.fillStyle(0xf6d18c, 1).fillRect(5, 21, 7, 2);
-    graphics.fillRect(23, 21, 7, 2);
-  });
-
-  createTexture(scene, 'land-race-roll-gate', 34, 17, (graphics) => {
-    graphics.fillStyle(0x384052, 1).fillRect(4, 11, 3, 6);
-    graphics.fillRect(27, 11, 3, 6);
-    graphics.fillStyle(0xf1c46f, 1).fillRect(3, 6, 29, 5);
-    graphics.fillStyle(0x9a5266, 1).fillRect(8, 6, 5, 5);
-    graphics.fillRect(21, 6, 5, 5);
-    graphics.fillStyle(0xffe7af, 1).fillRect(14, 7, 6, 2);
-  });
-
   createTexture(scene, 'land-race-start-block', 24, 12, (graphics) => {
     graphics.fillStyle(0x272b3b, 1).fillRect(2, 7, 20, 5);
     graphics.fillStyle(0xe0b46e, 1).fillRect(4, 4, 7, 4);
     graphics.fillRect(14, 2, 7, 6);
     graphics.fillStyle(0xf7e3b4, 1).fillRect(5, 4, 5, 1);
     graphics.fillRect(15, 2, 5, 1);
-  });
-
-  createTexture(scene, 'land-race-cone', 12, 16, (graphics) => {
-    graphics.fillStyle(0x333344, 1).fillRect(1, 14, 10, 2);
-    graphics.fillStyle(0xe47a4f, 1).fillRect(5, 3, 3, 11);
-    graphics.fillRect(3, 8, 7, 3);
-    graphics.fillStyle(0xffe0a0, 1).fillRect(4, 8, 5, 2);
-    graphics.fillStyle(0xf5b36d, 1).fillRect(5, 2, 3, 2);
-  });
-
-  createTexture(scene, 'land-race-banner', 88, 20, (graphics) => {
-    graphics.fillStyle(0x19182a, 1).fillRect(0, 0, 88, 20);
-    graphics.fillStyle(0x9b79c5, 1).fillRect(0, 0, 88, 2);
-    graphics.fillStyle(0xdba86e, 1).fillRect(0, 17, 88, 3);
-    graphics.fillStyle(0x49365f, 1).fillRect(3, 4, 82, 11);
-    graphics.fillStyle(0xf3dba9, 1).fillRect(7, 7, 8, 2);
-    graphics.fillRect(18, 7, 4, 2);
-    graphics.fillRect(25, 7, 7, 2);
-    graphics.fillRect(36, 7, 4, 2);
-    graphics.fillRect(43, 7, 7, 2);
-    graphics.fillRect(54, 7, 4, 2);
-    graphics.fillRect(61, 7, 8, 2);
-    graphics.fillRect(73, 7, 8, 2);
-    graphics.fillRect(13, 11, 62, 1);
-  });
-
-  createTexture(scene, 'land-race-energy', 18, 18, (graphics) => {
-    graphics.fillStyle(0x16394a, 1).fillCircle(9, 9, 8);
-    graphics.lineStyle(2, 0x9eeeff, 1).strokeCircle(9, 9, 7);
-    graphics.fillStyle(0xe8ffff, 1).fillRect(8, 3, 3, 12);
-    graphics.fillRect(4, 7, 10, 3);
-    graphics.fillStyle(0x5bd8ed, 1).fillRect(8, 5, 2, 8);
-  });
-
-  createTexture(scene, 'land-race-finish-arch', 34, 72, (graphics) => {
-    graphics.fillStyle(0x28273a, 1).fillRect(3, 0, 5, 71);
-    graphics.fillRect(26, 0, 5, 71);
-    graphics.fillStyle(0xe8d2a9, 1).fillRect(0, 0, 34, 8);
-    graphics.fillStyle(0x8a5caa, 1).fillRect(2, 8, 30, 4);
-    graphics.fillStyle(0xf0dfb9, 1).fillRect(5, 1, 5, 6);
-    graphics.fillRect(15, 1, 5, 6);
-    graphics.fillRect(25, 1, 5, 6);
-    graphics.fillStyle(0xd36d5d, 1).fillRect(5, 14, 2, 48);
-    graphics.fillRect(27, 14, 2, 48);
-    graphics.fillStyle(0xedd8ae, 1).fillRect(8, 15, 2, 47);
-    graphics.fillRect(24, 15, 2, 47);
   });
 }
 
@@ -160,6 +89,11 @@ export class LandRaceScene extends Phaser.Scene {
       'terrestrial',
       STAGE_MAP_ASSETS,
       STAGE_TILESET_ASSETS,
+    );
+    this.courseObjectTextures = createTilesetObjectTextures(
+      this,
+      resolveRaceCourseObjects('terrestrial', raceTilesets),
+      { prefix: 'land-course-object-' + this.game.loop.frame },
     );
     const mapKey = createLoopingMapTexture(this, courseMaps, {
       key: 'land-course-' + this.game.loop.frame,
@@ -180,14 +114,10 @@ export class LandRaceScene extends Phaser.Scene {
         .setDepth(-100 + index)
         .setAlpha(index === 0 ? 1 : 0.68),
     );
-    this.sceneryTextures = [];
 
     this.distance = 0;
     this.finishDistance = 0;
     this.trackOffset = 0;
-    this.scenery = [];
-    this.lastSceneryChunk = -1;
-    this.previousSceneryDistance = 0;
     this.player = null;
     this.rival = null;
     this.runners = [];
@@ -242,9 +172,6 @@ export class LandRaceScene extends Phaser.Scene {
     this.finishDistance = distance;
     this.distance = 0;
     this.trackOffset = 0;
-    this.scenery = [];
-    this.lastSceneryChunk = -1;
-    this.previousSceneryDistance = 0;
     this.obstacles = this.#generateRaceObstacles();
     this.pickups = this.#generateRacePickups();
     this.session.start(distance, COUNTDOWN_MS);
@@ -446,23 +373,25 @@ export class LandRaceScene extends Phaser.Scene {
       .setScale(laneScale)
       .setDepth(31 + laneIndex);
 
-    const animationSources = isPlayer
-      ? {
-        idle: landIdleGifUrl,
-        walk: landPoseGifUrl,
-        run: landRunGifUrl,
-        dash: landDashGifUrl,
-        jump: landJumpGifUrl,
-        roll: landRollGifUrl,
-      }
-      : {
-        idle: redRaceRunGifUrl,
-        walk: redRaceRunGifUrl,
-        run: redRaceRunGifUrl,
-        dash: redRaceRunGifUrl,
-        jump: redRaceRunGifUrl,
-        roll: redRaceRunGifUrl,
-      };
+    const animationSources = resolveLandRaceAnimationSources(
+      isPlayer ? 'orange' : 'red',
+      isPlayer
+        ? {
+          idle: landIdleGifUrl,
+          pose: landPoseGifUrl,
+          run: landRunGifUrl,
+          dash: landDashGifUrl,
+          jump: landJumpGifUrl,
+          roll: landRollGifUrl,
+        }
+        : {
+          idle: redRaceIdleGifUrl,
+          walk: redRaceWalkGifUrl,
+          run: redRaceRunGifUrl,
+          dash: redRaceDashGifUrl,
+          jump: redRaceJumpGifUrl,
+        },
+    );
     const racerName = isPlayer ? 'Axem Naranja' : 'Axem Red';
     const racerGif = this.add.dom(runnerX, laneY - 28).createFromHTML(
       '<img src="' + animationSources.idle + '" alt="' + racerName + '" style="width:48px;height:68px;object-fit:contain;image-rendering:pixelated;pointer-events:none;">',
@@ -503,9 +432,9 @@ export class LandRaceScene extends Phaser.Scene {
 
   #generateRacePickups() {
     return repeatCoursePattern([
-      { distance: 280, kind: 'energy' },
-      { distance: 760, kind: 'energy' },
-      { distance: 1060, kind: 'energy' },
+      { distance: 280, kind: 'stamina' },
+      { distance: 760, kind: 'stamina' },
+      { distance: 1060, kind: 'stamina' },
     ], this.finishDistance, {
       cycleDistance: LAND_RACE_LOOP_DISTANCE,
       finishPadding: 35,
@@ -518,24 +447,15 @@ export class LandRaceScene extends Phaser.Scene {
       racer.startBlock = this.add.image(runnerX - 11, racer.laneY + 17, 'land-race-start-block')
         .setScale(racer.laneScale)
         .setDepth(30 + racer.laneIndex);
-      racer.obstacleSprites = this.obstacles.map((obstacle) => {
-        const texture = obstacle.type === 'hurdle' ? 'land-race-hurdle' : 'land-race-roll-gate';
-        return this.add.image(runnerX, racer.laneY, texture)
-          .setScale(racer.laneScale)
-          .setDepth(34 + racer.laneIndex);
-      });
+      racer.obstacleSprites = this.obstacles.map((obstacle) =>
+        this.add.image(runnerX, racer.laneY, this.courseObjectTextures[obstacle.type])
+          .setScale(racer.laneScale * (obstacle.type === 'hurdle' ? 0.62 : 0.5))
+          .setDepth(34 + racer.laneIndex),
+      );
     }
-    this.pickupBackdropSprites = this.pickups.map((pickup, index) => {
-      const texture = this.sceneryTextures.length
-        ? this.sceneryTextures[index % this.sceneryTextures.length]
-        : 'land-race-energy';
-      return this.add.image(PLAYER_RUNNER_X, this.player.laneY - 27, texture)
-        .setDepth(36)
-        .setAlpha(0.82)
-        .setScale(0.78);
-    });
     this.pickupSprites = this.pickups.map(() =>
-      this.add.image(PLAYER_RUNNER_X, this.player.laneY - 27, 'land-race-energy')
+      this.add.image(PLAYER_RUNNER_X, this.player.laneY - 27, this.courseObjectTextures.stamina)
+        .setTint(0x9eeeff)
         .setDepth(38),
     );
   }
@@ -551,7 +471,7 @@ export class LandRaceScene extends Phaser.Scene {
       const obstacle = this.obstacles[index];
       const x = runnerX + (obstacle.distance - racer.distance) * LAND_OBJECT_SCALE;
       sprite.setPosition(x, racer.laneY + RUNNER_FOOT_OFFSET -
-        (obstacle.type === 'hurdle' ? 8 : 4))
+        (obstacle.action === 'jump' ? 8 : 4))
         .setScale(racer.laneScale)
         .setDepth(34 + racer.laneIndex);
       sprite.setVisible(index >= racer.obstacleIndex && x > -36 && x < GAME_WIDTH + 36);
@@ -561,21 +481,15 @@ export class LandRaceScene extends Phaser.Scene {
   #syncPickups() {
     this.pickups.forEach((pickup, index) => {
       const sprite = this.pickupSprites[index];
-      const backdrop = this.pickupBackdropSprites[index];
       if (pickup.collected) {
         sprite.setVisible(false);
-        backdrop?.setVisible(false);
         return;
       }
       const playerX = this.#runnerX(this.player);
       const x = playerX + (pickup.distance - this.player.distance) * LAND_OBJECT_SCALE;
-      backdrop?.setPosition(x, this.player.laneY - 27)
-        .setDepth(36 + this.player.laneIndex)
-        .setScale(this.player.laneScale)
-        .setVisible(x > -24 && x < GAME_WIDTH + 24);
       sprite.setPosition(x, this.player.laneY - 27)
         .setDepth(38 + this.player.laneIndex)
-        .setScale(this.player.laneScale)
+        .setScale(this.player.laneScale * 0.72)
         .setVisible(x > -24 && x < GAME_WIDTH + 24);
       if (Math.abs(x - playerX) < 14) {
         pickup.collected = true;
@@ -592,28 +506,6 @@ export class LandRaceScene extends Phaser.Scene {
     });
     this.#drawTrack();
 
-    const nextChunk = Math.floor(this.distance / 180);
-    while (this.lastSceneryChunk < nextChunk) {
-      this.lastSceneryChunk += 1;
-      if (!this.sceneryTextures.length) break;
-      const index = this.lastSceneryChunk;
-      const key = this.sceneryTextures[index % this.sceneryTextures.length];
-      const y = index % 2 === 0 ? 136 : 151;
-      const item = this.add.image(GAME_WIDTH + 28, y, key)
-        .setDepth(5)
-        .setScale(index % 3 === 0 ? 1.3 : 1);
-      this.scenery.push(item);
-    }
-    const travelled = Math.max(0, this.distance - this.previousSceneryDistance);
-    this.previousSceneryDistance = this.distance;
-    for (const item of this.scenery) item.x -= travelled * 0.28;
-    this.scenery = this.scenery.filter((item) => {
-      if (item.x < -60) {
-        item.destroy();
-        return false;
-      }
-      return item.active;
-    });
   }
 
 

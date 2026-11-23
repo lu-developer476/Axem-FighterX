@@ -9,6 +9,24 @@ export const RACE_COURSE_ASSETS = Object.freeze({
   }),
 });
 
+/**
+ * Recortes explícitos de objetos con sentido jugable extraídos de cada tileset.
+ * La decoración ambiental no se recicla como obstáculo ni como consumible.
+ */
+export const RACE_COURSE_OBJECTS = Object.freeze({
+  axem: Object.freeze([
+    Object.freeze({ id: 'rock-wall', role: 'obstacle', assetId: 'cave2-tileset', x: 128, y: 0, width: 96, height: 64 }),
+    Object.freeze({ id: 'stone-pillar', role: 'obstacle', assetId: 'cave1-tileset', x: 416, y: 32, width: 64, height: 96 }),
+    Object.freeze({ id: 'boost', role: 'pickup', assetId: 'cave1-tileset', x: 320, y: 352, width: 32, height: 32 }),
+    Object.freeze({ id: 'slow', role: 'pickup', assetId: 'cave2-tileset', x: 256, y: 64, width: 64, height: 64 }),
+  ]),
+  terrestrial: Object.freeze([
+    Object.freeze({ id: 'hurdle', role: 'obstacle', assetId: 'sidescroll-tileset', x: 960, y: 160, width: 64, height: 64 }),
+    Object.freeze({ id: 'roll-gate', role: 'obstacle', assetId: 'sidescroll-tileset', x: 1088, y: 160, width: 32, height: 96 }),
+    Object.freeze({ id: 'stamina', role: 'pickup', assetId: 'sidescroll-tileset', x: 896, y: 448, width: 32, height: 64 }),
+  ]),
+});
+
 export function resolveRaceCourseAssets(courseId, mapAssets, tilesetAssets) {
   const course = RACE_COURSE_ASSETS[courseId];
   if (!course) throw new RangeError('No existe el circuito "' + courseId + '".');
@@ -21,4 +39,19 @@ export function resolveRaceCourseAssets(courseId, mapAssets, tilesetAssets) {
     maps: Object.freeze(resolve(course.mapIds, mapAssets, 'mapa')),
     tilesets: Object.freeze(resolve(course.tilesetIds, tilesetAssets, 'tileset')),
   });
+}
+
+export function resolveRaceCourseObjects(courseId, tilesetAssets) {
+  const regions = RACE_COURSE_OBJECTS[courseId];
+  if (!regions) throw new RangeError('No existen objetos para el circuito "' + courseId + '".');
+  const assetsById = new Map((tilesetAssets ?? []).map((asset) => [asset.id, asset]));
+  return Object.freeze(regions.map((region) => {
+    const asset = assetsById.get(region.assetId);
+    if (!asset) throw new Error('Falta el tileset "' + region.assetId + '" para el objeto "' + region.id + '".');
+    if (![region.x, region.y, region.width, region.height].every(Number.isInteger) ||
+        region.x < 0 || region.y < 0 || region.width < 1 || region.height < 1) {
+      throw new RangeError('Región inválida para el objeto "' + region.id + '".');
+    }
+    return Object.freeze({ ...region, asset });
+  }));
 }

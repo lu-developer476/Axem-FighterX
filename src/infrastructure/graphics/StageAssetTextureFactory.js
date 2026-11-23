@@ -301,6 +301,50 @@ export function createLoopingMapTexture(scene, assets, {
   return key;
 }
 
+/**
+ * Recorta objetos con función jugable desde coordenadas explícitas de los tilesets.
+ * Cada salida se asocia a una clave estable del objeto en lugar de elegir un tile al azar.
+ */
+export function createTilesetObjectTextures(scene, objectSpecs, {
+  prefix = 'race-object',
+} = {}) {
+  const textures = Object.create(null);
+
+  for (const { id, asset, x, y, width, height } of objectSpecs ?? []) {
+    if (!asset || !scene.textures.exists(asset.key)) {
+      throw new Error('No se pudo cargar el tileset del objeto "' + id + '".');
+    }
+    const source = scene.textures.get(asset.key).getSourceImage();
+    if (x + width > source.width || y + height > source.height) {
+      throw new RangeError('El recorte del objeto "' + id + '" excede el tileset "' + asset.id + '".');
+    }
+
+    const key = prefix + '-' + id;
+    if (!scene.textures.exists(key)) {
+      const sourceCanvas = document.createElement('canvas');
+      sourceCanvas.width = source.width;
+      sourceCanvas.height = source.height;
+      const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+      sourceContext.drawImage(source, 0, 0);
+      const pixels = sourceContext.getImageData(0, 0, source.width, source.height).data;
+      const backgroundColor = asset.backgroundColor && asset.backgroundColor !== 'auto'
+        ? parseHexColor(asset.backgroundColor)
+        : detectCornerBackground(pixels, source.width, source.height);
+
+      const texture = scene.textures.createCanvas(key, width, height);
+      const context = texture.getContext();
+      context.imageSmoothingEnabled = false;
+      context.clearRect(0, 0, width, height);
+      context.drawImage(source, x, y, width, height, 0, 0, width, height);
+      if (backgroundColor) removeKeyedBackground(context, width, height, backgroundColor);
+      texture.refresh();
+    }
+    textures[id] = key;
+  }
+
+  return Object.freeze({ ...textures });
+}
+
 /** Prepara motivos individuales para repetirlos como vegetación, rocas y objetos contextuales. */
 export function createTilesetStampTextures(scene, assets, {
   prefix = 'race-prop',

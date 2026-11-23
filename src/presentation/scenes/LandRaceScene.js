@@ -9,27 +9,23 @@ import { getRaceCameraDistance, getRaceRunnerX } from '../../domain/race/raceLan
 import landIdleGifUrl from '../../../art/source/sprites/results/male/orange/idle.gif?url';
 import landPoseGifUrl from '../../../art/source/sprites/results/male/orange/pose.gif?url';
 import landRunGifUrl from '../../../art/source/sprites/results/male/orange/run.gif?url';
-import landDashGifUrl from '../../../art/source/sprites/results/male/orange/dash.gif?url';
 import landJumpGifUrl from '../../../art/source/sprites/results/male/orange/jump.gif?url';
 import landRollGifUrl from '../../../art/source/sprites/results/male/orange/roll.gif?url';
 import redRaceIdleGifUrl from '../../../art/source/sprites/references/axem-red/idle.gif?url';
 import redRaceWalkGifUrl from '../../../art/source/sprites/references/axem-red/walk.gif?url';
 import redRaceRunGifUrl from '../../../art/source/sprites/references/axem-red/run.gif?url';
-import redRaceDashGifUrl from '../../../art/source/sprites/references/axem-red/dash.gif?url';
 import redRaceJumpGifUrl from '../../../art/source/sprites/references/axem-red/jump.gif?url';
 import { resolveLandRaceAnimationSources } from '../../domain/race/landRaceAnimationRules.js';
 import { PauseMenuView } from '../views/PauseMenuView.js';
 import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import {
   resolveRaceCourseAssets,
-  resolveRaceCourseObjects,
 } from '../../infrastructure/assets/raceCourseAssets.js';
 import {
   createLoopingMapTexture,
   createLoopingRaceTextures,
-  createTilesetObjectTextures,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
-import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
+import { RACE_DISTANCE_OPTIONS } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
@@ -40,19 +36,9 @@ const RUNNER_LANES = LAND_RACE_LANES;
 const RUNNER_LANE_SCALES = LAND_RACE_LANE_SCALES;
 const PLAYER_RUNNER_X = TREADMILL_RUNNER_X;
 const LAND_OBJECT_SCALE = 0.14;
-const LAND_RACE_LOOP_DISTANCE = 1200;
 const RUNNER_FOOT_OFFSET = 13;
 const COUNTDOWN_MS = 3000;
 const STAMINA_MAX = 100;
-
-export const LAND_RACE_OBSTACLES = Object.freeze([
-  Object.freeze({ distance: 190, action: 'jump', type: 'hurdle' }),
-  Object.freeze({ distance: 370, action: 'roll', type: 'roll-gate' }),
-  Object.freeze({ distance: 555, action: 'jump', type: 'hurdle' }),
-  Object.freeze({ distance: 745, action: 'roll', type: 'roll-gate' }),
-  Object.freeze({ distance: 930, action: 'jump', type: 'hurdle' }),
-  Object.freeze({ distance: 1080, action: 'jump', type: 'hurdle' }),
-]);
 
 const ACTION_DURATION_MS = Object.freeze({ jump: 680, roll: 650 });
 
@@ -70,17 +56,14 @@ export class LandRaceScene extends Phaser.Scene {
       STAGE_MAP_ASSETS,
       STAGE_TILESET_ASSETS,
     );
-    this.courseObjectSpecs = resolveRaceCourseObjects('terrestrial', raceTilesets);
-    this.courseObjectTextures = createTilesetObjectTextures(
-      this,
-      this.courseObjectSpecs,
-      { prefix: 'land-course-object-' + this.game.loop.frame },
-    );
+    this.courseMaps = courseMaps;
     const mapKey = createLoopingMapTexture(this, courseMaps, {
       key: 'land-course-' + this.game.loop.frame,
       height: GAME_HEIGHT,
       cropTop: 240,
       cropHeight: 720,
+      width: Math.round(5000 * 0.12 + GAME_WIDTH),
+      finalSectionWidth: GAME_WIDTH,
     });
     const worldKeys = mapKey
       ? [mapKey]
@@ -150,8 +133,15 @@ export class LandRaceScene extends Phaser.Scene {
   #startRace(distance) {
     this.finishDistance = distance;
     this.distance = 0;
-    this.obstacles = this.#generateRaceObstacles();
-    this.pickups = this.#generateRacePickups();
+    const finishMapKey = createLoopingMapTexture(this, this.courseMaps, {
+      key: 'land-course-finish-' + this.game.loop.frame + '-' + Math.round(distance),
+      height: GAME_HEIGHT,
+      cropTop: 240,
+      cropHeight: 720,
+      width: Math.round(distance * 0.12 + GAME_WIDTH),
+      finalSectionWidth: GAME_WIDTH,
+    });
+    if (finishMapKey) this.stageLayers[0]?.setTexture(finishMapKey).setTilePosition(0, 0);
     this.session.start(distance, COUNTDOWN_MS);
     this.pauseMenu.hide();
     this.player = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[0], true);
@@ -160,7 +150,6 @@ export class LandRaceScene extends Phaser.Scene {
     this.player.distance = 0;
     this.rival.distance = 0;
     this.runners = [this.player, this.rival];
-    this.#createTrackObjects();
     this.status.setText('3').setFontSize(24);
     this.distanceLabel.setText('0 / ' + Math.round(distance) + ' M');
     this.#drawHud();
@@ -239,9 +228,6 @@ export class LandRaceScene extends Phaser.Scene {
     this.#updateEnvironment();
     this.#syncRacer(this.player);
     this.#syncRacer(this.rival);
-    this.#syncTrackObjects(this.player);
-    this.#syncTrackObjects(this.rival);
-    this.#syncPickups();
     this.#drawHud();
 
     if (this.player.distance >= this.finishDistance || this.rival.distance >= this.finishDistance) {
@@ -315,7 +301,7 @@ export class LandRaceScene extends Phaser.Scene {
           idle: landIdleGifUrl,
           pose: landPoseGifUrl,
           run: landRunGifUrl,
-          dash: landDashGifUrl,
+          dash: landRunGifUrl,
           jump: landJumpGifUrl,
           roll: landRollGifUrl,
         }
@@ -323,7 +309,7 @@ export class LandRaceScene extends Phaser.Scene {
           idle: redRaceIdleGifUrl,
           walk: redRaceWalkGifUrl,
           run: redRaceRunGifUrl,
-          dash: redRaceDashGifUrl,
+          dash: redRaceRunGifUrl,
           jump: redRaceJumpGifUrl,
         },
     );
@@ -350,105 +336,11 @@ export class LandRaceScene extends Phaser.Scene {
       actionElapsedMs: 0,
       actionRemainingMs: 0,
       stumbleMs: 0,
-      obstacleIndex: 0,
-      obstacleSprites: [],
-      obstacleLabels: [],
     };
     this.#setMode(racer, 'idle');
     return racer;
   }
 
-
-  #generateRaceObstacles() {
-    return repeatCoursePattern(LAND_RACE_OBSTACLES, this.finishDistance, {
-      cycleDistance: LAND_RACE_LOOP_DISTANCE,
-      finishPadding: 90,
-    });
-  }
-
-  #generateRacePickups() {
-    return repeatCoursePattern([
-      { distance: 280, kind: 'stamina' },
-      { distance: 760, kind: 'stamina' },
-      { distance: 1060, kind: 'stamina' },
-    ], this.finishDistance, {
-      cycleDistance: LAND_RACE_LOOP_DISTANCE,
-      finishPadding: 35,
-    }).map((pickup) => ({ ...pickup, collected: false }));
-  }
-
-  #createTrackObjects() {
-    for (const racer of this.runners) {
-      const runnerX = this.#runnerX(racer);
-      racer.obstacleSprites = this.obstacles.map((obstacle) =>
-        this.add.image(runnerX, racer.laneY, this.courseObjectTextures[obstacle.type])
-          .setScale(racer.laneScale * (obstacle.type === 'hurdle' ? 0.62 : 0.5))
-          .setDepth(34 + racer.laneIndex),
-      );
-      racer.obstacleLabels = this.obstacles.map((obstacle) => {
-        const definition = this.courseObjectSpecs.find(({ id }) => id === obstacle.type);
-        const isJump = definition?.action === 'jump';
-        const instruction = (isJump ? '↑ ' : '↓ ') + (definition?.instruction ?? 'OBSTÁCULO');
-        return this.add.text(runnerX, racer.laneY - 18, instruction, {
-          fontFamily: 'monospace',
-          fontSize: '7px',
-          fontStyle: 'bold',
-          color: isJump ? '#ffdc8b' : '#a8eeff',
-          backgroundColor: '#10131d',
-          padding: { left: 3, right: 3, top: 1, bottom: 1 },
-          stroke: '#10131d',
-          strokeThickness: 2,
-          align: 'center',
-        }).setOrigin(0.5).setDepth(48 + racer.laneIndex);
-      });
-    }
-    this.pickupSprites = this.pickups.map(() =>
-      this.add.image(PLAYER_RUNNER_X, this.player.laneY - 27, this.courseObjectTextures.stamina)
-        .setTint(0x9eeeff)
-        .setDepth(38),
-    );
-  }
-
-  #syncTrackObjects(racer) {
-    const runnerX = this.#runnerX(racer);
-    racer.obstacleSprites.forEach((sprite, index) => {
-      const obstacle = this.obstacles[index];
-      const x = runnerX + (obstacle.distance - racer.distance) * LAND_OBJECT_SCALE;
-      const y = racer.laneY + RUNNER_FOOT_OFFSET -
-        (obstacle.action === 'jump' ? 8 : 4);
-      const visible = index >= racer.obstacleIndex && x > -36 && x < GAME_WIDTH + 36;
-      const obstacleScale = obstacle.type === 'hurdle' ? 0.62 : 0.5;
-      sprite.setPosition(x, y)
-        .setScale(racer.laneScale * obstacleScale)
-        .setDepth(34 + racer.laneIndex)
-        .setVisible(visible);
-      racer.obstacleLabels[index]
-        ?.setPosition(x, y - 24)
-        .setDepth(48 + racer.laneIndex)
-        .setVisible(visible);
-    });
-  }
-
-  #syncPickups() {
-    this.pickups.forEach((pickup, index) => {
-      const sprite = this.pickupSprites[index];
-      if (pickup.collected) {
-        sprite.setVisible(false);
-        return;
-      }
-      const playerX = this.#runnerX(this.player);
-      const x = playerX + (pickup.distance - this.player.distance) * LAND_OBJECT_SCALE;
-      sprite.setPosition(x, this.player.laneY - 27)
-        .setDepth(38 + this.player.laneIndex)
-        .setScale(this.player.laneScale * 0.72)
-        .setVisible(x > -24 && x < GAME_WIDTH + 24);
-      if (Math.abs(x - playerX) < 14) {
-        pickup.collected = true;
-        sprite.setVisible(false);
-        this.player.stamina = Math.min(STAMINA_MAX, this.player.stamina + 30);
-      }
-    });
-  }
 
   #updateEnvironment() {
     this.stageLayers.forEach((layer, index) => {
@@ -480,19 +372,9 @@ export class LandRaceScene extends Phaser.Scene {
   }
 
   #advanceRacer(racer, delta, controls) {
-    const previousDistance = racer.distance;
     const isPlayer = racer.isPlayer;
     const accelerate = Boolean(controls?.accelerate && !controls?.brake);
     const brake = Boolean(controls?.brake && !controls?.accelerate);
-
-    if (!isPlayer) {
-      const nextObstacle = this.obstacles[racer.obstacleIndex];
-      if (nextObstacle && nextObstacle.distance - racer.distance <= 92 &&
-          nextObstacle.distance > racer.distance && racer.actionRemainingMs <= 0 &&
-          racer.stumbleMs <= 0) {
-        this.#startAction(racer, nextObstacle.action);
-      }
-    }
 
     if (racer.actionRemainingMs > 0) {
       racer.actionElapsedMs += delta;
@@ -532,21 +414,6 @@ export class LandRaceScene extends Phaser.Scene {
     }
 
     racer.distance = Math.min(this.finishDistance, racer.distance + speed * delta / 1000);
-
-    const obstacle = this.obstacles[racer.obstacleIndex];
-    if (obstacle && previousDistance < obstacle.distance && racer.distance >= obstacle.distance) {
-      const cleared = racer.actionMode === obstacle.action && racer.actionRemainingMs > 0;
-      if (cleared) {
-        racer.stamina = Math.min(STAMINA_MAX, racer.stamina + 8);
-      } else {
-        racer.stumbleMs = 620;
-        racer.stamina = Math.max(0, racer.stamina - 8);
-        this.#setMode(racer, 'walk');
-      }
-      racer.obstacleSprites[racer.obstacleIndex]?.setVisible(false);
-      racer.obstacleLabels[racer.obstacleIndex]?.setVisible(false);
-      racer.obstacleIndex += 1;
-    }
 
   }
 

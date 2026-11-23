@@ -15,6 +15,7 @@ import {
   createTilesetStampTextures,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
+import { RaceSession } from '../../domain/race/RaceSession.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
@@ -147,6 +148,7 @@ export class LandRaceScene extends Phaser.Scene {
 
   create() {
     playRaceMusic(this, 'landRace');
+    this.session = new RaceSession({ countdownDurationMs: COUNTDOWN_MS });
     createLandRaceTextures(this);
 
     const raceTilesets = STAGE_TILESET_ASSETS.filter((asset) => LAND_RACE_TILESET_IDS.includes(asset.id));
@@ -177,10 +179,6 @@ export class LandRaceScene extends Phaser.Scene {
     this.scenery = [];
     this.lastSceneryChunk = -1;
     this.previousSceneryDistance = 0;
-    this.countdownMs = COUNTDOWN_MS;
-    this.finished = false;
-    this.selectingDistance = true;
-    this.paused = false;
     this.player = null;
     this.rival = null;
     this.runners = [];
@@ -247,9 +245,7 @@ export class LandRaceScene extends Phaser.Scene {
     this.previousSceneryDistance = 0;
     this.obstacles = this.#generateRaceObstacles();
     this.pickups = this.#generateRacePickups();
-    this.countdownMs = COUNTDOWN_MS;
-    this.finished = false;
-    this.selectingDistance = false;
+    this.session.start(distance, COUNTDOWN_MS);
     this.pauseMenu.hide();
     this.player = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[1], true);
     this.rival = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[2], false);
@@ -264,7 +260,7 @@ export class LandRaceScene extends Phaser.Scene {
   }
 
   update(_time, delta) {
-    if (this.selectingDistance) {
+    if (this.session.selectingDistance) {
       if (Phaser.Input.Keyboard.JustDown(this.keys.escape)) {
         this.scene.start('MenuScene');
         return;
@@ -275,7 +271,7 @@ export class LandRaceScene extends Phaser.Scene {
       return;
     }
 
-    if (this.paused) {
+    if (this.session.paused) {
       if (Phaser.Input.Keyboard.JustDown(this.keys.pause)) {
         this.#resume();
         return;
@@ -300,19 +296,19 @@ export class LandRaceScene extends Phaser.Scene {
       return;
     }
 
-    if (this.finished) {
+    if (this.session.finished) {
       if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) this.scene.start('MenuScene');
       if (Phaser.Input.Keyboard.JustDown(this.keys.restart)) this.scene.restart();
       return;
     }
 
-    if (this.countdownMs > 0) {
-      this.countdownMs = Math.max(0, this.countdownMs - delta);
-      const count = Math.ceil(this.countdownMs / 1000);
+    if (this.session.countdownMs > 0) {
+      this.session.advanceCountdown(delta);
+      const count = Math.ceil(this.session.countdownMs / 1000);
       this.status.setText(count ? String(count) : '¡YA!');
-      if (this.countdownMs === 0) {
+      if (this.session.countdownMs === 0) {
         this.time.delayedCall(500, () => {
-          if (!this.finished && this.status.active) this.status.setText('');
+          if (!this.session.finished && this.status.active) this.status.setText('');
         });
       }
       this.#drawHud();
@@ -347,8 +343,8 @@ export class LandRaceScene extends Phaser.Scene {
   }
 
   #openPause() {
-    if (this.paused) return;
-    this.paused = true;
+    if (this.session.paused) return;
+    this.session.pause();
     this.tweens.pauseAll();
     this.anims.pauseAll();
     this.runners.forEach((racer) => {
@@ -363,8 +359,8 @@ export class LandRaceScene extends Phaser.Scene {
   }
 
   #resume() {
-    if (!this.paused) return;
-    this.paused = false;
+    if (!this.session.paused) return;
+    this.session.resume();
     this.pauseMenu.hide();
     this.tweens.resumeAll();
     this.anims.resumeAll();
@@ -595,7 +591,7 @@ export class LandRaceScene extends Phaser.Scene {
   }
 
   #startAction(racer, action) {
-    if (racer.actionRemainingMs > 0 || racer.stumbleMs > 0 || this.finished) return;
+    if (racer.actionRemainingMs > 0 || racer.stumbleMs > 0 || this.session.finished) return;
     const duration = ACTION_DURATION_MS[action];
     if (!duration) return;
 
@@ -719,7 +715,7 @@ export class LandRaceScene extends Phaser.Scene {
   }
 
   #finish(playerWon) {
-    this.finished = true;
+    this.session.finish({ playerWon });
     this.status.setText(playerWon ? '¡J1 GANA LA CARRERA!' : '¡GANA AXEM RED!')
       .setFontSize(11)
       .setColor('#fff0c9');

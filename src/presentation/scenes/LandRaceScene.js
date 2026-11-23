@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
+import { TREADMILL_RUNNER_X } from '../../domain/race/treadmillRaceRules.js';
 import landIdleGifUrl from '../../../art/source/sprites/results/male/orange/idle.gif?url';
 import landPoseGifUrl from '../../../art/source/sprites/results/male/orange/pose.gif?url';
 import landRunGifUrl from '../../../art/source/sprites/results/male/orange/run.gif?url';
@@ -21,8 +22,7 @@ import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
 
 const RUNNER_LANES = Object.freeze([151, 181, 211, 241]);
 const RUNNER_LANE_SCALES = Object.freeze([0.68, 0.78, 0.9, 1.02]);
-const PLAYER_RUNNER_X = 76;
-const RIVAL_RUNNER_X = 76;
+const PLAYER_RUNNER_X = TREADMILL_RUNNER_X;
 const LAND_OBJECT_SCALE = 0.14;
 const LAND_RACE_LOOP_DISTANCE = 1200;
 const RUNNER_FOOT_OFFSET = 13;
@@ -253,7 +253,9 @@ export class LandRaceScene extends Phaser.Scene {
     this.pauseMenu.hide();
     this.player = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[1], true);
     this.rival = this.#createRacer(RANGER_IDS.ORANGE, RUNNER_LANES[2], false);
-    this.rival.distance = 60;
+    // Ambos arrancan exactamente sobre la misma línea; la distancia solo mueve la cinta.
+    this.player.distance = 0;
+    this.rival.distance = 0;
     this.runners = [this.player, this.rival];
     this.#createTrackObjects();
     this.status.setText('3').setFontSize(24);
@@ -351,6 +353,7 @@ export class LandRaceScene extends Phaser.Scene {
     this.anims.pauseAll();
     this.runners.forEach((racer) => {
       racer.gif?.setVisible(false);
+      if (racer.gif?.node) racer.gif.node.style.visibility = 'hidden';
       racer.sprite?.setVisible(false);
       racer.shadow?.setVisible(false);
     });
@@ -367,6 +370,7 @@ export class LandRaceScene extends Phaser.Scene {
     this.anims.resumeAll();
     this.runners.forEach((racer) => {
       racer.gif?.setVisible(true);
+      if (racer.gif?.node) racer.gif.node.style.visibility = '';
       racer.shadow?.setVisible(true);
     });
     this.playerName?.setVisible(true);
@@ -405,17 +409,16 @@ export class LandRaceScene extends Phaser.Scene {
     this.startLineGraphics.lineBetween(68, 137, 68, 253);
   }
 
-  #runnerX(racer) {
-    if (racer.isPlayer) return PLAYER_RUNNER_X;
-    const lead = Phaser.Math.Clamp((racer.distance - (this.player?.distance ?? 0)) * LAND_OBJECT_SCALE, 10, 34);
-    return RIVAL_RUNNER_X + lead;
+  #runnerX(_racer) {
+    // Cinta continua: los corredores permanecen anclados a la misma vertical.
+    return PLAYER_RUNNER_X;
   }
 
   #createRacer(rangerId, laneY, isPlayer) {
     const idleKey = spriteKeyFor(rangerId, genderForRanger(rangerId));
     const laneIndex = RUNNER_LANES.indexOf(laneY);
     const laneScale = RUNNER_LANE_SCALES[Math.max(0, laneIndex)];
-    const runnerX = isPlayer ? PLAYER_RUNNER_X : RIVAL_RUNNER_X + 10;
+    const runnerX = PLAYER_RUNNER_X;
     const sprite = this.add.sprite(runnerX, laneY + RUNNER_FOOT_OFFSET, idleKey)
       .setOrigin(0.5, 1)
       .setScale(laneScale)

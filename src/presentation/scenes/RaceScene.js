@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
+import { TREADMILL_RUNNER_X } from '../../domain/race/treadmillRaceRules.js';
 import { STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import {
   createLoopingRaceTextures,
   createTilesetStampTextures,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
+import raceBikeGifUrl from '../../../art/source/sprites/results/male/orange/bike.gif?url';
 import redRaceBikeGifUrl from '../../../art/source/sprites/references/axem-red/axem-ranger-bike.gif?url';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { AVAILABLE_RANGER_VARIANTS, getCounterpartSelection } from '../../domain/rangers/rangerVariants.js';
@@ -20,8 +22,7 @@ import {
   normalizeMotorcycleLane,
 } from '../../domain/race/motorcycleRaceRules.js';
 
-const PLAYER_X = 76;
-const OPPONENT_X = 76;
+const PLAYER_X = TREADMILL_RUNNER_X;
 const COUNTDOWN_MS = 3000;
 const LANE_SWITCH_MS = 145;
 const RACE_TILESET_IDS = Object.freeze(['sidescroll-tileset']);
@@ -304,6 +305,7 @@ export class RaceScene extends Phaser.Scene {
     this.anims.pauseAll();
     this.racers?.forEach((racer) => {
       racer.gif?.setVisible(false);
+      if (racer.gif?.node) racer.gif.node.style.visibility = 'hidden';
       racer.sprite?.setVisible(false);
       racer.vehicle?.setVisible(false);
       racer.labelText?.setVisible(false);
@@ -319,6 +321,7 @@ export class RaceScene extends Phaser.Scene {
     this.anims.resumeAll();
     this.racers?.forEach((racer) => {
       racer.gif?.setVisible(true);
+      if (racer.gif?.node) racer.gif.node.style.visibility = '';
       racer.labelText?.setVisible(true);
     });
   }
@@ -371,7 +374,9 @@ export class RaceScene extends Phaser.Scene {
     this.opponents = [
       this.#createRacer(orangeSelection, 'AXEM RED', 2, false),
     ];
-    this.opponents[0].distance = 60;
+    // Ambos arrancan en la misma vertical y con distancia cero.
+    this.player.distance = 0;
+    this.opponents[0].distance = 0;
     this.racers = [this.player, ...this.opponents];
     this.obstacleSprites = this.obstacles.map((obstacle) =>
       this.add.image(0, 0, this.#obstacleTexture(obstacle.kind)).setDepth(30),
@@ -436,10 +441,9 @@ export class RaceScene extends Phaser.Scene {
     };
   }
 
-  #racerX(racer) {
-    if (racer.isPlayer) return PLAYER_X;
-    const lead = Phaser.Math.Clamp((racer.distance - this.distance) * 0.08, 10, 34);
-    return OPPONENT_X + lead;
+  #racerX(_racer) {
+    // El corredor queda fijo en la cinta; acelerar modifica velocidad y distancia, no X.
+    return PLAYER_X;
   }
 
   #changeLane(racer, direction) {
@@ -606,24 +610,45 @@ export class RaceScene extends Phaser.Scene {
   #emitNitroFlash(time) {
     this.lastNitroFlashAt = time;
     const y = MOTORCYCLE_LANE_BASELINES[this.player.lane] - 9;
-    const flash = this.add.image(PLAYER_X - 22, y, 'bike-race-nitro-flash')
-      .setDepth(66)
+    const burst = this.add.container(PLAYER_X - 24, y).setDepth(68);
+    const core = this.add.image(0, 0, 'bike-race-nitro-flash')
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setScale(0.9 + Math.random() * 0.3)
-      .setAlpha(1);
+      .setScale(1.1 + Math.random() * 0.25);
+    burst.add(core);
+    for (let index = 0; index < 4; index += 1) {
+      const spark = this.add.image(
+        Phaser.Math.Between(-8, 8),
+        Phaser.Math.Between(-10, 10),
+        'bike-race-nitro-flash',
+      ).setBlendMode(Phaser.BlendModes.ADD)
+        .setScale(Phaser.Math.FloatBetween(0.18, 0.38))
+        .setAngle(Phaser.Math.Between(-35, 35));
+      burst.add(spark);
+      this.tweens.add({
+        targets: spark,
+        x: spark.x - Phaser.Math.Between(24, 48),
+        y: spark.y + Phaser.Math.Between(-16, 16),
+        alpha: 0,
+        scale: 0.05,
+        duration: Phaser.Math.Between(130, 230),
+        ease: 'Cubic.easeOut',
+      });
+    }
     this.tweens.add({
-      targets: flash,
-      x: flash.x - 28,
-      scaleX: 1.65,
-      scaleY: 1.15,
+      targets: [core, burst],
+      x: '-=34',
+      scaleX: 1.8,
+      scaleY: 1.3,
       alpha: 0,
-      duration: 155,
+      duration: 190,
       ease: 'Cubic.easeOut',
-      onComplete: () => flash.destroy(),
+      onComplete: () => burst.destroy(),
     });
     if (!this.wasBoosting) {
-      this.cameras.main.flash(65, 115, 210, 255);
-      this.cameras.main.shake(95, 0.0012);
+      this.cameras.main.flash(110, 120, 220, 255);
+      this.cameras.main.shake(130, 0.0022);
+      this.cameras.main.zoomTo(1.035, 100);
+      this.time.delayedCall(170, () => this.cameras.main?.zoomTo(1, 150));
     }
   }
 

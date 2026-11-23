@@ -37,6 +37,10 @@ describe('Asignación de escenarios y objetos de carrera', () => {
       ['roll-gate', 'obstacle', 'sidescroll-tileset'],
     ]);
     expect(axem.every(({ role }) => role === 'obstacle')).toBe(true);
+    expect(axem.map(({ action, instruction }) => [action, instruction])).toEqual([
+      ['dodge', 'ESQUIVAR'],
+      ['dodge', 'ESQUIVAR'],
+    ]);
     const terrestrial = resolveRaceCourseObjects('terrestrial', [tilesets[0], tilesets[1]]);
     expect(terrestrial.map(({ id, role, asset }) => [id, role, asset.id])).toEqual([
       ['hurdle', 'obstacle', 'cave2-tileset'],

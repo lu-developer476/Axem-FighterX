@@ -1,6 +1,18 @@
 /** Escala compartida por escenario, cámara, motos y objetos. */
 export const MOTORCYCLE_WORLD_SCALE = 0.14;
 
+/**
+ * Margen de seguridad del recorrido visible: evita que el vehículo abandone
+ * el área jugable o quede cortado contra los bordes del escenario.
+ */
+export const MOTORCYCLE_TRACK_BOUNDS = Object.freeze({ minX: 48, maxX: 432 });
+
+export function clampMotorcycleTrackX(x) {
+  const numeric = Number(x);
+  if (!Number.isFinite(numeric)) return MOTORCYCLE_TRACK_BOUNDS.minX;
+  return Math.max(MOTORCYCLE_TRACK_BOUNDS.minX, Math.min(MOTORCYCLE_TRACK_BOUNDS.maxX, numeric));
+}
+
 export const MOTORCYCLE_LANE_COUNT = 2;
 export const MOTORCYCLE_LANE_BASELINES = Object.freeze([173, 233]);
 export const MOTORCYCLE_LANE_SCALES = Object.freeze([0.82, 1.08]);

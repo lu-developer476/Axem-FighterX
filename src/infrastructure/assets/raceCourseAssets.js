@@ -15,8 +15,8 @@ export const RACE_COURSE_ASSETS = Object.freeze({
  */
 export const RACE_COURSE_OBJECTS = Object.freeze({
   axem: Object.freeze([
-    Object.freeze({ id: 'hurdle', role: 'obstacle', action: 'jump', instruction: 'SALTAR', assetId: 'sidescroll-tileset', x: 960, y: 160, width: 64, height: 64 }),
-    Object.freeze({ id: 'roll-gate', role: 'obstacle', action: 'roll', instruction: 'RODAR', assetId: 'sidescroll-tileset', x: 1088, y: 160, width: 32, height: 96 }),
+    Object.freeze({ id: 'hurdle', role: 'obstacle', action: 'dodge', instruction: 'ESQUIVAR', assetId: 'sidescroll-tileset', x: 960, y: 160, width: 64, height: 64 }),
+    Object.freeze({ id: 'roll-gate', role: 'obstacle', action: 'dodge', instruction: 'ESQUIVAR', assetId: 'sidescroll-tileset', x: 1088, y: 160, width: 32, height: 96 }),
   ]),
   terrestrial: Object.freeze([
     Object.freeze({

@@ -4,7 +4,9 @@ import {
   MOTORCYCLE_LANE_COUNT,
   MOTORCYCLE_WORLD_SCALE,
   MOTORCYCLE_LANE_SCALES,
+  MOTORCYCLE_TRACK_BOUNDS,
   advanceMotorcycleLateralOffset,
+  clampMotorcycleTrackX,
 } from './motorcycleRaceRules.js';
 
 describe('Profundidad visual de la carrera de motos', () => {
@@ -20,6 +22,14 @@ describe('Profundidad visual de la carrera de motos', () => {
       expect(MOTORCYCLE_LANE_BASELINES[lane]).toBeGreaterThan(MOTORCYCLE_LANE_BASELINES[lane - 1]);
       expect(MOTORCYCLE_LANE_SCALES[lane]).toBeGreaterThan(MOTORCYCLE_LANE_SCALES[lane - 1]);
     }
+  });
+
+  it('mantiene las motos dentro de los márgenes visibles del recorrido', () => {
+    expect(MOTORCYCLE_TRACK_BOUNDS).toEqual({ minX: 48, maxX: 432 });
+    expect(clampMotorcycleTrackX(-20)).toBe(48);
+    expect(clampMotorcycleTrackX(240)).toBe(240);
+    expect(clampMotorcycleTrackX(500)).toBe(432);
+    expect(clampMotorcycleTrackX(Number.NaN)).toBe(48);
   });
 
   it('permite desplazarse a ambos lados del carril y limita el tiempo por fotograma', () => {

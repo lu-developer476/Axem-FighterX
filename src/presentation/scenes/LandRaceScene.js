@@ -10,10 +10,11 @@ import landJumpGifUrl from '../../../art/source/sprites/results/male/orange/jump
 import landRollGifUrl from '../../../art/source/sprites/results/male/orange/roll.gif?url';
 import redRaceRunGifUrl from '../../../art/source/sprites/results/male/red/run.gif?url';
 import { PauseMenuView } from '../views/PauseMenuView.js';
-import { STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
+import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
+import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseAssets.js';
 import {
+  createLoopingMapTexture,
   createLoopingRaceTextures,
-  createTilesetStampTextures,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
@@ -30,7 +31,6 @@ const LAND_RACE_LOOP_DISTANCE = 1200;
 const RUNNER_FOOT_OFFSET = 13;
 const COUNTDOWN_MS = 3000;
 const STAMINA_MAX = 100;
-const LAND_RACE_TILESET_IDS = Object.freeze(['cave1-tileset', 'cave2-tileset']);
 
 export const LAND_RACE_OBSTACLES = Object.freeze([
   Object.freeze({ distance: 190, action: 'jump', type: 'hurdle' }),
@@ -152,27 +152,31 @@ export class LandRaceScene extends Phaser.Scene {
     this.session = new RaceSession({ countdownDurationMs: COUNTDOWN_MS });
     createLandRaceTextures(this);
 
-    const raceTilesets = STAGE_TILESET_ASSETS.filter((asset) => LAND_RACE_TILESET_IDS.includes(asset.id));
-    const worldKeys = createLoopingRaceTextures(this, raceTilesets, {
-      prefix: 'land-world-' + this.game.loop.frame,
-      trackTop: 146,
-      seed: 601,
+    const { maps: courseMaps, tilesets: raceTilesets } = resolveRaceCourseAssets(
+      'terrestrial',
+      STAGE_MAP_ASSETS,
+      STAGE_TILESET_ASSETS,
+    );
+    const mapKey = createLoopingMapTexture(this, courseMaps, {
+      key: 'land-course-' + this.game.loop.frame,
+      height: GAME_HEIGHT,
+      cropTop: 240,
+      cropHeight: 720,
     });
+    const worldKeys = mapKey
+      ? [mapKey]
+      : createLoopingRaceTextures(this, raceTilesets, {
+          prefix: 'land-world-' + this.game.loop.frame,
+          trackTop: 146,
+          seed: 601,
+        });
     this.stageLayers = worldKeys.map((key, index) =>
       this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, key)
         .setOrigin(0)
         .setDepth(-100 + index)
-        .setAlpha(index === 0 ? 0.96 : 0.68),
+        .setAlpha(index === 0 ? 1 : 0.68),
     );
-    this.sceneryTextures = createTilesetStampTextures(this, raceTilesets, {
-      prefix: 'land-prop-' + this.game.loop.frame,
-      countPerAsset: 5,
-      seed: 701,
-    });
-    this.crowd = this.add.tileSprite(0, 94, GAME_WIDTH, 34, 'land-race-crowd')
-      .setOrigin(0)
-      .setDepth(-20)
-      .setAlpha(0.78);
+    this.sceneryTextures = [];
 
     this.distance = 0;
     this.finishDistance = 0;
@@ -583,7 +587,6 @@ export class LandRaceScene extends Phaser.Scene {
     this.stageLayers.forEach((layer, index) => {
       layer.tilePositionX = this.distance * (index === 0 ? 0.12 : 0.28);
     });
-    this.crowd.tilePositionX = this.distance * 0.42;
     this.#drawTrack();
 
     const nextChunk = Math.floor(this.distance / 180);

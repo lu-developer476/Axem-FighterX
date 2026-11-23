@@ -1,3 +1,4 @@
+import { access, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
@@ -17,6 +18,15 @@ const generatedMenuVioletPath = () =>
 
 const generatedMenuOrangePath = () =>
   fileURLToPath(new URL('../../../public/generated/menu-ranger-male-orange.png', import.meta.url));
+
+const resultGifPath = (color, action) =>
+  fileURLToPath(new URL(
+    `../../../art/source/sprites/results/male/${color}/${action}.gif`,
+    import.meta.url,
+  ));
+
+const resultGifDirectory = (color) =>
+  fileURLToPath(new URL(`../../../art/source/sprites/results/male/${color}`, import.meta.url));
 
 describe('Variantes canónicas de Axem Rangers', () => {
   it('mantiene solo Orange masculino y Violet femenino', () => {
@@ -72,20 +82,24 @@ describe('Variantes canónicas de Axem Rangers', () => {
   it('genera GIF propios del Axem Red desde su atlas y sus referencias originales', async () => {
     const actions = [
       'idle', 'walk', 'run', 'dash', 'jump', 'punch-01', 'punch-02', 'punch-03',
-      'hit', 'hurt', 'teleport', 'battle-pose', 'bike', 'double-axe',
+      'hit', 'hurt', 'teleport', 'bike',
     ];
     for (const action of actions) {
-      const file = fileURLToPath(new URL(
-        `../../../art/source/sprites/results/male/red/${action}.gif`,
-        import.meta.url,
-      ));
+      const file = resultGifPath('red', action);
       const metadata = await sharp(file, { animated: true }).metadata();
       expect(metadata.format, action).toBe('gif');
       expect(metadata.width, action).toBe(ASSET_STANDARDS.categories.actionGif.width);
       expect(metadata.pageHeight, action).toBe(ASSET_STANDARDS.categories.actionGif.height);
       expect(metadata.pages, action).toBeGreaterThan(1);
+      if (action === 'teleport') expect(metadata.pages, action).toBe(9);
       expect(metadata.hasAlpha, action).toBe(true);
     }
+    const expectedRedGifs = [
+      'bike.gif', 'dash.gif', 'hit.gif', 'hurt.gif', 'idle.gif', 'jump.gif',
+      'punch-01.gif', 'punch-02.gif', 'punch-03.gif', 'run.gif', 'teleport.gif', 'walk.gif',
+    ].sort();
+    expect((await readdir(resultGifDirectory('red'))).filter((name) => name.endsWith('.gif')).sort())
+      .toEqual(expectedRedGifs);
     const redRun = fileURLToPath(new URL(
       '../../../art/source/sprites/results/male/red/run.gif', import.meta.url,
     ));
@@ -100,17 +114,28 @@ describe('Variantes canónicas de Axem Rangers', () => {
   });
 
   it('mantiene los GIF de carrera y combate del Axem Naranja masculino', async () => {
-    for (const action of ['run', 'bike', 'double-axe', 'idle', 'jump', 'roll', 'guard', 'ko', 'charge', 'pose', 'battle-pose']) {
-      const file = fileURLToPath(new URL(
-        `../../../art/source/sprites/results/male/orange/${action}.gif`,
-        import.meta.url,
-      ));
+    for (const action of [
+      'run', 'bike', 'idle', 'jump', 'roll', 'guard', 'ko', 'charge', 'pose',
+      'dash', 'hit', 'hurt', 'punch-01', 'punch-02', 'punch-03', 'teleport',
+    ]) {
+      const file = resultGifPath('orange', action);
       const metadata = await sharp(file, { animated: true }).metadata();
       expect(metadata.format).toBe('gif');
       expect(metadata.width).toBe(ASSET_STANDARDS.categories.actionGif.width);
       expect(metadata.pageHeight).toBe(ASSET_STANDARDS.categories.actionGif.height);
       expect(metadata.pages).toBeGreaterThan(1);
       expect(metadata.hasAlpha).toBe(true);
+    }
+    const expectedOrangeGifs = [
+      'bike.gif', 'charge.gif', 'dash.gif', 'guard.gif', 'hit.gif', 'hurt.gif',
+      'idle.gif', 'jump.gif', 'ko.gif', 'pose.gif', 'punch-01.gif', 'punch-02.gif',
+      'punch-03.gif', 'roll.gif', 'run.gif', 'teleport.gif',
+    ].sort();
+    expect((await readdir(resultGifDirectory('orange'))).filter((name) => name.endsWith('.gif')).sort())
+      .toEqual(expectedOrangeGifs);
+    for (const action of ['double-axe', 'battle-pose']) {
+      await expect(access(resultGifPath('orange', action))).rejects.toMatchObject({ code: 'ENOENT' });
+      await expect(access(resultGifPath('red', action))).rejects.toMatchObject({ code: 'ENOENT' });
     }
   });
 });

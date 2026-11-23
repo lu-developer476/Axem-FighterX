@@ -138,7 +138,7 @@ describe('resultados de las variantes canónicas', () => {
   it('genera los GIF de acción de Axem Naranja en lienzos de 150×100 px', async () => {
     const animations = {
       'pose.gif': 16, 'punch-01.gif': 10, 'punch-02.gif': 8, 'punch-03.gif': 8,
-      'battle-pose.gif': 20, 'run.gif': 11, 'dash.gif': 8, 'jump.gif': 14,
+      'run.gif': 11, 'dash.gif': 8, 'jump.gif': 14,
       'hit.gif': 2, 'hurt.gif': 3, 'teleport.gif': 6,
     };
     for (const [animation, originalFrames] of Object.entries(animations)) {

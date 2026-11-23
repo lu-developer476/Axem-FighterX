@@ -683,7 +683,7 @@ async function makeHorizontalStrip(frames, width, height) {
  * Every GIF frame uses one fixed 53×83 cell. Do not trim each frame:
  * weapons and effects may extend beyond the body and must not shrink the ranger.
  */
-async function writeMaleAnimation(frames, rangerId, action, frameDelays, loop = 0) {
+async function writeMaleAnimation(frames, rangerId, action, frameDelays, loop = 0, { writeGif = true } = {}) {
   // La tira PNG de combate conserva sus celdas compactas de 53×83 px.
   const normalized = await Promise.all(frames.map((frame) =>
     sharp(frame)
@@ -702,6 +702,8 @@ async function writeMaleAnimation(frames, rangerId, action, frameDelays, loop = 
   ];
   await Promise.all(outputPaths.map((outputPath) => fs.writeFile(outputPath, strip)));
   console.log('Generada animación masculina ' + rangerId + '/' + action);
+
+  if (!writeGif) return;
 
   // Los GIF de referencia usan lienzo 150×100. La corrida original mide 101×100:
   // se centra sobre transparencia para llegar al mismo tamaño sin deformar el sprite.
@@ -858,8 +860,8 @@ async function buildMaleActionGifs(color, sequenceIndex) {
  * opacas. Los cuadros conservan sus píxeles originales y se recortan solo por
  * transparencia, sin deformar el personaje ni perder efectos asociados.
  */
-async function extractMaleStripFrames(color, groupId, frameCount) {
-  const file = RESULTS('male', color, 'sequences', groupId + '.png');
+async function extractMaleStripFrames(color, groupId, frameCount, directory = 'sequences') {
+  const file = RESULTS('male', color, directory, groupId + '.png');
   const metadata = await sharp(file).metadata();
   if (!metadata.width || !metadata.height || metadata.width % frameCount !== 0) {
     throw new Error('La tira ' + groupId + '.png no se divide en ' + frameCount + ' celdas iguales.');
@@ -905,6 +907,9 @@ async function extractMaleStripFrames(color, groupId, frameCount) {
     }
     frames.push({
       input,
+      cellWidth,
+      cellHeight: info.height,
+      anchorX: cellWidth / 2,
       bounds: [index * cellWidth + left, top, right - left + 1, bottom - top + 1],
       pixels,
     });
@@ -1033,7 +1038,9 @@ async function buildMaleKiAuraHoldFrames(sourceFrame) {
 
 
 async function readMaleGifFrames(color, filename) {
-  const file = RESULTS('male', color, filename);
+  const file = color === 'orange' && filename === 'battle-pose.gif'
+    ? SOURCE('sprites', 'masters', 'male', 'orange', 'battle-pose.gif')
+    : RESULTS('male', color, filename);
   const metadata = await sharp(file, { animated: true }).metadata();
   const count = Math.max(1, metadata.pages || 1);
   const frames = [];
@@ -1407,11 +1414,10 @@ async function addGrayRollMotionBlur(_input, angle, frameIndex = 0) {
  * Se recolorean en el mismo pipeline, por lo que Violet/Orange mantienen el mismo pivote.
  */
 async function buildMaleCombatEnhancementGifs(color) {
-  const [battlePose, dash, jump, doubleAxe, hurt, idle] = await Promise.all([
+  const [battlePose, dash, jump, hurt, idle] = await Promise.all([
     readMaleGifFrames(color, 'battle-pose.gif'),
     readMaleGifFrames(color, 'dash.gif'),
     readMaleGifFrames(color, 'jump.gif'),
-    readMaleGifFrames(color, 'double-axe.gif'),
     readMaleGifFrames(color, 'hurt.gif'),
     readMaleGifFrames(color, 'idle.gif'),
   ]);
@@ -1572,7 +1578,7 @@ async function buildGender(gender, allowedColors) {
         const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
         // Solo Orange tiene los grupos auxiliares completos para crear las acciones de combate.
         const sequenceIndex = await writeMaleSequences(color, parts[0], manifest.male.groups);
-        await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop);
+        await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop, { writeGif: false });
         await buildMaleActionGifs(color, sequenceIndex);
         // charge/guard/roll/KO ya tienen GIF maestros versionados; no se reconstruyen
         // desde tiras auxiliares antiguas que fueron retiradas del repositorio.
@@ -1709,6 +1715,8 @@ async function buildRedRangerGifs() {
 
   const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
   const sequenceIndex = await writeMaleSequences('red', keyedSheet, manifest.male.groups);
+  await writeMaleSupplemental('red', keyedSheet, manifest.male.supplementalGroups);
+  const redTeleportTail = await extractMaleStripFrames('red', 'group-01', 3, 'supplemental');
   const groups = new Map();
   for (const entry of sequenceIndex) {
     groups.set(entry.id, await readMaleSequenceFrames('red', entry));
@@ -1724,34 +1732,39 @@ async function buildRedRangerGifs() {
   await writeMaleSequenceGif(frames('group-03'), 'red', 'punch-01', 90);
   await writeMaleSequenceGif(frames('group-04'), 'red', 'punch-02', 90);
   await writeMaleSequenceGif(frames('group-05'), 'red', 'punch-03', 90);
-  await writeMaleSequenceGif(
-    frames('group-09', 'group-08', 'group-07', 'group-06'),
-    'red',
-    'battle-pose',
-    115,
-  );
   await writeMaleSequenceGif(frames('group-10'), 'red', 'run', 80);
   await writeMaleSequenceGif(frames('group-11'), 'red', 'dash', 80);
   await writeMaleSequenceGif(frames('group-12'), 'red', 'jump', 100);
   await writeMaleSequenceGif(groups.get('group-13').slice(0, 2), 'red', 'hit', 120);
   await writeMaleSequenceGif(groups.get('group-13').slice(3, 6), 'red', 'hurt', 150);
-  await writeMaleSequenceGif(frames('group-14'), 'red', 'teleport', 100);
+  await writeMaleSequenceGif([...frames('group-14'), ...redTeleportTail], 'red', 'teleport', 100);
 
-  // Bike and double-axe masters are also Red originals, never recolored Orange files.
-  for (const [action, sourceName] of [
-    ['bike', 'axem-ranger-bike.gif'],
-    ['double-axe', 'axem-ranger-double-axe.gif'],
+  // Bike y double-axe se mantienen como tiras PNG; solo bike se distribuye como GIF.
+  for (const [action, sourceName, writeGif] of [
+    ['bike', 'axem-ranger-bike.gif', true],
+    ['double-axe', 'axem-ranger-double-axe.gif', false],
   ]) {
     const animation = await readRawGifFrames(path.join(sourceDirectory, sourceName));
-    await writeMaleAnimation(animation.frames, 'red', action, animation.delay, animation.loop);
+    await writeMaleAnimation(animation.frames, 'red', action, animation.delay, animation.loop, { writeGif });
   }
 
   // These sheets are temporary inputs for GIF assembly, not distributed game assets.
-  await fs.rm(RESULTS('male', 'red', 'sequences'), { recursive: true, force: true });
+  await Promise.all([
+    fs.rm(RESULTS('male', 'red', 'sequences'), { recursive: true, force: true }),
+    fs.rm(RESULTS('male', 'red', 'supplemental'), { recursive: true, force: true }),
+  ]);
 }
 
 async function main() {
   await fs.mkdir(GENERATED, { recursive: true });
+  const retiredActionGifs = [
+    RESULTS('male', 'orange', 'double-axe.gif'),
+    RESULTS('male', 'orange', 'battle-pose.gif'),
+    RESULTS('male', 'red', 'double-axe.gif'),
+    RESULTS('male', 'red', 'battle-pose.gif'),
+  ];
+  await Promise.all(retiredActionGifs.map((filename) => fs.rm(filename, { force: true })));
+
   const retiredSpriteDirectories = [
     RESULTS('male', 'violet'),
     RESULTS('female', 'orange'),

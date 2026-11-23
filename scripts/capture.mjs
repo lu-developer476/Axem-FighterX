@@ -228,7 +228,8 @@ await tap('Enter'); // Inicio → JUGAR
 await tap('ArrowDown'); // JUGAR → CARRERA
 await tap('Enter'); // Abrir modalidades de carrera
 await tap('ArrowDown'); // CARRERA TERRESTRE
-await tap('Enter');
+await tap('Enter'); // Abrir distancia total
+await tap('Enter'); // Confirmar el recorrido seleccionado (1 KM)
 await wait(3200); // Cuenta regresiva
 await hold('d', 620); // Sprint
 await tap('w'); // Salto de la primera valla

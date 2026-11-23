@@ -2,10 +2,11 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { TREADMILL_RUNNER_X } from '../../domain/race/treadmillRaceRules.js';
 import { getRaceCameraDistance, getRaceRunnerX } from '../../domain/race/raceLanePresentation.js';
-import { STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
+import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
+import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseAssets.js';
 import {
+  createLoopingMapTexture,
   createLoopingRaceTextures,
-  createTilesetStampTextures,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
@@ -27,7 +28,6 @@ import {
 const PLAYER_X = TREADMILL_RUNNER_X;
 const COUNTDOWN_MS = 3000;
 const LANE_SWITCH_MS = 145;
-const RACE_TILESET_IDS = Object.freeze(['sidescroll-tileset']);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 function createTexture(scene, key, width, height, draw) {
@@ -138,23 +138,29 @@ export class RaceScene extends Phaser.Scene {
 
     this.track = this.add.graphics().setDepth(10);
     this.scenery = [];
-    const raceTilesets = STAGE_TILESET_ASSETS.filter((asset) => RACE_TILESET_IDS.includes(asset.id));
-    const worldKeys = createLoopingRaceTextures(this, raceTilesets, {
-      prefix: 'bike-world-' + this.game.loop.frame,
-      trackTop: 139,
-      seed: 809,
+    const { maps: courseMaps, tilesets: raceTilesets } = resolveRaceCourseAssets(
+      'axem',
+      STAGE_MAP_ASSETS,
+      STAGE_TILESET_ASSETS,
+    );
+    const mapKey = createLoopingMapTexture(this, courseMaps, {
+      key: 'bike-course-' + this.game.loop.frame,
+      height: GAME_HEIGHT,
     });
+    const worldKeys = mapKey
+      ? [mapKey]
+      : createLoopingRaceTextures(this, raceTilesets, {
+          prefix: 'bike-world-' + this.game.loop.frame,
+          trackTop: 139,
+          seed: 809,
+        });
     this.stageLayers = worldKeys.map((key, index) =>
       this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, key)
         .setOrigin(0)
         .setDepth(-100 + index)
-        .setAlpha(index === 0 ? 0.9 : 0.58),
+        .setAlpha(index === 0 ? 1 : 0.58),
     );
-    this.sceneryTextures = createTilesetStampTextures(this, raceTilesets, {
-      prefix: 'bike-prop-' + this.game.loop.frame,
-      countPerAsset: 5,
-      seed: 911,
-    });
+    this.sceneryTextures = [];
     this.#drawTrack();
     this.hud = this.add.graphics().setDepth(80);
     this.status = this.#text('ELEGÍ LA DISTANCIA', GAME_WIDTH / 2, 48, '#fff0c9', 10);

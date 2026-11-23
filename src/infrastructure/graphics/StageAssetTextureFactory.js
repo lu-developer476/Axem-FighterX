@@ -193,6 +193,41 @@ export function createLoopingRaceTextures(scene, assets, {
   }).filter(Boolean);
 }
 
+/** Compone mapas terminados en una panorámica horizontal para las carreras. */
+export function createLoopingMapTexture(scene, assets, {
+  key = 'race-map-course',
+  height = GAME_HEIGHT,
+  cropTop = 0,
+  cropHeight = null,
+} = {}) {
+  const available = (assets ?? []).filter((asset) => scene.textures.exists(asset.key));
+  if (!available.length) return null;
+  if (!Number.isInteger(height) || height < 1) {
+    throw new RangeError('La altura de la panorámica debe ser un entero positivo.');
+  }
+  const sections = available.map((asset) => {
+    const source = scene.textures.get(asset.key).getSourceImage();
+    const sectionHeight = Math.max(1, Math.min(source.height, Math.floor(cropHeight ?? source.height)));
+    const top = Math.max(0, Math.min(source.height - sectionHeight, Math.floor(cropTop)));
+    return {
+      source,
+      top,
+      sectionHeight,
+      width: Math.max(1, Math.round(source.width * height / sectionHeight)),
+    };
+  });
+  const width = sections.reduce((total, section) => total + section.width, 0);
+  createCanvasTexture(scene, key, width, height, (ctx) => {
+    let left = 0;
+    for (const section of sections) {
+      ctx.drawImage(section.source, 0, section.top, section.source.width, section.sectionHeight,
+        left, 0, section.width, height);
+      left += section.width;
+    }
+  });
+  return key;
+}
+
 /** Prepara motivos individuales para repetirlos como vegetación, rocas y objetos contextuales. */
 export function createTilesetStampTextures(scene, assets, {
   prefix = 'race-prop',

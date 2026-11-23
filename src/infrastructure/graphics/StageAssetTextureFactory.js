@@ -12,6 +12,7 @@ const PALETTES = Object.freeze({
   cave: { skyTop: '#10131d', skyBottom: '#39414d', far: '#29313e', ground: '#242b32', accent: '#8f9ca8' },
   darkness: { skyTop: '#07151b', skyBottom: '#263b43', far: '#193039', ground: '#1b292d', accent: '#45a7a7' },
   side: { skyTop: '#111b2b', skyBottom: '#637487', far: '#35475a', ground: '#242b39', accent: '#a7c5d2' },
+  forest: { skyTop: '#8daebe', skyBottom: '#c2d5a3', far: '#536c56', ground: '#38513a', accent: '#a6c96d' },
   space: { skyTop: '#100c27', skyBottom: '#392b5c', far: '#2c2350', ground: '#211b35', accent: '#8f8cf3' },
   default: { skyTop: '#111522', skyBottom: '#3c4859', far: '#293445', ground: '#252b35', accent: '#b2bdcb' },
 });
@@ -124,6 +125,7 @@ export function createLoopingRaceTextures(scene, assets, {
   trackTop = 140,
   patternWidth = 1024,
   seed = 1,
+  transparentBackground = false,
 } = {}) {
   const available = (assets ?? []).filter((asset) => scene.textures.exists(asset.key));
   return available.map((asset, index) => {
@@ -150,7 +152,7 @@ export function createLoopingRaceTextures(scene, assets, {
       const pick = () => tiles[Math.floor(random() * tiles.length)];
       const columns = Math.floor(width / tileWidth);
 
-      if (index === 0) {
+      if (index === 0 && !transparentBackground) {
         const gradient = ctx.createLinearGradient(0, 0, 0, trackTop);
         gradient.addColorStop(0, palette.skyTop);
         gradient.addColorStop(1, palette.skyBottom);
@@ -170,7 +172,7 @@ export function createLoopingRaceTextures(scene, assets, {
         }
       }
 
-      if (index === 0) {
+      if (index === 0 && !transparentBackground) {
         ctx.globalAlpha = 1;
         ctx.fillStyle = palette.ground;
         ctx.fillRect(0, trackTop, width, GAME_HEIGHT - trackTop);
@@ -469,6 +471,7 @@ function paletteFor(id = '') {
   if (name.includes('cave')) return PALETTES.cave;
   if (name.includes('dark')) return PALETTES.darkness;
   if (name.includes('side')) return PALETTES.side;
+  if (name.includes('forest') || name.includes('platformer')) return PALETTES.forest;
   if (name.includes('space')) return PALETTES.space;
   return PALETTES.default;
 }

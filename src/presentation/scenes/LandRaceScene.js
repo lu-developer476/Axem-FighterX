@@ -27,8 +27,13 @@ import redRaceDashGifUrl from '../../../art/source/sprites/references/axem-red/d
 import redRaceJumpGifUrl from '../../../art/source/sprites/references/axem-red/jump.gif?url';
 import { resolveLandRaceAnimationSources } from '../../domain/race/landRaceAnimationRules.js';
 import { PauseMenuView } from '../views/PauseMenuView.js';
+import { STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseAssets.js';
-import { createLoopingMapTexture } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
+import {
+  createLoopingMapTexture,
+  createLoopingRaceTextures,
+  createTilesetRaceTrackTexture,
+} from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
@@ -112,22 +117,59 @@ export class LandRaceScene extends Phaser.Scene {
     playRaceMusic(this, 'landRace');
     this.session = new RaceSession({ countdownDurationMs: COUNTDOWN_MS });
 
-    const courseAssets = resolveRaceCourseAssets('terrestrial', [], []);
+    const courseAssets = resolveRaceCourseAssets('terrestrial', [], STAGE_TILESET_ASSETS);
     this.courseObjectSpecs = LAND_RACE_OBJECT_SPECS;
     this.courseObjectTextures = createLandRaceObjectTextures(this);
+    const courseTexturePrefix = 'land-course-' + this.game.loop.frame;
     const mapKey = this.textures.exists(courseAssets.backgroundKey)
       ? createLoopingMapTexture(this, [{ key: courseAssets.backgroundKey }], {
-          key: 'land-course-' + this.game.loop.frame,
+          key: courseTexturePrefix + '-parallax',
           height: GAME_HEIGHT,
         })
       : null;
-    const worldKeys = mapKey ? [mapKey] : [];
-    this.stageLayers = worldKeys.map((key, index) =>
-      this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, key)
+    const environmentKeys = createLoopingRaceTextures(this, courseAssets.tilesets, {
+      prefix: courseTexturePrefix + '-environment',
+      trackTop: LAND_RACE_LANE_Y - 8,
+      patternWidth: 1024,
+      seed: 29,
+      transparentBackground: true,
+    });
+    const trackTileset = courseAssets.tilesets.find(({ id }) => id === 'free-platformer-tileset');
+    const trackKey = createTilesetRaceTrackTexture(this, trackTileset ? [trackTileset] : [], {
+      key: courseTexturePrefix + '-track',
+      width: 1024,
+      laneCount: 1,
+      laneHeight: GAME_HEIGHT - (LAND_RACE_LANE_Y + RUNNER_FOOT_OFFSET + 1),
+      seed: 71,
+    });
+
+    this.stageLayers = [];
+    if (mapKey) {
+      this.stageLayers.push({
+        layer: this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, mapKey)
+          .setOrigin(0)
+          .setDepth(-100),
+        factor: 0.12,
+      });
+    }
+    const environmentSpeeds = [0.22, 0.34, 0.46];
+    environmentKeys.forEach((key, index) => {
+      const layer = this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, key)
         .setOrigin(0)
-        .setDepth(-100 + index)
-        .setAlpha(index === 0 ? 1 : 0.68),
-    );
+        .setDepth(-90 + index)
+        .setAlpha(0.88);
+      this.stageLayers.push({ layer, factor: environmentSpeeds[index] ?? 0.38 });
+    });
+    if (trackKey) {
+      const trackTop = LAND_RACE_LANE_Y + RUNNER_FOOT_OFFSET + 1;
+      const trackHeight = GAME_HEIGHT - trackTop;
+      this.stageLayers.push({
+        layer: this.add.tileSprite(0, trackTop, GAME_WIDTH, trackHeight, trackKey)
+          .setOrigin(0)
+          .setDepth(-55),
+        factor: LAND_OBJECT_SCALE,
+      });
+    }
 
     this.distance = 0;
     this.finishDistance = 0;
@@ -491,8 +533,8 @@ export class LandRaceScene extends Phaser.Scene {
       LAND_RACE_RUNNER_X_BOUNDS.max,
       LAND_OBJECT_SCALE,
     );
-    this.stageLayers.forEach((layer, index) => {
-      layer.tilePositionX = cameraDistance * (index === 0 ? 0.22 : 0.28);
+    this.stageLayers.forEach(({ layer, factor }) => {
+      layer.tilePositionX = cameraDistance * factor;
     });
   }
 

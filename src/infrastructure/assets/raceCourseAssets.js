@@ -5,7 +5,11 @@ export const RACE_COURSE_ASSETS = Object.freeze({
   }),
   terrestrial: Object.freeze({
     mapIds: Object.freeze([]),
-    tilesetIds: Object.freeze([]),
+    tilesetIds: Object.freeze([
+      'sunnyland-tall-forest-tileset',
+      'free-platformer-tileset',
+      'free-platformer-tileset-2',
+    ]),
     backgroundKey: 'land-course-parallax',
   }),
 });

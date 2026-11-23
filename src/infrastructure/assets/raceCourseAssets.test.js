@@ -7,15 +7,15 @@ import {
 } from './raceCourseAssets.js';
 
 const maps = [
-  { id: 'terrestrial-platformer-a' },
-  { id: 'terrestrial-platformer-b' },
   { id: 'sidescroll-1' },
   { id: 'sidescroll-2' },
   { id: 'sidescroll-3' },
   { id: 'sidescroll-4' },
 ];
 const tilesets = [
-  { id: 'terrestrial-platformer-tileset', width: 360, height: 162, tileWidth: 18, tileHeight: 18 },
+  { id: 'sunnyland-tall-forest-tileset', width: 1280, height: 740, tileWidth: 32, tileHeight: 32 },
+  { id: 'free-platformer-tileset', width: 1536, height: 1024, tileWidth: 32, tileHeight: 32 },
+  { id: 'free-platformer-tileset-2', width: 1536, height: 1024, tileWidth: 32, tileHeight: 32 },
   { id: 'sidescroll-tileset', width: 1280, height: 1024, tileWidth: 32, tileHeight: 32 },
 ];
 
@@ -26,15 +26,19 @@ describe('Asignación de escenarios y objetos de carrera', () => {
     expect(assets.tilesets.map(({ id }) => id)).toEqual(['sidescroll-tileset']);
   });
 
-  it('usa el fondo parallax gratuito para Carrera Terrestre sin reutilizar los mapas de Axem', () => {
+  it('usa el parallax y los tres tilesets nuevos para Carrera Terrestre', () => {
     const assets = resolveRaceCourseAssets('terrestrial', maps, tilesets);
     expect(assets.maps).toEqual([]);
-    expect(assets.tilesets).toEqual([]);
+    expect(assets.tilesets.map(({ id }) => id)).toEqual([
+      'sunnyland-tall-forest-tileset',
+      'free-platformer-tileset',
+      'free-platformer-tileset-2',
+    ]);
     expect(assets.backgroundKey).toBe('land-course-parallax');
   });
 
   it('mantiene los objetos propios de Carrera Axem en su tileset sidescroll', () => {
-    const axem = resolveRaceCourseObjects('axem', [tilesets[1]]);
+    const axem = resolveRaceCourseObjects('axem', [tilesets[3]]);
     expect(axem.map(({ id, role, asset }) => [id, role, asset.id])).toEqual([
       ['hurdle', 'obstacle', 'sidescroll-tileset'],
       ['roll-gate', 'obstacle', 'sidescroll-tileset'],
@@ -78,7 +82,11 @@ describe('Asignación de escenarios y objetos de carrera', () => {
     expect(RACE_COURSE_ASSETS.axem.mapIds).toEqual(['sidescroll-1', 'sidescroll-2', 'sidescroll-3', 'sidescroll-4']);
     expect(RACE_COURSE_ASSETS.axem.tilesetIds).toEqual(['sidescroll-tileset']);
     expect(RACE_COURSE_ASSETS.terrestrial.mapIds).toEqual([]);
-    expect(RACE_COURSE_ASSETS.terrestrial.tilesetIds).toEqual([]);
+    expect(RACE_COURSE_ASSETS.terrestrial.tilesetIds).toEqual([
+      'sunnyland-tall-forest-tileset',
+      'free-platformer-tileset',
+      'free-platformer-tileset-2',
+    ]);
     expect(RACE_COURSE_ASSETS.terrestrial.backgroundKey).toBe('land-course-parallax');
     expect(RACE_COURSE_OBJECTS.axem.every(({ assetId }) => assetId === 'sidescroll-tileset')).toBe(true);
     expect(RACE_COURSE_OBJECTS.terrestrial).toEqual([]);

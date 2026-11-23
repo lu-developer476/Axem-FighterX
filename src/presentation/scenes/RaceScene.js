@@ -7,6 +7,7 @@ import {
   createTilesetStampTextures,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
+import { RaceSession } from '../../domain/race/RaceSession.js';
 import raceBikeGifUrl from '../../../art/source/sprites/results/male/orange/bike.gif?url';
 import redRaceBikeGifUrl from '../../../art/source/sprites/references/axem-red/axem-ranger-bike.gif?url';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
@@ -101,13 +102,11 @@ export class RaceScene extends Phaser.Scene {
       g.fillStyle(0xffd1a5, 1).fillRect(5, 10, 12, 3);
     });
     playRaceMusic(this, 'motorcycleRace');
+    this.session = new RaceSession({ countdownDurationMs: COUNTDOWN_MS });
     this.distance = 0;
     this.raceDistance = 0;
-    this.selectingDistance = true;
     this.speed = 210;
     this.boost = 100;
-    this.countdownMs = COUNTDOWN_MS;
-    this.finished = false;
     this.selectingCharacter = false;
     this.selectedVariant = { id: RANGER_IDS.ORANGE, gender: 'male' };
     this.trackOffset = 0;
@@ -162,7 +161,6 @@ export class RaceScene extends Phaser.Scene {
       GAME_WIDTH / 2, GAME_HEIGHT - 7, '#f0dfc2', 6);
     this.distanceLabel = this.#text('J1 · 0 M', 63, 18, '#e7dcff', 5);
     this.nitroLabel = this.#text('NITRO', GAME_WIDTH - 48, 8, '#a8e8ff', 4);
-    this.paused = false;
     this.pauseMenu = new PauseMenuView(this, {
       onResume: () => this.#resume(),
       onReturnToMenu: () => this.scene.start('MenuScene'),
@@ -185,7 +183,7 @@ export class RaceScene extends Phaser.Scene {
 
 
   update(time, delta) {
-    if (this.selectingDistance) {
+    if (this.session.selectingDistance) {
       if (Phaser.Input.Keyboard.JustDown(this.keys.escape)) {
         this.scene.start('MenuScene');
         return;
@@ -196,7 +194,7 @@ export class RaceScene extends Phaser.Scene {
       return;
     }
 
-    if (this.paused) {
+    if (this.session.paused) {
       if (Phaser.Input.Keyboard.JustDown(this.keys.pause)) {
         this.#resume();
         return;
@@ -238,16 +236,16 @@ export class RaceScene extends Phaser.Scene {
       if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) this.#startRace();
       return;
     }
-    if (this.finished) {
+    if (this.session.finished) {
       if (Phaser.Input.Keyboard.JustDown(this.keys.enter)) this.scene.start('MenuScene');
       if (Phaser.Input.Keyboard.JustDown(this.keys.restart)) this.scene.restart();
       return;
     }
-    if (this.countdownMs > 0) {
-      this.countdownMs = Math.max(0, this.countdownMs - delta);
-      const count = Math.ceil(this.countdownMs / 1000);
+    if (this.session.countdownMs > 0) {
+      this.session.advanceCountdown(delta);
+      const count = Math.ceil(this.session.countdownMs / 1000);
       this.status.setText(count ? String(count) : '¡YA!');
-      if (!this.countdownMs) this.time.delayedCall(450, () => this.status?.setText(''));
+      if (!this.session.countdownMs) this.time.delayedCall(450, () => this.status?.setText(''));
       return;
     }
 
@@ -299,8 +297,8 @@ export class RaceScene extends Phaser.Scene {
   }
 
   #openPause() {
-    if (this.paused) return;
-    this.paused = true;
+    if (this.session.paused) return;
+    this.session.pause();
     this.tweens.pauseAll();
     this.anims.pauseAll();
     this.racers?.forEach((racer) => {
@@ -314,8 +312,8 @@ export class RaceScene extends Phaser.Scene {
   }
 
   #resume() {
-    if (!this.paused) return;
-    this.paused = false;
+    if (!this.session.paused) return;
+    this.session.resume();
     this.pauseMenu.hide();
     this.tweens.resumeAll();
     this.anims.resumeAll();
@@ -340,10 +338,9 @@ export class RaceScene extends Phaser.Scene {
   }
 
   #startRace(distance) {
-    this.selectingDistance = false;
+    this.session.start(distance, COUNTDOWN_MS);
     this.pauseMenu.hide();
     this.raceDistance = distance;
-    this.countdownMs = COUNTDOWN_MS;
     this.distance = 0;
     this.trackOffset = 0;
     this.sceneryOffset = 0;
@@ -653,7 +650,7 @@ export class RaceScene extends Phaser.Scene {
   }
 
   #finish(playerWon) {
-    this.finished = true;
+    this.session.finish({ playerWon });
     this.status.setText(playerWon ? '¡J1 GANA LA CARRERA!' : '¡GANA AXEM RED!').setFontSize(11);
     this.instructions.setText('R · REINICIAR     ENTER / ESC · MENÚ');
     this.cameras.main.flash(180, 255, 245, 218);

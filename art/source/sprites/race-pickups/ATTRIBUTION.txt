@@ -1,9 +1,7 @@
-Kenney — Space Shooter Remastered
-https://kenney.nl/assets/space-shooter-remastered
+Iconografía de consumibles de Carrera Axem:
 
-The blue and red bolt power-up icons are released under Creative Commons Zero
-1.0 Universal (CC0 1.0):
-https://creativecommons.org/publicdomain/zero/1.0/
+- axem-boost.svg: ilustración vectorial original de un depósito de nitro.
+- axem-slow.svg: ilustración vectorial original de un derrame de aceite.
 
-The images are included unchanged. Blue indicates boost; red indicates the
-existing slowdown effect. Gameplay values and pickup behavior are unchanged.
+Ambos SVG fueron creados para este proyecto y se distribuyen junto con el código.
+Los PNG anteriores se conservan como fuentes históricas, pero ya no se cargan.

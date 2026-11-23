@@ -14,8 +14,8 @@ import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/ass
 import { createStageAssetTextures } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import whitePuffAtlasUrl from '../../../art/source/effects/kenney-smoke-particles/white-puff-atlas.png';
 import terrestrialRaceTilesetUrl from '../../../art/source/environments/race-terrestrial/tileset.png?url';
-import axemRaceBoostPickupUrl from '../../../art/source/sprites/race-pickups/axem-boost.png?url';
-import axemRaceSlowPickupUrl from '../../../art/source/sprites/race-pickups/axem-slow.png?url';
+import axemRaceBoostPickupUrl from '../../../art/source/sprites/race-pickups/axem-boost.svg?url';
+import axemRaceSlowPickupUrl from '../../../art/source/sprites/race-pickups/axem-slow.svg?url';
 import { registerFxAnimations } from '../animation/registerFxAnimations.js';
 
 export class PreloadScene extends Phaser.Scene {

@@ -4,8 +4,8 @@ export const RACE_COURSE_ASSETS = Object.freeze({
     tilesetIds: Object.freeze(['sidescroll-tileset']),
   }),
   terrestrial: Object.freeze({
-    mapIds: Object.freeze(['terrestrial-platformer-a', 'terrestrial-platformer-b']),
-    tilesetIds: Object.freeze(['terrestrial-platformer-tileset']),
+    mapIds: Object.freeze(['sidescroll-1', 'sidescroll-2', 'sidescroll-3', 'sidescroll-4']),
+    tilesetIds: Object.freeze(['sidescroll-tileset']),
   }),
 });
 

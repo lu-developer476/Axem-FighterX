@@ -32,7 +32,6 @@ import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseA
 import {
   createLoopingMapTexture,
   createLoopingRaceTextures,
-  createTilesetRaceTrackTexture,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
@@ -134,15 +133,6 @@ export class LandRaceScene extends Phaser.Scene {
       seed: 29,
       transparentBackground: true,
     });
-    const trackTileset = courseAssets.tilesets.find(({ id }) => id === 'free-platformer-tileset');
-    const trackKey = createTilesetRaceTrackTexture(this, trackTileset ? [trackTileset] : [], {
-      key: courseTexturePrefix + '-track',
-      width: 1024,
-      laneCount: 1,
-      laneHeight: GAME_HEIGHT - (LAND_RACE_LANE_Y + RUNNER_FOOT_OFFSET + 1),
-      seed: 71,
-    });
-
     this.stageLayers = [];
     if (mapKey) {
       this.stageLayers.push({
@@ -160,16 +150,6 @@ export class LandRaceScene extends Phaser.Scene {
         .setAlpha(0.88);
       this.stageLayers.push({ layer, factor: environmentSpeeds[index] ?? 0.38 });
     });
-    if (trackKey) {
-      const trackTop = LAND_RACE_LANE_Y + RUNNER_FOOT_OFFSET + 1;
-      const trackHeight = GAME_HEIGHT - trackTop;
-      this.stageLayers.push({
-        layer: this.add.tileSprite(0, trackTop, GAME_WIDTH, trackHeight, trackKey)
-          .setOrigin(0)
-          .setDepth(-55),
-        factor: LAND_OBJECT_SCALE,
-      });
-    }
 
     this.distance = 0;
     this.finishDistance = 0;

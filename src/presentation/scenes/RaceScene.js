@@ -11,7 +11,6 @@ import {
   createLoopingMapTexture,
   createLoopingRaceTextures,
   createTilesetObjectTextures,
-  createTilesetRaceTrackTexture,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
@@ -129,14 +128,6 @@ export class RaceScene extends Phaser.Scene {
       seed: 41,
       transparentBackground: true,
     });
-    const trackKey = createTilesetRaceTrackTexture(this, raceTilesets, {
-      key: courseTexturePrefix + '-track',
-      width: 1024,
-      laneCount: MOTORCYCLE_LANE_COUNT,
-      laneHeight: 56,
-      seed: 83,
-    });
-
     this.stageLayers = [{
       layer: this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, mapKey)
         .setOrigin(0)
@@ -153,15 +144,6 @@ export class RaceScene extends Phaser.Scene {
         factor: 0.24 + index * 0.06,
       });
     });
-    if (trackKey) {
-      const trackTop = MOTORCYCLE_LANE_BASELINES[0] - 28;
-      this.stageLayers.push({
-        layer: this.add.tileSprite(0, trackTop, GAME_WIDTH, MOTORCYCLE_LANE_COUNT * 56, trackKey)
-          .setOrigin(0)
-          .setDepth(-55),
-        factor: MOTORCYCLE_WORLD_SCALE,
-      });
-    }
     this.hud = this.add.graphics().setDepth(80);
     this.status = this.#text('ELEGÍ LA DISTANCIA', GAME_WIDTH / 2, 48, '#fff0c9', 10);
     this.nitroLabel = this.#text('NITRO', GAME_WIDTH - 112, 23, '#d9fbff', 10)

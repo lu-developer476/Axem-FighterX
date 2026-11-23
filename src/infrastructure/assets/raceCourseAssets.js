@@ -4,8 +4,8 @@ export const RACE_COURSE_ASSETS = Object.freeze({
     tilesetIds: Object.freeze(['sidescroll-tileset']),
   }),
   terrestrial: Object.freeze({
-    mapIds: Object.freeze(['cave-1', 'cave-2']),
-    tilesetIds: Object.freeze(['cave1-tileset', 'cave2-tileset']),
+    mapIds: Object.freeze(['terrestrial-platformer-a', 'terrestrial-platformer-b']),
+    tilesetIds: Object.freeze(['terrestrial-platformer-tileset']),
   }),
 });
 
@@ -18,39 +18,7 @@ export const RACE_COURSE_OBJECTS = Object.freeze({
     Object.freeze({ id: 'hurdle', role: 'obstacle', action: 'dodge', instruction: 'ESQUIVAR', assetId: 'sidescroll-tileset', x: 960, y: 160, width: 64, height: 64 }),
     Object.freeze({ id: 'roll-gate', role: 'obstacle', action: 'dodge', instruction: 'ESQUIVAR', assetId: 'sidescroll-tileset', x: 1088, y: 160, width: 32, height: 96 }),
   ]),
-  terrestrial: Object.freeze([
-    Object.freeze({
-      id: 'hurdle',
-      role: 'obstacle',
-      action: 'jump',
-      instruction: 'SALTAR',
-      assetId: 'cave2-tileset',
-      x: 128,
-      y: 0,
-      width: 96,
-      height: 64,
-    }),
-    Object.freeze({
-      id: 'roll-gate',
-      role: 'obstacle',
-      action: 'roll',
-      instruction: 'RODAR',
-      assetId: 'cave1-tileset',
-      x: 416,
-      y: 32,
-      width: 64,
-      height: 96,
-    }),
-    Object.freeze({
-      id: 'stamina',
-      role: 'pickup',
-      assetId: 'cave1-tileset',
-      x: 320,
-      y: 384,
-      width: 32,
-      height: 32,
-    }),
-  ]),
+  terrestrial: Object.freeze([]),
 });
 
 export function resolveRaceCourseAssets(courseId, mapAssets, tilesetAssets) {

@@ -1,0 +1,9 @@
+Kenney — Space Shooter Remastered
+https://kenney.nl/assets/space-shooter-remastered
+
+The blue and red bolt power-up icons are released under Creative Commons Zero
+1.0 Universal (CC0 1.0):
+https://creativecommons.org/publicdomain/zero/1.0/
+
+The images are included unchanged. Blue indicates boost; red indicates the
+existing slowdown effect. Gameplay values and pickup behavior are unchanged.

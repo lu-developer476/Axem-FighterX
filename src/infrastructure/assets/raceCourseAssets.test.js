@@ -7,14 +7,16 @@ import {
 } from './raceCourseAssets.js';
 
 const maps = [
-  { id: 'cave-1' }, { id: 'cave-2' },
-  { id: 'sidescroll-1' }, { id: 'sidescroll-2' },
-  { id: 'sidescroll-3' }, { id: 'sidescroll-4' },
+  { id: 'terrestrial-platformer-a' },
+  { id: 'terrestrial-platformer-b' },
+  { id: 'sidescroll-1' },
+  { id: 'sidescroll-2' },
+  { id: 'sidescroll-3' },
+  { id: 'sidescroll-4' },
 ];
 const tilesets = [
-  { id: 'cave1-tileset', width: 512, height: 512 },
-  { id: 'cave2-tileset', width: 512, height: 512 },
-  { id: 'sidescroll-tileset', width: 1280, height: 1024 },
+  { id: 'terrestrial-platformer-tileset', width: 360, height: 162, tileWidth: 18, tileHeight: 18 },
+  { id: 'sidescroll-tileset', width: 1280, height: 1024, tileWidth: 32, tileHeight: 32 },
 ];
 
 describe('Asignación de escenarios y objetos de carrera', () => {
@@ -24,14 +26,15 @@ describe('Asignación de escenarios y objetos de carrera', () => {
     expect(assets.tilesets.map(({ id }) => id)).toEqual(['sidescroll-tileset']);
   });
 
-  it('reserva los mapas de cueva y ambos tilesets para Carrera Terrestre', () => {
+  it('asigna mapas exteriores y tileset pixel platformer a Carrera Terrestre', () => {
     const assets = resolveRaceCourseAssets('terrestrial', maps, tilesets);
-    expect(assets.maps.map(({ id }) => id)).toEqual(['cave-1', 'cave-2']);
-    expect(assets.tilesets.map(({ id }) => id)).toEqual(['cave1-tileset', 'cave2-tileset']);
+    expect(assets.maps.map(({ id }) => id)).toEqual(['terrestrial-platformer-a', 'terrestrial-platformer-b']);
+    expect(assets.tilesets.map(({ id }) => id)).toEqual(['terrestrial-platformer-tileset']);
+    expect(assets.tilesets[0]).toMatchObject({ width: 360, height: 162, tileWidth: 18, tileHeight: 18 });
   });
 
-  it('resuelve obstáculos contextuales de Carrera Axem desde el tileset sidescroll', () => {
-    const axem = resolveRaceCourseObjects('axem', [tilesets[2]]);
+  it('mantiene los objetos propios de Carrera Axem en su tileset sidescroll', () => {
+    const axem = resolveRaceCourseObjects('axem', [tilesets[1]]);
     expect(axem.map(({ id, role, asset }) => [id, role, asset.id])).toEqual([
       ['hurdle', 'obstacle', 'sidescroll-tileset'],
       ['roll-gate', 'obstacle', 'sidescroll-tileset'],
@@ -41,34 +44,30 @@ describe('Asignación de escenarios y objetos de carrera', () => {
       ['dodge', 'ESQUIVAR'],
       ['dodge', 'ESQUIVAR'],
     ]);
-    const terrestrial = resolveRaceCourseObjects('terrestrial', [tilesets[0], tilesets[1]]);
-    expect(terrestrial.map(({ id, role, asset }) => [id, role, asset.id])).toEqual([
-      ['hurdle', 'obstacle', 'cave2-tileset'],
-      ['roll-gate', 'obstacle', 'cave1-tileset'],
-      ['stamina', 'pickup', 'cave1-tileset'],
-    ]);
-    expect(terrestrial.slice(0, 2).map(({ action, instruction }) => [action, instruction])).toEqual([
-      ['jump', 'SALTAR'],
-      ['roll', 'RODAR'],
-    ]);
   });
 
-  it('mantiene cada recorte dentro del tileset y alineado a la cuadrícula', () => {
-    const regions = [...RACE_COURSE_OBJECTS.axem, ...RACE_COURSE_OBJECTS.terrestrial];
-    for (const region of regions) {
+  it('no recicla recortes de cuevas como obstáculos del circuito terrestre', () => {
+    expect(RACE_COURSE_OBJECTS.terrestrial).toEqual([]);
+    expect(resolveRaceCourseObjects('terrestrial', [tilesets[0]])).toEqual([]);
+  });
+
+  it('mantiene cada recorte de Axem dentro del tileset y alineado a su cuadrícula', () => {
+    for (const region of RACE_COURSE_OBJECTS.axem) {
       const asset = tilesets.find(({ id }) => id === region.assetId);
-      expect(region.x % 32, region.id + ' x').toBe(0);
-      expect(region.y % 32, region.id + ' y').toBe(0);
+      const tileWidth = asset.tileWidth ?? 32;
+      const tileHeight = asset.tileHeight ?? 32;
+      expect(region.x % tileWidth, region.id + ' x').toBe(0);
+      expect(region.y % tileHeight, region.id + ' y').toBe(0);
       expect(region.x + region.width, region.id + ' borde derecho').toBeLessThanOrEqual(asset.width);
       expect(region.y + region.height, region.id + ' borde inferior').toBeLessThanOrEqual(asset.height);
     }
   });
 
-  it('falla con claridad cuando falta el tileset o el circuito', () => {
+  it('falla con claridad cuando falta un recurso o el circuito', () => {
+    expect(() => resolveRaceCourseAssets('terrestrial', maps, []))
+      .toThrow('Falta el recurso de tileset: terrestrial-platformer-tileset');
     expect(() => resolveRaceCourseObjects('axem', [tilesets[0]]))
       .toThrow('Falta el tileset "sidescroll-tileset" para el objeto "hurdle".');
-    expect(() => resolveRaceCourseObjects('terrestrial', [tilesets[0]]))
-      .toThrow('Falta el tileset "cave2-tileset" para el objeto "hurdle".');
     expect(() => resolveRaceCourseObjects('unknown', tilesets))
       .toThrow('No existen objetos para el circuito "unknown".');
     expect(() => resolveRaceCourseAssets('unknown', maps, tilesets))
@@ -78,11 +77,9 @@ describe('Asignación de escenarios y objetos de carrera', () => {
   it('mantiene separados los recursos de Axem y Terrestre', () => {
     expect(RACE_COURSE_ASSETS.axem.mapIds).toEqual(['sidescroll-1', 'sidescroll-2', 'sidescroll-3', 'sidescroll-4']);
     expect(RACE_COURSE_ASSETS.axem.tilesetIds).toEqual(['sidescroll-tileset']);
-    expect(RACE_COURSE_ASSETS.terrestrial.mapIds).toEqual(['cave-1', 'cave-2']);
-    expect(RACE_COURSE_ASSETS.terrestrial.tilesetIds).toEqual(['cave1-tileset', 'cave2-tileset']);
+    expect(RACE_COURSE_ASSETS.terrestrial.mapIds).toEqual(['terrestrial-platformer-a', 'terrestrial-platformer-b']);
+    expect(RACE_COURSE_ASSETS.terrestrial.tilesetIds).toEqual(['terrestrial-platformer-tileset']);
     expect(RACE_COURSE_OBJECTS.axem.every(({ assetId }) => assetId === 'sidescroll-tileset')).toBe(true);
-    expect(RACE_COURSE_OBJECTS.terrestrial.map(({ assetId }) => assetId)).toEqual([
-      'cave2-tileset', 'cave1-tileset', 'cave1-tileset',
-    ]);
+    expect(RACE_COURSE_OBJECTS.terrestrial).toEqual([]);
   });
 });

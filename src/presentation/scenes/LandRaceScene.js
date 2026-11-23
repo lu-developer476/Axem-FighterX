@@ -27,15 +27,10 @@ import redRaceDashGifUrl from '../../../art/source/sprites/references/axem-red/d
 import redRaceJumpGifUrl from '../../../art/source/sprites/references/axem-red/jump.gif?url';
 import { resolveLandRaceAnimationSources } from '../../domain/race/landRaceAnimationRules.js';
 import { PauseMenuView } from '../views/PauseMenuView.js';
-import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
+import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseAssets.js';
 import {
-  resolveRaceCourseAssets,
-  resolveRaceCourseObjects,
-} from '../../infrastructure/assets/raceCourseAssets.js';
-import {
-  createLoopingMapTexture,
+  createLoopingTiledMapTexture,
   createLoopingRaceTextures,
-  createTilesetObjectTextures,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
@@ -43,6 +38,8 @@ import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
+import terrestrialRaceMapA from '../../../art/source/environments/race-terrestrial/maps/terrestrial-a.json';
+import terrestrialRaceMapB from '../../../art/source/environments/race-terrestrial/maps/terrestrial-b.json';
 
 const PLAYER_RUNNER_X = TREADMILL_RUNNER_X;
 const LAND_OBJECT_SCALE = LAND_RACE_WORLD_SCALE;
@@ -50,6 +47,67 @@ const LAND_RACE_LOOP_DISTANCE = 1200;
 const RUNNER_FOOT_OFFSET = 13;
 const COUNTDOWN_MS = 3000;
 const STAMINA_MAX = 100;
+
+const TERRESTRIAL_RACE_MAP_ASSETS = Object.freeze([
+  Object.freeze({ id: 'terrestrial-platformer-a', map: terrestrialRaceMapA }),
+  Object.freeze({ id: 'terrestrial-platformer-b', map: terrestrialRaceMapB }),
+]);
+const TERRESTRIAL_RACE_TILESET_ASSET = Object.freeze({
+  id: 'terrestrial-platformer-tileset',
+  key: 'terrestrial-race-tileset',
+  width: 360,
+  height: 162,
+  tileWidth: 18,
+  tileHeight: 18,
+});
+const LAND_RACE_OBJECT_SPECS = Object.freeze([
+  Object.freeze({ id: 'hurdle', instruction: 'VALLA' }),
+  Object.freeze({ id: 'roll-gate', instruction: 'BARRA' }),
+]);
+
+function createLandRaceObjectTextures(scene) {
+  const create = (key, width, height, draw) => {
+    if (scene.textures.exists(key)) return;
+    const graphics = scene.make.graphics({ x: 0, y: 0, add: false });
+    draw(graphics);
+    graphics.generateTexture(key, width, height);
+    graphics.destroy();
+  };
+
+  create('land-course-object-hurdle', 68, 44, (g) => {
+    g.fillStyle(0x253b35, 0.65).fillRect(4, 38, 60, 4);
+    g.fillStyle(0x5b3829, 1).fillRect(8, 7, 7, 32).fillRect(53, 7, 7, 32);
+    g.fillStyle(0xc58a4f, 1).fillRect(10, 8, 3, 28).fillRect(55, 8, 3, 28);
+    g.fillStyle(0x6a3f2b, 1).fillRect(5, 9, 58, 9);
+    g.fillStyle(0xe0ad68, 1).fillRect(7, 10, 54, 5);
+    g.fillStyle(0x844d32, 1).fillRect(7, 17, 54, 3);
+    g.fillStyle(0x5b3829, 1).fillRect(4, 35, 15, 4).fillRect(49, 35, 15, 4);
+  });
+  create('land-course-object-roll-gate', 68, 44, (g) => {
+    g.fillStyle(0x253b35, 0.65).fillRect(4, 38, 60, 4);
+    g.fillStyle(0x5b3829, 1).fillRect(7, 13, 7, 26).fillRect(54, 13, 7, 26);
+    g.fillStyle(0xc58a4f, 1).fillRect(9, 14, 3, 23).fillRect(56, 14, 3, 23);
+    g.fillStyle(0x5b3829, 1).fillRect(5, 6, 58, 11);
+    g.fillStyle(0xe8c36d, 1).fillRect(8, 8, 52, 4);
+    g.fillStyle(0x242c32, 1).fillRect(14, 8, 5, 4).fillRect(26, 8, 5, 4)
+      .fillRect(38, 8, 5, 4).fillRect(50, 8, 5, 4);
+    g.fillStyle(0x844d32, 1).fillRect(4, 36, 15, 4).fillRect(49, 36, 15, 4);
+  });
+  create('land-course-object-stamina', 22, 22, (g) => {
+    g.fillStyle(0x163c42, 1).fillTriangle(11, 1, 2, 11, 11, 21);
+    g.fillTriangle(11, 1, 20, 11, 11, 21);
+    g.fillStyle(0x65dfc8, 1).fillTriangle(11, 3, 4, 11, 11, 19);
+    g.fillTriangle(11, 3, 18, 11, 11, 19);
+    g.fillStyle(0xf2ffbd, 1).fillRect(10, 6, 3, 7).fillRect(8, 11, 7, 3);
+  });
+
+  return Object.freeze({
+    hurdle: 'land-course-object-hurdle',
+    'roll-gate': 'land-course-object-roll-gate',
+    stamina: 'land-course-object-stamina',
+  });
+}
+
 
 export const LAND_RACE_OBSTACLES = Object.freeze([
   Object.freeze({ distance: 190, action: 'jump', type: 'hurdle' }),
@@ -73,20 +131,15 @@ export class LandRaceScene extends Phaser.Scene {
 
     const { maps: courseMaps, tilesets: raceTilesets } = resolveRaceCourseAssets(
       'terrestrial',
-      STAGE_MAP_ASSETS,
-      STAGE_TILESET_ASSETS,
+      TERRESTRIAL_RACE_MAP_ASSETS,
+      [TERRESTRIAL_RACE_TILESET_ASSET],
     );
-    this.courseObjectSpecs = resolveRaceCourseObjects('terrestrial', raceTilesets);
-    this.courseObjectTextures = createTilesetObjectTextures(
-      this,
-      this.courseObjectSpecs,
-      { prefix: 'land-course-object-' + this.game.loop.frame },
-    );
-    const mapKey = createLoopingMapTexture(this, courseMaps, {
+    this.courseObjectSpecs = LAND_RACE_OBJECT_SPECS;
+    this.courseObjectTextures = createLandRaceObjectTextures(this);
+    const mapKey = createLoopingTiledMapTexture(this, courseMaps.map(({ map }) => map), {
       key: 'land-course-' + this.game.loop.frame,
+      atlasKey: raceTilesets[0].key,
       height: GAME_HEIGHT,
-      cropTop: 240,
-      cropHeight: 720,
     });
     const worldKeys = mapKey
       ? [mapKey]

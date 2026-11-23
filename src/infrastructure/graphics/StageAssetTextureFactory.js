@@ -302,6 +302,81 @@ export function createLoopingMapTexture(scene, assets, {
 }
 
 /**
+ * Renderiza mapas Tiled sobre un atlas de tiles y los concatena en una cinta horizontal.
+ * Las capas se dibujan en el orden original del mapa para conservar fondo y primer plano.
+ */
+export function createLoopingTiledMapTexture(scene, maps, {
+  key = 'race-tiled-map',
+  atlasKey,
+  height = GAME_HEIGHT,
+} = {}) {
+  const available = (maps ?? []).filter((map) =>
+    Number.isInteger(map?.width) &&
+    Number.isInteger(map?.height) &&
+    Array.isArray(map.layers),
+  );
+  if (!available.length || !atlasKey || !scene.textures.exists(atlasKey)) return null;
+  if (!Number.isInteger(height) || height < 1) {
+    throw new RangeError('La altura del mapa Tiled debe ser un entero positivo.');
+  }
+
+  const source = scene.textures.get(atlasKey).getSourceImage();
+  const firstTileset = available[0].tilesets?.[0];
+  const tileWidth = Number(firstTileset?.tilewidth ?? available[0].tilewidth ?? 18);
+  const tileHeight = Number(firstTileset?.tileheight ?? available[0].tileheight ?? tileWidth);
+  const columns = Number(firstTileset?.columns ?? Math.floor(source.width / tileWidth));
+  if (!Number.isInteger(tileWidth) || tileWidth < 1 ||
+      !Number.isInteger(tileHeight) || tileHeight < 1 ||
+      !Number.isInteger(columns) || columns < 1) {
+    throw new RangeError('El tileset del mapa Tiled tiene una cuadrícula inválida.');
+  }
+
+  const sections = available.map((map) => {
+    const scale = height / (map.height * tileHeight);
+    return {
+      map,
+      scale,
+      width: Math.max(1, Math.round(map.width * tileWidth * scale)),
+    };
+  });
+  const width = sections.reduce((total, section) => total + section.width, 0);
+  createCanvasTexture(scene, key, width, height, (ctx) => {
+    ctx.imageSmoothingEnabled = false;
+    let offsetX = 0;
+    for (const section of sections) {
+      const { map, scale } = section;
+      const mapWidth = map.width * tileWidth * scale;
+      ctx.fillStyle = map.backgroundcolor ?? '#b9e9e6';
+      ctx.fillRect(offsetX, 0, mapWidth, height);
+      for (const layer of map.layers) {
+        if (layer.type !== 'tilelayer' || layer.visible === false || !Array.isArray(layer.data)) continue;
+        const expectedTiles = map.width * map.height;
+        if (layer.data.length !== expectedTiles) {
+          throw new RangeError('La capa "' + (layer.name ?? 'sin nombre') + '" no coincide con las dimensiones del mapa.');
+        }
+        for (let index = 0; index < layer.data.length; index += 1) {
+          const gid = (Number(layer.data[index]) >>> 0) & 0x1fffffff;
+          if (!gid) continue;
+          const tileIndex = gid - 1;
+          const sourceX = (tileIndex % columns) * tileWidth;
+          const sourceY = Math.floor(tileIndex / columns) * tileHeight;
+          if (sourceX < 0 || sourceY < 0 ||
+              sourceX + tileWidth > source.width || sourceY + tileHeight > source.height) {
+            throw new RangeError('El tile GID ' + gid + ' excede el atlas "' + atlasKey + '".');
+          }
+          const x = offsetX + (index % map.width) * tileWidth * scale;
+          const y = Math.floor(index / map.width) * tileHeight * scale;
+          ctx.drawImage(source, sourceX, sourceY, tileWidth, tileHeight, x, y,
+            tileWidth * scale, tileHeight * scale);
+        }
+      }
+      offsetX += section.width;
+    }
+  });
+  return key;
+}
+
+/**
  * Recorta objetos con función jugable desde coordenadas explícitas de los tilesets.
  * Cada salida se asocia a una clave estable del objeto en lugar de elegir un tile al azar.
  */

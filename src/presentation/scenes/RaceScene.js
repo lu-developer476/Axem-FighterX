@@ -62,23 +62,7 @@ function createRaceTextures(scene) {
     g.fillTriangle(37, 12, 25, 2, 25, 26);
   });
 
-  // Los tilesets de cueva solo contienen terreno/estructuras/rocas. Los pickups
-  // tienen iconografía propia para no confundir una decoración con un efecto.
-  createTexture(scene, 'axem-pickup-boost', 36, 36, (g) => {
-    g.fillStyle(0x101820, 1).fillRoundedRect(1, 1, 34, 34, 4);
-    g.lineStyle(2, 0x75e8f3, 1).strokeRoundedRect(2, 2, 32, 32, 4);
-    g.fillStyle(0x12616a, 1).fillRoundedRect(6, 6, 24, 24, 3);
-    g.fillStyle(0xfff0b7, 1);
-    g.fillTriangle(7, 8, 18, 18, 7, 28);
-    g.fillTriangle(17, 8, 28, 18, 17, 28);
-  });
-  createTexture(scene, 'axem-pickup-slow', 36, 36, (g) => {
-    g.fillStyle(0x101820, 1).fillRoundedRect(1, 1, 34, 34, 4);
-    g.lineStyle(2, 0xff8b72, 1).strokeRoundedRect(2, 2, 32, 32, 4);
-    g.fillStyle(0x702d37, 1).fillRoundedRect(6, 6, 24, 24, 3);
-    g.fillStyle(0xffeadf, 1).fillRect(16, 7, 4, 12);
-    g.fillTriangle(8, 17, 28, 17, 18, 29);
-  });
+
 
 }
 

@@ -24,6 +24,6 @@ describe('Carrera Axem de dos carriles', () => {
   });
   it('incluye obstáculos distribuidos por los dos carriles', () => {
     expect(new Set(MOTORCYCLE_RACE_OBSTACLES.map(({ lane }) => lane))).toEqual(new Set([0, 1]));
-    expect(new Set(MOTORCYCLE_RACE_OBSTACLES.map(({ kind }) => kind))).toEqual(new Set(['rock-wall', 'stone-pillar']));
+    expect(new Set(MOTORCYCLE_RACE_OBSTACLES.map(({ kind }) => kind))).toEqual(new Set(['hurdle', 'roll-gate']));
   });
 });

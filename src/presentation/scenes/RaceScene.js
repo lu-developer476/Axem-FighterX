@@ -468,7 +468,7 @@ export class RaceScene extends Phaser.Scene {
       const y = MOTORCYCLE_LANE_BASELINES[obstacle.lane] + 3;
       const sprite = this.obstacleSprites[index];
       sprite.setPosition(screenX, y)
-        .setScale(MOTORCYCLE_LANE_SCALES[obstacle.lane] * (obstacle.kind === 'stone-pillar' ? 0.52 : 0.42))
+        .setScale(MOTORCYCLE_LANE_SCALES[obstacle.lane] * (obstacle.kind === 'roll-gate' ? 0.52 : 0.42))
         .setDepth(30 + obstacle.lane);
       if (screenX < -30) {
         sprite.setVisible(false);

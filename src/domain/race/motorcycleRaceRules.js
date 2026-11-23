@@ -1,3 +1,6 @@
+/** Escala compartida por escenario, cámara, motos y objetos. */
+export const MOTORCYCLE_WORLD_SCALE = 0.14;
+
 export const MOTORCYCLE_LANE_COUNT = 2;
 export const MOTORCYCLE_LANE_BASELINES = Object.freeze([173, 233]);
 export const MOTORCYCLE_LANE_SCALES = Object.freeze([0.82, 1.08]);

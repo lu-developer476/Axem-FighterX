@@ -9,7 +9,6 @@ import {
 } from '../../infrastructure/assets/raceCourseAssets.js';
 import {
   createLoopingMapTexture,
-  createLoopingRaceTextures,
   createTilesetObjectTextures,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
@@ -25,6 +24,7 @@ import {
   MOTORCYCLE_LANE_COUNT,
   MOTORCYCLE_LANE_BASELINES,
   MOTORCYCLE_LANE_SCALES,
+  MOTORCYCLE_WORLD_SCALE,
   MOTORCYCLE_RACE_OBSTACLES,
   normalizeMotorcycleLane,
   advanceMotorcycleLateralOffset,
@@ -104,8 +104,6 @@ export class RaceScene extends Phaser.Scene {
       down: Phaser.Input.Keyboard.KeyCodes.DOWN,
       a: Phaser.Input.Keyboard.KeyCodes.A,
       d: Phaser.Input.Keyboard.KeyCodes.D,
-      w: Phaser.Input.Keyboard.KeyCodes.W,
-      s: Phaser.Input.Keyboard.KeyCodes.S,
       space: Phaser.Input.Keyboard.KeyCodes.SPACE,
       nitro: Phaser.Input.Keyboard.KeyCodes.N,
       escape: Phaser.Input.Keyboard.KeyCodes.ESC,
@@ -133,23 +131,20 @@ export class RaceScene extends Phaser.Scene {
       key: 'bike-course-' + this.game.loop.frame,
       height: GAME_HEIGHT,
     });
-    const worldKeys = mapKey
-      ? [mapKey]
-      : createLoopingRaceTextures(this, raceTilesets, {
-          prefix: 'bike-world-' + this.game.loop.frame,
-          trackTop: 139,
-          seed: 809,
-        });
-    this.stageLayers = worldKeys.map((key, index) =>
-      this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, key)
+    if (!mapKey) {
+      throw new Error('No se pudieron componer los cuatro mapas de Carrera Axem en el orden previsto.');
+    }
+    this.stageLayers = [
+      this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, mapKey)
         .setOrigin(0)
-        .setDepth(-100 + index)
-        .setAlpha(index === 0 ? 1 : 0.58),
-    );
+        .setDepth(-100)
+        .setAlpha(1),
+    ];
     this.hud = this.add.graphics().setDepth(80);
     this.status = this.#text('ELEGÍ LA DISTANCIA', GAME_WIDTH / 2, 48, '#fff0c9', 10);
-    this.distanceLabel = this.#text('0 M', 105, GAME_HEIGHT - 20, '#e7dcff', 5);
-    this.nitroLabel = this.#text('NITRO', GAME_WIDTH - 62, GAME_HEIGHT - 25, '#a8e8ff', 4);
+    this.nitroLabel = this.#text('NITRO', GAME_WIDTH - 112, 23, '#d9fbff', 10)
+      .setFontStyle('bold')
+      .setStroke('#07131b', 3);
     this.pauseMenu = new PauseMenuView(this, {
       onResume: () => this.#resume(),
       onReturnToMenu: () => this.scene.start('MenuScene'),
@@ -158,7 +153,7 @@ export class RaceScene extends Phaser.Scene {
       controlsTitle: 'CONTROLES · CARRERA AXEM',
       controls: [
         '← / → · MOVERSE DENTRO DEL CARRIL',
-        '↑ / ↓ o W / S · CAMBIAR DE CARRIL',
+        '↑ / ↓ · CAMBIAR DE CARRIL',
         'D · ACELERAR · A · FRENAR',
         'ESPACIO · SALTAR',
         'N · NITRO',
@@ -243,10 +238,10 @@ export class RaceScene extends Phaser.Scene {
     const accelerate = this.keys.d.isDown;
     const brake = this.keys.a.isDown;
     const boosting = this.keys.nitro.isDown && this.boost > 0;
-    if (Phaser.Input.Keyboard.JustDown(this.keys.up) || Phaser.Input.Keyboard.JustDown(this.keys.w)) {
+    if (Phaser.Input.Keyboard.JustDown(this.keys.up)) {
       this.#changeLane(this.player, -1);
     }
-    if (Phaser.Input.Keyboard.JustDown(this.keys.down) || Phaser.Input.Keyboard.JustDown(this.keys.s)) {
+    if (Phaser.Input.Keyboard.JustDown(this.keys.down)) {
       this.#changeLane(this.player, 1);
     }
 
@@ -267,8 +262,8 @@ export class RaceScene extends Phaser.Scene {
     this.distance += this.speed * frame;
     this.player.distance = this.distance;
     this.boost = clamp(this.boost + (boosting ? -34 : 16) * frame, 0, 100);
-    this.stageLayers.forEach((layer, index) => {
-      layer.tilePositionX = this.distance * (index === 0 ? 0.14 : 0.34);
+    this.stageLayers.forEach((layer) => {
+      layer.tilePositionX = this.distance * MOTORCYCLE_WORLD_SCALE;
     });
     if (boosting && (!this.wasBoosting || time - this.lastNitroFlashAt >= 120)) {
       this.#emitNitroFlash(time);
@@ -379,15 +374,6 @@ export class RaceScene extends Phaser.Scene {
       this.add.image(0, 0, pickup.kind === 'boost' ? 'axem-pickup-boost' : 'axem-pickup-slow')
         .setDepth(32),
     );
-    this.pickupLabels = this.pickups.map((pickup) =>
-      this.add.text(0, 0, pickup.kind === 'boost' ? 'ACELERA' : 'FRENA', {
-        fontFamily: 'monospace',
-        fontSize: '6px',
-        color: pickup.kind === 'boost' ? '#9cecff' : '#ffb2a0',
-        stroke: '#10131d',
-        strokeThickness: 3,
-      }).setOrigin(0.5).setDepth(35),
-    );
     this.speedEffect = 0;
     this.speedEffectMs = 0;
     this.wasBoosting = false;
@@ -425,8 +411,13 @@ export class RaceScene extends Phaser.Scene {
   }
 
   #worldX(distance) {
-    const cameraDistance = getRaceCameraDistance(this.distance, PLAYER_X, 126, 0.19);
-    return getRaceRunnerX(PLAYER_X, distance, cameraDistance, 0.19);
+    const cameraDistance = getRaceCameraDistance(
+      this.distance,
+      PLAYER_X,
+      126,
+      MOTORCYCLE_WORLD_SCALE,
+    );
+    return getRaceRunnerX(PLAYER_X, distance, cameraDistance, MOTORCYCLE_WORLD_SCALE);
   }
 
   #racerX(racer) {
@@ -497,10 +488,8 @@ export class RaceScene extends Phaser.Scene {
   #updatePickups() {
     this.pickups.forEach((pickup, index) => {
       const sprite = this.pickupSprites[index];
-      const label = this.pickupLabels[index];
       if (pickup.collected) {
         sprite.setVisible(false);
-        label.setVisible(false);
         return;
       }
       const playerX = this.#racerX(this.player);
@@ -511,12 +500,9 @@ export class RaceScene extends Phaser.Scene {
         .setScale(MOTORCYCLE_LANE_SCALES[pickup.lane] * 0.72)
         .setDepth(32 + pickup.lane)
         .setVisible(visible);
-      label.setPosition(x, y + 20)
-        .setVisible(visible);
       if (this.player.lane === pickup.lane && Math.abs(x - playerX) < 18) {
         pickup.collected = true;
         sprite.setVisible(false);
-        label.setVisible(false);
         this.speedEffect = pickup.kind === 'boost' ? 105 : -75;
         this.speedEffectMs = 1900;
         if (pickup.kind === 'boost') this.boost = clamp(this.boost + 24, 0, 100);
@@ -549,16 +535,15 @@ export class RaceScene extends Phaser.Scene {
 
   #drawHud() {
     this.hud.clear();
-    const top = GAME_HEIGHT - 31;
-    this.hud.fillStyle(0x111725, 0.9).fillRoundedRect(8, top, GAME_WIDTH - 16, 25, 4);
-    this.hud.fillStyle(0x9b85d1, 1).fillRect(18, top + 17,
-      205 * clamp(this.distance / this.raceDistance, 0, 1), 3);
-    this.hud.fillStyle(0x172033, 1).fillRect(GAME_WIDTH - 118, top + 16, 96, 6);
-    this.hud.fillStyle(0x78c9e8, 1).fillRect(GAME_WIDTH - 117, top + 17,
-      94 * this.boost / 100, 4);
-    this.distanceLabel.setPosition(103, top + 9)
-      .setText(Math.floor(this.distance) + ' / ' + this.raceDistance + ' M');
-    this.nitroLabel.setPosition(GAME_WIDTH - 70, top + 6);
+    this.hud.fillStyle(0x07131b, 0.94).fillRoundedRect(GAME_WIDTH - 158, 8, 150, 31, 5);
+    this.hud.lineStyle(1, 0x5baec2, 0.95).strokeRoundedRect(GAME_WIDTH - 157, 9, 148, 29, 5);
+    this.hud.fillStyle(0x213b49, 1).fillRoundedRect(GAME_WIDTH - 81, 18, 65, 10, 3);
+    const fillWidth = Math.round(61 * clamp(this.boost / 100, 0, 1));
+    if (fillWidth > 0) {
+      this.hud.fillStyle(0x64e4ff, 1)
+        .fillRoundedRect(GAME_WIDTH - 79, 20, fillWidth, 6, 2);
+    }
+    this.nitroLabel.setPosition(GAME_WIDTH - 119, 23);
   }
 
   #emitNitroFlash(time) {
@@ -598,12 +583,6 @@ export class RaceScene extends Phaser.Scene {
       ease: 'Cubic.easeOut',
       onComplete: () => burst.destroy(),
     });
-    if (!this.wasBoosting) {
-      this.cameras.main.flash(110, 120, 220, 255);
-      this.cameras.main.shake(130, 0.0022);
-      this.cameras.main.zoomTo(1.035, 100);
-      this.time.delayedCall(170, () => this.cameras.main?.zoomTo(1, 150));
-    }
   }
 
   #finish(playerWon) {

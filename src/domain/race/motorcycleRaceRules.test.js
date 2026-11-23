@@ -2,11 +2,16 @@ import { describe, expect, it } from 'vitest';
 import {
   MOTORCYCLE_LANE_BASELINES,
   MOTORCYCLE_LANE_COUNT,
+  MOTORCYCLE_WORLD_SCALE,
   MOTORCYCLE_LANE_SCALES,
   advanceMotorcycleLateralOffset,
 } from './motorcycleRaceRules.js';
 
 describe('Profundidad visual de la carrera de motos', () => {
+  it('mantiene una escala única entre el desplazamiento del escenario y el mundo de carrera', () => {
+    expect(MOTORCYCLE_WORLD_SCALE).toBe(0.14);
+  });
+
   it('mantiene dos carriles con líneas de suelo y escala progresivas', () => {
     expect(MOTORCYCLE_LANE_COUNT).toBe(2);
     expect(MOTORCYCLE_LANE_BASELINES).toEqual([173, 233]);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contentWidth, insetSize, mapPanelY, UI_SPACING } from './uiLayout.js';
+import { contentWidth, getStackedButtonPositions, insetSize, mapPanelY, UI_SPACING } from './uiLayout.js';
 
 describe('Espaciado compartido de interfaces', () => {
   it('aplica el mismo marco interior a paneles de cualquier tamaño', () => {
@@ -24,5 +24,13 @@ describe('Espaciado compartido de interfaces', () => {
     expect(mapPanelY(122, 122, 239, 46, 226)).toBe(46);
     expect(mapPanelY(239, 122, 239, 46, 226)).toBe(226);
     expect(mapPanelY(500, 122, 239, 46, 226)).toBe(226);
+  });
+
+  it('apila tres botones debajo de la línea dorada y deja espacios entre ellos', () => {
+    const positions = getStackedButtonPositions(3, 104, { buttonHeight: 16 });
+    expect(positions).toEqual([120, 146, 172]);
+    expect(positions[0] - 8 - 104).toBe(8);
+    expect(positions[1] - positions[0] - 16).toBe(10);
+    expect(positions[2] - positions[1] - 16).toBe(10);
   });
 });

@@ -43,7 +43,7 @@ export class PreloadScene extends Phaser.Scene {
       letterSpacing: 2,
     }).setOrigin(0.5);
 
-    const status = this.add.text(GAME_WIDTH / 2, 131, 'CARGANDO RECURSOS...', {
+    const status = this.add.text(GAME_WIDTH / 2, 131, 'Cargando recursos...', {
       fontFamily: 'monospace',
       fontSize: '10px',
       color: '#8f86ae',
@@ -71,11 +71,11 @@ export class PreloadScene extends Phaser.Scene {
 
     drawProgress(0);
     this.load.on('progress', drawProgress);
-    this.load.on('fileprogress', (file) => {
-      status.setText('CARGANDO ' + file.key.toUpperCase());
+    this.load.on('fileprogress', () => {
+      status.setText('Cargando recursos...');
     });
-    this.load.on('loaderror', (file) => {
-      status.setText('NO SE PUDO CARGAR ' + file.key.toUpperCase());
+    this.load.on('loaderror', () => {
+      status.setText('No se pudo cargar un recurso');
     });
 
     // Carga únicamente las identidades canónicas: Orange masculino y Violet femenino.

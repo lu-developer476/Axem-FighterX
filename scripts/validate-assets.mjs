@@ -120,10 +120,7 @@ async function collectActionGifs(directory, recursive = false) {
 async function validateActionGifs() {
   const category = standards.categories.actionGif;
   const directory = absolute(category.directory);
-  const redActionNames = [
-    'bike.gif', 'dash.gif', 'hit.gif', 'hurt.gif', 'idle.gif', 'jump.gif',
-    'punch-01.gif', 'punch-02.gif', 'punch-03.gif', 'run.gif', 'teleport.gif', 'walk.gif',
-  ];
+  const redActionNames = ['dash.gif', 'idle.gif', 'jump.gif', 'run.gif', 'walk.gif'];
   const redActionDirectory = absolute('art/source/sprites/references/axem-red');
   const redActionFiles = redActionNames.map((name) => path.join(redActionDirectory, name));
   const files = [

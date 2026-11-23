@@ -1043,7 +1043,7 @@ async function buildMaleKiAuraHoldFrames(sourceFrame) {
 
 async function readMaleGifFrames(color, filename) {
   const file = color === 'orange' && filename === 'battle-pose.gif'
-    ? SOURCE('sprites', 'references', 'axem-orange', 'battle-pose.gif')
+    ? RESULTS('male', 'orange', 'pose.gif')
     : RESULTS('male', color, filename);
   const metadata = await sharp(file, { animated: true }).metadata();
   const count = Math.max(1, metadata.pages || 1);
@@ -1731,21 +1731,16 @@ async function buildRedRangerGifs() {
     return group;
   });
 
+  // Las referencias Red conservan las animaciones que necesita el catálogo de minijuegos.
   await writeMaleSequenceGif(frames('group-01', 'group-02'), 'red', 'idle', 105);
   await writeMaleSequenceGif(frames('group-02'), 'red', 'walk', 105);
-  await writeMaleSequenceGif(frames('group-03'), 'red', 'punch-01', 90);
-  await writeMaleSequenceGif(frames('group-04'), 'red', 'punch-02', 90);
-  await writeMaleSequenceGif(frames('group-05'), 'red', 'punch-03', 90);
   await writeMaleSequenceGif(frames('group-10'), 'red', 'run', 80);
   await writeMaleSequenceGif(frames('group-11'), 'red', 'dash', 80);
   await writeMaleSequenceGif(frames('group-12'), 'red', 'jump', 100);
-  await writeMaleSequenceGif(groups.get('group-13').slice(0, 2), 'red', 'hit', 120);
-  await writeMaleSequenceGif(groups.get('group-13').slice(3, 6), 'red', 'hurt', 150);
-  await writeMaleSequenceGif([...frames('group-14'), ...redTeleportTail], 'red', 'teleport', 100);
 
-  // Bike y double-axe se mantienen como tiras PNG; solo bike se distribuye como GIF.
+  // El master de moto se procesa para la hoja del juego, sin crear bike.gif duplicado.
   for (const [action, sourceName, writeGif] of [
-    ['bike', 'axem-ranger-bike.gif', true],
+    ['bike', 'axem-ranger-bike.gif', false],
     ['double-axe', 'axem-ranger-double-axe.gif', false],
   ]) {
     const animation = await readRawGifFrames(path.join(sourceDirectory, sourceName));

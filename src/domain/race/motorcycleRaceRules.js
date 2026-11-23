@@ -21,3 +21,16 @@ export function normalizeMotorcycleLane(lane) {
   const normalized = Number.isFinite(numeric) ? Math.round(numeric) : 0;
   return Math.max(0, Math.min(MOTORCYCLE_LANE_COUNT - 1, normalized));
 }
+
+/** Avanza el desplazamiento horizontal dentro del carril con un eje -1/0/1. */
+export function advanceMotorcycleLateralOffset(offset, direction, deltaMs, speed = 280) {
+  const current = Number.isFinite(Number(offset)) ? Number(offset) : 0;
+  const axis = Number.isFinite(Number(direction))
+    ? Math.max(-1, Math.min(1, Number(direction)))
+    : 0;
+  const elapsed = Number.isFinite(Number(deltaMs))
+    ? Math.max(0, Math.min(50, Number(deltaMs)))
+    : 0;
+  const rate = Number.isFinite(Number(speed)) && Number(speed) > 0 ? Number(speed) : 280;
+  return current + axis * rate * elapsed / 1000;
+}

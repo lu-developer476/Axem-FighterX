@@ -30,20 +30,24 @@ async function visibleBounds(relativePath) {
 }
 
 describe('Estándares centrales de recursos gráficos', () => {
-  it('mantiene los GIF de Red junto a sus referencias y fuera de results', async () => {
+  it('conserva solo las referencias Red necesarias y el master de moto', async () => {
     const directory = absolute('art/source/sprites/references/axem-red');
     const entries = await fs.readdir(directory, { withFileTypes: true });
-    const expectedGifs = [
-      'bike.gif', 'dash.gif', 'hit.gif', 'hurt.gif', 'idle.gif', 'jump.gif',
-      'punch-01.gif', 'punch-02.gif', 'punch-03.gif', 'run.gif', 'teleport.gif', 'walk.gif',
-    ].sort();
+    const expectedGifs = ['dash.gif', 'idle.gif', 'jump.gif', 'run.gif', 'walk.gif'].sort();
     const gifs = entries
       .filter((entry) => entry.isFile() && expectedGifs.includes(entry.name))
       .map((entry) => entry.name)
       .sort();
     expect(gifs).toEqual(expectedGifs);
+    const retiredGifs = [
+      'bike.gif', 'hit.gif', 'hurt.gif', 'punch-01.gif',
+      'punch-02.gif', 'punch-03.gif', 'teleport.gif',
+    ];
+    expect(entries.some((entry) => retiredGifs.includes(entry.name))).toBe(false);
+    expect(entries.some((entry) => entry.name === 'axem-ranger-bike.gif')).toBe(true);
     expect(entries.some((entry) => entry.name === 'axem-red-spritesheet.png')).toBe(true);
     expect(entries.some((entry) => entry.name === 'super-axem-ranger-red.png')).toBe(true);
+    await expect(fs.access(absolute('art/source/sprites/references/axem-orange'))).rejects.toThrow();
 
     const resultsDirectory = absolute('art/source/sprites/results/male/red');
     await expect(fs.readdir(resultsDirectory)).resolves.toHaveLength(0);

@@ -193,6 +193,79 @@ export function createLoopingRaceTextures(scene, assets, {
   }).filter(Boolean);
 }
 
+/**
+ * Crea una superficie de carrera repetible usando tiles reales del escenario.
+ * Cada carril toma motivos y paleta del tileset correspondiente.
+ */
+export function createTilesetRaceTrackTexture(scene, assets, {
+  key = 'race-track-tileset', width = 1024, laneCount = 2, laneHeight = 60, seed = 1,
+} = {}) {
+  const prepared = (assets ?? [])
+    .filter((asset) => scene.textures.exists(asset.key))
+    .map((asset) => {
+      const sourceImage = scene.textures.get(asset.key).getSourceImage();
+      const sourceCanvas = document.createElement('canvas');
+      sourceCanvas.width = sourceImage.width;
+      sourceCanvas.height = sourceImage.height;
+      const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+      sourceContext.drawImage(sourceImage, 0, 0);
+      const pixels = sourceContext.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height).data;
+      const backgroundColor = asset.backgroundColor && asset.backgroundColor !== 'auto'
+        ? parseHexColor(asset.backgroundColor)
+        : detectCornerBackground(pixels, sourceCanvas.width, sourceCanvas.height);
+      const tiles = findUsableTiles(pixels, sourceCanvas.width, sourceCanvas.height, asset, backgroundColor);
+      if (!tiles.length) return null;
+      if (backgroundColor) removeKeyedBackground(sourceContext, sourceCanvas.width, sourceCanvas.height, backgroundColor);
+      return {
+        source: sourceCanvas, tiles, tileWidth: asset.tileWidth ?? 32, tileHeight: asset.tileHeight ?? 32,
+        palette: paletteFor(asset.id), seed: stableTrackSeed(asset.id),
+      };
+    })
+    .filter(Boolean);
+
+  if (!prepared.length) return null;
+  const safeWidth = Math.max(256, Math.floor(width));
+  const safeLaneCount = Math.max(1, Math.floor(laneCount));
+  const safeLaneHeight = Math.max(16, Math.floor(laneHeight));
+
+  createCanvasTexture(scene, key, safeWidth, safeLaneCount * safeLaneHeight, (ctx) => {
+    ctx.imageSmoothingEnabled = false;
+    for (let lane = 0; lane < safeLaneCount; lane += 1) {
+      const tileset = prepared[lane % prepared.length];
+      const random = createRandom((seed + tileset.seed + lane * 7919) >>> 0);
+      const pick = () => tileset.tiles[Math.floor(random() * tileset.tiles.length)];
+      const top = lane * safeLaneHeight;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = tileset.palette.ground;
+      ctx.fillRect(0, top, safeWidth, safeLaneHeight);
+      for (let y = 0; y < safeLaneHeight; y += tileset.tileHeight) {
+        for (let x = 0; x < safeWidth; x += tileset.tileWidth) {
+          ctx.globalAlpha = 0.88 + random() * 0.12;
+          drawTile(ctx, tileset.source, pick(), tileset.tileWidth, tileset.tileHeight, x, top + y);
+        }
+      }
+      ctx.globalAlpha = 0.36;
+      ctx.fillStyle = tileset.palette.ground;
+      ctx.fillRect(0, top, safeWidth, 3);
+      ctx.fillStyle = tileset.palette.accent;
+      ctx.globalAlpha = 0.88;
+      ctx.fillRect(0, top, safeWidth, 1);
+      ctx.fillRect(0, top + safeLaneHeight - 1, safeWidth, 1);
+    }
+    ctx.globalAlpha = 1;
+  });
+  return key;
+}
+
+function stableTrackSeed(value = '') {
+  let hash = 2166136261;
+  for (const character of String(value)) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
 /** Compone mapas terminados en una panorámica horizontal para las carreras. */
 export function createLoopingMapTexture(scene, assets, {
   key = 'race-map-course',

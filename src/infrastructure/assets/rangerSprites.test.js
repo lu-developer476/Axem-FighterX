@@ -86,11 +86,8 @@ describe('Variantes canónicas de Axem Rangers', () => {
     )))).rejects.toMatchObject({ code: 'ENOENT' });
   });
 
-  it('genera GIF propios del Axem Red desde su atlas y sus referencias originales', async () => {
-    const actions = [
-      'idle', 'walk', 'run', 'dash', 'jump', 'punch-01', 'punch-02', 'punch-03',
-      'hit', 'hurt', 'teleport', 'bike',
-    ];
+  it('genera las animaciones Red necesarias para los minijuegos', async () => {
+    const actions = ['idle', 'walk', 'run', 'dash', 'jump'];
     for (const action of actions) {
       const file = resultGifPath('red', action);
       const metadata = await sharp(file, { animated: true }).metadata();
@@ -98,15 +95,19 @@ describe('Variantes canónicas de Axem Rangers', () => {
       expect(metadata.width, action).toBe(ASSET_STANDARDS.categories.actionGif.width);
       expect(metadata.pageHeight, action).toBe(ASSET_STANDARDS.categories.actionGif.height);
       expect(metadata.pages, action).toBeGreaterThan(1);
-      if (action === 'teleport') expect(metadata.pages, action).toBe(9);
       expect(metadata.hasAlpha, action).toBe(true);
     }
-    const expectedRedGifs = [
-      'bike.gif', 'dash.gif', 'hit.gif', 'hurt.gif', 'idle.gif', 'jump.gif',
-      'punch-01.gif', 'punch-02.gif', 'punch-03.gif', 'run.gif', 'teleport.gif', 'walk.gif',
-    ].sort();
+    const expectedRedGifs = ['dash.gif', 'idle.gif', 'jump.gif', 'run.gif', 'walk.gif'].sort();
     expect((await readdir(resultGifDirectory('red')))
       .filter((name) => expectedRedGifs.includes(name)).sort()).toEqual(expectedRedGifs);
+
+    const redBikeMaster = fileURLToPath(new URL(
+      '../../../art/source/sprites/references/axem-red/axem-ranger-bike.gif', import.meta.url,
+    ));
+    const bikeMetadata = await sharp(redBikeMaster, { animated: true }).metadata();
+    expect(bikeMetadata.format).toBe('gif');
+    expect(bikeMetadata.pages).toBeGreaterThan(1);
+
     const redRun = fileURLToPath(new URL(
       '../../../art/source/sprites/references/axem-red/run.gif', import.meta.url,
     ));

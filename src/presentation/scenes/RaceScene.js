@@ -7,7 +7,7 @@ import {
   resolveRaceCourseAssets,
   resolveRaceCourseObjects,
 } from '../../infrastructure/assets/raceCourseAssets.js';
-import { RACE_COURSE_ENVIRONMENT } from '../../infrastructure/assets/raceCourseEnvironment.js';
+import { RACE_COURSE_ENVIRONMENT, RACE_COURSE_ENVIRONMENT_LAYOUT } from '../../infrastructure/assets/raceCourseEnvironment.js';
 import {
   createLoopingMapTexture,
   createTilesetEnvironmentSprites,
@@ -126,7 +126,7 @@ export class RaceScene extends Phaser.Scene {
       this,
       raceTilesets,
       RACE_COURSE_ENVIRONMENT.axem,
-      { prefix: courseTexturePrefix + '-object', worldCycle: 2048, repetitions: 2 },
+      { prefix: courseTexturePrefix + '-object', ...RACE_COURSE_ENVIRONMENT_LAYOUT.axem },
     );
     this.stageLayers = [{
       layer: this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, mapKey)

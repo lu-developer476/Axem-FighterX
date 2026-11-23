@@ -29,7 +29,7 @@ import { resolveLandRaceAnimationSources } from '../../domain/race/landRaceAnima
 import { PauseMenuView } from '../views/PauseMenuView.js';
 import { STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseAssets.js';
-import { LAND_RACE_OBJECT_SPECS, RACE_COURSE_ENVIRONMENT } from '../../infrastructure/assets/raceCourseEnvironment.js';
+import { LAND_RACE_OBJECT_SPECS, RACE_COURSE_ENVIRONMENT, RACE_COURSE_ENVIRONMENT_LAYOUT } from '../../infrastructure/assets/raceCourseEnvironment.js';
 import {
   createLoopingMapTexture,
   createTilesetEnvironmentSprites,
@@ -92,7 +92,7 @@ export class LandRaceScene extends Phaser.Scene {
       this,
       courseAssets.tilesets,
       RACE_COURSE_ENVIRONMENT.terrestrial,
-      { prefix: courseTexturePrefix + '-object', worldCycle: 1800, repetitions: 3 },
+      { prefix: courseTexturePrefix + '-object', ...RACE_COURSE_ENVIRONMENT_LAYOUT.terrestrial },
     );
     this.stageLayers = [];
     if (mapKey) {

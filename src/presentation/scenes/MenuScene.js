@@ -7,7 +7,7 @@ import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../
 import { getCharacterSelectionsByCorner } from '../../domain/match/playerAssignments.js';
 import { menuSpriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playMenuMusic } from '../../infrastructure/audio/GameMusic.js';
-import { contentWidth, insetSize, mapPanelY, UI_SPACING } from '../views/uiLayout.js';
+import { contentWidth, getStackedButtonPositions, insetSize, mapPanelY, UI_SPACING } from '../views/uiLayout.js';
 
 const RANGER_ORDER = [RANGER_IDS.ORANGE, RANGER_IDS.VIOLET];
 const readableFontSize = (value = '10px') => {
@@ -220,6 +220,7 @@ export class MenuScene extends Phaser.Scene {
       sourceBottom: 239,
       targetTop: panelTop + UI_SPACING.modalTopInset,
       targetBottom: panelBottom - UI_SPACING.modalBottomInset - 9,
+      headerRuleY: panelTop + UI_SPACING.modalHeaderRuleInset,
     };
     const isHome = this.page === 'home';
     this.titleArt?.setVisible(isHome);
@@ -405,6 +406,31 @@ export class MenuScene extends Phaser.Scene {
       : y;
   }
 
+  #unmapPanelY(y) {
+    const layout = this.panelLayout;
+    if (!layout || layout.targetBottom <= layout.targetTop) return y;
+    const progress = (y - layout.targetTop) / (layout.targetBottom - layout.targetTop);
+    return layout.sourceTop + progress * (layout.sourceBottom - layout.sourceTop);
+  }
+
+  #addStackedButtons(items, { buttonStyle = {} } = {}) {
+    const buttonHeight = buttonStyle.height ?? 16;
+    const positions = getStackedButtonPositions(
+      items.length,
+      this.panelLayout?.headerRuleY,
+      { buttonHeight },
+    );
+
+    items.forEach((item, index) => {
+      this.#addButton(
+        item.label,
+        this.#unmapPanelY(positions[index]),
+        item.action,
+        { ...buttonStyle, height: buttonHeight },
+      );
+    });
+  }
+
   #refreshButtons() {
     this.buttons.forEach((button, index) => {
       const selected = index === this.selectedIndex;
@@ -583,12 +609,16 @@ export class MenuScene extends Phaser.Scene {
     this.#beginPage('COMBATE', 330, 168);
 
     const buttonStyle = { width: 230, fontSize: '8px', height: 16, shadowOffset: 0 };
-    VERSUS_MODES.forEach((mode, index) => {
-      this.#addButton(mode.label, 143 + index * 26, () => {
-        this.matchSetup.versusMode = mode.id;
-        this.#showCombatModes();
-      }, buttonStyle);
-    });
+    this.#addStackedButtons(
+      VERSUS_MODES.map((mode) => ({
+        label: mode.label,
+        action: () => {
+          this.matchSetup.versusMode = mode.id;
+          this.#showCombatModes();
+        },
+      })),
+      { buttonStyle },
+    );
 
     this.#addButton('VOLVER', 239, () => this.#showPlayModes(), {
       width: 150, fontSize: '7px', shadowOffset: 0,
@@ -614,9 +644,11 @@ export class MenuScene extends Phaser.Scene {
       height: 16,
       shadowOffset: 0,
     };
-    this.#addButton('DEFINITIVO', 143, () => chooseMode('definitive'), buttonStyle);
-    this.#addButton('RONDAS', 169, () => this.#showRoundOptions(), buttonStyle);
-    this.#addButton('ENTRENAMIENTO', 195, () => chooseMode('training'), buttonStyle);
+    this.#addStackedButtons([
+      { label: 'DEFINITIVO', action: () => chooseMode('definitive') },
+      { label: 'RONDAS', action: () => this.#showRoundOptions() },
+      { label: 'ENTRENAMIENTO', action: () => chooseMode('training') },
+    ], { buttonStyle });
     this.#addButton('VOLVER', 239, () => this.#showVersusModes(), {
       width: 150,
       fontSize: '7px',

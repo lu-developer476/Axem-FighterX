@@ -120,110 +120,6 @@ export function createProceduralBackground(scene, asset, options = {}) {
  * Construye patrones largos a partir de tiles repetibles para usarlos como fondos
  * en movimiento. La carrera puede avanzar sin mover horizontalmente a los corredores.
  */
-export function createCuratedRaceEnvironmentLayers(scene, assets, groups, {
-  prefix = 'race-environment',
-  height = GAME_HEIGHT,
-} = {}) {
-  const assetsById = new Map((assets ?? []).map((asset) => [asset.id, asset]));
-  const preparedAssets = new Map();
-
-  const prepareAsset = (assetId) => {
-    if (preparedAssets.has(assetId)) return preparedAssets.get(assetId);
-    const asset = assetsById.get(assetId);
-    if (!asset) throw new Error('Falta el tileset ambiental "' + assetId + '".');
-    if (!scene.textures.exists(asset.key)) {
-      throw new Error('No se pudo cargar la hoja ambiental "' + assetId + '".');
-    }
-
-    const source = scene.textures.get(asset.key).getSourceImage();
-    const sourceCanvas = document.createElement('canvas');
-    sourceCanvas.width = source.width;
-    sourceCanvas.height = source.height;
-    const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
-    if (!sourceContext) throw new Error('No se pudo preparar el canvas de "' + assetId + '".');
-    sourceContext.drawImage(source, 0, 0);
-    const pixels = sourceContext.getImageData(0, 0, source.width, source.height).data;
-    const backgroundColor = asset.backgroundColor && asset.backgroundColor !== 'auto'
-      ? parseHexColor(asset.backgroundColor)
-      : detectCornerBackground(pixels, source.width, source.height);
-    const prepared = Object.freeze({ source, backgroundColor, width: source.width, height: source.height });
-    preparedAssets.set(assetId, prepared);
-    return prepared;
-  };
-
-  return Object.freeze((groups ?? []).map((group, groupIndex) => {
-    if (!group.id || !Array.isArray(group.placements) || group.placements.length === 0) {
-      throw new TypeError('Cada capa ambiental necesita un ID y al menos un objeto.');
-    }
-    const width = Math.max(256, Math.floor(group.patternWidth ?? 1800));
-    const key = prefix + '-' + group.id;
-
-    for (const item of group.placements) {
-      const source = prepareAsset(item.assetId);
-      const rect = item.source ?? {};
-      const target = item.target ?? {};
-      const sourceValues = [rect.x, rect.y, rect.width, rect.height];
-      const targetValues = [target.x, target.y, target.width, target.height];
-      if (!sourceValues.every(Number.isFinite) ||
-          !targetValues.every(Number.isFinite) ||
-          !sourceValues.every(Number.isInteger) ||
-          rect.x < 0 || rect.y < 0 || rect.width < 1 || rect.height < 1 ||
-          rect.x + rect.width > source.width || rect.y + rect.height > source.height ||
-          target.x < 0 || target.y < 0 || target.width < 1 || target.height < 1 ||
-          !Number.isFinite(item.alpha ?? 1) || (item.alpha ?? 1) < 0 || (item.alpha ?? 1) > 1) {
-        throw new RangeError('Recorte o ubicación inválida para el objeto "' + item.kind + '".');
-      }
-    }
-
-    createCanvasTexture(scene, key, width, height, (ctx) => {
-      ctx.clearRect(0, 0, width, height);
-      for (const item of group.placements) {
-        const prepared = prepareAsset(item.assetId);
-        const { x: sourceX, y: sourceY, width: sourceWidth, height: sourceHeight } = item.source;
-        const crop = document.createElement('canvas');
-        crop.width = sourceWidth;
-        crop.height = sourceHeight;
-        const cropContext = crop.getContext('2d', { willReadFrequently: true });
-        if (!cropContext) throw new Error('No se pudo recortar el objeto "' + item.kind + '".');
-        cropContext.imageSmoothingEnabled = false;
-        cropContext.drawImage(
-          prepared.source,
-          sourceX, sourceY, sourceWidth, sourceHeight,
-          0, 0, sourceWidth, sourceHeight,
-        );
-        if (prepared.backgroundColor) {
-          removeKeyedBackground(cropContext, sourceWidth, sourceHeight, prepared.backgroundColor);
-        }
-
-        const target = item.target;
-        ctx.save();
-        ctx.globalAlpha = item.alpha ?? 1;
-        if (item.flipX) {
-          ctx.translate(target.x + target.width, target.y);
-          ctx.scale(-1, 1);
-          ctx.drawImage(crop, 0, 0, sourceWidth, sourceHeight, 0, 0, target.width, target.height);
-        } else {
-          ctx.drawImage(
-            crop,
-            0, 0, sourceWidth, sourceHeight,
-            target.x, target.y, target.width, target.height,
-          );
-        }
-        ctx.restore();
-      }
-    });
-
-    return Object.freeze({
-      id: group.id,
-      key,
-      scrollFactor: group.scrollFactor,
-      alpha: group.alpha ?? 1,
-      patternWidth: width,
-      groupIndex,
-    });
-  }));
-}
-
 /** Compone mapas terminados en una panorámica horizontal para las carreras. */
 export function createLoopingMapTexture(scene, assets, {
   key = 'race-map-course',
@@ -338,6 +234,54 @@ export function createLoopingTiledMapTexture(scene, maps, {
  * Recorta objetos con función jugable desde coordenadas explícitas de los tilesets.
  * Cada salida se asocia a una clave estable del objeto en lugar de elegir un tile al azar.
  */
+/**
+ * Recorta cada objeto de una hoja y lo instancia como un Phaser Image separado.
+ * El atlas solo se usa como fuente de píxeles: nunca se muestra ni se aplana
+ * como una única textura ambiental.
+ */
+export function createTilesetEnvironmentSprites(scene, assets, placements, {
+  prefix = 'race-environment-object',
+  worldCycle = 1800,
+  repetitions = 3,
+} = {}) {
+  const assetsById = new Map((assets ?? []).map((asset) => [asset.id, asset]));
+  const textureSpecs = (placements ?? []).map((item) => {
+    const asset = assetsById.get(item.assetId);
+    if (!asset) throw new Error('Falta el tileset "' + item.assetId + '" para "' + item.id + '".');
+    return {
+      id: item.id,
+      asset,
+      x: item.source.x,
+      y: item.source.y,
+      width: item.source.width,
+      height: item.source.height,
+    };
+  });
+  const textures = createTilesetObjectTextures(scene, textureSpecs, { prefix });
+
+  const instances = [];
+  const repeatCount = Math.max(1, Math.floor(repetitions));
+  const repeatWidth = Math.max(1, Math.floor(worldCycle));
+
+  for (let cycle = 0; cycle < repeatCount; cycle += 1) {
+    for (const item of placements ?? []) {
+      const worldX = item.x + cycle * repeatWidth;
+      const image = scene.add.image(worldX, item.y, textures[item.id])
+        .setOrigin(0, 0)
+        .setDisplaySize(item.width, item.height)
+        .setDepth(item.depth ?? -80)
+        .setAlpha(item.alpha ?? 1);
+      instances.push(Object.freeze({
+        image,
+        worldX,
+        scrollFactor: item.scrollFactor ?? 0.25,
+      }));
+    }
+  }
+
+  return Object.freeze(instances);
+}
+
 export function createTilesetObjectTextures(scene, objectSpecs, {
   prefix = 'race-object',
 } = {}) {

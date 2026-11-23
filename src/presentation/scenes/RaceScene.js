@@ -10,7 +10,7 @@ import {
 import { RACE_COURSE_ENVIRONMENT } from '../../infrastructure/assets/raceCourseEnvironment.js';
 import {
   createLoopingMapTexture,
-  createCuratedRaceEnvironmentLayers,
+  createTilesetEnvironmentSprites,
   createTilesetObjectTextures,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
@@ -122,11 +122,11 @@ export class RaceScene extends Phaser.Scene {
       throw new Error('No se pudieron componer los cuatro mapas de Carrera Axem en el orden previsto.');
     }
     const courseTexturePrefix = 'bike-course-' + this.game.loop.frame;
-    const environmentLayers = createCuratedRaceEnvironmentLayers(
+    this.environmentObjects = createTilesetEnvironmentSprites(
       this,
       raceTilesets,
       RACE_COURSE_ENVIRONMENT.axem,
-      { prefix: courseTexturePrefix + '-props' },
+      { prefix: courseTexturePrefix + '-object', worldCycle: 2048, repetitions: 2 },
     );
     this.stageLayers = [{
       layer: this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, mapKey)
@@ -135,15 +135,6 @@ export class RaceScene extends Phaser.Scene {
         .setAlpha(1),
       factor: MOTORCYCLE_WORLD_SCALE,
     }];
-    environmentLayers.forEach(({ key, scrollFactor, alpha }, index) => {
-      this.stageLayers.push({
-        layer: this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, key)
-          .setOrigin(0)
-          .setDepth(-92 + index)
-          .setAlpha(alpha),
-        factor: scrollFactor,
-      });
-    });
     this.hud = this.add.graphics().setDepth(80);
     this.status = this.#text('ELEGÍ LA DISTANCIA', GAME_WIDTH / 2, 48, '#fff0c9', 10);
     this.nitroLabel = this.#text('NITRO', GAME_WIDTH - 112, 23, '#d9fbff', 10)
@@ -272,6 +263,9 @@ export class RaceScene extends Phaser.Scene {
     this.boost = clamp(this.boost + (boosting ? -34 : 16) * frame, 0, 100);
     this.stageLayers.forEach(({ layer, factor }) => {
       layer.tilePositionX = cameraDistance * factor;
+    });
+    this.environmentObjects.forEach(({ image, worldX, scrollFactor }) => {
+      image.x = worldX - cameraDistance * scrollFactor;
     });
     if (boosting && (!this.wasBoosting || time - this.lastNitroFlashAt >= 120)) {
       this.#emitNitroFlash(time);

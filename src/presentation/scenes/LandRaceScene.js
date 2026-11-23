@@ -29,10 +29,11 @@ import { resolveLandRaceAnimationSources } from '../../domain/race/landRaceAnima
 import { PauseMenuView } from '../views/PauseMenuView.js';
 import { STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseAssets.js';
-import { RACE_COURSE_ENVIRONMENT } from '../../infrastructure/assets/raceCourseEnvironment.js';
+import { LAND_RACE_OBJECT_SPECS, RACE_COURSE_ENVIRONMENT } from '../../infrastructure/assets/raceCourseEnvironment.js';
 import {
   createLoopingMapTexture,
-  createCuratedRaceEnvironmentLayers,
+  createTilesetEnvironmentSprites,
+  createTilesetObjectTextures,
 } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
@@ -47,55 +48,6 @@ const LAND_RACE_LOOP_DISTANCE = 1200;
 const RUNNER_FOOT_OFFSET = 13;
 const COUNTDOWN_MS = 3000;
 const STAMINA_MAX = 100;
-
-const LAND_RACE_OBJECT_SPECS = Object.freeze([
-  Object.freeze({ id: 'hurdle', instruction: 'VALLA' }),
-  Object.freeze({ id: 'roll-gate', instruction: 'BARRA' }),
-]);
-
-function createLandRaceObjectTextures(scene) {
-  const create = (key, width, height, draw) => {
-    if (scene.textures.exists(key)) return;
-    const graphics = scene.make.graphics({ x: 0, y: 0, add: false });
-    draw(graphics);
-    graphics.generateTexture(key, width, height);
-    graphics.destroy();
-  };
-
-  create('land-course-object-hurdle', 68, 44, (g) => {
-    g.fillStyle(0x253b35, 0.65).fillRect(4, 38, 60, 4);
-    g.fillStyle(0x5b3829, 1).fillRect(8, 7, 7, 32).fillRect(53, 7, 7, 32);
-    g.fillStyle(0xc58a4f, 1).fillRect(10, 8, 3, 28).fillRect(55, 8, 3, 28);
-    g.fillStyle(0x6a3f2b, 1).fillRect(5, 9, 58, 9);
-    g.fillStyle(0xe0ad68, 1).fillRect(7, 10, 54, 5);
-    g.fillStyle(0x844d32, 1).fillRect(7, 17, 54, 3);
-    g.fillStyle(0x5b3829, 1).fillRect(4, 35, 15, 4).fillRect(49, 35, 15, 4);
-  });
-  create('land-course-object-roll-gate', 68, 44, (g) => {
-    g.fillStyle(0x253b35, 0.65).fillRect(4, 38, 60, 4);
-    g.fillStyle(0x5b3829, 1).fillRect(7, 13, 7, 26).fillRect(54, 13, 7, 26);
-    g.fillStyle(0xc58a4f, 1).fillRect(9, 14, 3, 23).fillRect(56, 14, 3, 23);
-    g.fillStyle(0x5b3829, 1).fillRect(5, 6, 58, 11);
-    g.fillStyle(0xe8c36d, 1).fillRect(8, 8, 52, 4);
-    g.fillStyle(0x242c32, 1).fillRect(14, 8, 5, 4).fillRect(26, 8, 5, 4)
-      .fillRect(38, 8, 5, 4).fillRect(50, 8, 5, 4);
-    g.fillStyle(0x844d32, 1).fillRect(4, 36, 15, 4).fillRect(49, 36, 15, 4);
-  });
-  create('land-course-object-stamina', 22, 22, (g) => {
-    g.fillStyle(0x163c42, 1).fillTriangle(11, 1, 2, 11, 11, 21);
-    g.fillTriangle(11, 1, 20, 11, 11, 21);
-    g.fillStyle(0x65dfc8, 1).fillTriangle(11, 3, 4, 11, 11, 19);
-    g.fillTriangle(11, 3, 18, 11, 11, 19);
-    g.fillStyle(0xf2ffbd, 1).fillRect(10, 6, 3, 7).fillRect(8, 11, 7, 3);
-  });
-
-  return Object.freeze({
-    hurdle: 'land-course-object-hurdle',
-    'roll-gate': 'land-course-object-roll-gate',
-    stamina: 'land-course-object-stamina',
-  });
-}
-
 
 export const LAND_RACE_OBSTACLES = Object.freeze([
   Object.freeze({ distance: 190, action: 'jump', type: 'hurdle' }),
@@ -118,20 +70,29 @@ export class LandRaceScene extends Phaser.Scene {
     this.session = new RaceSession({ countdownDurationMs: COUNTDOWN_MS });
 
     const courseAssets = resolveRaceCourseAssets('terrestrial', [], STAGE_TILESET_ASSETS);
-    this.courseObjectSpecs = LAND_RACE_OBJECT_SPECS;
-    this.courseObjectTextures = createLandRaceObjectTextures(this);
     const courseTexturePrefix = 'land-course-' + this.game.loop.frame;
+    const tilesetsById = new Map(courseAssets.tilesets.map((asset) => [asset.id, asset]));
+    this.courseObjectSpecs = LAND_RACE_OBJECT_SPECS;
+    this.courseObjectTextures = createTilesetObjectTextures(
+      this,
+      LAND_RACE_OBJECT_SPECS.map((spec) => ({
+        id: spec.id,
+        asset: tilesetsById.get(spec.assetId),
+        ...spec.source,
+      })),
+      { prefix: courseTexturePrefix + '-interaction' },
+    );
     const mapKey = this.textures.exists(courseAssets.backgroundKey)
       ? createLoopingMapTexture(this, [{ key: courseAssets.backgroundKey }], {
           key: courseTexturePrefix + '-parallax',
           height: GAME_HEIGHT,
         })
       : null;
-    const environmentLayers = createCuratedRaceEnvironmentLayers(
+    this.environmentObjects = createTilesetEnvironmentSprites(
       this,
       courseAssets.tilesets,
       RACE_COURSE_ENVIRONMENT.terrestrial,
-      { prefix: courseTexturePrefix + '-props' },
+      { prefix: courseTexturePrefix + '-object', worldCycle: 1800, repetitions: 3 },
     );
     this.stageLayers = [];
     if (mapKey) {
@@ -142,13 +103,6 @@ export class LandRaceScene extends Phaser.Scene {
         factor: 0.12,
       });
     }
-    environmentLayers.forEach(({ key, scrollFactor, alpha }, index) => {
-      const layer = this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, key)
-        .setOrigin(0)
-        .setDepth(-92 + index)
-        .setAlpha(alpha);
-      this.stageLayers.push({ layer, factor: scrollFactor });
-    });
 
     this.distance = 0;
     this.finishDistance = 0;
@@ -435,8 +389,10 @@ export class LandRaceScene extends Phaser.Scene {
     const runnerX = PLAYER_RUNNER_X;
     this.obstacleSprites = this.obstacles.map((obstacle) => {
       if (obstacle.type === 'gap') return null;
+      const spec = this.courseObjectSpecs.find(({ id }) => id === obstacle.type);
       return this.add.image(runnerX, this.player.laneY, this.courseObjectTextures[obstacle.type])
-        .setScale(obstacle.type === 'hurdle' ? 0.62 : 0.5)
+        .setDisplaySize(spec?.displayWidth ?? 44, spec?.displayHeight ?? 52)
+        .setOrigin(0.5, 1)
         .setDepth(34);
     });
     this.obstacleLabels = this.obstacles.map((obstacle) => {
@@ -457,9 +413,10 @@ export class LandRaceScene extends Phaser.Scene {
         align: 'center',
       }).setOrigin(0.5).setDepth(48);
     });
+    const staminaSpec = this.courseObjectSpecs.find(({ id }) => id === 'stamina');
     this.pickupSprites = this.pickups.map(() =>
       this.add.image(PLAYER_RUNNER_X, this.player.laneY - 27, this.courseObjectTextures.stamina)
-        .setTint(0x9eeeff)
+        .setDisplaySize(staminaSpec?.displayWidth ?? 16, staminaSpec?.displayHeight ?? 32)
         .setDepth(38),
     );
   }
@@ -514,6 +471,9 @@ export class LandRaceScene extends Phaser.Scene {
     );
     this.stageLayers.forEach(({ layer, factor }) => {
       layer.tilePositionX = cameraDistance * factor;
+    });
+    this.environmentObjects.forEach(({ image, worldX, scrollFactor }) => {
+      image.x = worldX - cameraDistance * scrollFactor;
     });
   }
 

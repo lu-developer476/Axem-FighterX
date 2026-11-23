@@ -2,17 +2,9 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../config/gameConfig.js';
 import { TREADMILL_RUNNER_X } from '../../domain/race/treadmillRaceRules.js';
 import { getRaceCameraDistance, getRaceRunnerX } from '../../domain/race/raceLanePresentation.js';
-import { STAGE_MAP_ASSETS, STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
-import {
-  resolveRaceCourseAssets,
-  resolveRaceCourseObjects,
-} from '../../infrastructure/assets/raceCourseAssets.js';
-import { RACE_COURSE_ENVIRONMENT, RACE_COURSE_ENVIRONMENT_LAYOUT } from '../../infrastructure/assets/raceCourseEnvironment.js';
-import {
-  createLoopingMapTexture,
-  createTilesetEnvironmentSprites,
-  createTilesetObjectTextures,
-} from '../../infrastructure/graphics/StageAssetTextureFactory.js';
+import { STAGE_MAP_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
+import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseAssets.js';
+import { createLoopingMapTexture } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
 import raceBikeGifUrl from '../../../art/source/sprites/results/male/orange/bike.gif?url';
@@ -104,37 +96,11 @@ export class RaceScene extends Phaser.Scene {
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
     });
 
-    const { maps: courseMaps, tilesets: raceTilesets } = resolveRaceCourseAssets(
-      'axem',
-      STAGE_MAP_ASSETS,
-      STAGE_TILESET_ASSETS,
-    );
-    this.courseObjectTextures = createTilesetObjectTextures(
-      this,
-      resolveRaceCourseObjects('axem', raceTilesets),
-      { prefix: 'bike-course-object-' + this.game.loop.frame },
-    );
-    const mapKey = createLoopingMapTexture(this, courseMaps, {
-      key: 'bike-course-' + this.game.loop.frame,
-      height: GAME_HEIGHT,
-    });
-    if (!mapKey) {
-      throw new Error('No se pudieron componer los cuatro mapas de Carrera Axem en el orden previsto.');
-    }
-    const courseTexturePrefix = 'bike-course-' + this.game.loop.frame;
-    this.environmentObjects = createTilesetEnvironmentSprites(
-      this,
-      raceTilesets,
-      RACE_COURSE_ENVIRONMENT.axem,
-      { prefix: courseTexturePrefix + '-object', ...RACE_COURSE_ENVIRONMENT_LAYOUT.axem },
-    );
-    this.stageLayers = [{
-      layer: this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, mapKey)
-        .setOrigin(0)
-        .setDepth(-100)
-        .setAlpha(1),
-      factor: MOTORCYCLE_WORLD_SCALE,
-    }];
+    const { maps: courseMaps } = resolveRaceCourseAssets('axem', STAGE_MAP_ASSETS);
+    const mapKey = createLoopingMapTexture(this, courseMaps, { key: 'bike-course-' + this.game.loop.frame, height: GAME_HEIGHT });
+    if (!mapKey) throw new Error('No se pudo cargar castle.png para Carrera Axem.');
+    this.stageLayers = [{ layer: this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, mapKey).setOrigin(0).setDepth(-100).setAlpha(1), factor: MOTORCYCLE_WORLD_SCALE }];
+    this.environmentObjects = [];
     this.hud = this.add.graphics().setDepth(80);
     this.status = this.#text('ELEGÍ LA DISTANCIA', GAME_WIDTH / 2, 48, '#fff0c9', 10);
     this.nitroLabel = this.#text('NITRO', GAME_WIDTH - 112, 23, '#d9fbff', 10)
@@ -264,9 +230,7 @@ export class RaceScene extends Phaser.Scene {
     this.stageLayers.forEach(({ layer, factor }) => {
       layer.tilePositionX = cameraDistance * factor;
     });
-    this.environmentObjects.forEach(({ image, worldX, scrollFactor }) => {
-      image.x = worldX - cameraDistance * scrollFactor;
-    });
+
     if (boosting && (!this.wasBoosting || time - this.lastNitroFlashAt >= 120)) {
       this.#emitNitroFlash(time);
     }
@@ -354,9 +318,20 @@ export class RaceScene extends Phaser.Scene {
     this.player.distance = 0;
     this.opponents[0].distance = 0;
     this.racers = [this.player, ...this.opponents];
-    this.obstacleSprites = this.obstacles.map((obstacle) =>
-      this.add.image(0, 0, this.courseObjectTextures[obstacle.kind]).setDepth(30),
-    );
+    this.obstacleSprites = this.obstacles.map((obstacle) => {
+      const graphics = this.make.graphics({ x: 0, y: 0, add: false });
+      if (obstacle.kind === 'roll-gate') {
+        graphics.fillStyle(0x8d6b45, 1).fillRoundedRect(2, 2, 30, 24, 4);
+        graphics.lineStyle(3, 0xe7c88c, 1).strokeRoundedRect(2, 2, 30, 24, 4);
+      } else {
+        graphics.fillStyle(0xd9a34a, 1).fillTriangle(2, 28, 17, 2, 32, 28);
+        graphics.lineStyle(2, 0x603d2a, 1).strokeTriangle(2, 28, 17, 2, 32, 28);
+      }
+      const key = 'bike-course-obstacle-' + obstacle.kind;
+      if (!this.textures.exists(key)) graphics.generateTexture(key, 34, 30);
+      graphics.destroy();
+      return this.add.image(0, 0, key).setDepth(30);
+    });
     this.pickups = repeatCoursePattern([
       { distance: 280, kind: 'boost', lane: 0 },
       { distance: 840, kind: 'slow', lane: 1 },

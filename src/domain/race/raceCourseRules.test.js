@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from './raceCourseRules.js';
 
 describe('Configuración de distancias de los minijuegos', () => {
-  it('ofrece únicamente recorridos de 5 y 10 kilómetros', () => {
+  it('ofrece recorridos de 7 y 25 kilómetros para Carrera Axem', () => {
     expect(RACE_DISTANCE_OPTIONS).toEqual([
-      { label: '5 KM', value: 5000 },
-      { label: '10 KM', value: 10000 },
+      { label: '7 KM', value: 7000 },
+      { label: '25 KM', value: 25000 },
     ]);
   });
 

@@ -11,18 +11,18 @@ import {
 } from './stageAssetManifest.js';
 
 describe('Descubrimiento automático de escenarios', () => {
-  it('detecta todos los mapas y tilesets existentes sin fijar un inventario manual', () => {
+  it('detecta los mapas restantes y admite que no queden tilesets', () => {
     expect(STAGE_MAP_ASSETS.length).toBeGreaterThanOrEqual(1);
-    expect(STAGE_TILESET_ASSETS.length).toBeGreaterThanOrEqual(1);
+    expect(STAGE_TILESET_ASSETS).toEqual([]);
     expect(STAGE_MAP_ASSETS.every(({ url, key }) => typeof url === 'string' && key.startsWith('stage-map-'))).toBe(true);
     expect(STAGE_TILESET_ASSETS.every(({ url, key }) => typeof url === 'string' && key.startsWith('stage-tileset-'))).toBe(true);
     const mapFilenames = STAGE_MAP_ASSETS.map(({ filename }) => filename);
     const tilesetFilenames = STAGE_TILESET_ASSETS.map(({ filename }) => filename);
-    expect(mapFilenames).toContain('cave-1.png');
-    expect(mapFilenames).toContain('cave-2.png');
-    expect(mapFilenames).not.toContain('castle.png');
-    expect(tilesetFilenames).toContain('cave1-tileset.png');
-    expect(tilesetFilenames).not.toContain('cave-tileset.png');
+    expect(mapFilenames).toContain('castle.png');
+    expect(mapFilenames).toContain('desert.png');
+    expect(mapFilenames).not.toContain('cave-1.png');
+    expect(mapFilenames).not.toContain('cave-2.png');
+    expect(tilesetFilenames).toEqual([]);
   });
 
   it('mantiene separados archivos con el mismo nombre en carpetas distintas y prioriza PNG por variante', () => {

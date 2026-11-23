@@ -27,15 +27,11 @@ import redRaceDashGifUrl from '../../../art/source/sprites/references/axem-red/d
 import redRaceJumpGifUrl from '../../../art/source/sprites/references/axem-red/jump.gif?url';
 import { resolveLandRaceAnimationSources } from '../../domain/race/landRaceAnimationRules.js';
 import { PauseMenuView } from '../views/PauseMenuView.js';
-import { STAGE_TILESET_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
+import { STAGE_MAP_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseAssets.js';
-import { LAND_RACE_OBJECT_SPECS, RACE_COURSE_ENVIRONMENT, RACE_COURSE_ENVIRONMENT_LAYOUT } from '../../infrastructure/assets/raceCourseEnvironment.js';
-import {
-  createLoopingMapTexture,
-  createTilesetEnvironmentSprites,
-  createTilesetObjectTextures,
-} from '../../infrastructure/graphics/StageAssetTextureFactory.js';
-import { RACE_DISTANCE_OPTIONS, repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
+
+import { createLoopingMapTexture } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
+import { repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
@@ -69,41 +65,27 @@ export class LandRaceScene extends Phaser.Scene {
     playRaceMusic(this, 'landRace');
     this.session = new RaceSession({ countdownDurationMs: COUNTDOWN_MS });
 
-    const courseAssets = resolveRaceCourseAssets('terrestrial', [], STAGE_TILESET_ASSETS);
+    const courseAssets = resolveRaceCourseAssets('terrestrial', STAGE_MAP_ASSETS);
     const courseTexturePrefix = 'land-course-' + this.game.loop.frame;
-    const tilesetsById = new Map(courseAssets.tilesets.map((asset) => [asset.id, asset]));
-    this.courseObjectSpecs = LAND_RACE_OBJECT_SPECS;
-    this.courseObjectTextures = createTilesetObjectTextures(
-      this,
-      LAND_RACE_OBJECT_SPECS.map((spec) => ({
-        id: spec.id,
-        asset: tilesetsById.get(spec.assetId),
-        ...spec.source,
-      })),
-      { prefix: courseTexturePrefix + '-interaction' },
-    );
-    const mapKey = this.textures.exists(courseAssets.backgroundKey)
-      ? createLoopingMapTexture(this, [{ key: courseAssets.backgroundKey }], {
-          key: courseTexturePrefix + '-parallax',
-          height: GAME_HEIGHT,
-        })
-      : null;
-    this.environmentObjects = createTilesetEnvironmentSprites(
-      this,
-      courseAssets.tilesets,
-      RACE_COURSE_ENVIRONMENT.terrestrial,
-      { prefix: courseTexturePrefix + '-object', ...RACE_COURSE_ENVIRONMENT_LAYOUT.terrestrial },
-    );
-    this.stageLayers = [];
-    if (mapKey) {
-      this.stageLayers.push({
-        layer: this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, mapKey)
-          .setOrigin(0)
-          .setDepth(-100),
-        factor: 0.12,
-      });
+    const mapKey = createLoopingMapTexture(this, courseAssets.maps, { key: courseTexturePrefix + '-desert', height: GAME_HEIGHT });
+    if (!mapKey) throw new Error('No se pudo cargar desert.png para Carrera Terrestre.');
+    this.stageLayers = [{ layer: this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, mapKey).setOrigin(0).setDepth(-100), factor: LAND_RACE_WORLD_SCALE }];
+    this.environmentObjects = [];
+    this.courseObjectSpecs = [
+      { id: 'hurdle', instruction: 'PLANTA', displayWidth: 48, displayHeight: 52 },
+      { id: 'roll-gate', instruction: 'ARBUSTO', displayWidth: 48, displayHeight: 42 },
+      { id: 'stamina', instruction: 'ENERGÍA', displayWidth: 16, displayHeight: 32 },
+    ];
+    this.courseObjectTextures = {};
+    for (const [id, color] of [['hurdle', 0xd9a34a], ['roll-gate', 0x6a9d58], ['stamina', 0x65d9ed]]) {
+      const graphics = this.make.graphics({ x: 0, y: 0, add: false });
+      graphics.fillStyle(color, 1).fillRoundedRect(2, 2, 30, 30, 5);
+      graphics.lineStyle(2, 0x182536, 1).strokeRoundedRect(2, 2, 30, 30, 5);
+      const key = 'land-course-object-' + id;
+      if (!this.textures.exists(key)) graphics.generateTexture(key, 34, 34);
+      graphics.destroy();
+      this.courseObjectTextures[id] = key;
     }
-
     this.distance = 0;
     this.finishDistance = 0;
     this.player = null;
@@ -136,8 +118,8 @@ export class LandRaceScene extends Phaser.Scene {
     this.pauseMenu = new PauseMenuView(this, {
       onResume: () => this.#resume(),
       onReturnToMenu: () => this.scene.start('MenuScene'),
-      onSelectDistance: (distance) => this.#startRace(distance),
-      distanceOptions: RACE_DISTANCE_OPTIONS,
+      onSelectDistance: null,
+      distanceOptions: [],
       controlsTitle: 'CONTROLES · CARRERA TERRESTRE',
       controls: [
         'D / → · CORRER',
@@ -149,7 +131,7 @@ export class LandRaceScene extends Phaser.Scene {
         'ESC · VOLVER AL MENÚ',
       ],
     });
-    this.pauseMenu.showDistanceSelection();
+    this.#startRace(5000);
   }
 
   #startRace(distance) {
@@ -472,9 +454,7 @@ export class LandRaceScene extends Phaser.Scene {
     this.stageLayers.forEach(({ layer, factor }) => {
       layer.tilePositionX = cameraDistance * factor;
     });
-    this.environmentObjects.forEach(({ image, worldX, scrollFactor }) => {
-      image.x = worldX - cameraDistance * scrollFactor;
-    });
+
   }
 
 

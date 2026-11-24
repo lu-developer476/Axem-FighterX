@@ -913,7 +913,7 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "552";
+	app.meta.h["build"] = "554";
 	app.meta.h["company"] = "";
 	app.meta.h["file"] = "index";
 	app.meta.h["name"] = "Axem FighterX Minigames";
@@ -5334,7 +5334,7 @@ LandRaceState.prototype = $extend(RaceBaseState.prototype,{
 	}
 	,createRunnerModes: function(isPlayer,x) {
 		var prefix = isPlayer ? "axem-orange-" : "axem-red-";
-		var specs = isPlayer ? [{ mode : "idle", action : "idle", fps : 7},{ mode : "walk", action : "run", fps : 5},{ mode : "run", action : "run", fps : 10},{ mode : "dash", action : "dash", fps : 14}] : [{ mode : "idle", action : "idle", fps : 7},{ mode : "walk", action : "walk", fps : 5},{ mode : "run", action : "run", fps : 10},{ mode : "dash", action : "dash", fps : 14}];
+		var specs = isPlayer ? [{ mode : "idle", action : "idle", fps : 10},{ mode : "walk", action : "run", fps : 10},{ mode : "run", action : "run", fps : 10},{ mode : "dash", action : "dash", fps : 10}] : [{ mode : "idle", action : "idle", fps : 10},{ mode : "walk", action : "walk", fps : 10},{ mode : "run", action : "run", fps : 10},{ mode : "dash", action : "dash", fps : 10}];
 		var result = new haxe_ds_StringMap();
 		var _g = 0;
 		while(_g < specs.length) {
@@ -80672,7 +80672,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 846037;
+	this.version = 386018;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";

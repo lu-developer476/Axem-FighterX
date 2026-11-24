@@ -8,6 +8,11 @@ const PROJECT = path.join(ROOT, 'haxeflixel');
 const OUTPUT = path.join(PROJECT, 'export', 'html5', 'bin');
 const PUBLIC_OUTPUT = path.join(ROOT, 'public', 'minigames');
 
+// Lime cambia estos sellos en cada compilación aunque el contenido sea idéntico.
+// Se fijan para evitar commits automáticos causados únicamente por ruido de build.
+const STABLE_LIME_BUILD_VERSION = '554';
+const STABLE_ASSET_CACHE_VERSION = 386018;
+
 const BOOTSTRAP = [
   '(function () {',
   '  window.addEventListener("touchmove", function (event) {',
@@ -27,6 +32,22 @@ const BOOTSTRAP = [
   '',
 ].join('\n');
 
+async function normalizeGeneratedBundle() {
+  const bundlePath = path.join(OUTPUT, 'index.js');
+  let bundle = await fs.readFile(bundlePath, 'utf8');
+  const buildPattern = /app\.meta\.h\["build"\] = "\d+";/g;
+  const cachePattern = /(var lime_utils_AssetCache = function\(\) \{[\s\S]*?\n\tthis\.version = )\d+(;)/g;
+
+  if ((bundle.match(buildPattern) || []).length !== 1 ||
+      (bundle.match(cachePattern) || []).length !== 1) {
+    throw new Error('No se pudieron normalizar los identificadores variables de Lime.');
+  }
+
+  bundle = bundle
+    .replace(buildPattern, 'app.meta.h["build"] = "' + STABLE_LIME_BUILD_VERSION + '";')
+    .replace(cachePattern, '$1' + STABLE_ASSET_CACHE_VERSION + '$2');
+  await fs.writeFile(bundlePath, bundle);
+}
 async function prepareCspCompatibleHtml() {
   const htmlPath = path.join(OUTPUT, 'index.html');
   let html = await fs.readFile(htmlPath, 'utf8');
@@ -79,6 +100,7 @@ async function main() {
     throw new Error('Lime terminó sin generar export/html5/bin/index.html.');
   }
 
+  await normalizeGeneratedBundle();
   await prepareCspCompatibleHtml();
   await fs.rm(PUBLIC_OUTPUT, { recursive: true, force: true });
   await fs.mkdir(PUBLIC_OUTPUT, { recursive: true });

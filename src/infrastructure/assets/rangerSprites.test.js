@@ -37,12 +37,17 @@ describe('Sprites canónicos de Axem Naranja', () => {
   it('no genera recursos de variantes incompletas', async () => {
     for (const path of [
       '../../../art/source/sprites/results/male/violet',
-      '../../../art/source/sprites/results/female/violet',
       '../../../art/source/sprites/results/female/orange',
+      '../../../art/source/sprites/results/female/pink',
+      '../../../art/source/sprites/results/male/red',
     ]) {
       await expect(access(fileURLToPath(new URL(path, import.meta.url))))
         .rejects.toMatchObject({ code: 'ENOENT' });
     }
+    const femaleVioletDirectory = fileURLToPath(new URL(
+      '../../../art/source/sprites/results/female/violet', import.meta.url,
+    ));
+    expect(await readdir(femaleVioletDirectory)).toEqual(['.gitkeep']);
     for (const filename of [
       'ranger-female-violet.png',
       'menu-ranger-female-violet.png',

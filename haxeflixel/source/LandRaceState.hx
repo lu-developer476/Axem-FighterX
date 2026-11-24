@@ -49,16 +49,16 @@ class LandRaceState extends RaceBaseState
         var prefix = isPlayer ? "axem-orange-" : "axem-red-";
         var specs:Array<{ mode:String, action:String, fps:Int }> = isPlayer
             ? [
-                { mode: "idle", action: "idle", fps: 7 },
-                { mode: "walk", action: "run", fps: 5 },
+                { mode: "idle", action: "idle", fps: 10 },
+                { mode: "walk", action: "run", fps: 10 },
                 { mode: "run", action: "run", fps: 10 },
-                { mode: "dash", action: "dash", fps: 14 }
+                { mode: "dash", action: "dash", fps: 10 }
             ]
             : [
-                { mode: "idle", action: "idle", fps: 7 },
-                { mode: "walk", action: "walk", fps: 5 },
+                { mode: "idle", action: "idle", fps: 10 },
+                { mode: "walk", action: "walk", fps: 10 },
                 { mode: "run", action: "run", fps: 10 },
-                { mode: "dash", action: "dash", fps: 14 }
+                { mode: "dash", action: "dash", fps: 10 }
             ];
         var result = new Map<String, FlxSprite>();
         for (spec in specs)

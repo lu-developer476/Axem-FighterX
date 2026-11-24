@@ -49,9 +49,8 @@ describe('Estándares centrales de recursos gráficos', () => {
     expect(entries.some((entry) => entry.name === 'super-axem-ranger-red.png')).toBe(true);
     await expect(fs.access(absolute('art/source/sprites/references/axem-orange'))).rejects.toThrow();
 
-    const resultsDirectory = absolute('art/source/sprites/results/male/red');
-    const redResultFiles = (await fs.readdir(resultsDirectory)).sort();
-    expect(redResultFiles).toEqual(['dash.gif', 'idle.gif', 'jump.gif', 'run.gif', 'walk.gif']);
+    await expect(fs.access(absolute('art/source/sprites/results/male/red')))
+      .rejects.toMatchObject({ code: 'ENOENT' });
     expect(ASSET_STANDARDS.categories.characterArtwork.families.male).not.toHaveProperty('derivedArtwork');
   });
 
@@ -68,6 +67,9 @@ describe('Estándares centrales de recursos gráficos', () => {
     for (const directory of removedDirectories) {
       await expect(fs.access(absolute(directory))).rejects.toThrow();
     }
+    expect(await fs.readdir(absolute('art/source/sprites/results/female/violet'))).toEqual(['.gitkeep']);
+    await expect(fs.access(absolute('art/source/sprites/results/female/pink')))
+      .rejects.toMatchObject({ code: 'ENOENT' });
     expect(PROCESSING_RULES.processedPolicy.excludedFiles)
       .toContain('male/orange/super-axem-ranger-orange.png');
     expect(PROCESSING_RULES.processedPolicy.excludedFiles)
@@ -177,7 +179,9 @@ describe('Estándares centrales de recursos gráficos', () => {
 
   it('mantiene cada atlas procesado con las dimensiones de su referencia', async () => {
     for (const family of ASSET_STANDARDS.categories.atlasSheet.families) {
-      const [source, output] = await Promise.all([sharp(absolute(family.reference)).metadata(), sharp(absolute(family.result)).metadata()]);
+      const source = await sharp(absolute(family.reference)).metadata();
+      if (!family.result) continue;
+      const output = await sharp(absolute(family.result)).metadata();
       expect([output.width, output.height]).toEqual([source.width, source.height]);
       expect(output.hasAlpha).toBe(true);
     }
@@ -185,7 +189,15 @@ describe('Estándares centrales de recursos gráficos', () => {
 
   it('mantiene los GIF de acción en su lienzo estándar y con sus cuadros', async () => {
     const category = ASSET_STANDARDS.categories.actionGif;
-    const files = await collectGifFiles(absolute(category.directory), category.recursive === true);
+    const redReferenceDirectory = absolute('art/source/sprites/references/axem-red');
+    const redReferenceGifs = [
+      'axem-ranger-bike.gif', 'axem-ranger-run.gif',
+      'dash.gif', 'idle.gif', 'jump.gif', 'run.gif', 'walk.gif',
+    ].map((name) => path.join(redReferenceDirectory, name));
+    const files = [
+      ...await collectGifFiles(absolute(category.directory), category.recursive === true),
+      ...redReferenceGifs,
+    ];
     expect(files.length).toBeGreaterThan(0);
     for (const file of files) {
       const metadata = await sharp(file, { animated: true }).metadata();
@@ -194,6 +206,10 @@ describe('Estándares centrales de recursos gráficos', () => {
       expect(metadata.pageHeight ?? metadata.height).toBe(category.height);
       expect(metadata.pages).toBeGreaterThan(0);
       expect(metadata.hasAlpha).toBe(true);
+      if (category.preserveFrameTiming) {
+        const delays = Array.isArray(metadata.delay) ? metadata.delay : [metadata.delay];
+        expect(delays).toEqual(Array(metadata.pages).fill(100));
+      }
     }
   });
 

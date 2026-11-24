@@ -9,43 +9,39 @@ Hay dos géneros, cada uno con su hoja de referencia. **Violet** y **Orange** so
 
 La orientación nativa se conserva en todas las imágenes de cada fuente: Axem Red masculino, incluidos el retrato base y los GIF de acción, apunta a la derecha; Axem Pink femenino apunta a la izquierda. El renderizador espeja cada sprite solo cuando el luchador necesita mirar hacia el lado contrario.
 
-Los archivos maestros de Axem Red se preservan. Sus GIF de acción derivados se guardan junto a ellos en `references/axem-red/`, con nombres diferenciados de los GIF maestros: las secuencias se extraen de `axem-red-spritesheet.png`, mientras que bicicleta y doble hacha parten de sus GIF originales. El GIF maestro de batalla de Orange se conserva en `references/axem-orange/battle-pose.gif`. Orange y Violet siguen siendo derivados cromáticos independientes; Red no se obtiene recoloreando a Orange. Las referencias sueltas femeninas `axem-pink-battle-pose.png` y `axem-pink-levitate.png` ya no forman parte del pipeline y se eliminaron.
+Los masters y los GIF de acción de Axem Red se conservan juntos en `references/axem-red/`. `dash.gif`, `idle.gif`, `jump.gif`, `run.gif` y `walk.gif` son las secuencias de referencia; `axem-ranger-run.gif` y `axem-ranger-bike.gif` mantienen los nombres de sus GIF maestros. No se genera una copia redundante en `results/male/red/`: Red queda centralizado en `references/axem-red/`. El GIF maestro de batalla de Orange se conserva en `references/axem-orange/battle-pose.gif`. Orange y Violet siguen siendo variantes cromáticas independientes; Red no se obtiene recoloreando a Orange.
 
 ## Cómo se generan los resultados
 
-`npm run prepare:sprites` (también corre antes de `dev`, `build` y `test`) quita el fondo, cambia solo el tono de la familia cromática del traje (violeta 273°, naranja 22°, conservando luminosidad y saturación) y escribe los resultados cromáticos en `results/` y los GIF finales de Red en `references/axem-red/`:
+`npm run prepare:sprites` (también corre antes de `dev`, `build` y `test`) prepara los resultados de Axem Naranja masculino en `results/male/orange/`. Los masters y las secuencias de referencia de Axem Red permanecen en `references/axem-red/`, sin duplicarse bajo `results/male/red/`.
 
 ```
 results/
   male/
     orange/
-      spritesheet.png  run.png  bike.png  double-axe.png
-      run.gif  bike.gif  double-axe.gif  pose.gif  battle-pose.gif
-      dash.gif  jump.gif  hit.gif  hurt.gif  teleport.gif
-      punch-01.gif  punch-02.gif  punch-03.gif
+      spritesheet.png  run.png  bike.png  GIF de combate y acciones
   female/
-    axem-ranger-{violet,orange}.png     referencias femeninas apiladas
-    {violet,orange}/
-      spritesheet.png  pose.png
-      sequences/group-01.png … group-06.png + index.json
-      supplemental/group-01.png … group-07.png (armas, efectos, íconos y siluetas)
+    violet/          destino reservado para los resultados femeninos
 
 references/axem-red/
-  idle.gif  walk.gif  run.gif  dash.gif  jump.gif
-  punch-01.gif  punch-02.gif  punch-03.gif  hit.gif  hurt.gif
-  teleport.gif  bike.gif
+  axem-red-spritesheet.png  super-axem-ranger-red.png
+  axem-ranger-run.gif  axem-ranger-bike.gif
+  dash.gif  idle.gif  jump.gif  run.gif  walk.gif
 
 references/axem-orange/
   battle-pose.gif
+
+pickups/
+  axem-boost.png  axem-boost.svg  axem-slow.png  axem-slow.svg  ATTRIBUTION.txt
 ```
 
 Los retratos laterales del menú se generan directamente desde la referencia original `references/axem-red/axem-red-spritesheet.png`; no se necesita una vista previa duplicada en `results/male/`. El recoloreado del cabello recorre cada componente rubio de todas las poses, incluso cuando está separado del casco o la cara, para evitar que queden mechones originales sin procesar.
 
-La hoja femenina `spritesheet.png` conserva su corrección manual de paleta cuando está versionada en `results/female/{orange,violet}/`. `prepare:sprites`, `pretest` y `prebuild` la preservan; si falta, se reconstruye desde el atlas original. La pose femenina `pose.png` se genera desde su imagen canónica versionada. Los antiguos archivos sueltos de referencia de batalla y levitación ya no forman parte del pipeline.
+La ruta de resultados femeninos es `results/female/violet/`; el contenido provisional `results/female/pink/` se retiró. La referencia original Pink permanece en `references/axem-pink/` y no se replica como una variante Pink dentro de `results/`.
 
 El `charge.gif` masculino conserva los tres cuadros de preparación y luego sostiene el quinto (último) sprite de `sequences/group-09.png` mientras anima cuatro fotogramas de la hoja `super-saiyan-aura.webp`. El aura que aparece en el GIF es la misma hoja que se muestra en `super-saiyan-aura.svg`: un aro de llamas doradas envolventes, con borde blanco-amarillo, centro transparente y chispas ascendentes. Cada celda de 64×64 px se amplía con nearest-neighbor y se coloca detrás del ranger, sin recolorearla ni recortar sus llamas laterales. Es arte original creado para Axem-FighterX con estética Super Saiyan de Dragon Ball Z, no un recorte de sprites oficiales; la procedencia está documentada en `art/source/effects/dragon-ball-style/SOURCE.md`.
 
-Los GIF masculinos de bicicleta y doble hacha conservan sus lienzos de **150 × 100 px**. Los GIF de Orange se generan desde las secuencias clasificadas y el pack propio de Red se compone desde el atlas original sin recolorear. Todos los GIF de acción usan lienzos de **150 × 100 px**, transparencia y escalado nearest-neighbor para conservar el pixel-art. El pivote de los pies se centra horizontalmente y mantiene una línea de suelo fija para evitar saltos entre fotogramas.
+Los GIF de personaje conservan lienzos de **150 × 100 px**, transparencia y escalado nearest-neighbor. Todas las animaciones de personaje usan **100 ms por cuadro (10 fps)** en los GIF, Phaser y los minijuegos HaxeFlixel. El pivote de los pies se centra horizontalmente y mantiene una línea de suelo fija para evitar saltos entre fotogramas.
 
 
 ## Regla global de transparencia y pixel art

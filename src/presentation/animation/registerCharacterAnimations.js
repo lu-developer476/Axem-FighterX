@@ -1,4 +1,3 @@
-import { DASH, DODGE, TIMINGS, attackTotalMs, specialAttackTotalMs } from '../../domain/entities/FighterState.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import {
   animationKey,
@@ -7,40 +6,16 @@ import {
 import { sheetTextureKey, maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
 
 const RANGER_ORDER = [RANGER_IDS.ORANGE];
+const CHARACTER_FRAME_RATE = 10;
 const LOOPING_STATES = new Set(['idle', 'walk']);
 
-const oneShotDurationMs = (state) => {
-  switch (state) {
-    case 'attack':
-      return attackTotalMs();
-    case 'hurt':
-      return TIMINGS.hurtMs;
-    case 'block-hit':
-      return TIMINGS.blockHitMs;
-    case 'dodge':
-      return DODGE.durationMs;
-    case 'land':
-      return TIMINGS.landMs;
-    case 'special-attack':
-      return specialAttackTotalMs();
-    case 'victory':
-      return TIMINGS.victoryAnimationMs;
-    case 'teleport':
-      return TIMINGS.teleportOutMs + TIMINGS.teleportInMs;
-    case 'ko':
-      return TIMINGS.koAnimationMs;
-    default:
-      return 400;
-  }
-};
-
 /**
- * Registra las mismas coordenadas y el mismo orden de cuadros para ambos
- * personajes. Solo cambia la textura ya recoloreada automáticamente.
+ * Todas las animaciones de personajes usan 10 fps: cada cuadro permanece
+ * visible durante 100 ms, independientemente de la acción o su cantidad de cuadros.
  */
 export function registerCharacterAnimations(scene) {
   for (const rangerId of RANGER_ORDER) {
-    for (const [action, frameRate] of [['run', 10], ['bike', 9]]) {
+    for (const action of ['run', 'bike']) {
       const key = maleAnimationKey(rangerId, action);
       const texture = scene.textures.get(key);
       if (!scene.anims.exists(key) && texture) {
@@ -48,7 +23,7 @@ export function registerCharacterAnimations(scene) {
         if (frames.length) scene.anims.create({
           key,
           frames,
-          frameRate,
+          frameRate: CHARACTER_FRAME_RATE,
           repeat: -1,
         });
       }
@@ -70,11 +45,12 @@ export function registerCharacterAnimations(scene) {
         frame: 'f' + index,
       }));
 
-      const timing = LOOPING_STATES.has(state)
-        ? { frameRate: sequence.frameRate, repeat: -1 }
-        : { duration: oneShotDurationMs(state), repeat: 0 };
-
-      scene.anims.create({ key, frames, ...timing });
+      scene.anims.create({
+        key,
+        frames,
+        frameRate: CHARACTER_FRAME_RATE,
+        repeat: LOOPING_STATES.has(state) ? -1 : 0,
+      });
     }
   }
 }
@@ -90,43 +66,46 @@ const gifFrames = (scene, rangerId, action) => {
 };
 
 /**
- * Registra las animaciones que vienen de los GIF. Los golpes, el daño, el teleport
- * y el impulso se ajustan a las duraciones del dominio; el resto usa su ritmo original.
+ * Registra animaciones desde hojas derivadas de GIF. Cada estado, incluidos
+ * los de un solo uso, avanza exactamente un cuadro cada 100 ms.
  */
 function registerGifAnimations(scene, rangerId) {
-  const define = (action, timing, frames = gifFrames(scene, rangerId, action), key = maleAnimationKey(rangerId, action)) => {
+  const define = (action, {
+    frames = gifFrames(scene, rangerId, action),
+    key = maleAnimationKey(rangerId, action),
+    repeat = 0,
+  } = {}) => {
     if (!frames.length || scene.anims.exists(key)) return;
-    scene.anims.create({ key, frames, ...timing });
+    scene.anims.create({
+      key,
+      frames,
+      frameRate: CHARACTER_FRAME_RATE,
+      repeat,
+    });
   };
 
-  define('idle', { frameRate: 7, repeat: -1 });
-  define('guard', { frameRate: 8, repeat: -1 });
-  define('roll', { duration: DODGE.durationMs, repeat: 0 });
-  define('ko', { duration: TIMINGS.koAnimationMs, repeat: 0 });
-  define('charge', { frameRate: 10, repeat: -1 });
-  define('pose', { frameRate: 8, repeat: -1 });
-  define('attack', { duration: attackTotalMs(), repeat: 0 },
-    ['punch-01', 'punch-02', 'punch-03'].flatMap((action) => gifFrames(scene, rangerId, action)));
-  define('victory', { duration: TIMINGS.victoryAnimationMs, repeat: 0 },
-    gifFrames(scene, rangerId, 'pose'));
-  define('jump', { frameRate: 14, repeat: 0 });
-  define('dash', { duration: DASH.durationMs, repeat: 0 });
-  define('teleport', { duration: TIMINGS.teleportOutMs + TIMINGS.teleportInMs, repeat: 0 });
-  for (const punch of ['punch-01', 'punch-02', 'punch-03']) {
-    define(punch, { duration: attackTotalMs(), repeat: 0 });
-  }
-  define(
-    'hurt-combo',
-    { duration: TIMINGS.hurtMs, repeat: 0 },
-    [...gifFrames(scene, rangerId, 'hit'), ...gifFrames(scene, rangerId, 'hurt')],
-    hurtComboKey(rangerId),
-  );
+  define('idle', { repeat: -1 });
+  define('guard', { repeat: -1 });
+  define('roll');
+  define('ko');
+  define('charge', { repeat: -1 });
+  define('pose', { repeat: -1 });
+  define('attack', {
+    frames: ['punch-01', 'punch-02', 'punch-03']
+      .flatMap((action) => gifFrames(scene, rangerId, action)),
+  });
+  define('victory', { frames: gifFrames(scene, rangerId, 'pose') });
+  define('jump');
+  define('dash');
+  define('teleport');
+  for (const punch of ['punch-01', 'punch-02', 'punch-03']) define(punch);
+  define('hurt-combo', {
+    frames: [...gifFrames(scene, rangerId, 'hit'), ...gifFrames(scene, rangerId, 'hurt')],
+    key: hurtComboKey(rangerId),
+  });
 }
 
-/**
- * El repositorio no contiene un walk.gif independiente. La caminata reutiliza
- * la secuencia run con una cadencia menor, sin duplicar recursos raster.
- */
+/** La caminata reutiliza la secuencia run sin duplicar recursos raster. */
 function registerWalkAnimations(scene, rangerId) {
   const sourceKey = maleAnimationKey(rangerId, 'run');
   const texture = scene.textures.get(sourceKey);
@@ -136,7 +115,12 @@ function registerWalkAnimations(scene, rangerId) {
     start: 0,
     end: texture.frameTotal - 2,
   });
-  if (frames.length) scene.anims.create({ key, frames, frameRate: 5, repeat: -1 });
+  if (frames.length) scene.anims.create({
+    key,
+    frames,
+    frameRate: CHARACTER_FRAME_RATE,
+    repeat: -1,
+  });
 }
 
 function registerBikeAnimations(scene, rangerId) {
@@ -151,17 +135,22 @@ function registerBikeAnimations(scene, rangerId) {
   if (!frames.length) return;
 
   const specs = [
-    ['bike-idle', frames.slice(0, Math.min(3, frames.length)), 3, -1],
-    ['bike-accelerate', frames, 12, -1],
-    ['bike-brake', frames.slice(0, Math.min(4, frames.length)), 5, -1],
-    ['bike-boost', frames, 16, -1],
-    ['bike-victory', frames.slice(-Math.min(5, frames.length)), 8, 0],
-    ['bike-defeat', frames.slice(0, Math.min(4, frames.length)), 5, 0],
+    ['bike-idle', frames.slice(0, Math.min(3, frames.length)), -1],
+    ['bike-accelerate', frames, -1],
+    ['bike-brake', frames.slice(0, Math.min(4, frames.length)), -1],
+    ['bike-boost', frames, -1],
+    ['bike-victory', frames.slice(-Math.min(5, frames.length)), 0],
+    ['bike-defeat', frames.slice(0, Math.min(4, frames.length)), 0],
   ];
 
-  for (const [action, actionFrames, frameRate, repeat] of specs) {
+  for (const [action, actionFrames, repeat] of specs) {
     const key = maleAnimationKey(rangerId, action);
     if (scene.anims.exists(key) || !actionFrames.length) continue;
-    scene.anims.create({ key, frames: actionFrames, frameRate, repeat });
+    scene.anims.create({
+      key,
+      frames: actionFrames,
+      frameRate: CHARACTER_FRAME_RATE,
+      repeat,
+    });
   }
 }

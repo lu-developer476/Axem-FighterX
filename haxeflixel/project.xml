@@ -4,8 +4,8 @@
   <haxelib name="flixel" />
   <assets path="../art/source/environments/maps/castle.png" rename="assets/maps/castle.png" />
   <assets path="../art/source/environments/maps/desert.png" rename="assets/maps/desert.png" />
-  <assets path="../art/source/sprites/race-pickups/axem-boost.png" rename="assets/pickups/axem-boost.png" />
-  <assets path="../art/source/sprites/race-pickups/axem-slow.png" rename="assets/pickups/axem-slow.png" />
+  <assets path="../art/source/pickups/axem-boost.png" rename="assets/pickups/axem-boost.png" />
+  <assets path="../art/source/pickups/axem-slow.png" rename="assets/pickups/axem-slow.png" />
   <assets path="../art/source/effects/music/race--mecha-collection.wav" rename="assets/audio/axem-race.wav" />
   <assets path="../art/source/effects/music/race--slow-dark-music.wav" rename="assets/audio/land-race.wav" />
   <assets path="../public/generated/haxeflixel/axem-orange-bike.png" rename="assets/races/axem-orange-bike.png" />

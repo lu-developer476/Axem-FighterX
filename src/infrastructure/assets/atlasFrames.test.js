@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
@@ -191,15 +191,16 @@ describe('resultados de las variantes canónicas', () => {
     expect(Math.abs(visibleHeights[0] - 78)).toBeLessThanOrEqual(1);
   });
 
-  it('conserva la hoja de referencia de Axem Pink sin publicarla como variante jugable', async () => {
+  it('conserva Axem Pink como referencia y deja vacío el destino femenino Violet', async () => {
     const source = await sharp(
       fileURLToPath(new URL('../../../art/source/sprites/references/axem-pink/axem-pink-spritesheet.png', import.meta.url)),
     ).metadata();
-    const processed = await sharp(resultsPath('female', 'pink', 'spritesheet.png')).metadata();
-    expect(processed.format).toBe('png');
-    expect(processed.width).toBe(source.width);
-    expect(processed.height).toBe(source.height);
-    expect(processed.hasAlpha).toBe(true);
+    expect(source.format).toBe('png');
+    expect(source.width).toBe(900);
+    expect(source.height).toBe(421);
+    expect(await readdir(resultsPath('female', 'violet'))).toEqual(['.gitkeep']);
+    await expect(readFile(resultsPath('female', 'pink', 'spritesheet.png')))
+      .rejects.toMatchObject({ code: 'ENOENT' });
   });
 
   it('mantiene retiradas las tiras auxiliares del repositorio', async () => {

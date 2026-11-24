@@ -3,7 +3,7 @@
   "sourcePolicy": {
     "directory": "references",
     "treatment": "preserve-originals",
-    "description": "Los archivos maestros de references se preservan; el GIF maestro de Orange vive en axem-orange y los GIF finales de Axem Red se generan con nombres diferenciados en axem-red y se validan junto a los resultados."
+    "description": "Los archivos maestros de references se preservan. Los GIF de referencia y de acción de Axem Red permanecen centralizados en axem-red; no se recrean copias bajo results/male/red."
   },
   "processedPolicy": {
     "directory": "results",

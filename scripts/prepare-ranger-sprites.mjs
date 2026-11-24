@@ -31,7 +31,8 @@ const KI_AURA_SHEET_PATH = path.join(
   ROOT, 'art', 'source', 'effects', 'dragon-ball-style', 'super-saiyan-aura.webp',
 );
 const KI_AURA_GRID = Object.freeze({ columns: 2, rows: 2, cellWidth: 64, cellHeight: 64 });
-const KI_AURA_HOLD_DELAY = 180;
+const FRAME_DELAY_MS = 100;
+const KI_AURA_HOLD_DELAY = FRAME_DELAY_MS;
 
 async function writeResult(gender, color, relativePath, buffer) {
   const target = path.join(RESULTS(gender, color), relativePath);
@@ -720,9 +721,7 @@ async function writeMaleAnimation(frames, rangerId, action, frameDelays, loop = 
   ));
 
   // Sharp une los PNG de cada cuadro como una animación real, conservando la transparencia.
-  const delays = Array.isArray(frameDelays) && frameDelays.length === gifFrames.length
-    ? frameDelays
-    : 80;
+  const delays = gifFrames.map(() => FRAME_DELAY_MS);
   const gif = await sharp(gifFrames, { join: { animated: true } })
     .gif({
       loop,
@@ -771,7 +770,7 @@ async function readMaleSequenceFrames(color, entry) {
  * El escalado nearest-neighbor preserva el pixel-art; el pivote de los pies
  * queda centrado y la línea de suelo permanece constante entre fotogramas.
  */
-async function writeMaleSequenceGif(frames, color, filename, delay = 100) {
+async function writeMaleSequenceGif(frames, color, filename, _delay = FRAME_DELAY_MS) {
   if (!Array.isArray(frames) || frames.length === 0) {
     throw new Error('La animación ' + filename + ' no contiene fotogramas.');
   }
@@ -810,7 +809,7 @@ async function writeMaleSequenceGif(frames, color, filename, delay = 100) {
   const gif = await sharp(gifFrames, { join: { animated: true } })
     .gif({
       loop: 0,
-      delay,
+      delay: gifFrames.map(() => FRAME_DELAY_MS),
       colours: 256,
       dither: 0,
       effort: 10,
@@ -1067,7 +1066,7 @@ async function writeMaleActionGif(color, filename, frames, delays) {
   const gif = await sharp(frames, { join: { animated: true } })
     .gif({
       loop: 0,
-      delay: delays.length === frames.length ? delays : frames.map(() => 100),
+      delay: frames.map(() => FRAME_DELAY_MS),
       colours: 256,
       dither: 0,
       effort: 10,
@@ -1579,7 +1578,7 @@ async function buildGender(gender, allowedColors) {
       const pinkReferenceSheet = await normalizeFemaleSpriteScale(
         await keyFemaleReferenceBackground(path.join(pinkReference, 'axem-pink-spritesheet.png')),
       );
-      await writeResult(gender, 'pink', 'spritesheet.png', pinkReferenceSheet);
+      await writeResult(gender, color, 'spritesheet.png', pinkReferenceSheet);
       // Las poses canónicas femeninas viven dentro de results/female/<color>/.
       // Mantener el color en la ruta evita depender del antiguo archivo en la raíz.
       canonicalPosePath = RESULTS(
@@ -1667,92 +1666,20 @@ async function buildGender(gender, allowedColors) {
   }
 }
 
-async function buildRedRangerGifs() {
-  const sourceDirectory = SOURCE('sprites', 'references', 'axem-red');
-  const sourceSheet = path.join(sourceDirectory, 'axem-red-spritesheet.png');
-  const decoded = await sharp(sourceSheet)
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const pixels = new Uint8ClampedArray(
-    decoded.data.buffer,
-    decoded.data.byteOffset,
-    decoded.data.byteLength,
-  );
-
-  // Axem Red keeps its original red palette; only the teal source background is removed.
-  removeSpriteBackground({
-    data: pixels,
-    width: decoded.info.width,
-    height: decoded.info.height,
-  }, {
-    tolerance: ATLAS_SOURCES.male.tolerance,
-    minBorderCoverage: 0.08,
-  });
-  const keyedSheet = await sharp(Buffer.from(pixels), {
-    raw: {
-      width: decoded.info.width,
-      height: decoded.info.height,
-      channels: 4,
-    },
-  }).png().toBuffer();
-
-  const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
-  const sequenceIndex = await writeMaleSequences('red', keyedSheet, manifest.male.groups);
-  await writeMaleSupplemental('red', keyedSheet, manifest.male.supplementalGroups);
-  const redTeleportTail = await extractMaleStripFrames('red', 'group-01', 3, 'supplemental');
-  const groups = new Map();
-  for (const entry of sequenceIndex) {
-    groups.set(entry.id, await readMaleSequenceFrames('red', entry));
-  }
-  const frames = (...ids) => ids.flatMap((id) => {
-    const group = groups.get(id);
-    if (!group) throw new Error('No existe ' + id + ' en el atlas original de Axem Red.');
-    return group;
-  });
-
-  // Las referencias Red conservan las animaciones que necesita el catálogo de minijuegos.
-  await writeMaleSequenceGif(frames('group-01', 'group-02'), 'red', 'idle', 105);
-  await writeMaleSequenceGif(frames('group-02'), 'red', 'walk', 105);
-  await writeMaleSequenceGif(frames('group-10'), 'red', 'run', 80);
-  await writeMaleSequenceGif(frames('group-11'), 'red', 'dash', 80);
-  await writeMaleSequenceGif(frames('group-12'), 'red', 'jump', 100);
-
-  // El master de moto se procesa para la hoja del juego, sin crear bike.gif duplicado.
-  for (const [action, sourceName, writeGif] of [
-    ['bike', 'axem-ranger-bike.gif', false],
-  ]) {
-    const animation = await readRawGifFrames(path.join(sourceDirectory, sourceName));
-    await writeMaleAnimation(animation.frames, 'red', action, animation.delay, animation.loop, { writeGif });
-  }
-
-  // These sheets are temporary inputs for GIF assembly, not distributed game assets.
-  await Promise.all([
-    fs.rm(RESULTS('male', 'red', 'sequences'), { recursive: true, force: true }),
-    fs.rm(RESULTS('male', 'red', 'supplemental'), { recursive: true, force: true }),
-  ]);
-}
-
 async function main() {
   await fs.mkdir(GENERATED, { recursive: true });
   const retiredActionGifs = [
     RESULTS('male', 'orange', 'double-axe.gif'),
     RESULTS('male', 'orange', 'battle-pose.gif'),
-    RESULTS('male', 'red', 'double-axe.gif'),
-    RESULTS('male', 'red', 'battle-pose.gif'),
   ];
   await Promise.all(retiredActionGifs.map((filename) => fs.rm(filename, { force: true })));
 
   const retiredSpriteDirectories = [
     RESULTS('male', 'violet'),
-    RESULTS('female', 'violet'),
     RESULTS('female', 'orange'),
     RESULTS('male', 'orange', 'source'),
     RESULTS('male', 'orange', 'sequences'),
     RESULTS('male', 'orange', 'supplemental'),
-    RESULTS('female', 'violet', 'source'),
-    RESULTS('female', 'violet', 'sequences'),
-    RESULTS('female', 'violet', 'supplemental'),
   ];
   await Promise.all(retiredSpriteDirectories.map((directory) =>
     fs.rm(directory, { recursive: true, force: true }),
@@ -1789,7 +1716,6 @@ async function main() {
     fs.rm(path.join(RESULTS('female', 'violet'), name), { force: true })
   ));
   await buildGender('male', ['orange']);
-  await buildRedRangerGifs();
   await buildMenuSuperPoses();
   // Las tiras auxiliares solo existen durante la generación; no quedan versionadas.
   await Promise.all(retiredSpriteDirectories.map((directory) =>

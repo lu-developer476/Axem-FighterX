@@ -96,6 +96,8 @@ async function validateFixedCanvasCategories() {
 async function validateAtlasSheets() {
   for (const family of standards.categories.atlasSheet.families) {
     const source = await sharp(absolute(family.reference), { failOn: 'error' }).metadata();
+    // Algunas referencias se conservan como masters sin publicar una salida derivada.
+    if (!family.result) continue;
     await validatePng(
       family.result,
       { width: source.width, height: source.height },
@@ -149,13 +151,23 @@ async function validateActionGifs() {
     }
     if (
       category.preserveFrameTiming &&
-      Array.isArray(metadata.delay) &&
       (
+        !Array.isArray(metadata.delay) ||
         metadata.delay.length !== metadata.pages ||
-        metadata.delay.some((delay) => !Number.isFinite(delay) || delay < 0)
+        metadata.delay.some((delay) => delay !== 100)
       )
     ) {
-      throw new Error(relativePath + ': los tiempos de los cuadros son inválidos.');
+      throw new Error(relativePath + ': todos los cuadros deben durar exactamente 100 ms.');
+    }
+  }
+
+  // Los GIF maestros de carrera de Axem Red también deben usar 100 ms por cuadro.
+  for (const name of ['axem-ranger-bike.gif', 'axem-ranger-run.gif']) {
+    const filename = path.join(redActionDirectory, name);
+    const metadata = await sharp(filename, { animated: true, failOn: 'error' }).metadata();
+    if (!Array.isArray(metadata.delay) || metadata.delay.length !== metadata.pages ||
+        metadata.delay.some((delay) => delay !== 100)) {
+      throw new Error(path.relative(ROOT, filename) + ': todos los cuadros deben durar exactamente 100 ms.');
     }
   }
 

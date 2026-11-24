@@ -77,8 +77,7 @@
           "result": "art/source/sprites/results/male/orange/spritesheet.png"
         },
         {
-          "reference": "art/source/sprites/references/axem-pink/axem-pink-spritesheet.png",
-          "result": "art/source/sprites/results/female/pink/spritesheet.png"
+          "reference": "art/source/sprites/references/axem-pink/axem-pink-spritesheet.png"
         }
       ]
     },

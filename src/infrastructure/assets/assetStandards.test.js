@@ -38,8 +38,14 @@ describe('Estándares centrales de recursos gráficos', () => {
     expect(filenames.has('axem-ranger-bike.gif')).toBe(true);
     expect(filenames.has('axem-ranger-run.gif')).toBe(true);
     expect(filenames.has('axem-red-spritesheet.png')).toBe(true);
-    expect(filenames.has('axem-red-animation-atlas.png')).toBe(true);
+    expect(filenames.has('axem-red-animation-atlas.png')).toBe(false);
     expect(filenames.has('super-axem-ranger-red.png')).toBe(true);
+
+    const pinkDirectory = absolute('art/source/sprites/references/axem-pink');
+    const pinkEntries = await fs.readdir(pinkDirectory, { withFileTypes: true });
+    const pinkFiles = new Set(pinkEntries.filter((entry) => entry.isFile()).map((entry) => entry.name));
+    expect(pinkFiles.has('axem-pink-spritesheet.png')).toBe(true);
+    expect(pinkFiles.has('axem-pink-animation-atlas.png')).toBe(false);
     expect(ASSET_STANDARDS.categories.characterArtwork.families.male).not.toHaveProperty('derivedArtwork');
   });
 
@@ -153,13 +159,16 @@ describe('Estándares centrales de recursos gráficos', () => {
     }
   });
 
-  it('mantiene cada atlas procesado con las dimensiones de su referencia', async () => {
-    for (const family of ASSET_STANDARDS.categories.atlasSheet.families) {
+  it('conserva las hojas compuestas Red y Pink como referencias visuales', async () => {
+    const families = ASSET_STANDARDS.categories.referenceSheet.families;
+    expect(families.map((family) => family.reference)).toEqual([
+      'art/source/sprites/references/axem-red/axem-red-spritesheet.png',
+      'art/source/sprites/references/axem-pink/axem-pink-spritesheet.png',
+    ]);
+    for (const family of families) {
       const source = await sharp(absolute(family.reference)).metadata();
-      if (!family.result) continue;
-      const output = await sharp(absolute(family.result)).metadata();
-      expect([output.width, output.height]).toEqual([source.width, source.height]);
-      expect(output.hasAlpha).toBe(true);
+      expect(source.format).toBe('png');
+      expect(family.result).toBeUndefined();
     }
   });
 

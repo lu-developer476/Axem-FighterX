@@ -103,15 +103,15 @@ async function validateFixedCanvasCategories() {
   }
 }
 
-async function validateAtlasSheets() {
-  for (const family of standards.categories.atlasSheet.families) {
+async function validateReferenceSheets() {
+  for (const family of standards.categories.referenceSheet.families) {
     const source = await sharp(absolute(family.reference), { failOn: 'error' }).metadata();
     // Algunas referencias se conservan como masters sin publicar una salida derivada.
     if (!family.result) continue;
     await validatePng(
       family.result,
       { width: source.width, height: source.height },
-      'Atlas procesado ' + path.basename(family.result),
+      'Referencia compuesta ' + path.basename(family.result),
       true,
     );
   }
@@ -254,13 +254,13 @@ async function validateSequenceIndex(indexPath, gender) {
 async function main() {
   await validateArtwork();
   await validateFixedCanvasCategories();
-  await validateAtlasSheets();
+  await validateReferenceSheets();
 
   const gifCount = await validateActionGifs();
   const effectGifCount = await validateEffectGifs();
 
   console.log(
-    'Recursos gráficos validados: artwork, texturas, retratos, atlas y ' +
+    'Recursos gráficos validados: artwork, hojas compuestas de referencia, texturas y retratos; ' +
     gifCount + ' GIF de acción y ' + effectGifCount + ' GIF de efectos Axem. Los recursos sin tamaño fijo conservan su resolución nativa.',
   );
 }

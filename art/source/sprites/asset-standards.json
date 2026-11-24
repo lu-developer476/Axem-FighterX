@@ -3,7 +3,7 @@
   "sourcePolicy": {
     "directory": "art/source/sprites/references",
     "immutable": true,
-    "description": "Los archivos maestros de references son inmutables. La hoja compuesta axem-red-spritesheet.png se conserva como referencia visual; axem-red-animation-atlas.png es la fuente estructurada para detección de secuencias y generación de recursos. Los recursos de Orange se conservan en results/male/orange."
+    "description": "Los masters de references son inmutables. Se conservan las hojas compuestas axem-red-spritesheet.png y axem-pink-spritesheet.png como referencias visuales; las hojas de animación separadas de Red y Pink se retiraron. Las acciones masculinas se regeneran desde results/male/orange/spritesheet.png y su mapa de recortes versionado."
   },
   "categories": {
     "characterArtwork": {
@@ -94,31 +94,6 @@
       "height": 57,
       "feetY": 55
     },
-    "atlasSheet": {
-      "policy": "match-family-master",
-      "preserveIrregularLayout": true,
-      "allowResampling": false,
-      "allowCropping": false,
-      "families": [
-        {
-          "reference": "art/source/sprites/references/axem-red/axem-red-animation-atlas.png",
-          "result": "art/source/sprites/results/male/orange/spritesheet.png",
-          "role": "animation-source"
-        },
-        {
-          "reference": "art/source/sprites/references/axem-red/axem-red-spritesheet.png",
-          "role": "composite-reference"
-        },
-        {
-          "reference": "art/source/sprites/references/axem-pink/axem-pink-animation-atlas.png",
-          "role": "animation-source"
-        },
-        {
-          "reference": "art/source/sprites/references/axem-pink/axem-pink-spritesheet.png",
-          "role": "composite-reference"
-        }
-      ]
-    },
     "otherProcessedSprites": {
       "policy": "preserve-native-dimensions",
       "alphaRequired": true,
@@ -194,6 +169,22 @@
       "policy": "preserve-source-aspect-ratio",
       "crop": "explicit-per-stage-only",
       "description": "Los fondos y tilesets no se estiran a un lienzo global; cada escena define su encuadre."
+    },
+    "referenceSheet": {
+      "policy": "match-family-master",
+      "preserveIrregularLayout": true,
+      "allowResampling": false,
+      "allowCropping": false,
+      "families": [
+        {
+          "reference": "art/source/sprites/references/axem-red/axem-red-spritesheet.png",
+          "role": "composite-reference"
+        },
+        {
+          "reference": "art/source/sprites/references/axem-pink/axem-pink-spritesheet.png",
+          "role": "composite-reference"
+        }
+      ]
     }
   }
 }

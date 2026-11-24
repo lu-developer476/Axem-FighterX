@@ -4,14 +4,12 @@ Hay dos géneros, cada uno con su hoja de referencia. **Violet** y **Orange** so
 
 | Género | Referencia | Hoja | Tamaño | Dirección nativa |
 |---|---|---|---|---|
-| Masculino (referencia compuesta) | Axem Red | `references/axem-red/axem-red-spritesheet.png` | 1316 × 1230 px, paneles blancos sobre fondo negro | Derecha |
-| Masculino (atlas de animaciones) | Axem Red | `references/axem-red/axem-red-animation-atlas.png` | 730 × 804 px, fondo teal `rgb(0,128,128)` | Derecha |
-| Femenino (referencia compuesta) | Axem Pink | `references/axem-pink/axem-pink-spritesheet.png` | 1316 × 717 px, paneles blancos sobre fondo negro | Izquierda |
-| Femenino (atlas de animaciones) | Axem Pink | `references/axem-pink/axem-pink-animation-atlas.png` | 900 × 421 px, fondo teal | Izquierda |
+| Masculino | Axem Red | `references/axem-red/axem-red-spritesheet.png` | 1316 × 1230 px, paneles blancos sobre fondo negro | Derecha |
+| Femenino | Axem Pink | `references/axem-pink/axem-pink-spritesheet.png` | 1316 × 717 px, paneles blancos sobre fondo negro | Izquierda |
 
 La orientación nativa se conserva en todas las imágenes de cada fuente: Axem Red masculino, incluidos el retrato base y los GIF de acción, apunta a la derecha; Axem Pink femenino apunta a la izquierda. El renderizador espeja cada sprite solo cuando el luchador necesita mirar hacia el lado contrario.
 
-La carpeta `references/axem-red/` conserva tanto la nueva hoja compuesta `axem-red-spritesheet.png` como el atlas estructurado `axem-red-animation-atlas.png`, del que se extraen las secuencias automáticamente. `dash.gif`, `idle.gif`, `jump.gif`, `run.gif` y `walk.gif` son las secuencias de referencia; `axem-ranger-run.gif` y `axem-ranger-bike.gif` mantienen los nombres de sus GIF maestros. No se genera una copia redundante en `results/male/red/`: Red queda centralizado en `references/axem-red/`. El GIF maestro de batalla de Orange se conserva en `references/axem-orange/battle-pose.gif`. Orange y Violet siguen siendo variantes cromáticas independientes; Red no se obtiene recoloreando a Orange.
+La carpeta `references/axem-red/` conserva la hoja compuesta `axem-red-spritesheet.png`, las secuencias de referencia `dash.gif`, `idle.gif`, `jump.gif`, `run.gif` y `walk.gif`, y los GIF maestros `axem-ranger-run.gif` y `axem-ranger-bike.gif`. Las hojas de animación separadas de Red y Pink se eliminaron; los recortes de combate se reconstruyen desde la hoja Orange procesada y su índice versionado. No se genera una copia redundante en `results/male/red/`: Red queda centralizado en `references/axem-red/`. El GIF maestro de batalla de Orange se conserva en `references/axem-orange/battle-pose.gif`. Orange y Violet siguen siendo variantes cromáticas independientes; Red no se obtiene recoloreando a Orange.
 
 ## Cómo se generan los resultados
 
@@ -26,11 +24,11 @@ results/
     violet/          destino reservado para los resultados femeninos
 
 references/axem-red/
-  axem-red-spritesheet.png  axem-red-animation-atlas.png
+  axem-red-spritesheet.png
   super-axem-ranger-red.png
 
 references/axem-pink/
-  axem-pink-spritesheet.png  axem-pink-animation-atlas.png
+  axem-pink-spritesheet.png
   axem-pink-pose.png  super-axem-pink.png
   axem-ranger-run.gif  axem-ranger-bike.gif
   dash.gif  idle.gif  jump.gif  run.gif  walk.gif
@@ -42,7 +40,7 @@ pickups/
   axem-boost.png  axem-boost.svg  axem-slow.png  axem-slow.svg  ATTRIBUTION.txt
 ```
 
-Los retratos laterales del menú y las secuencias automáticas se generan desde `references/axem-red/axem-red-animation-atlas.png`; la hoja compuesta `axem-red-spritesheet.png` se preserva como referencia visual independiente; no se necesita una vista previa duplicada en `results/male/`. El recoloreado del cabello recorre cada componente rubio de todas las poses, incluso cuando está separado del casco o la cara, para evitar que queden mechones originales sin procesar.
+Los retratos laterales del menú y las secuencias automáticas se generan desde los recursos Orange versionados en `results/male/orange/`; el mapa de recortes está en `src/infrastructure/assets/spriteFrameIndex.json`. La hoja compuesta `axem-red-spritesheet.png` se conserva únicamente como referencia visual. El recoloreado del cabello recorre cada componente rubio de todas las poses, incluso cuando está separado del casco o la cara, para evitar que queden mechones originales sin procesar.
 
 La ruta de resultados femeninos es `results/female/violet/`; el contenido provisional `results/female/pink/` se retiró. La referencia original Pink permanece en `references/axem-pink/` y no se replica como una variante Pink dentro de `results/`.
 
@@ -63,13 +61,13 @@ La política está centralizada en `processing-rules.json` y se aplica automáti
 
 La configuración de Phaser ya refuerza el resultado con `pixelArt`, `antialias: false`, `roundPixels` y filtro `NEAREST` para las texturas que se cargan. Por eso el criterio visual es **píxel definido y borde limpio**, no bordes borrosos o suavizados por interpolación.
 
-## El atlas no es una cuadrícula
+## Recortes y referencias conservados
 
-El detector automático no procesa todas las referencias con el mismo algoritmo. Para las secuencias masculinas utiliza `axem-red-animation-atlas.png` (730 × 804 px, fondo teal) y para las femeninas `axem-pink-animation-atlas.png` (900 × 421 px, fondo teal). Las hojas `axem-red-spritesheet.png` (1316 × 1230 px) y `axem-pink-spritesheet.png` (1316 × 717 px) se conservan como referencias compuestas independientes. Esas láminas combinan paneles blancos sobre fondo negro y no sustituyen a los atlas estructurados: los generadores usan únicamente las fuentes de animación declaradas en `atlasLayoutRules.js`.
+Las hojas de animación separadas de Axem Red y Axem Pink se retiraron del repositorio. Se conservan las dos hojas compuestas como referencias visuales, no como entradas de los generadores.
 
-Los rectángulos de las dos fuentes procesables los detecta `scripts/analyze-atlas.mjs` y quedan en `src/infrastructure/assets/atlasFrames.json`; las reglas (color de fondo, tolerancia, zonas excluidas) están en `atlasLayoutRules.js` y el algoritmo en `atlasFrameDetection.js`. Para regenerar el índice: `node scripts/analyze-atlas.mjs`. `atlasFrames.test.js` comprueba las secuencias, los límites de los recortes y que la referencia compuesta nueva y el atlas de animaciones sigan preservados por separado.
+Las animaciones masculinas se regeneran desde `results/male/orange/spritesheet.png`, que conserva el lienzo de **730 × 804 px** y la transparencia. Sus coordenadas de recorte y grupos están versionados en `src/infrastructure/assets/spriteFrameIndex.json`; la preparación no vuelve a analizar ni exige imágenes de hojas de animación. Los GIF maestros de carrera siguen en `references/axem-red/`.
 
-## Masculino (Axem Red): 14 grupos, 107 cuadros
+## Recortes masculinos conservados: 14 grupos, 107 cuadros
 
 Estrategia de filas: proyección de píxeles → tiras → cuadros. Los grupos se numeran de arriba hacia abajo y los cuadros de izquierda a derecha. `pivotX` es la columna de los pies relativa al cuadro. Cada tira de `sequences/` pone todos los cuadros de un grupo en celdas del mismo tamaño, con los pies sobre la misma línea y alineados por `pivotX`, así el personaje no “salta” cuando la bufanda o un tajo ensanchan el rectángulo.
 
@@ -295,159 +293,15 @@ Región `[6, 744, 164, 45]` · 6 cuadros
 
 La zona `reference-poses` `[525, 0, 205, 385]` queda excluida de las secuencias animadas, pero sus elementos se conservan: el análisis detecta los recursos independientes y los exporta, agrupados por los cinco renglones originales, como `supplemental/group-01.png` a `group-05.png` más `supplemental/index.json`. Allí se incluyen las siluetas de referencia, la pose de derrota, la pose con hacha y las demás poses sueltas. Cada elemento ocupa una celda propia y el índice mantiene sus coordenadas de origen. Orange y Violet comparten el orden, las dimensiones y la transparencia; solo cambia la paleta.
 
-## Femenino (Axem Pink): 7 grupos, 116 regiones, 84 de personaje
+## Femenino (Axem Pink)
 
-La hoja de Pink tiene distribución libre (poses en el aire, estelas, armas sueltas e íconos), no una cuadrícula de cuadros uniformes. Se detectan componentes conexos que se fusionan si están a 3 px o menos, y cada región se clasifica por su color: un personaje tiene masa rosada más el azul verdoso del traje o la bufanda amarilla; las estelas, armas, corazones, la figura con ojos y las tres siluetas de referencia quedan como `other`. Después, las 116 regiones se distribuyen en siete grupos espaciales según su centro vertical, de arriba hacia abajo. Cada grupo conserva el ancho completo del atlas y los límites se amplían hasta incluir todas sus regiones.
-
-**La clasificación de regiones es heurística.** 12 regiones llevan una marca `review` para revisarlas a mano: `varias-poses` (una sola caja con más de una pose fusionada por una estela o un arma que las toca) y `posible-personaje` (vistas laterales angostas o poses tumbadas cuya clasificación no es segura). Ninguna se descarta: las regiones `character` y `other`, incluidas las 12 marcadas, se asignan exactamente una vez a los siete grupos.
-
-| # | x | y | ancho | alto | tipo | revisión |
-|---:|---:|---:|---:|---:|---|---|
-| 0 | 435 | 9 | 32 | 39 | character |  |
-| 1 | 479 | 10 | 28 | 39 | character |  |
-| 2 | 527 | 26 | 36 | 47 | character |  |
-| 3 | 578 | 27 | 37 | 46 | character |  |
-| 4 | 622 | 25 | 40 | 48 | character |  |
-| 5 | 668 | 23 | 33 | 53 | character |  |
-| 6 | 710 | 35 | 24 | 38 | character |  |
-| 7 | 742 | 37 | 28 | 37 | character |  |
-| 8 | 778 | 33 | 18 | 37 | character |  |
-| 9 | 800 | 35 | 29 | 33 | character |  |
-| 10 | 836 | 32 | 28 | 36 | character |  |
-| 11 | 872 | 30 | 18 | 35 | other |  |
-| 12 | 203 | 79 | 29 | 36 | character |  |
-| 13 | 241 | 61 | 31 | 52 | character |  |
-| 14 | 281 | 64 | 32 | 52 | character |  |
-| 15 | 324 | 68 | 31 | 53 | character |  |
-| 16 | 368 | 67 | 31 | 52 | character |  |
-| 17 | 409 | 59 | 84 | 54 | character | varias-poses |
-| 18 | 16 | 80 | 31 | 32 | character |  |
-| 19 | 54 | 81 | 18 | 32 | other |  |
-| 20 | 78 | 82 | 16 | 31 | other |  |
-| 21 | 106 | 81 | 23 | 32 | character |  |
-| 22 | 144 | 83 | 29 | 34 | character |  |
-| 23 | 182 | 83 | 17 | 30 | other |  |
-| 24 | 504 | 82 | 40 | 38 | character |  |
-| 25 | 566 | 82 | 52 | 54 | character |  |
-| 26 | 639 | 84 | 32 | 55 | character |  |
-| 27 | 688 | 81 | 30 | 55 | character |  |
-| 28 | 732 | 101 | 17 | 31 | other |  |
-| 29 | 770 | 94 | 23 | 38 | character |  |
-| 30 | 808 | 82 | 19 | 45 | other | posible-personaje |
-| 31 | 833 | 89 | 28 | 37 | other |  |
-| 32 | 12 | 127 | 44 | 61 | character |  |
-| 33 | 67 | 124 | 96 | 67 | character | varias-poses |
-| 34 | 181 | 125 | 48 | 61 | character |  |
-| 35 | 241 | 139 | 31 | 41 | character |  |
-| 36 | 284 | 138 | 17 | 40 | character |  |
-| 37 | 318 | 137 | 14 | 40 | character |  |
-| 38 | 359 | 138 | 19 | 39 | character |  |
-| 39 | 386 | 127 | 32 | 52 | character |  |
-| 40 | 427 | 134 | 36 | 43 | character |  |
-| 41 | 472 | 144 | 48 | 35 | character |  |
-| 42 | 532 | 142 | 43 | 37 | character |  |
-| 43 | 587 | 151 | 41 | 31 | other |  |
-| 44 | 644 | 151 | 27 | 46 | other | posible-personaje |
-| 45 | 683 | 143 | 42 | 46 | character |  |
-| 46 | 734 | 151 | 40 | 36 | character |  |
-| 47 | 785 | 147 | 27 | 36 | character |  |
-| 48 | 826 | 146 | 18 | 35 | other |  |
-| 49 | 854 | 145 | 31 | 32 | character |  |
-| 50 | 201 | 195 | 34 | 41 | character |  |
-| 51 | 248 | 198 | 56 | 40 | character | varias-poses |
-| 52 | 370 | 199 | 48 | 40 | character |  |
-| 53 | 431 | 199 | 33 | 39 | character |  |
-| 54 | 478 | 199 | 56 | 41 | character | varias-poses |
-| 55 | 723 | 197 | 43 | 45 | character |  |
-| 56 | 781 | 194 | 43 | 48 | character |  |
-| 57 | 841 | 195 | 42 | 47 | character |  |
-| 58 | 21 | 207 | 27 | 40 | character |  |
-| 59 | 61 | 213 | 23 | 32 | other |  |
-| 60 | 93 | 212 | 28 | 33 | character |  |
-| 61 | 131 | 201 | 22 | 39 | character |  |
-| 62 | 164 | 200 | 22 | 39 | character |  |
-| 63 | 315 | 200 | 49 | 39 | character |  |
-| 64 | 551 | 202 | 49 | 41 | character |  |
-| 65 | 609 | 202 | 47 | 40 | character |  |
-| 66 | 666 | 201 | 42 | 44 | character |  |
-| 67 | 15 | 257 | 49 | 40 | character |  |
-| 68 | 77 | 256 | 43 | 40 | character |  |
-| 69 | 128 | 253 | 23 | 42 | character |  |
-| 70 | 167 | 254 | 22 | 40 | character |  |
-| 71 | 200 | 253 | 28 | 39 | character |  |
-| 72 | 239 | 255 | 32 | 40 | character |  |
-| 73 | 282 | 253 | 28 | 39 | character |  |
-| 74 | 324 | 253 | 22 | 40 | character |  |
-| 75 | 358 | 254 | 23 | 41 | character |  |
-| 76 | 388 | 254 | 32 | 40 | character |  |
-| 77 | 437 | 254 | 22 | 40 | character |  |
-| 78 | 480 | 260 | 56 | 34 | character | varias-poses |
-| 79 | 541 | 260 | 17 | 30 | other |  |
-| 80 | 569 | 251 | 31 | 41 | character |  |
-| 81 | 620 | 253 | 20 | 53 | character |  |
-| 82 | 647 | 256 | 95 | 41 | character | varias-poses |
-| 83 | 748 | 257 | 28 | 40 | character |  |
-| 84 | 788 | 253 | 19 | 44 | character |  |
-| 85 | 816 | 251 | 32 | 40 | character |  |
-| 86 | 856 | 261 | 30 | 37 | other |  |
-| 87 | 28 | 306 | 39 | 27 | other |  |
-| 88 | 74 | 306 | 11 | 11 | other |  |
-| 89 | 92 | 314 | 5 | 4 | other |  |
-| 90 | 108 | 311 | 33 | 35 | character |  |
-| 91 | 146 | 310 | 30 | 35 | character |  |
-| 92 | 183 | 307 | 29 | 36 | character |  |
-| 93 | 224 | 307 | 27 | 35 | character |  |
-| 94 | 263 | 310 | 27 | 35 | character |  |
-| 95 | 305 | 310 | 34 | 34 | character |  |
-| 96 | 351 | 307 | 21 | 40 | character |  |
-| 97 | 387 | 311 | 29 | 34 | character |  |
-| 98 | 433 | 307 | 22 | 41 | character |  |
-| 99 | 463 | 318 | 39 | 22 | other |  |
-| 100 | 515 | 309 | 18 | 44 | character |  |
-| 101 | 556 | 312 | 31 | 44 | other |  |
-| 102 | 604 | 314 | 32 | 45 | other | posible-personaje |
-| 103 | 656 | 307 | 32 | 49 | other | posible-personaje |
-| 104 | 704 | 309 | 27 | 48 | other |  |
-| 105 | 746 | 307 | 14 | 49 | other |  |
-| 106 | 773 | 307 | 18 | 52 | other |  |
-| 107 | 796 | 313 | 97 | 41 | other | posible-personaje |
-| 108 | 14 | 320 | 10 | 11 | other |  |
-| 109 | 25 | 324 | 67 | 41 | other | posible-personaje |
-| 110 | 6 | 374 | 33 | 22 | other |  |
-| 111 | 59 | 378 | 46 | 23 | other |  |
-| 112 | 126 | 376 | 48 | 22 | other |  |
-| 113 | 192 | 377 | 46 | 23 | other |  |
-| 114 | 250 | 376 | 39 | 33 | other |  |
-| 115 | 306 | 382 | 43 | 20 | other |  |
-
-
-### Grupos femeninos por fila
-
-La hoja completa se recorre de arriba hacia abajo y cada uno de sus siete renglones se procesa. **Cada región de personaje se extrae a una celda individual** y se compone en una tira horizontal compacta, con celdas uniformes y centradas para conservar también las poses aéreas o tumbadas. El formato es el mismo que el de las tiras masculinas: `sequences/group-XX.png` y un `index.json` con el orden, las coordenadas de origen y las marcas de revisión de cada fotograma.
-
-Dos cajas detectadas contenían varias poses claramente independientes: la región 33 se separa en dos fotogramas y la región 82 en tres. Así, las **84 regiones de personaje detectadas producen 87 celdas de fotograma** sin fusionar personajes distintos. Los elementos que no son fotogramas de personaje (armas, estelas, efectos, corazones, íconos y siluetas) no se mezclan con las secuencias: se conservan en `supplemental/group-XX.png`, vinculados al grupo de la misma fila. La séptima fila no contiene poses clasificadas como personaje, pero sus seis recursos suplementarios también se exportan. No se descarta ninguna de las 116 regiones detectadas.
-
-| Grupo | Fotogramas | Recursos suplementarios | Regiones |
-|---|---:|---:|---:|
-| group-01 | 11 | 1 | 12 |
-| group-02 | 14 | 6 | 20 |
-| group-03 | 16 | 3 | 18 |
-| group-04 | 16 | 1 | 17 |
-| group-05 | 20 | 2 | 20 |
-| group-06 | 10 | 13 | 23 |
-| group-07 | 0 | 6 | 6 |
-| **Total** | **87** | **32** | **116** |
-
-**Revisión manual:** las 12 regiones que el detector considera compuestas (`varias-poses`) o dudosas (`posible-personaje`) se conservan identificadas. Las dos cajas que contenían varios personajes se dividieron manualmente con coordenadas explícitas; las demás siguen en su celda original con su marca de revisión. Ninguna región se omite.
-
-Orange y Violet utilizan las mismas regiones, orden y dimensiones de celda. Solo cambia la paleta.
-
+La hoja compuesta Pink se conserva en `references/axem-pink/axem-pink-spritesheet.png`. El proyecto ya no mantiene una hoja de animación separada ni un índice de regiones femenino.
 
 ## Acciones añadidas para combate y carrera
 
 El proceso de preparación también genera para Orange y Violet los GIF `guard.gif`,
 `guard-hit.gif`, `roll.gif`, `land.gif`, `special-attack.gif`, `victory.gif`
-y `ko.gif`. Se construyen desde secuencias originales del atlas masculino: guardia
+y `ko.gif`. Se construyen desde recortes masculinos versionados: guardia
 y reacción al bloqueo desde la pose de combate, rodada desde el dash, aterrizaje
 desde los últimos cuadros del salto, especial desde la secuencia del hacha, y
 victoria/KO desde las poses de combate, reposo y derrota disponibles.
@@ -487,7 +341,7 @@ Los masters de `references/` son inmutables y contienen únicamente las referenc
 
 - Los artworks de personaje conservan el lienzo de su master. Orange mantiene la escala de su upload original; el derivado Red se escala proporcionalmente para igualar la altura visible de Orange mediante nearest-neighbor, con centrado horizontal y pies alineados. Violet mantiene la normalización de su familia. Nunca se aplica deformación ni recorte automático.
 - Las texturas de combate, retratos y GIF se generan con sus medidas de categoría.
-- Los atlas mantienen sus dimensiones y su distribución irregular. Las secuencias usan las celdas declaradas en sus respectivos `index.json`; no se inventa una cuadrícula global.
+- Las hojas compuestas de referencia conservan sus dimensiones originales. Las animaciones usan las celdas declaradas en sus `index.json`, y el mapa de recortes masculino permanece versionado.
 - Armas, objetos, efectos, recursos suplementarios, fondos y tilesets conservan sus dimensiones nativas. Los fondos pueden tener proporciones distintas según la escena.
 
 `standardize-assets.mjs` aplica el padding transparente permitido y `validate-assets.mjs` comprueba los masters, las variantes Orange/Violet, los retratos, las texturas, los GIF y las tiras de secuencia. Ambos se ejecutan automáticamente en `npm test`, `npm run build` y `npm run prepare:sprites`.

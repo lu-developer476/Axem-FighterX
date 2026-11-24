@@ -3,8 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { removeSpriteBackground } from '../src/infrastructure/graphics/removeSpriteBackground.js';
-import { layoutSequence } from '../src/infrastructure/assets/atlasFrameDetection.js';
-import { ATLAS_SEQUENCE_ROLES, ATLAS_SOURCES } from '../src/infrastructure/assets/atlasLayoutRules.js';
+import { layoutSequence } from '../src/infrastructure/assets/spriteFrameLayout.js';
+import { MALE_BACKGROUND_TOLERANCE, SPRITE_SEQUENCE_ROLES } from '../src/infrastructure/assets/spriteSequenceRoles.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = (...parts) => path.join(ROOT, 'art', 'source', ...parts);
@@ -27,7 +27,7 @@ const SEQUENCE_GIF_FEET_MARGIN = 4;
 const STANDARD_STANDING_HEIGHT = 78;
 const MENU_SIZE = Object.freeze({ width: ASSET_STANDARDS.categories.menuPortrait.width, height: ASSET_STANDARDS.categories.menuPortrait.height });
 const TRANSPARENT = Object.freeze({ r: 0, g: 0, b: 0, alpha: 0 });
-const ATLAS_FRAMES_PATH = path.join(ROOT, 'src', 'infrastructure', 'assets', 'atlasFrames.json');
+const SPRITE_FRAME_INDEX_PATH = path.join(ROOT, 'src', 'infrastructure', 'assets', 'spriteFrameIndex.json');
 
 
 async function writeResult(gender, color, relativePath, buffer) {
@@ -71,7 +71,7 @@ async function writeMaleSequences(color, recoloredSheet, groups) {
     await writeResult('male', color, path.join('sequences', group.id + '.png'), strip);
     index.push({
       id: group.id,
-      role: ATLAS_SEQUENCE_ROLES.male[group.id] ?? null,
+      role: SPRITE_SEQUENCE_ROLES.male[group.id] ?? null,
       file: group.id + '.png',
       frameCount: group.frames.length,
       cellWidth,
@@ -646,7 +646,7 @@ async function readRawGifFrames(file) {
       width: decoded.info.width,
       height: decoded.info.height,
     }, {
-      tolerance: ATLAS_SOURCES.male.tolerance,
+      tolerance: MALE_BACKGROUND_TOLERANCE,
       minBorderCoverage: 0.08,
     });
     frames.push(await sharp(Buffer.from(pixels), {
@@ -1416,41 +1416,6 @@ async function keyFemaleReferenceBackground(inputPath) {
   }).png().toBuffer();
 }
 
-async function normalizeFemaleSpriteScale(imageBuffer) {
-  const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
-  const femaleRegions = manifest.female.regions.filter((region) => region.kind === 'character');
-  const maleRegions = manifest.male.groups.flatMap((group) => group.frames);
-  const median = (values) => {
-    const sorted = [...values].sort((a, b) => a - b);
-    return sorted[Math.floor(sorted.length / 2)];
-  };
-  const targetHeight = median(maleRegions.map((region) => region.h));
-  const sourceHeight = median(femaleRegions.map((region) => region.h));
-  if (!targetHeight || !sourceHeight || !femaleRegions.length) {
-    throw new Error('No se pudo calcular la escala de personajes del atlas.');
-  }
-  const scale = targetHeight / sourceHeight;
-  const { width, height } = await sharp(imageBuffer).metadata();
-  const overlays = await Promise.all(femaleRegions.map(async (region) => {
-    const scaledWidth = Math.max(1, Math.round(region.w * scale));
-    const scaledHeight = Math.max(1, Math.round(region.h * scale));
-    const left = Math.max(0, Math.round(region.x + (region.w - scaledWidth) / 2));
-    const top = Math.max(0, Math.round(region.y + (region.h - scaledHeight) / 2));
-    return {
-      input: await sharp(imageBuffer)
-        .extract({ left: region.x, top: region.y, width: region.w, height: region.h })
-        .resize(scaledWidth, scaledHeight, { fit: 'fill', kernel: 'nearest' })
-        .png()
-        .toBuffer(),
-      left,
-      top,
-    };
-  }));
-  return sharp({
-    create: { width, height, channels: 4, background: TRANSPARENT },
-  }).composite(overlays).png().toBuffer();
-}
-
 async function buildGender(gender, allowedColors) {
   for (const [color, targetHue] of Object.entries(COLORS).filter(([color]) => allowedColors.includes(color))) {
     const parts = [];
@@ -1458,10 +1423,18 @@ async function buildGender(gender, allowedColors) {
     let canonicalPosePath;
 
     if (gender === 'male') {
-      // Use the actual checked-in Axem Red reference; legacy preview filenames are absent.
-      const redReference = SOURCE('sprites', 'references', 'axem-red', 'axem-red-animation-atlas.png');
-      // El atlas Red trae ruido de compresión: con tolerancia 42 queda un halo verdoso.
-      parts.push(await recolorAndKey(redReference, gender, targetHue, ATLAS_SOURCES.male.tolerance));
+      // The versioned, transparent Orange sheet replaces the removed Red animation atlas.
+      // Its dimensions and crop coordinates are kept in spriteFrameIndex.json.
+      const redReference = RESULTS('male', 'orange', 'spritesheet.png');
+      const redMetadata = await sharp(redReference, { failOn: 'error' }).metadata();
+      const frameIndex = JSON.parse(await fs.readFile(SPRITE_FRAME_INDEX_PATH, 'utf8'));
+      if (redMetadata.width !== frameIndex.male.width || redMetadata.height !== frameIndex.male.height) {
+        throw new Error(
+          'La hoja procesada Orange debe medir ' + frameIndex.male.width + 'x' + frameIndex.male.height +
+          ' para usar el mapa de recortes versionado.',
+        );
+      }
+      parts.push(await fs.readFile(redReference));
 
       const run = await extractGifFrames(SOURCE('sprites', 'references', 'axem-red', 'axem-ranger-run.gif'), gender, targetHue);
       const bike = await extractGifFrames(SOURCE('sprites', 'references', 'axem-red', 'axem-ranger-bike.gif'), gender, targetHue);
@@ -1473,9 +1446,7 @@ async function buildGender(gender, allowedColors) {
       await writeMaleAnimation(run.frames, color, 'run', run.delay, run.loop);
       await writeMaleAnimation(bike.frames, color, 'bike', bike.delay, bike.loop);
       if (color === 'orange') {
-        const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
-        // Solo Orange tiene los grupos auxiliares completos para crear las acciones de combate.
-        const sequenceIndex = await writeMaleSequences(color, parts[0], manifest.male.groups);
+        const sequenceIndex = await writeMaleSequences(color, parts[0], frameIndex.male.groups);
         await buildMaleActionGifs(color, sequenceIndex);
         // charge/guard/roll/KO ya tienen GIF maestros versionados; no se reconstruyen
         // desde tiras auxiliares antiguas que fueron retiradas del repositorio.
@@ -1489,8 +1460,8 @@ async function buildGender(gender, allowedColors) {
         'axem-pink-pose.png',
       ];
       // Publica también una copia Pink normalizada, sin alterar la referencia original.
-      const pinkReferenceSheet = await normalizeFemaleSpriteScale(
-        await keyFemaleReferenceBackground(path.join(pinkReference, 'axem-pink-spritesheet.png')),
+      const pinkReferenceSheet = await keyFemaleReferenceBackground(
+        path.join(pinkReference, 'axem-pink-spritesheet.png'),
       );
       await writeResult(gender, color, 'spritesheet.png', pinkReferenceSheet);
       // Las poses canónicas femeninas viven dentro de results/female/<color>/.
@@ -1527,9 +1498,6 @@ async function buildGender(gender, allowedColors) {
             targetHue,
           );
           corrected = await harmonizeFemalePalette(recolored);
-          if (file === 'axem-pink-spritesheet.png') {
-            corrected = await normalizeFemaleSpriteScale(corrected);
-          }
         }
 
         parts.push(corrected);

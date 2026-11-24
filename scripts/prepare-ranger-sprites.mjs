@@ -20,6 +20,7 @@ const PALETTE_SOURCES = Object.freeze({
 // Así el resultado mejorado queda versionable y no depende de un PNG congelado.
 const BASE_SIZE = Object.freeze({ width: ASSET_STANDARDS.categories.combatTexture.width, height: ASSET_STANDARDS.categories.combatTexture.height });
 const ACTION_GIF_SIZE = Object.freeze({ width: ASSET_STANDARDS.categories.actionGif.width, height: ASSET_STANDARDS.categories.actionGif.height });
+const FRAME_DELAY_MS = 100;
 const SEQUENCE_GIF_SCALE = 1.75;
 const SEQUENCE_GIF_FEET_MARGIN = 4;
 /** Altura visible estándar del personaje de pie, común a todas las animaciones masculinas. */
@@ -27,12 +28,7 @@ const STANDARD_STANDING_HEIGHT = 78;
 const MENU_SIZE = Object.freeze({ width: ASSET_STANDARDS.categories.menuPortrait.width, height: ASSET_STANDARDS.categories.menuPortrait.height });
 const TRANSPARENT = Object.freeze({ r: 0, g: 0, b: 0, alpha: 0 });
 const ATLAS_FRAMES_PATH = path.join(ROOT, 'src', 'infrastructure', 'assets', 'atlasFrames.json');
-const KI_AURA_SHEET_PATH = path.join(
-  ROOT, 'art', 'source', 'effects', 'dragon-ball-style', 'super-saiyan-aura.webp',
-);
-const KI_AURA_GRID = Object.freeze({ columns: 2, rows: 2, cellWidth: 64, cellHeight: 64 });
-const FRAME_DELAY_MS = 100;
-const KI_AURA_HOLD_DELAY = FRAME_DELAY_MS;
+
 
 async function writeResult(gender, color, relativePath, buffer) {
   const target = path.join(RESULTS(gender, color), relativePath);
@@ -921,8 +917,8 @@ async function extractMaleStripFrames(color, groupId, frameCount, directory = 's
   return frames;
 }
 
-async function normalizeMaleActionFrame(input, addAura = false, targetHeight = null, options = {}) {
-  const { targetScale = null, auraColor = { r: 195, g: 70, b: 255 } } = options;
+async function normalizeMaleActionFrame(input, targetHeight = null, options = {}) {
+  const { targetScale = null } = options;
   const trimmed = await sharp(input)
     .trim({ background: TRANSPARENT, threshold: 1 })
     .png()
@@ -947,19 +943,7 @@ async function normalizeMaleActionFrame(input, addAura = false, targetHeight = n
   const left = Math.round((ACTION_GIF_SIZE.width - width) / 2);
   const top = ACTION_GIF_SIZE.height - SEQUENCE_GIF_FEET_MARGIN - height;
 
-  const layers = [];
-  if (addAura) {
-    // Amplía y difumina la silueta para que el aura violeta se distinga
-    // claramente del personaje incluso con la paleta limitada del formato GIF.
-    const glow = await sharp(sprite)
-      .resize({ width: width + 14, height: height + 14, kernel: 'nearest' })
-      .blur(7)
-      .tint(auraColor)
-      .png()
-      .toBuffer();
-    layers.push({ input: glow, left: left - 7, top: top - 7 });
-  }
-  layers.push({ input: sprite, left, top });
+  const layers = [{ input: sprite, left, top }];
 
   return sharp({
     create: {
@@ -974,66 +958,6 @@ async function normalizeMaleActionFrame(input, addAura = false, targetHeight = n
     .toBuffer();
 }
 
-/**
- * Compone el aura dorada Super Saiyan detrás de la última pose masculina de group-09.
- * La pose original se conserva y se mantiene visible durante el cierre de carga.
- */
-async function buildMaleKiAuraHoldFrames(sourceFrame) {
-  const metadata = await sharp(KI_AURA_SHEET_PATH).metadata();
-  const { columns, rows, cellWidth, cellHeight } = KI_AURA_GRID;
-  if (metadata.width !== columns * cellWidth || metadata.height !== rows * cellHeight) {
-    throw new Error('La hoja de aura Super Saiyan debe medir 128×128 px en una cuadrícula 2×2.');
-  }
-  if (!metadata.hasAlpha) {
-    throw new Error('La hoja de aura Super Saiyan debe conservar transparencia.');
-  }
-
-  const heldPose = await normalizeMaleActionFrame(
-    sourceFrame.input,
-    false,
-    STANDARD_STANDING_HEIGHT,
-  );
-  const frames = [];
-
-  for (let frameIndex = 0; frameIndex < columns * rows; frameIndex += 1) {
-    const aura = await sharp(KI_AURA_SHEET_PATH)
-      .extract({
-        left: (frameIndex % columns) * cellWidth,
-        top: Math.floor(frameIndex / columns) * cellHeight,
-        width: cellWidth,
-        height: cellHeight,
-      })
-      .png()
-      .toBuffer();
-
-    const heldKiFrame = await sharp({
-      create: {
-        width: ACTION_GIF_SIZE.width,
-        height: ACTION_GIF_SIZE.height,
-        channels: 4,
-        background: TRANSPARENT,
-      },
-    })
-      .composite([
-        {
-          input: await sharp(aura)
-            .resize(112, 112, { fit: 'fill', kernel: 'nearest' })
-            .extract({ left: 0, top: 8, width: 112, height: 100 })
-            .png()
-            .toBuffer(),
-          left: 19,
-          top: 0,
-        },
-        { input: heldPose, left: 0, top: 0 },
-      ])
-      .png()
-      .toBuffer();
-
-    frames.push(heldKiFrame);
-  }
-
-  return frames;
-}
 
 
 async function readMaleGifFrames(color, filename) {
@@ -1078,7 +1002,7 @@ async function writeMaleActionGif(color, filename, frames, delays) {
 
 /** Completa las secuencias adicionales propias de Axem Violeta. */
 async function writeMaleDefeatedPose(color, frame, targetScale = null) {
-  const defeated = await normalizeMaleActionFrame(frame.input, false, null, { targetScale });
+  const defeated = await normalizeMaleActionFrame(frame.input, null, { targetScale });
   await writeResult('male', color, 'defeated.png', defeated);
   const generatedPath = path.join(GENERATED, 'axem-' + color + '-defeated.png');
   await fs.writeFile(generatedPath, defeated);
@@ -1146,7 +1070,7 @@ async function buildMaleSharedExtraGifs(color) {
 
   const teleport = await readMaleGifFrames(color, 'teleport.gif');
   const teleportTail = await Promise.all(
-    teleportAppend.map((frame) => normalizeMaleActionFrame(frame.input, false, STANDARD_STANDING_HEIGHT)),
+    teleportAppend.map((frame) => normalizeMaleActionFrame(frame.input, STANDARD_STANDING_HEIGHT)),
   );
   await writeMaleActionGif(
     color,
@@ -1156,19 +1080,9 @@ async function buildMaleSharedExtraGifs(color) {
   );
 
   const charged = await Promise.all(
-    chargeFrames.map((frame) => normalizeMaleActionFrame(frame.input, false, STANDARD_STANDING_HEIGHT)),
+    chargeFrames.map((frame) => normalizeMaleActionFrame(frame.input, STANDARD_STANDING_HEIGHT)),
   );
-  const group09 = await extractMaleStripFrames(color, 'group-09', 5);
-  const heldKiFrames = await buildMaleKiAuraHoldFrames(group09[group09.length - 1]);
-  await writeMaleActionGif(
-    color,
-    'charge',
-    [...charged, ...heldKiFrames],
-    [
-      ...charged.map(() => 100),
-      ...heldKiFrames.map(() => KI_AURA_HOLD_DELAY),
-    ],
-  );
+  await writeMaleActionGif(color, 'charge', charged, charged.map(() => 100));
 
   await buildMaleIdleGif(color);
   await buildMaleCombatEnhancementGifs(color);
@@ -1184,7 +1098,7 @@ async function buildMaleIdleGif(color) {
     ...await extractMaleStripFrames(color, 'group-19', 5),
   ];
   const idle = await Promise.all(
-    idleFrames.map((frame) => normalizeMaleActionFrame(frame.input, false, STANDARD_STANDING_HEIGHT)),
+    idleFrames.map((frame) => normalizeMaleActionFrame(frame.input, STANDARD_STANDING_HEIGHT)),
   );
   await writeMaleActionGif(color, 'idle', idle, idle.map(() => 140));
 }

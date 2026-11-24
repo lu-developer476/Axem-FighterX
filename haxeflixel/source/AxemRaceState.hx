@@ -86,9 +86,8 @@ class AxemRaceState extends RaceBaseState
     function addPickup(distance:Float, kind:String, lane:Int):Void
     {
         var pickup = new FlxSprite(0, 0);
-        pickup.loadGraphic(Assets.getBitmapData(kind == "boost"
-            ? "assets/pickups/axem-boost.png" : "assets/pickups/axem-slow.png"));
-        pickup.setGraphicSize(18, 18);
+        // Iconos geométricos procedurales: el minijuego ya no depende de sprites de pickup externos.
+        pickup.makeGraphic(18, 18, kind == "boost" ? 0xFFFFB347 : 0xFF70DDFF);
         pickup.updateHitbox();
         pickup.antialiasing = false;
         pickup.visible = false;

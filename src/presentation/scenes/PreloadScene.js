@@ -11,13 +11,9 @@ import {
 import { AVAILABLE_RANGER_VARIANTS } from '../../domain/rangers/rangerVariants.js';
 import { GIF_ACTIONS, GIF_CELL } from '../../infrastructure/assets/characterAnimationData.js';
 import { registerCharacterAnimations } from '../animation/registerCharacterAnimations.js';
-import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { STAGE_MAP_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { createStageAssetTextures } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
-import whitePuffAtlasUrl from '../../../art/source/effects/combat/kenney-smoke-particles/white-puff-atlas.png';
-import axemRaceBoostPickupUrl from '../../../art/source/pickups/axem-boost.png?url';
-import axemRaceSlowPickupUrl from '../../../art/source/pickups/axem-slow.png?url';
 import { registerFxAnimations } from '../animation/registerFxAnimations.js';
 
 export class PreloadScene extends Phaser.Scene {
@@ -73,13 +69,6 @@ export class PreloadScene extends Phaser.Scene {
     }
     this.load.image('title-art', import.meta.env.BASE_URL + 'generated/title.png');
     Object.values(STAGE_MAP_ASSETS).forEach(({ key, url }) => this.load.image(key, url));
-    this.load.image('axem-pickup-boost', axemRaceBoostPickupUrl);
-    this.load.image('axem-pickup-slow', axemRaceSlowPickupUrl);
-    Object.values(KENNEY_FX).forEach(({ key, url }) => this.load.image(key, url));
-    this.load.spritesheet('kenney-white-puff', whitePuffAtlasUrl, {
-      frameWidth: 381,
-      frameHeight: 346,
-    });
   }
 
   create() {

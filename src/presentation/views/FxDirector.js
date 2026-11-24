@@ -3,7 +3,6 @@ import { ARENA } from '../../domain/arena/arena.js';
 import { FighterState, TIMINGS } from '../../domain/entities/FighterState.js';
 import { POWER_UPS, PICKUP_TYPES } from '../../domain/entities/PowerUpPickup.js';
 import { FX_PARTICLES, fxAnimKey, fxFrameKey } from '../../infrastructure/graphics/FxTextureFactory.js';
-import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
 
 const FX_DEPTH = 500;
 const DUST_INTERVAL_MS = 190;
@@ -90,7 +89,7 @@ export class FxDirector {
         if (elapsed >= DASH_DUST_INTERVAL_MS) {
           const x = fighter.position.x - fighter.facing * 17;
           this.#play('dust', x, fighter.position.y - 5, { scale: 1.1, depth: FX_DEPTH - 10 });
-          this.#playWhitePuff(x, fighter.position.y - 7, 0.12, 370);
+          this.#play('smoke', x, fighter.position.y - 7, { scale: 0.45, depth: FX_DEPTH - 130 });
           this.#scatter(x, fighter.position.y - 4, 2, FX_PARTICLES.rubble, 0xc5b49b, -fighter.facing);
           this.dashTimers.set(fighter.combatantId, 0);
         } else this.dashTimers.set(fighter.combatantId, elapsed);
@@ -122,7 +121,6 @@ export class FxDirector {
         originX: 0,
         depth: FX_DEPTH + 5,
       });
-      this.#assetPop('slash', x, y, { tint: 0xc7b6ff, scale: 0.82, duration: 360, depth: FX_DEPTH + 6 });
     });
   }
 
@@ -131,7 +129,6 @@ export class FxDirector {
     this.#play('burst', event.x, event.y, { scale: 0.72, depth: FX_DEPTH + 1 });
     this.#play('spark', event.x, event.y, { scale: 1.3, depth: FX_DEPTH + 2 });
     this.#play('electric', event.x, event.y, { scale: 0.82, flipX: event.facing < 0, depth: FX_DEPTH + 3 });
-    this.#assetPop('spark', event.x, event.y, { tint: 0xffd48a, scale: 0.9 });
     this.#debris(event.x, event.y, 9, event.facing, SPARK_COLORS);
     this.#scatter(event.x, event.y, 5, FX_PARTICLES.rubble, 0xc1b7a8, event.facing);
     this.#floatText(event.x, event.y - 18, `-${event.damage}`, '#ffe066');
@@ -142,9 +139,6 @@ export class FxDirector {
     const { x, y } = event;
     this.#play('explosion', x, y, { scale: 1.7 });
     this.#play('burst', x, y, { scale: 1.55, depth: FX_DEPTH + 2 });
-    this.#assetPop('flame', x, y - 4, { tint: 0xff9a52, scale: 1.1 });
-    this.#assetPop('smoke', x, y - 8, { tint: 0xb9b7c5, scale: 1.3, depth: FX_DEPTH - 1, duration: 780 });
-    this.#leaveScorch(x, ARENA.groundY - 3);
     this.#play('shockwave', x, y + 18, { scale: 1.6 });
     [[-18, -10, 90], [16, 8, 170], [-6, 20, 250]].forEach(([dx, dy, delay]) => {
       this.scene.time.delayedCall(delay, () => this.#play('explosion', x + dx, y + dy, { scale: 1 }));
@@ -199,7 +193,6 @@ export class FxDirector {
     if (!definition || !texture) return;
     const color = `#${definition.color.toString(16).padStart(6, '0')}`;
     if (event.powerUpType === PICKUP_TYPES.FURY) {
-      this.#assetPop('magic', event.x, event.y - 4, { tint: definition.color, scale: 1.25, duration: 760 });
     }
     this.#play('healRing', event.x, event.y + 8, { scale: 1.45 });
 
@@ -243,7 +236,6 @@ export class FxDirector {
   #dashStart(event) {
     const groundY = event.groundY ?? ARENA.groundY;
     this.#play('dashTrail', event.x - event.facing * 12, groundY - 9, { scale: 1.05, flipX: event.facing < 0, depth: FX_DEPTH + 1 });
-    this.#assetPop('dirt', event.x - event.facing * 12, groundY - 6, { tint: 0xc8b99c, scale: 0.8, duration: 460, depth: FX_DEPTH - 10 });
     this.#play('dust', event.x - event.facing * 10, groundY - 5, { scale: 1.45, depth: FX_DEPTH - 10 });
     this.#scatter(event.x, groundY - 4, 7, FX_PARTICLES.rubble, 0xb7a58e, -event.facing);
   }
@@ -251,7 +243,6 @@ export class FxDirector {
   #land(event) {
     const groundY = event.groundY ?? ARENA.groundY;
     this.#play('landing', event.x, groundY - 5, { scale: 1.1, depth: FX_DEPTH - 8 });
-    this.#assetPop('dirt', event.x, groundY - 6, { tint: 0xb9a78b, scale: 0.72, depth: FX_DEPTH - 10, duration: 440 });
     this.#play('dust', event.x, groundY - 6, { scale: 1.2, depth: FX_DEPTH - 10 });
     this.#debris(event.x, groundY - 4, 5, event.facing, ['#d8c7a4', '#9d8b70', '#f0dfb8']);
   }
@@ -290,59 +281,6 @@ export class FxDirector {
     sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => sprite.destroy());
     sprite.play(fxAnimKey(name));
     return sprite;
-  }
-
-  /** Reproduce el atlas animado de humo blanco y limpia el sprite al finalizar. */
-  #playWhitePuff(x, y, scale = 0.12, depth = FX_DEPTH - 130) {
-    const textureKey = 'kenney-white-puff';
-    const animationKey = 'kenney-white-puff-animation';
-    if (!this.scene.textures.exists(textureKey) || !this.scene.anims.exists(animationKey)) return null;
-
-    const sprite = this.scene.add
-      .sprite(Math.round(x), Math.round(y), textureKey)
-      .setScale(scale)
-      .setAlpha(0.88)
-      .setDepth(depth);
-    sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => sprite.destroy());
-    sprite.play(animationKey);
-    return sprite;
-  }
-
-  #assetPop(name, x, y, { tint = 0xffffff, scale = 1, duration = 560, depth = FX_DEPTH, flipX = false } = {}) {
-    const asset = KENNEY_FX[name];
-    if (!asset || !this.scene.textures.exists(asset.key)) return null;
-    const sprite = this.scene.add.image(Math.round(x), Math.round(y), asset.key)
-      .setTint(tint)
-      .setFlipX(flipX)
-      .setScale(scale * 0.32)
-      .setAlpha(0.94)
-      .setDepth(depth);
-    this.scene.tweens.add({
-      targets: sprite,
-      scale: scale,
-      alpha: 0,
-      angle: Phaser.Math.Between(-18, 18),
-      duration,
-      ease: 'Quad.easeOut',
-      onComplete: () => sprite.destroy(),
-    });
-    return sprite;
-  }
-
-  #leaveScorch(x, y) {
-    const asset = KENNEY_FX.scorch;
-    if (!this.scene.textures.exists(asset.key)) return;
-    const mark = this.scene.add.image(Math.round(x), Math.round(y), asset.key)
-      .setTint(0x604d67)
-      .setAlpha(0.38)
-      .setScale(0.48)
-      .setDepth(8);
-    this.scene.time.delayedCall(6500, () => this.scene.tweens.add({
-      targets: mark,
-      alpha: 0,
-      duration: 800,
-      onComplete: () => mark.destroy(),
-    }));
   }
 
   #floatText(x, y, value, color) {

@@ -1,7 +1,6 @@
 import { ARENA } from '../../domain/arena/arena.js';
 import { PICKUP_TYPES } from '../../domain/entities/PowerUpPickup.js';
-import { FX_PARTICLES } from '../../infrastructure/graphics/FxTextureFactory.js';
-import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
+import { FX_PARTICLES, fxFrameKey } from '../../infrastructure/graphics/FxTextureFactory.js';
 
 const PICKUP_STYLE = {
   [PICKUP_TYPES.HEALTH]: { texture: FX_PARTICLES.heart, color: 0xff668d, scale: 2.1 },
@@ -50,7 +49,7 @@ export class PickupView {
     if (!style) return;
     this.type = type;
     this.aura = this.scene.add
-      .image(0, 0, KENNEY_FX.magic.key)
+      .image(0, 0, fxFrameKey('healRing', 0))
       .setScale(2.1)
       .setTint(style.color)
       .setAlpha(0.34)

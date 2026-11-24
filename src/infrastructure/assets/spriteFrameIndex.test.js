@@ -62,8 +62,12 @@ describe('mapa versionado de recortes masculinos', () => {
       expect(frame.y).toBeGreaterThanOrEqual(0);
       expect(frame.x + frame.w).toBeLessThanOrEqual(width);
       expect(frame.y + frame.h).toBeLessThanOrEqual(height);
-      for (const other of frames.slice(index + 1)) expect(overlaps(frame, other)).toBe(false);
-      for (const zone of excludedBounds) expect(overlaps(frame, zone)).toBe(false);
+      for (const other of frames.slice(index + 1)) {
+        expect(overlaps(frame, other), JSON.stringify({ frame, other })).toBe(false);
+      }
+      for (const zone of excludedBounds) {
+        expect(overlaps(frame, zone), JSON.stringify({ frame, zone })).toBe(false);
+      }
     });
   });
 });

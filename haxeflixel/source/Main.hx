@@ -10,7 +10,7 @@ class Main extends FlxGame
 {
     public function new()
     {
-        super(480, 270, initialState(), 1, 60, 60, true);
+        super(480, 270, initialState(), 60, 60, true);
     }
 
     static function initialState():Class<FlxState>

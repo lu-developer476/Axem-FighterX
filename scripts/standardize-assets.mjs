@@ -122,7 +122,9 @@ async function main() {
 
   for (const [gender, family] of Object.entries(artwork.families)) {
     await assertMasterCanvas(family.reference, family.width, family.height, 'Master Super Axem ' + gender);
-    if (!(gender === 'male' && family.result.toLowerCase().endsWith('/male/orange/super-axem-ranger-orange.png'))) {
+    // Solo se estandarizan resultados de artwork publicados. Pink se conserva
+    // como referencia fuente, pero ya no existe una variante femenina jugable.
+    if (family.result) {
       changed += Number(await ensureCanvas(family.result, family.width, family.height, 'Artwork Super Axem ' + gender));
     }
     changed += Number(await ensureCanvas(family.preparedSource, family.width, family.height, 'Fuente preparada Super Axem ' + gender));

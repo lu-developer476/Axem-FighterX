@@ -73,7 +73,9 @@ async function validateArtwork() {
   for (const [gender, family] of Object.entries(standards.categories.characterArtwork.families)) {
     const dimensions = { width: family.width, height: family.height };
     await validatePng(family.reference, dimensions, 'Master Super Axem ' + gender, false);
-    await validatePng(family.result, dimensions, 'Artwork Super Axem ' + gender, true);
+    if (family.result) {
+      await validatePng(family.result, dimensions, 'Artwork Super Axem ' + gender, true);
+    }
     await validatePng(family.preparedSource, dimensions, 'Fuente preparada Super Axem ' + gender, true);
     await assertVisualBoundsMatch(family);
   }

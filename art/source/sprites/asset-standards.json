@@ -29,7 +29,6 @@
         },
         "female": {
           "reference": "art/source/sprites/references/axem-pink/super-axem-pink.png",
-          "result": "art/source/sprites/results/female/violet/super-axem-ranger-violet.png",
           "preparedSource": "public/generated/super-axem-source-female.png",
           "width": 745,
           "height": 1372
@@ -41,8 +40,7 @@
       "height": 83,
       "alphaRequired": true,
       "outputs": [
-        "public/generated/ranger-male-orange.png",
-        "public/generated/ranger-female-violet.png"
+        "public/generated/ranger-male-orange.png"
       ],
       "feetY": 27
     },
@@ -51,8 +49,7 @@
       "height": 150,
       "alphaRequired": true,
       "outputs": [
-        "public/generated/menu-ranger-male-orange.png",
-        "public/generated/menu-ranger-female-violet.png"
+        "public/generated/menu-ranger-male-orange.png"
       ]
     },
     "actionGif": {
@@ -81,7 +78,7 @@
         },
         {
           "reference": "art/source/sprites/references/axem-pink/axem-pink-spritesheet.png",
-          "result": "art/source/sprites/results/female/violet/spritesheet.png"
+          "result": "art/source/sprites/results/female/pink/spritesheet.png"
         }
       ]
     },

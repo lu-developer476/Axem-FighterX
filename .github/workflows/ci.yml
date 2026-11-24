@@ -119,16 +119,18 @@ jobs:
       - name: Esperar a que termine la publicación automática de Jekyll
         env:
           GH_TOKEN: ${{ github.token }}
-          EXPECTED_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
 
+          # El paso de sprites puede crear un commit auxiliar en main durante este mismo workflow.
+          # Por eso se consulta el SHA real de la rama, no el SHA original del evento.
+          expected_sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq '.sha')"
           legacy_run=""
           # El workflow generado de Pages puede aparecer unos segundos después del push.
           # Esta espera no reserva el entorno github-pages: deja libre el despliegue de Jekyll.
           for attempt in $(seq 1 12); do
             runs="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?branch=main&per_page=100")"
-            legacy_run="$(jq -r --arg sha "$EXPECTED_SHA" '
+            legacy_run="$(jq -r --arg sha "$expected_sha" '
               [.workflow_runs[]
                 | select(.head_sha == $sha and .path == "dynamic/pages/pages-build-deployment")]
               | max_by(.created_at)
@@ -143,7 +145,7 @@ jobs:
             exit 0
           fi
 
-          echo "Esperando el workflow Jekyll $legacy_run para el commit $EXPECTED_SHA."
+          echo "Esperando el workflow Jekyll $legacy_run para el commit $expected_sha."
           for attempt in $(seq 1 120); do
             run_state="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/$legacy_run")"
             status="$(jq -r '.status' <<< "$run_state")"

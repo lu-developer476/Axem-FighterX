@@ -9,12 +9,12 @@ const ACTION_BY_STATE = Object.freeze({
   dodge: 'roll',
   block: 'guard',
   'block-hit': 'hurt-combo',
-  attack: 'double-axe',
+  attack: 'attack',
   'special-attack': 'charge',
   hurt: 'hurt-combo',
   land: 'jump',
   teleport: 'teleport',
-  victory: 'battle-pose',
+  victory: 'victory',
   ko: 'ko',
 });
 
@@ -58,7 +58,7 @@ export class FighterAnimator {
     this.sprite.setTexture(this.fallbackTexture);
     const action = ACTION_BY_STATE[state];
     if (!action) return;
-    const originY = action === 'run' || action === 'double-axe' ? 1 : GIF_ORIGIN_Y;
+    const originY = action === 'run' ? 1 : GIF_ORIGIN_Y;
     this.sprite.setOrigin?.(0.5, originY);
     const key = maleAnimationKey(this.rangerId, action);
     if (this.animations?.exists?.(key)) this.sprite.play(key, true);

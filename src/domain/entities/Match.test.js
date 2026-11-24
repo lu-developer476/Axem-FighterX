@@ -7,8 +7,8 @@ import { PICKUP_TYPES } from './PowerUpPickup.js';
 
 const idle = { x: 0, y: 0, z: 0, attack: false, teleport: false };
 const make = ({ ax = 300, bx = 340, rng = () => 0, arena = ARENA, hazards = null } = {}) => {
-  const a = createFighter('violet', { x: ax, y: ARENA.groundY }, 1);
-  const b = createFighter('orange', { x: bx, y: ARENA.groundY }, -1);
+  const a = createFighter('orange', { x: ax, y: ARENA.groundY }, 1, 'male');
+  const b = createFighter('orange', { x: bx, y: ARENA.groundY }, -1, 'male');
   return new Match({ fighters: [a, b], rng, arena, hazards });
 };
 const advance = (match, intents, ms, step = 16) => {
@@ -82,8 +82,8 @@ describe('Match: golpes', () => {
 describe('Match: KO', () => {
   it('mantiene ganadores inequívocos cuando se construye con dos instancias del mismo Axem', () => {
     const fighters = [
-      createFighter('violet', { x: 300, y: ARENA.groundY }, 1, 'female'),
-      createFighter('violet', { x: 340, y: ARENA.groundY }, -1, 'female'),
+      createFighter('orange', { x: 300, y: ARENA.groundY }, 1, 'male'),
+      createFighter('orange', { x: 340, y: ARENA.groundY }, -1, 'male'),
     ];
     const match = new Match({ fighters, rng: () => 0.999 });
 

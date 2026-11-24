@@ -19,6 +19,9 @@ describe('FighterAnimator con secuencias de Axem Red recoloreadas', () => {
     ];
     animator.update(fighter('walk'));
     expect(sprite.setOrigin).toHaveBeenLastCalledWith(0.5, 1);
+    // La llamada inicial comprueba la orientación vertical del estado walk;
+    // la secuencia de estados se verifica desde un registro limpio.
+    sprite.play.mockClear();
     for (const [state] of states) animator.update(fighter(state));
     expect(sprite.play.mock.calls.map(([key]) => key)).toEqual(states.map(([, key]) => key));
     expect(sprite.setTexture).toHaveBeenCalledWith('ranger-male-orange');

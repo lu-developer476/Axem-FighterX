@@ -9,7 +9,7 @@ import { menuSpriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playMenuMusic } from '../../infrastructure/audio/GameMusic.js';
 import { contentWidth, getStackedButtonPositions, insetSize, mapPanelY, UI_SPACING } from '../views/uiLayout.js';
 
-const RANGER_ORDER = [RANGER_IDS.ORANGE, RANGER_IDS.VIOLET];
+const RANGER_ORDER = [RANGER_IDS.ORANGE];
 const readableFontSize = (value = '10px') => {
   const size = Number.parseFloat(value);
   return Number.isFinite(size) ? Math.max(8, Math.round(size * 1.25)) + 'px' : value;
@@ -176,31 +176,12 @@ export class MenuScene extends Phaser.Scene {
       });
     };
 
-    const orangeX = GAME_WIDTH / 2 - 110;
-    const violetX = GAME_WIDTH / 2 + 110;
+    const orangeX = GAME_WIDTH / 2;
     const baseline = 154;
     addAura(orangeX, baseline, 0xff8b3d);
-    addAura(violetX, baseline, 0xa56bff);
-
-    const orange = this.add.image(
-      orangeX,
-      baseline,
-      menuSpriteKeyFor(RANGER_IDS.ORANGE, 'male'),
-    )
-      .setOrigin(0.5, 1)
-      .setScale(0.47)
-      .setDepth(1);
-
-    const violet = this.add.image(
-      violetX,
-      baseline,
-      menuSpriteKeyFor(RANGER_IDS.VIOLET, 'female'),
-    )
-      .setOrigin(0.5, 1)
-      .setScale(0.47)
-      .setDepth(1);
-
-    this.ui.add([orange, violet]);
+    const orange = this.add.image(orangeX, baseline, menuSpriteKeyFor(RANGER_IDS.ORANGE, 'male'))
+      .setOrigin(0.5, 1).setScale(0.47).setDepth(1);
+    this.ui.add(orange);
   }
   #beginPage(title, width = 282, height = 120) {
     this.#clearTrainingPickerKeyboard();
@@ -591,8 +572,8 @@ export class MenuScene extends Phaser.Scene {
     this.#beginPage('CARRERA', 330, 168);
 
     const buttonStyle = { width: 230, fontSize: '8px', height: 16, shadowOffset: 0 };
-    this.#addButton('CARRERA AXEM', 156, () => this.scene.start('RaceScene'), buttonStyle);
-    this.#addButton('CARRERA TERRESTRE', 182, () => this.scene.start('LandRaceScene'), buttonStyle);
+    this.#addButton('CARRERA AXEM', 156, () => this.scene.start('HaxeMinigameScene', { mode: 'axem' }), buttonStyle);
+    this.#addButton('CARRERA TERRESTRE', 182, () => this.scene.start('HaxeMinigameScene', { mode: 'land' }), buttonStyle);
     this.#addButton('VOLVER', 239, () => this.#showPlayModes(), {
       width: 150, fontSize: '7px', shadowOffset: 0,
     });
@@ -679,12 +660,12 @@ export class MenuScene extends Phaser.Scene {
     this.#beginCharacterModal();
 
     RANGER_ORDER.forEach((rangerId, index) => {
-      const rangerLabel = rangerId === RANGER_IDS.ORANGE ? 'NARANJA' : 'VIOLETA';
+      const rangerLabel = 'NARANJA';
       this.#addButton('AXEM ' + rangerLabel, 181, () => {
         this.#selectCharacter(rangerId);
       }, {
         width: 154,
-        x: index === 0 ? 160 : 320,
+        x: GAME_WIDTH / 2,
         fontSize: '7px',
       });
     });
@@ -713,10 +694,8 @@ export class MenuScene extends Phaser.Scene {
     }
 
     if (mode.characterSlots === 1) {
-      this.matchSetup.characters[1] = {
-        id: RANGER_ORDER.find((id) => id !== rangerId),
-        gender: genderForRanger(RANGER_ORDER.find((id) => id !== rangerId)),
-      };
+      const opponentId = RANGER_ORDER.find((id) => id !== rangerId) ?? rangerId;
+      this.matchSetup.characters[1] = { id: opponentId, gender: genderForRanger(opponentId) };
       this.matchSetup.playerCharacter = rangerId;
       this.matchSetup.playerSide = null;
       this.#showPlayerSide();

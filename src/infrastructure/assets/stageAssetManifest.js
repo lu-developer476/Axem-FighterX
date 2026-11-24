@@ -120,28 +120,24 @@ export function proceduralTextureKeyForTileset(tilesetKey) {
 const lines = (...entries) => Object.freeze(entries.map(([speaker, text]) => Object.freeze({ speaker, text })));
 
 const RESULT_DIALOGUE = Object.freeze({
-  violetWins: lines(
-    ['violet', 'Leí mejor el espacio y encontré el momento para cerrar el combate.'],
-    ['orange', 'Me concentré demasiado en atacar y dejé de prestar atención al terreno.'],
-  ),
   orangeWins: lines(
     ['orange', 'Aproveché el espacio disponible y no te dejé recuperar la posición.'],
-    ['violet', 'Vi tarde el cambio de distancia. La próxima vez voy a anticiparlo.'],
+    ['orange', 'Buen combate. Ya sabemos un poco más sobre el terreno.'],
   ),
   draw: lines(
-    ['violet', 'Ninguno consiguió una ventaja definitiva en este terreno.'],
-    ['orange', 'Volvamos a intentarlo. Ya sabemos un poco más sobre el espacio disponible.'],
+    ['orange', 'Ninguno consiguió una ventaja definitiva en este terreno.'],
+    ['orange', 'Volvamos a intentarlo. Ya conocemos mejor el espacio disponible.'],
   ),
 });
 
 function createStageDialogue(name, filename, kind) {
   const sourceDescription = kind === 'map' ? 'mapa' : 'tileset';
   return lines(
-    ['violet', `El archivo ${filename} define esta zona. El registro la identifica como ${name}.`],
-    ['orange', `Entonces usemos el terreno tal como está representado, sin asumir que el fondo cambia las reglas.`],
-    ['violet', 'Revisá las distancias y mantené la vista en el rival. No conocemos todos los puntos de referencia.'],
+    ['orange', `El archivo ${filename} define esta zona. El registro la identifica como ${name}.`],
+    ['orange', `Usemos el terreno tal como está representado, sin asumir que el fondo cambia las reglas.`],
+    ['orange', 'Revisá las distancias y mantené la vista en el rival. No conocemos todos los puntos de referencia.'],
     ['orange', `La configuración llegó desde un ${sourceDescription} del proyecto. El combate sigue las mismas reglas.`],
-    ['violet', 'Entendido. Nada de confiarse por conocer el dibujo; primero vamos a medir el espacio.'],
+    ['orange', 'Nada de confiarse por conocer el dibujo; primero vamos a medir el espacio.'],
     ['orange', 'Cuando quieras. El escenario está cargado y podemos empezar.'],
   );
 }

@@ -1,7 +1,7 @@
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import ASSET_STANDARDS from '../../../art/source/sprites/asset-standards.json';
 
-/** Estados del luchador; las poses de combate se aplican de forma procedural. */
+/** Estados de combate y dimensiones de las hojas cuadro a cuadro. */
 export const ANIMATION_STATES = Object.freeze([
   'idle', 'walk', 'dash', 'dodge', 'block', 'block-hit', 'attack',
   'special-attack', 'hurt', 'land', 'teleport', 'victory', 'ko',
@@ -13,22 +13,17 @@ export const ANIMATION_STATES = Object.freeze([
  */
 const CHARACTER_DATA = Object.freeze({
   spriteFacing: Object.freeze({
-    // Las dos ilustraciones Super Axem tienen orientación nativa hacia la derecha.
+    // Axem Naranja deriva de Axem Red y conserva su orientación nativa.
     male: 1,
     female: 1,
   }),
   displayHeight: ASSET_STANDARDS.categories.combatTexture.height,
   // Alto fijo de cada celda de animación: no depende del frame activo.
-  frameHeight: ASSET_STANDARDS.categories.combatTexture.height,
+  frameHeight: ASSET_STANDARDS.categories.actionFrameCell.height,
   sheets: Object.freeze({}),
 });
 
 export const characterAnimationData = Object.freeze({
-  [RANGER_IDS.VIOLET]: Object.freeze({
-    ...CHARACTER_DATA,
-    spriteFacing: Object.freeze({ male: 1, female: 1 }),
-    sheets: Object.freeze({}),
-  }),
   [RANGER_IDS.ORANGE]: CHARACTER_DATA,
 });
 

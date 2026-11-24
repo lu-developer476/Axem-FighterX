@@ -78,9 +78,8 @@ describe('Descubrimiento automático de escenarios', () => {
       expect(stage.name.length).toBeGreaterThan(3);
       expect(stage.description.length).toBeGreaterThan(15);
       expect(stage.dialogue.length).toBeGreaterThanOrEqual(6);
-      expect(stage.dialogue.some((line) => line.speaker === 'violet')).toBe(true);
       expect(stage.dialogue.some((line) => line.speaker === 'orange')).toBe(true);
-      for (const outcome of ['violetWins', 'orangeWins', 'draw']) {
+      for (const outcome of ['orangeWins', 'draw']) {
         expect(stage.resultDialogue[outcome]).toHaveLength(2);
       }
     }

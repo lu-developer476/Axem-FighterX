@@ -22,7 +22,7 @@ export function getPlayersByStartCorner(playerSides) {
 
 /**
  * Convierte elecciones de personaje identificadas por jugador en el orden espacial.
- * El género no se elige: se obtiene del personaje (Orange masculino, Violet femenino).
+ * Todos los participantes usan Axem Naranja masculino mientras se completan las demás hojas.
  */
 export function getCharacterSelectionsByCorner(playerCharacters, playerSides) {
   const playersByCorner = getPlayersByStartCorner(playerSides);

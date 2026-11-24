@@ -11,7 +11,7 @@ const SOURCE = (...parts) => path.join(ROOT, 'art', 'source', ...parts);
 const RESULTS = (...parts) => path.join(ROOT, 'art', 'source', 'sprites', 'results', ...parts);
 const GENERATED = path.join(ROOT, 'public', 'generated');
 const ASSET_STANDARDS = JSON.parse(await fs.readFile(SOURCE('sprites', 'asset-standards.json'), 'utf8'));
-const COLORS = Object.freeze({ violet: 273, orange: 22 });
+const COLORS = Object.freeze({ orange: 22 });
 const PALETTE_SOURCES = Object.freeze({
   male: [[0, 25], [335, 360]],
   female: [[300, 360]],
@@ -1465,11 +1465,6 @@ async function buildMenuSuperPoses() {
       color: 'orange',
       file: path.join(GENERATED, 'super-axem-source-male.png'),
     },
-    {
-      gender: 'female',
-      color: 'violet',
-      file: path.join(GENERATED, 'super-axem-source-female.png'),
-    },
   ];
 
   await fs.mkdir(GENERATED, { recursive: true });
@@ -1766,6 +1761,7 @@ async function main() {
 
   const retiredSpriteDirectories = [
     RESULTS('male', 'violet'),
+    RESULTS('female', 'violet'),
     RESULTS('female', 'orange'),
     RESULTS('male', 'orange', 'source'),
     RESULTS('male', 'orange', 'sequences'),
@@ -1779,11 +1775,16 @@ async function main() {
   ));
   // Elimina salidas antiguas que ya no forman parte del juego.
   const retiredAssets = [
+    'super-axem-source-female.png',
     'menu-ranger-male-violet.png',
+    'menu-ranger-female-violet.png',
     'ranger-male-violet.png',
+    'ranger-female-violet.png',
     'ranger-female-orange.png',
     'axem-male-violet-run.png',
     'axem-male-violet-bike.png',
+    'axem-female-violet-run.png',
+    'axem-female-violet-bike.png',
     'axem-female-orange-run.png',
     'axem-female-orange-bike.png',
     ...['violet'].flatMap((color) => [
@@ -1805,7 +1806,6 @@ async function main() {
     fs.rm(path.join(RESULTS('female', 'violet'), name), { force: true })
   ));
   await buildGender('male', ['orange']);
-  await buildGender('female', ['violet']);
   await buildRedRangerGifs();
   await buildMenuSuperPoses();
   // Las tiras auxiliares solo existen durante la generación; no quedan versionadas.

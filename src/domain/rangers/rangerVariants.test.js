@@ -1,36 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import {
-  AVAILABLE_RANGER_VARIANTS,
-  genderForRanger,
-  getCounterpartSelection,
-  isAvailableRangerVariant,
-} from './rangerVariants.js';
+import { AVAILABLE_RANGER_VARIANTS, genderForRanger, getCounterpartSelection, isAvailableRangerVariant } from './rangerVariants.js';
 
 describe('variantes disponibles de Axem', () => {
-  it('mantiene el género fijo de cada Axem y solo ofrece dos personajes', () => {
-    expect(AVAILABLE_RANGER_VARIANTS).toEqual([
-      { id: 'orange', gender: 'male' },
-      { id: 'violet', gender: 'female' },
-    ]);
+  it('ofrece únicamente Axem Naranja masculino hasta que las demás hojas estén listas', () => {
+    expect(AVAILABLE_RANGER_VARIANTS).toEqual([{ id: 'orange', gender: 'male' }]);
     expect(genderForRanger('orange')).toBe('male');
-    expect(genderForRanger('violet')).toBe('female');
+    expect(genderForRanger('violet')).toBeNull();
+    expect(isAvailableRangerVariant('orange', 'male')).toBe(true);
+    expect(isAvailableRangerVariant('violet', 'female')).toBe(false);
     expect(isAvailableRangerVariant('orange', 'female')).toBe(false);
-    expect(isAvailableRangerVariant('violet', 'male')).toBe(false);
+    expect(isAvailableRangerVariant('red', 'male')).toBe(false);
   });
-
-  it('asigna a las IA la variante contraria a la elegida por J1', () => {
-    expect(getCounterpartSelection({ id: 'violet', gender: 'female' })).toEqual({
-      id: 'orange', gender: 'male',
-    });
-    expect(getCounterpartSelection({ id: 'orange', gender: 'male' })).toEqual({
-      id: 'violet', gender: 'female',
-    });
+  it('mantiene una selección visual válida para el rival IA', () => {
+    expect(getCounterpartSelection({ id: 'orange', gender: 'male' })).toEqual({ id: 'orange', gender: 'male' });
   });
-
-  it('rechaza combinaciones de Axem y género que no son canónicas', () => {
-    expect(() => getCounterpartSelection({ id: 'orange', gender: 'female' }))
-      .toThrow(/selección de Axem no está disponible/);
-    expect(() => getCounterpartSelection({ id: 'violet', gender: 'male' }))
-      .toThrow(/selección de Axem no está disponible/);
+  it('rechaza combinaciones que no están disponibles', () => {
+    expect(() => getCounterpartSelection({ id: 'violet', gender: 'female' })).toThrow(/selección de Axem no está disponible/);
+    expect(() => getCounterpartSelection({ id: 'orange', gender: 'female' })).toThrow(/selección de Axem no está disponible/);
   });
 });

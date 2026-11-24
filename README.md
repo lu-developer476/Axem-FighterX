@@ -27,7 +27,7 @@ Desde **JUGAR** se elige el tipo de enfrentamiento (**Jugador vs IA**, **Jugador
 
 Los formatos respetan la cantidad total indicada: **Definitivo** disputa una ronda, **2 Rondas** disputa exactamente dos y **5 Rondas** disputa exactamente cinco. Entre rondas se muestra el marcador y se espera que el jugador pulse `ENTER` o `ESPACIO` para continuar. Al finalizar la cantidad prevista, gana quien haya obtenido más rondas; un empate en el marcador termina en empate. `ENTRENAMIENTO` permite elegir un fondo completamente sólido, con colores predefinidos o un selector de color personalizado.
 
-Cada selección humana o de IA solicita primero el color (**Axem Naranja** o **Axem Violeta**) y luego el género (**masculino** o **femenino**), sin retratos ni descripciones físicas previas. En **Jugador vs Jugador**, J1 y J2 hacen ambas selecciones por separado y luego configuran sus esquinas. En **Jugador vs IA**, la IA recibe el color opuesto al elegido por el jugador y conserva el género seleccionado para el enfrentamiento.
+El selector de personajes ofrece únicamente **Axem Naranja masculino** mientras las demás spritesheets no estén listas. En **Jugador vs Jugador**, ambos participantes usan esa variante y mantienen sus respectivos esquemas de teclado y esquinas. En **Jugador vs IA**, el rival controlado por IA también utiliza Axem Naranja masculino.
 
 ## Escenarios y cinemáticas
 
@@ -80,14 +80,16 @@ Para agregar un personaje: sumarlo a `rangerCatalog.js`, registrar su PNG en
 Para agregar un escenario, colocar un PNG, WebP, JPG o JPEG en `art/source/environments/maps/`, o un tileset compatible en `art/source/environments/maps/tilesets/`. El siguiente build lo agrega automáticamente al selector. Se admiten subcarpetas; las imágenes de `tilesets/` se procesan como recursos procedurales y no como mapas directos.
 Para cambiar el control (gamepad, táctil), basta con otro adaptador que implemente `InputPort`.
 
-## Minijuegos
+## Minijuegos (HaxeFlixel)
 
-El menú principal ofrece dos carreras independientes:
+Los dos minijuegos se ejecutan en **HaxeFlixel compilado a HTML5**. Phaser conserva el menú, las cinemáticas y todo el combate; las carreras se montan en un iframe aislado y regresan al menú mediante un mensaje entre ventanas. No se comparten objetos de escena ni instancias de motor.
 
-- **Carrera Axem** conserva la modalidad en bicicleta.
-- **Carrera terrestre** es una prueba de atletismo de dos carriles contra un rival controlado por IA. El jugador acelera con D o flecha derecha, frena con A o flecha izquierda, salta vallas con W o flecha arriba y rueda bajo obstáculos bajos con S o flecha abajo. La barra de resistencia limita los sprints; fallar un obstáculo reduce temporalmente la velocidad. R reinicia y ESC vuelve al menú.
+- **Carrera Axem:** carrera de motos de dos carriles, con un rival controlado por IA, aceleración, frenado, nitro y objetos de impulso o ralentización. Se puede elegir 7 km o 25 km.
+- **Carrera terrestre:** carrera de resistencia de 5 km contra un rival IA, con aceleración, frenado y recuperación de resistencia.
 
-La carrera terrestre reutiliza los GIF de idle, roll y jump, y la secuencia run de los Axem Naranja y Violeta. Como el repositorio no contiene un GIF walk separado, la animación de caminata usa los mismos cuadros de carrera con una cadencia menor. La grada, las vallas, las barras bajas, los tacos de salida, los conos y el arco de llegada se generan como sprites pixel-art durante la carga de la escena.
+Controles de Carrera Axem: D acelera, A frena, flechas izquierda/derecha mueven lateralmente, flechas arriba/abajo cambian de carril, N activa nitro, P pausa y ESC vuelve al menú. Carrera terrestre: D/→ corre, A/← frena, P pausa, R reinicia y ESC vuelve al menú.
+
+Se necesita Haxe, Haxelib, Lime, OpenFL y HaxeFlixel. El proyecto está en `haxeflixel/`; `npm run prepare:haxe-assets && npm run build:haxe` genera el HTML5 en `public/minigames/`. `npm run dev` lo compila antes de iniciar Vite. CI también lo compila y versiona junto con los sprites; el build de Vercel consume el HTML5 ya generado desde el repositorio.
 
 ## Combate
 
@@ -101,49 +103,13 @@ La carrera terrestre reutiliza los GIF de idle, roll y jump, y la secuencia run 
 - **Objetos de combate:** aparecen cada tanto y duran 9 segundos. El corazón recupera 25 puntos de vida; Furia aumenta el daño un 50%; Rapidez aumenta el movimiento un 40%; Escudo reduce el daño recibido un 50%. Los tres potenciadores duran 6,5 segundos y su estado se muestra debajo de cada barra de vida.
 - **Recolección:** ambos jugadores pueden recoger objetos al tocarlos. El corazón no se consume si el luchador ya tiene toda la vida; los potenciadores se pueden renovar al recoger otro del mismo tipo.
 
-## Variantes de género y atlas de sprites
+## Sprites y animaciones
 
-Cada color jugable (Violet y Orange) tiene variante masculina y femenina. El menú permite elegir
-las cuatro combinaciones de forma independiente para cada participante. En Jugador vs Jugador no
-hay colores asociados automáticamente a J1 o J2: cada uno conserva su selección y su esquema de
-teclas, sin importar la esquina elegida. En Jugador vs IA, la IA recibe el color opuesto y el género
-del personaje seleccionado por el jugador.
+La variante seleccionable actual es **Axem Naranja masculino**. Sus recursos de combate se generan desde las referencias originales de Axem Red en `art/source/sprites/references/axem-red/`. El pipeline conserva los fotogramas fuente y genera tiras PNG transparentes con un pivote común para el combate.
 
-Las referencias masculinas usan los materiales disponibles de Axem Red:
-`art/source/sprites/references/axem-red/preview.png`,
-`preview (2).png` y los GIF `axem-ranger-run.gif`, `axem-ranger-bike.gif` y
-`axem-ranger-double-axe.gif`. El atlas masculino original completo ya no está en el repositorio;
-el generador conserva las imágenes de referencia disponibles y añade todas las páginas de esos GIF,
-sin atribuir a la copia parcial las filas que ya no existen.
+El combate reproduce secuencias cuadro a cuadro de reposo, carrera, hachazo doble, carga, guardia, daño, rodada, salto, teletransporte, victoria y KO. Las hojas que todavía no están terminadas no se ofrecen en los selectores ni se cargan en las pantallas de juego. Las referencias Pink se conservan como material fuente, sin publicar una variante jugable incompleta.
 
-Las referencias femeninas usan la spritesheet maestra y las poses de
-`art/source/sprites/references/axem-pink/`. La hoja maestra conserva la distribución original
-completa; las poses individuales se agregan como material complementario. El proceso genera cuatro atlas PNG con fondo transparente:
-`results/male/axem-ranger-violet.png`, `results/male/axem-ranger-orange.png`,
-`results/female/axem-ranger-violet.png` y `results/female/axem-ranger-orange.png`.
-La transformación conserva la luminosidad y saturación de los píxeles y cambia solo la familia
-cromática del traje. Las referencias originales no se sobrescriben.
-
-`npm run prepare:sprites` ejecuta el generador. También se ejecuta automáticamente antes de
-`npm test`, `npm run dev` y `npm run build`. Los cuatro retratos de combate y las dos poses masculinas laterales del menú se escriben en
-`public/generated/`; Phaser los carga por color y género. Las poses del menú se extraen primero de
-`art/source/sprites/results/male/preview (1).png`: el generador detecta dos figuras separadas,
-recorta cada pose y aplica la paleta Violet u Orange. Si esa referencia no contiene dos figuras
-recortables, usa las hojas originales de Axem Red como respaldo. Los atlas completos
-quedan en `art/source/sprites/results/` como hojas de referencia.
-
-La dirección original de cada variante se declara por género en
-`characterAnimationData.js`. Combate, cinemática y menú aplican `shouldFlip()` con esa misma
-referencia, de modo que cada personaje mira hacia el lado al que se desplaza. El menú principal
-agrupa a las femeninas sobre el panel INICIO y ubica a los masculinos en los laterales con dos
-poses distintas extraídas de la referencia masculina.
-
-El juego conserva sus estados de combate (reposo, movimiento, ataque, daño, teletransporte y KO)
-con las poses procedurales actuales. Para integrar secuencias cuadro a cuadro, cada color tiene
-en `results/male/<color>/sequences/` una tira por grupo del atlas Red (idle, walk y attack son
-`group-01`, `group-02` y `group-03`) y las hojas femeninas conservan toda la referencia de Pink.
-Las coordenadas de cada cuadro, el orden y las zonas excluidas están en
-`art/source/sprites/README.md`; se regeneran con `node scripts/analyze-atlas.mjs`.
+`npm run prepare:sprites` regenera los recursos. También se ejecuta automáticamente antes de los tests y del build de Vite.
 
 ## Despliegue en Vercel
 
@@ -173,13 +139,13 @@ Requiere **Settings → Pages → Source: GitHub Actions**. Para correr la captu
 - **Música:** pistas WAV contextuales con carga diferida y reproducción en bucle.
 - **Efectos contextuales:** polvo y estela al hacer dash, nube de aterrizaje, chispas eléctricas, ráfagas de impacto, explosiones, humo, escombros y partículas que cambian según el material de cada escenario.
 
-## Variantes canónicas de Axem
+## Personaje disponible
 
-El catálogo de juego conserva únicamente **Axem Violeta femenino** y **Axem Naranja masculino**. La preparación de sprites, el preload y la selección de personajes generan/cargan solo esas combinaciones. Violeta utiliza su pose femenina y animación procedural de combate; Naranja conserva las hojas GIF masculinas. La moto de Violeta se compone con un sprite de vehículo propio para no volver a introducir el recurso masculino eliminado.
+La selección ofrece temporalmente solo **Axem Naranja masculino**. Hasta que estén listas las demás spritesheets, el rival IA utiliza la misma variante, sin mostrar retratos ni nombres de personajes incompletos.
 
 ## Carrera de motos
 
-La carrera de motos tiene cuatro carriles: J1 y tres rivales controlados por IA. Antes de largar, J1 elige entre Axem Violeta femenino y Axem Naranja masculino; las IA usan la variante opuesta. Se puede cambiar de carril con las flechas arriba/abajo o W/S, acelerar con derecha/D, frenar con izquierda/A y usar nitro con espacio. Vallas, cajas y manchas de aceite se distribuyen por carril y penalizan a quien las golpea. El entorno utiliza capas de montañas, vegetación, arcén y pista con desplazamiento.
+La carrera de motos usa HaxeFlixel y mantiene cuatro participantes: J1 y tres rivales controlados por IA. El jugador compite con la variante Orange actual; los otros rivales se distinguen por el tinte de sus sprites. Tiene dos carriles, cambio lateral, aceleración, frenado, nitro y objetos de impulso/ralentización.
 
 ## Música
 

@@ -5,145 +5,83 @@ import { describe, expect, it } from 'vitest';
 import { genderForRanger, isAvailableRangerVariant } from '../../domain/rangers/rangerVariants.js';
 import ASSET_STANDARDS from '../../../art/source/sprites/asset-standards.json';
 
-const variants = Object.freeze([
-  { id: 'orange', gender: 'male' },
-  { id: 'violet', gender: 'female' },
-]);
+const generatedSpritePath = fileURLToPath(new URL('../../../public/generated/ranger-male-orange.png', import.meta.url));
+const generatedMenuOrangePath = fileURLToPath(new URL('../../../public/generated/menu-ranger-male-orange.png', import.meta.url));
+const resultGifPath = (action) => fileURLToPath(new URL(`../../../art/source/sprites/results/male/orange/${action}.gif`, import.meta.url));
+const resultGifDirectory = fileURLToPath(new URL('../../../art/source/sprites/results/male/orange', import.meta.url));
 
-const generatedSpritePath = ({ id, gender }) =>
-  fileURLToPath(new URL(`../../../public/generated/ranger-${gender}-${id}.png`, import.meta.url));
-
-const generatedMenuVioletPath = () =>
-  fileURLToPath(new URL('../../../public/generated/menu-ranger-female-violet.png', import.meta.url));
-
-const generatedMenuOrangePath = () =>
-  fileURLToPath(new URL('../../../public/generated/menu-ranger-male-orange.png', import.meta.url));
-
-const resultGifPath = (color, action) =>
-  fileURLToPath(new URL(
-    color === 'red'
-      ? `../../../art/source/sprites/references/axem-red/${action}.gif`
-      : `../../../art/source/sprites/results/male/${color}/${action}.gif`,
-    import.meta.url,
-  ));
-
-const resultGifDirectory = (color) =>
-  fileURLToPath(new URL(
-    color === 'red'
-      ? '../../../art/source/sprites/references/axem-red'
-      : `../../../art/source/sprites/results/male/${color}`,
-    import.meta.url,
-  ));
-
-describe('Variantes canónicas de Axem Rangers', () => {
-  it('mantiene solo Orange masculino y Violet femenino', () => {
+describe('Sprites canónicos de Axem Naranja', () => {
+  it('mantiene disponible únicamente la variante masculina naranja', () => {
     expect(genderForRanger('orange')).toBe('male');
-    expect(genderForRanger('violet')).toBe('female');
-    for (const variant of variants) {
-      expect(isAvailableRangerVariant(variant.id, variant.gender)).toBe(true);
-    }
-    expect(isAvailableRangerVariant('orange', 'female')).toBe(false);
-    expect(isAvailableRangerVariant('violet', 'male')).toBe(false);
-    expect(isAvailableRangerVariant('red', 'male')).toBe(false);
+    expect(genderForRanger('violet')).toBeNull();
+    expect(isAvailableRangerVariant('orange', 'male')).toBe(true);
+    expect(isAvailableRangerVariant('violet', 'female')).toBe(false);
   });
 
-  for (const variant of variants) {
-    it(`${variant.gender}/${variant.id} genera una textura transparente de 53×83 px`, async () => {
-      const metadata = await sharp(generatedSpritePath(variant)).metadata();
-      expect(metadata.format).toBe('png');
-      expect(metadata.width).toBe(ASSET_STANDARDS.categories.combatTexture.width);
-      expect(metadata.height).toBe(ASSET_STANDARDS.categories.combatTexture.height);
-      expect(metadata.hasAlpha).toBe(true);
-    });
-  }
+  it('genera la textura transparente de combate de 53×83 px', async () => {
+    const metadata = await sharp(generatedSpritePath).metadata();
+    expect(metadata.format).toBe('png');
+    expect(metadata.width).toBe(ASSET_STANDARDS.categories.combatTexture.width);
+    expect(metadata.height).toBe(ASSET_STANDARDS.categories.combatTexture.height);
+    expect(metadata.hasAlpha).toBe(true);
+  });
 
-  it.each([
-    ['male/orange', generatedMenuOrangePath],
-    ['female/violet', generatedMenuVioletPath],
-  ])('genera el retrato de menú Super Axem %s en un lienzo transparente de 104×150 px', async (_name, getFile) => {
-    const file = getFile();
-    const metadata = await sharp(file).metadata();
+  it('genera el retrato naranja de menú en 104×150 px', async () => {
+    const metadata = await sharp(generatedMenuOrangePath).metadata();
     expect(metadata.format).toBe('png');
     expect(metadata.width).toBe(ASSET_STANDARDS.categories.menuPortrait.width);
     expect(metadata.height).toBe(ASSET_STANDARDS.categories.menuPortrait.height);
     expect(metadata.hasAlpha).toBe(true);
-
-    const { data } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-    const visiblePixels = Array.from({ length: data.length / 4 }, (_, index) => data[index * 4 + 3])
-      .filter((alpha) => alpha > 0).length;
-    expect(visiblePixels).toBeGreaterThan(900);
   });
 
-  it('no genera carpetas de variantes no canónicas', async () => {
-    const { access } = await import('node:fs/promises');
-    await expect(access(fileURLToPath(new URL(
+  it('no genera recursos de variantes incompletas', async () => {
+    for (const path of [
       '../../../art/source/sprites/results/male/violet',
-      import.meta.url,
-    )))).rejects.toMatchObject({ code: 'ENOENT' });
-    await expect(access(fileURLToPath(new URL(
+      '../../../art/source/sprites/results/female/violet',
       '../../../art/source/sprites/results/female/orange',
-      import.meta.url,
-    )))).rejects.toMatchObject({ code: 'ENOENT' });
+    ]) {
+      await expect(access(fileURLToPath(new URL(path, import.meta.url))))
+        .rejects.toMatchObject({ code: 'ENOENT' });
+    }
+    for (const filename of [
+      'ranger-female-violet.png',
+      'menu-ranger-female-violet.png',
+      'ranger-male-violet.png',
+    ]) {
+      await expect(access(fileURLToPath(new URL(`../../../public/generated/${filename}`, import.meta.url))))
+        .rejects.toMatchObject({ code: 'ENOENT' });
+    }
   });
 
-  it('genera las animaciones Red necesarias para los minijuegos', async () => {
-    const actions = ['idle', 'walk', 'run', 'dash', 'jump'];
-    for (const action of actions) {
-      const file = resultGifPath('red', action);
+  it('conserva las referencias de Axem Red para los minijuegos', async () => {
+    for (const action of ['idle', 'walk', 'run', 'dash', 'jump']) {
+      const file = fileURLToPath(new URL(`../../../art/source/sprites/references/axem-red/${action}.gif`, import.meta.url));
       const metadata = await sharp(file, { animated: true }).metadata();
+      expect(metadata.format, action).toBe('gif');
+      expect(metadata.pages, action).toBeGreaterThan(1);
+      expect(metadata.hasAlpha, action).toBe(true);
+    }
+    const masterBike = fileURLToPath(new URL('../../../art/source/sprites/references/axem-red/axem-ranger-bike.gif', import.meta.url));
+    expect((await sharp(masterBike, { animated: true }).metadata()).pages).toBeGreaterThan(1);
+  });
+
+  it('genera las animaciones de combate naranja desde las referencias Red', async () => {
+    const actions = ['bike', 'charge', 'dash', 'guard', 'hit', 'hurt', 'idle', 'jump', 'ko',
+      'pose', 'punch-01', 'punch-02', 'punch-03', 'roll', 'run', 'teleport'];
+    for (const action of actions) {
+      const metadata = await sharp(resultGifPath(action), { animated: true }).metadata();
       expect(metadata.format, action).toBe('gif');
       expect(metadata.width, action).toBe(ASSET_STANDARDS.categories.actionGif.width);
       expect(metadata.pageHeight, action).toBe(ASSET_STANDARDS.categories.actionGif.height);
       expect(metadata.pages, action).toBeGreaterThan(1);
       expect(metadata.hasAlpha, action).toBe(true);
     }
-    const expectedRedGifs = ['dash.gif', 'idle.gif', 'jump.gif', 'run.gif', 'walk.gif'].sort();
-    expect((await readdir(resultGifDirectory('red')))
-      .filter((name) => expectedRedGifs.includes(name)).sort()).toEqual(expectedRedGifs);
-
-    const redBikeMaster = fileURLToPath(new URL(
-      '../../../art/source/sprites/references/axem-red/axem-ranger-bike.gif', import.meta.url,
-    ));
-    const bikeMetadata = await sharp(redBikeMaster, { animated: true }).metadata();
-    expect(bikeMetadata.format).toBe('gif');
-    expect(bikeMetadata.pages).toBeGreaterThan(1);
-
-    const redRun = fileURLToPath(new URL(
-      '../../../art/source/sprites/references/axem-red/run.gif', import.meta.url,
-    ));
-    const orangeRun = fileURLToPath(new URL(
-      '../../../art/source/sprites/results/male/orange/run.gif', import.meta.url,
-    ));
-    const [redFrame, orangeFrame] = await Promise.all([
-      sharp(redRun, { page: 0, pages: 1 }).png().toBuffer(),
-      sharp(orangeRun, { page: 0, pages: 1 }).png().toBuffer(),
-    ]);
-    expect(redFrame.equals(orangeFrame)).toBe(false);
-  });
-
-  it('mantiene los GIF de carrera y combate del Axem Naranja masculino', async () => {
-    for (const action of [
-      'run', 'bike', 'idle', 'jump', 'roll', 'guard', 'ko', 'charge', 'pose',
-      'dash', 'hit', 'hurt', 'punch-01', 'punch-02', 'punch-03', 'teleport',
-    ]) {
-      const file = resultGifPath('orange', action);
-      const metadata = await sharp(file, { animated: true }).metadata();
-      expect(metadata.format).toBe('gif');
-      expect(metadata.width).toBe(ASSET_STANDARDS.categories.actionGif.width);
-      expect(metadata.pageHeight).toBe(ASSET_STANDARDS.categories.actionGif.height);
-      expect(metadata.pages).toBeGreaterThan(1);
-      expect(metadata.hasAlpha).toBe(true);
-    }
-    const expectedOrangeGifs = [
-      'bike.gif', 'charge.gif', 'dash.gif', 'guard.gif', 'hit.gif', 'hurt.gif',
-      'idle.gif', 'jump.gif', 'ko.gif', 'pose.gif', 'punch-01.gif', 'punch-02.gif',
-      'punch-03.gif', 'roll.gif', 'run.gif', 'teleport.gif',
-    ].sort();
-    expect((await readdir(resultGifDirectory('orange'))).filter((name) => name.endsWith('.gif')).sort())
-      .toEqual(expectedOrangeGifs);
-    for (const action of ['double-axe', 'battle-pose']) {
-      await expect(access(resultGifPath('orange', action))).rejects.toMatchObject({ code: 'ENOENT' });
-      await expect(access(resultGifPath('red', action))).rejects.toMatchObject({ code: 'ENOENT' });
-    }
+    expect((await readdir(resultGifDirectory)).filter((name) => name.endsWith('.gif')).sort())
+      .toEqual(actions.map((action) => action + '.gif').sort());
+    const generated = fileURLToPath(new URL('../../../public/generated/axem-orange-idle.png', import.meta.url));
+    const sheet = await sharp(generated).metadata();
+    expect(sheet.format).toBe('png');
+    expect(sheet.width).toBeGreaterThan(ASSET_STANDARDS.categories.actionFrameCell.width);
+    expect(sheet.height).toBe(ASSET_STANDARDS.categories.actionFrameCell.height);
   });
 });

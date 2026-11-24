@@ -1,13 +1,16 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from '../../config/gameConfig.js';
-import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import {
   spriteKeyFor,
   spriteUrlFor,
   menuSpriteKeyFor,
   menuSpriteUrlFor,
+  maleAnimationKey,
+  maleAnimationUrl,
 } from '../../infrastructure/assets/assetManifest.js';
-import { AVAILABLE_RANGER_VARIANTS, genderForRanger } from '../../domain/rangers/rangerVariants.js';
+import { AVAILABLE_RANGER_VARIANTS } from '../../domain/rangers/rangerVariants.js';
+import { GIF_ACTIONS, GIF_CELL } from '../../infrastructure/assets/characterAnimationData.js';
+import { registerCharacterAnimations } from '../animation/registerCharacterAnimations.js';
 import { KENNEY_FX } from '../../infrastructure/assets/kenneyFxAssets.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { STAGE_MAP_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
@@ -52,24 +55,21 @@ export class PreloadScene extends Phaser.Scene {
       console.error('No se pudo cargar un recurso:', file?.key ?? file?.src ?? file);
     });
 
-    // Carga únicamente las identidades canónicas: Orange masculino y Violet femenino.
+    // Solo se cargan recursos de la variante completa: Axem Naranja masculino.
     for (const { id, gender } of AVAILABLE_RANGER_VARIANTS) {
       this.load.image(spriteKeyFor(id, gender), spriteUrlFor(id, gender));
-      for (const action of ['run', 'bike']) {
-        const key = 'axem-' + gender + '-' + id + '-' + action;
-        this.load.spritesheet(
-          key,
-          import.meta.env.BASE_URL + 'generated/' + key + '.png',
-          { frameWidth: 53, frameHeight: 83 },
-        );
+      this.load.image(menuSpriteKeyFor(id, gender), menuSpriteUrlFor(id, gender));
+      for (const action of ['run', 'bike', 'double-axe']) {
+        const key = maleAnimationKey(id, action);
+        this.load.spritesheet(key, maleAnimationUrl(id, action), { frameWidth: 53, frameHeight: 83 });
       }
-    }
-    for (const rangerId of [RANGER_IDS.ORANGE, RANGER_IDS.VIOLET]) {
-      const gender = genderForRanger(rangerId);
-      this.load.image(
-        menuSpriteKeyFor(rangerId, gender),
-        menuSpriteUrlFor(rangerId, gender),
-      );
+      for (const action of GIF_ACTIONS) {
+        const key = maleAnimationKey(id, action);
+        this.load.spritesheet(key, maleAnimationUrl(id, action), {
+          frameWidth: GIF_CELL.width,
+          frameHeight: GIF_CELL.height,
+        });
+      }
     }
     this.load.image('title-art', import.meta.env.BASE_URL + 'generated/title.png');
     Object.values(STAGE_MAP_ASSETS).forEach(({ key, url }) => this.load.image(key, url));
@@ -87,21 +87,7 @@ export class PreloadScene extends Phaser.Scene {
     createStageAssetTextures(this);
     createFxTextures(this);
     registerFxAnimations(this);
-    for (const { id, gender } of AVAILABLE_RANGER_VARIANTS) {
-      for (const action of ['run', 'bike']) {
-        const key = 'axem-' + gender + '-' + id + '-' + action;
-        if (!this.anims.exists(key) && this.textures.exists(key)) {
-          const texture = this.textures.get(key);
-          const frames = this.anims.generateFrameNumbers(key, { start: 0, end: texture.frameTotal - 2 });
-          if (frames.length) this.anims.create({
-            key,
-            frames,
-            frameRate: action === 'bike' ? 9 : 10,
-            repeat: -1,
-          });
-        }
-      }
-    }
+    registerCharacterAnimations(this);
     this.scene.start('MenuScene');
   }
 }

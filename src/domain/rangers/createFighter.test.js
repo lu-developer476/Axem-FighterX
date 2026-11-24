@@ -5,56 +5,36 @@ import { createDefaultMatch } from '../../application/useCases/CreateMatch.js';
 import { ARENA } from '../arena/arena.js';
 
 describe('Identidad canónica de los Axem Rangers', () => {
-  it('asigna automáticamente a Violet su género femenino canónico', () => {
-    const femaleViolet = createFighter(
-      RANGER_IDS.VIOLET,
-      { x: 120, y: 180 },
-      1,
-    );
-
-    expect(femaleViolet.id).toBe(RANGER_IDS.VIOLET);
-    expect(femaleViolet.gender).toBe('female');
-    expect(femaleViolet.name).toBe('Axem Violet');
+  it('crea Axem Naranja masculino por defecto', () => {
+    const fighter = createFighter(RANGER_IDS.ORANGE, { x: 120, y: 180 }, 1);
+    expect(fighter.id).toBe(RANGER_IDS.ORANGE);
+    expect(fighter.gender).toBe('male');
+    expect(fighter.name).toBe('Axem Orange');
   });
 
-  it('elige la variante masculina de Naranja por defecto', () => {
-    const maleOrange = createFighter(
-      RANGER_IDS.ORANGE,
-      { x: 360, y: 180 },
-      -1,
-    );
-
-    expect(maleOrange.gender).toBe('male');
-  });
-
-  it('mantiene el género canónico de cada Ranger en la creación del combate', () => {
+  it('usa exclusivamente variantes Naranja para los dos combatientes', () => {
     const match = createDefaultMatch(() => 0, [
-      { id: RANGER_IDS.VIOLET, gender: 'female' },
+      { id: RANGER_IDS.ORANGE, gender: 'male' },
       { id: RANGER_IDS.ORANGE, gender: 'male' },
     ]);
-
-    expect(match.fighters.map((fighter) => fighter.gender)).toEqual(['female', 'male']);
+    expect(match.fighters.map((fighter) => fighter.gender)).toEqual(['male', 'male']);
+    expect(match.fighters.map((fighter) => fighter.id)).toEqual(['orange', 'orange']);
   });
 
   it('ubica ambos luchadores sobre la coordenada compartida del suelo', () => {
     const match = createDefaultMatch(() => 0, [
-      { id: RANGER_IDS.VIOLET, gender: 'female' },
+      { id: RANGER_IDS.ORANGE, gender: 'male' },
       { id: RANGER_IDS.ORANGE, gender: 'male' },
     ]);
-
-    expect(match.fighters.map((fighter) => fighter.position.y)).toEqual([
-      ARENA.groundY,
-      ARENA.groundY,
-    ]);
+    expect(match.fighters.map((fighter) => fighter.position.y)).toEqual([ARENA.groundY, ARENA.groundY]);
     expect(ARENA.minY).toBeLessThan(ARENA.groundY);
     expect(ARENA.maxY).toBe(ARENA.groundY);
   });
 
-
-  it('rechaza cualquier intento de cambiar el género canónico del Ranger', () => {
+  it('rechaza variantes sin spritesheet canónica completa', () => {
     expect(() => createFighter(RANGER_IDS.ORANGE, { x: 120, y: 180 }, 1, 'female'))
       .toThrow('Variante de Axem no disponible');
-    expect(() => createFighter(RANGER_IDS.VIOLET, { x: 360, y: 180 }, -1, 'male'))
+    expect(() => createFighter(RANGER_IDS.VIOLET, { x: 360, y: 180 }, -1, 'female'))
       .toThrow('Variante de Axem no disponible');
   });
 });

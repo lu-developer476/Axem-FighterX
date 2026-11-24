@@ -1,17 +1,31 @@
-import { spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
-import { poseFor } from './proceduralPoses.js';
+import { spriteFacingFor, GIF_ORIGIN_Y } from '../../infrastructure/assets/characterAnimationData.js';
+import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
+import { flashOnlyPose } from './proceduralPoses.js';
 
-/**
- * Mantiene el arte Super Axem durante todo el combate.
- * Los estados se expresan mediante poses procedurales para no alternar con
- * hojas antiguas que mostrarían una versión visual distinta del personaje.
- */
+const ACTION_BY_STATE = Object.freeze({
+  idle: 'idle',
+  walk: 'run',
+  dash: 'dash',
+  dodge: 'roll',
+  block: 'guard',
+  'block-hit': 'hurt-combo',
+  attack: 'double-axe',
+  'special-attack': 'charge',
+  hurt: 'hurt-combo',
+  land: 'jump',
+  teleport: 'teleport',
+  victory: 'battle-pose',
+  ko: 'ko',
+});
+
+/** Reproduce las secuencias cuadro a cuadro derivadas de los GIF originales de Axem Red. */
 export class FighterAnimator {
-  constructor(sprite, rangerId, gender, fallbackTexture, _anims) {
+  constructor(sprite, rangerId, gender, fallbackTexture, animations) {
     this.sprite = sprite;
     this.rangerId = rangerId;
     this.gender = gender;
     this.fallbackTexture = fallbackTexture;
+    this.animations = animations;
     this.state = null;
     this.forcedState = null;
   }
@@ -23,11 +37,7 @@ export class FighterAnimator {
   update(fighter) {
     const visualState = this.forcedState ?? fighter.state;
     if (visualState !== this.state) this.#enter(visualState);
-    return poseFor(
-      visualState,
-      this.forcedState ? fighter.elapsedMs : fighter.stateTimeMs,
-      fighter.elapsedMs,
-    );
+    return flashOnlyPose(visualState, this.forcedState ? fighter.elapsedMs : fighter.stateTimeMs);
   }
 
   showVictory() {
@@ -46,6 +56,11 @@ export class FighterAnimator {
     this.state = state;
     this.sprite.stop();
     this.sprite.setTexture(this.fallbackTexture);
-    this.sprite.setOrigin?.(0.5, 1);
+    const action = ACTION_BY_STATE[state];
+    if (!action) return;
+    const originY = action === 'run' || action === 'double-axe' ? 1 : GIF_ORIGIN_Y;
+    this.sprite.setOrigin?.(0.5, originY);
+    const key = maleAnimationKey(this.rangerId, action);
+    if (this.animations?.exists?.(key)) this.sprite.play(key, true);
   }
 }

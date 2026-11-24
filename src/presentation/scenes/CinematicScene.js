@@ -11,8 +11,7 @@ import { shouldFlip } from '../views/orientation.js';
 import { playStageMusic } from '../../infrastructure/audio/GameMusic.js';
 
 const SPEAKERS = {
-  violet: { name: 'AXEM VIOLET', color: '#d9a9ff', tint: 0xe6d4ff },
-  orange: { name: 'AXEM ORANGE', color: '#ffc17e', tint: 0xffdfbd },
+  orange: { name: 'AXEM NARANJA', color: '#ffc17e', tint: 0xffdfbd },
 };
 
 /** Introducción breve del escenario: diálogo entre los dos rangers antes del combate. */
@@ -180,7 +179,7 @@ export class CinematicScene extends Phaser.Scene {
 
   #showLine() {
     const line = this.stage.dialogue[this.lineIndex];
-    const speaker = SPEAKERS[line.speaker];
+    const speaker = SPEAKERS[line.speaker] ?? SPEAKERS.orange;
     this.speaker.setText(speaker.name).setColor(speaker.color);
     this.dialogue.setText(line.text).setAlpha(0);
     this.progress.setText(String(this.lineIndex + 1).padStart(2, '0') + ' / ' + this.stage.dialogue.length);

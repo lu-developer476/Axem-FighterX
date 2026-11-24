@@ -2,21 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { resolveLandRaceAnimationSources } from './landRaceAnimationRules.js';
 
 describe('Secuencias de carrera terrestre', () => {
-  it('asigna a Axem Naranja sus GIF de reposo, caminata y acciones', () => {
+  it('asigna a Axem Naranja sus GIF de reposo, caminata y carrera', () => {
     expect(resolveLandRaceAnimationSources('orange', {
       idle: 'orange/idle.gif',
       pose: 'orange/pose.gif',
       run: 'orange/run.gif',
       dash: 'orange/dash.gif',
-      jump: 'orange/jump.gif',
-      roll: 'orange/roll.gif',
     })).toEqual({
       idle: 'orange/idle.gif',
       walk: 'orange/pose.gif',
       run: 'orange/run.gif',
       dash: 'orange/dash.gif',
-      jump: 'orange/jump.gif',
-      roll: 'orange/roll.gif',
     });
   });
 
@@ -26,14 +22,11 @@ describe('Secuencias de carrera terrestre', () => {
       walk: 'red/walk.gif',
       run: 'red/run.gif',
       dash: 'red/dash.gif',
-      jump: 'red/jump.gif',
     })).toEqual({
       idle: 'red/idle.gif',
       walk: 'red/walk.gif',
       run: 'red/run.gif',
       dash: 'red/dash.gif',
-      jump: 'red/jump.gif',
-      roll: 'red/walk.gif',
     });
   });
 

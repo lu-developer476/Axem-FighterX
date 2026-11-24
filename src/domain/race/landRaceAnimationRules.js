@@ -1,7 +1,7 @@
 /**
  * Asociación de secuencias GIF para los corredores de la carrera terrestre.
- * Axem Red no tiene un GIF de rodada independiente: walk.gif cubre ese estado
- * sin sustituir idle, run, dash o jump por una animación incorrecta.
+ * Las secuencias se limitan a los estados básicos de carrera, sin acciones
+ * vinculadas a obstáculos o huecos del recorrido.
  */
 const LAND_RACE_ANIMATION_PROFILES = Object.freeze({
   orange: Object.freeze({
@@ -9,16 +9,12 @@ const LAND_RACE_ANIMATION_PROFILES = Object.freeze({
     walk: 'pose',
     run: 'run',
     dash: 'dash',
-    jump: 'jump',
-    roll: 'roll',
   }),
   red: Object.freeze({
     idle: 'idle',
     walk: 'walk',
     run: 'run',
     dash: 'dash',
-    jump: 'jump',
-    roll: 'walk',
   }),
 });
 

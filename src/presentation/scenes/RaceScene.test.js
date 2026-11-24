@@ -3,7 +3,6 @@ import { RACE_DISTANCE_OPTIONS } from '../../domain/race/raceCourseRules.js';
 import {
   MOTORCYCLE_LANE_BASELINES,
   MOTORCYCLE_LANE_COUNT,
-  MOTORCYCLE_RACE_OBSTACLES,
   normalizeMotorcycleLane,
 } from '../../domain/race/motorcycleRaceRules.js';
 
@@ -21,9 +20,5 @@ describe('Carrera Axem de dos carriles', () => {
     expect(normalizeMotorcycleLane(2)).toBe(1);
     expect(normalizeMotorcycleLane(8)).toBe(1);
     expect(normalizeMotorcycleLane(Number.NaN)).toBe(0);
-  });
-  it('incluye obstáculos distribuidos por los dos carriles', () => {
-    expect(new Set(MOTORCYCLE_RACE_OBSTACLES.map(({ lane }) => lane))).toEqual(new Set([0, 1]));
-    expect(new Set(MOTORCYCLE_RACE_OBSTACLES.map(({ kind }) => kind))).toEqual(new Set(['hurdle', 'roll-gate']));
   });
 });

@@ -1,7 +1,7 @@
 Iconografía de consumibles de Carrera Axem:
 
-- axem-boost.svg: ilustración vectorial original de un depósito de nitro.
-- axem-slow.svg: ilustración vectorial original de un derrame de aceite.
+- axem-boost.png: ilustración original de un depósito de nitro; formato cargado por el juego.
+- axem-slow.png: ilustración original de un derrame de aceite; formato cargado por el juego.
+- axem-boost.svg y axem-slow.svg se conservan como fuentes vectoriales originales.
 
-Ambos SVG fueron creados para este proyecto y se distribuyen junto con el código.
-Los PNG anteriores se conservan como fuentes históricas, pero ya no se cargan.
+Todos los recursos fueron creados para este proyecto y se distribuyen junto con el código.

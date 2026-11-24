@@ -6,32 +6,23 @@ import {
   LAND_RACE_LANE_SCALE,
   LAND_RACE_RUNNER_X_BOUNDS,
   clampLandRaceRunnerX,
-  getLandRaceGapJumpProgress,
   LAND_RACE_WORLD_SCALE,
-  LAND_RACE_GAP_TRIGGER_DISTANCE,
-  LAND_RACE_GAP_JUMP_DURATION_MS,
-  LAND_RACE_GAP_FALL_DURATION_MS,
-  createLandRaceObstacles,
 } from '../../domain/race/landRaceTrackRules.js';
 import { getRaceCameraDistance, getRaceRunnerX } from '../../domain/race/raceLanePresentation.js';
 import landIdleGifUrl from '../../../art/source/sprites/results/male/orange/idle.gif?url';
 import landPoseGifUrl from '../../../art/source/sprites/results/male/orange/pose.gif?url';
 import landRunGifUrl from '../../../art/source/sprites/results/male/orange/run.gif?url';
 import landDashGifUrl from '../../../art/source/sprites/results/male/orange/dash.gif?url';
-import landJumpGifUrl from '../../../art/source/sprites/results/male/orange/jump.gif?url';
-import landRollGifUrl from '../../../art/source/sprites/results/male/orange/roll.gif?url';
 import redRaceIdleGifUrl from '../../../art/source/sprites/references/axem-red/idle.gif?url';
 import redRaceWalkGifUrl from '../../../art/source/sprites/references/axem-red/walk.gif?url';
 import redRaceRunGifUrl from '../../../art/source/sprites/references/axem-red/run.gif?url';
 import redRaceDashGifUrl from '../../../art/source/sprites/references/axem-red/dash.gif?url';
-import redRaceJumpGifUrl from '../../../art/source/sprites/references/axem-red/jump.gif?url';
 import { resolveLandRaceAnimationSources } from '../../domain/race/landRaceAnimationRules.js';
 import { PauseMenuView } from '../views/PauseMenuView.js';
 import { STAGE_MAP_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { resolveRaceCourseAssets } from '../../infrastructure/assets/raceCourseAssets.js';
 
 import { createLoopingMapTexture } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
-import { repeatCoursePattern } from '../../domain/race/raceCourseRules.js';
 import { RaceSession } from '../../domain/race/RaceSession.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
@@ -40,21 +31,10 @@ import { playRaceMusic } from '../../infrastructure/audio/GameMusic.js';
 
 const PLAYER_RUNNER_X = TREADMILL_RUNNER_X;
 const LAND_OBJECT_SCALE = LAND_RACE_WORLD_SCALE;
-const LAND_RACE_LOOP_DISTANCE = 1200;
 const RUNNER_FOOT_OFFSET = 13;
 const COUNTDOWN_MS = 3000;
 const STAMINA_MAX = 100;
 
-export const LAND_RACE_OBSTACLES = Object.freeze([
-  Object.freeze({ distance: 190, action: 'jump', type: 'hurdle' }),
-  Object.freeze({ distance: 370, action: 'roll', type: 'roll-gate' }),
-  Object.freeze({ distance: 555, action: 'jump', type: 'hurdle' }),
-  Object.freeze({ distance: 745, action: 'roll', type: 'roll-gate' }),
-  Object.freeze({ distance: 930, action: 'jump', type: 'hurdle' }),
-  Object.freeze({ distance: 1080, action: 'jump', type: 'hurdle' }),
-]);
-
-const ACTION_DURATION_MS = Object.freeze({ jump: 680, roll: 650 });
 
 export class LandRaceScene extends Phaser.Scene {
   constructor() {
@@ -70,22 +50,6 @@ export class LandRaceScene extends Phaser.Scene {
     const mapKey = createLoopingMapTexture(this, courseAssets.maps, { key: courseTexturePrefix + '-desert', height: GAME_HEIGHT });
     if (!mapKey) throw new Error('No se pudo cargar desert.png para Carrera Terrestre.');
     this.stageLayers = [{ layer: this.add.tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, mapKey).setOrigin(0).setDepth(-100), factor: LAND_RACE_WORLD_SCALE }];
-    this.environmentObjects = [];
-    this.courseObjectSpecs = [
-      { id: 'hurdle', instruction: 'PLANTA', displayWidth: 48, displayHeight: 52 },
-      { id: 'roll-gate', instruction: 'ARBUSTO', displayWidth: 48, displayHeight: 42 },
-      { id: 'stamina', instruction: 'ENERGÍA', displayWidth: 16, displayHeight: 32 },
-    ];
-    this.courseObjectTextures = {};
-    for (const [id, color] of [['hurdle', 0xd9a34a], ['roll-gate', 0x6a9d58], ['stamina', 0x65d9ed]]) {
-      const graphics = this.make.graphics({ x: 0, y: 0, add: false });
-      graphics.fillStyle(color, 1).fillRoundedRect(2, 2, 30, 30, 5);
-      graphics.lineStyle(2, 0x182536, 1).strokeRoundedRect(2, 2, 30, 30, 5);
-      const key = 'land-course-object-' + id;
-      if (!this.textures.exists(key)) graphics.generateTexture(key, 34, 34);
-      graphics.destroy();
-      this.courseObjectTextures[id] = key;
-    }
     this.distance = 0;
     this.finishDistance = 0;
     this.player = null;
@@ -97,10 +61,6 @@ export class LandRaceScene extends Phaser.Scene {
       accelerateArrow: Phaser.Input.Keyboard.KeyCodes.RIGHT,
       brake: Phaser.Input.Keyboard.KeyCodes.A,
       brakeArrow: Phaser.Input.Keyboard.KeyCodes.LEFT,
-      jump: Phaser.Input.Keyboard.KeyCodes.W,
-      jumpArrow: Phaser.Input.Keyboard.KeyCodes.UP,
-      roll: Phaser.Input.Keyboard.KeyCodes.S,
-      rollArrow: Phaser.Input.Keyboard.KeyCodes.DOWN,
       escape: Phaser.Input.Keyboard.KeyCodes.ESC,
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
       restart: Phaser.Input.Keyboard.KeyCodes.R,
@@ -124,9 +84,6 @@ export class LandRaceScene extends Phaser.Scene {
       controls: [
         'D / → · CORRER',
         'A / ← · FRENAR',
-        'W / ↑ · SALTAR',
-        'S / ↓ · RODAR',
-        'RECOGÉ ENERGÍA PARA RECUPERAR RESISTENCIA',
         'AL FINAL · ENTER MENÚ · R REPETIR',
         'ESC · VOLVER AL MENÚ',
       ],
@@ -137,8 +94,6 @@ export class LandRaceScene extends Phaser.Scene {
   #startRace(distance) {
     this.finishDistance = distance;
     this.distance = 0;
-    this.obstacles = this.#generateRaceObstacles();
-    this.pickups = this.#generateRacePickups();
     this.session.start(distance, COUNTDOWN_MS);
     this.pauseMenu.hide();
     this.player = this.#createRacer(RANGER_IDS.ORANGE, true);
@@ -147,7 +102,6 @@ export class LandRaceScene extends Phaser.Scene {
     this.player.distance = 0;
     this.rival.distance = 0;
     this.runners = [this.player, this.rival];
-    this.#createTrackObjects();
     this.status.setText('3').setFontSize(24);
     this.#drawHud();
   }
@@ -210,14 +164,6 @@ export class LandRaceScene extends Phaser.Scene {
 
     const accelerate = this.keys.accelerate.isDown || this.keys.accelerateArrow.isDown;
     const brake = this.keys.brake.isDown || this.keys.brakeArrow.isDown;
-    if (Phaser.Input.Keyboard.JustDown(this.keys.jump) ||
-        Phaser.Input.Keyboard.JustDown(this.keys.jumpArrow)) {
-      this.#startAction(this.player, 'jump');
-    }
-    if (Phaser.Input.Keyboard.JustDown(this.keys.roll) ||
-        Phaser.Input.Keyboard.JustDown(this.keys.rollArrow)) {
-      this.#startAction(this.player, 'roll');
-    }
 
     this.#advanceRacer(this.player, delta, { accelerate, brake });
     this.#advanceRacer(this.rival, delta, null);
@@ -225,8 +171,6 @@ export class LandRaceScene extends Phaser.Scene {
     this.#updateEnvironment();
     this.#syncRacer(this.player);
     this.#syncRacer(this.rival);
-    this.#syncTrackObjects();
-    this.#syncPickups();
     this.#drawHud();
 
     if (this.player.distance >= this.finishDistance || this.rival.distance >= this.finishDistance) {
@@ -281,7 +225,6 @@ export class LandRaceScene extends Phaser.Scene {
   #createRacer(rangerId, isPlayer) {
     const idleKey = spriteKeyFor(rangerId, genderForRanger(rangerId));
     const laneY = LAND_RACE_LANE_Y;
-    const laneIndex = 0;
     const laneScale = LAND_RACE_LANE_SCALE;
     const visualOffset = isPlayer ? -11 : 11;
     const runnerX = PLAYER_RUNNER_X + visualOffset;
@@ -302,15 +245,12 @@ export class LandRaceScene extends Phaser.Scene {
           pose: landPoseGifUrl,
           run: landRunGifUrl,
           dash: landDashGifUrl,
-          jump: landJumpGifUrl,
-          roll: landRollGifUrl,
         }
         : {
           idle: redRaceIdleGifUrl,
           walk: redRaceWalkGifUrl,
           run: redRaceRunGifUrl,
           dash: redRaceDashGifUrl,
-          jump: redRaceJumpGifUrl,
         },
     );
     const racerName = isPlayer ? 'Axem Naranja' : 'Axem Red';
@@ -323,7 +263,6 @@ export class LandRaceScene extends Phaser.Scene {
       animationSources,
       gif: racerGif,
       laneY,
-      laneIndex,
       laneScale,
       isPlayer,
       visualOffset,
@@ -332,117 +271,11 @@ export class LandRaceScene extends Phaser.Scene {
       distance: 0,
       stamina: STAMINA_MAX,
       mode: null,
-      actionMode: null,
-      actionDurationMs: 0,
-      actionElapsedMs: 0,
-      actionRemainingMs: 0,
-      stumbleMs: 0,
-      obstacleIndex: 0,
-      gapStartDistance: null,
-      gapEndDistance: null,
-      fallRemainingMs: 0,
-      fallDurationMs: 0,
-      fallEndDistance: null,
     };
     this.#setMode(racer, 'idle');
     return racer;
   }
 
-
-  #generateRaceObstacles() {
-    return createLandRaceObstacles(LAND_RACE_OBSTACLES, this.finishDistance, {
-      cycleDistance: LAND_RACE_LOOP_DISTANCE,
-      finishPadding: 90,
-    });
-  }
-
-  #generateRacePickups() {
-    return repeatCoursePattern([
-      { distance: 280, kind: 'stamina' },
-      { distance: 760, kind: 'stamina' },
-      { distance: 1060, kind: 'stamina' },
-    ], this.finishDistance, {
-      cycleDistance: LAND_RACE_LOOP_DISTANCE,
-      finishPadding: 35,
-    }).map((pickup) => ({ ...pickup, collected: false }));
-  }
-
-  #createTrackObjects() {
-    const runnerX = PLAYER_RUNNER_X;
-    this.obstacleSprites = this.obstacles.map((obstacle) => {
-      if (obstacle.type === 'gap') return null;
-      const spec = this.courseObjectSpecs.find(({ id }) => id === obstacle.type);
-      return this.add.image(runnerX, this.player.laneY, this.courseObjectTextures[obstacle.type])
-        .setDisplaySize(spec?.displayWidth ?? 44, spec?.displayHeight ?? 52)
-        .setOrigin(0.5, 1)
-        .setDepth(34);
-    });
-    this.obstacleLabels = this.obstacles.map((obstacle) => {
-      const definition = this.courseObjectSpecs.find(({ id }) => id === obstacle.type);
-      const isJump = obstacle.action === 'jump';
-      const instruction = obstacle.type === 'gap'
-        ? '¡SALTO!'
-        : (isJump ? '↑ ' : '↓ ') + (definition?.instruction ?? 'OBSTÁCULO');
-      return this.add.text(runnerX, this.player.laneY - (obstacle.type === 'gap' ? 28 : 18), instruction, {
-        fontFamily: 'monospace',
-        fontSize: obstacle.type === 'gap' ? '8px' : '7px',
-        fontStyle: 'bold',
-        color: obstacle.type === 'gap' ? '#ff8585' : (isJump ? '#ffdc8b' : '#a8eeff'),
-        backgroundColor: '#10131d',
-        padding: { left: 3, right: 3, top: 1, bottom: 1 },
-        stroke: '#10131d',
-        strokeThickness: 2,
-        align: 'center',
-      }).setOrigin(0.5).setDepth(48);
-    });
-    const staminaSpec = this.courseObjectSpecs.find(({ id }) => id === 'stamina');
-    this.pickupSprites = this.pickups.map(() =>
-      this.add.image(PLAYER_RUNNER_X, this.player.laneY - 27, this.courseObjectTextures.stamina)
-        .setDisplaySize(staminaSpec?.displayWidth ?? 16, staminaSpec?.displayHeight ?? 32)
-        .setDepth(38),
-    );
-  }
-
-  #syncTrackObjects() {
-    const runnerX = this.#runnerX(this.player);
-    this.obstacles.forEach((obstacle, index) => {
-      const x = runnerX + (obstacle.distance - this.player.distance) * LAND_OBJECT_SCALE;
-      const y = this.player.laneY + RUNNER_FOOT_OFFSET -
-        (obstacle.type === 'gap' ? 22 : (obstacle.action === 'jump' ? 8 : 4));
-      const stillPending = this.runners.some((racer) =>
-        racer.distance < obstacle.distance + (obstacle.width ?? 0),
-      );
-      const visible = stillPending && x > -36 && x < GAME_WIDTH + 36;
-      this.obstacleSprites[index]?.setPosition(x, y)
-        .setDepth(34)
-        .setVisible(visible);
-      this.obstacleLabels[index]
-        ?.setPosition(x, obstacle.type === 'gap' ? y - 9 : y - 24)
-        .setDepth(48)
-        .setVisible(visible);
-    });
-  }
-
-  #syncPickups() {
-    this.pickups.forEach((pickup, index) => {
-      const sprite = this.pickupSprites[index];
-      if (pickup.collected) {
-        sprite.setVisible(false);
-        return;
-      }
-      const playerX = this.#runnerX(this.player);
-      const x = playerX + (pickup.distance - this.player.distance) * LAND_OBJECT_SCALE;
-      sprite.setPosition(x, this.player.laneY - 27)
-        .setDepth(38 + this.player.laneIndex)
-        .setScale(this.player.laneScale * 0.72)
-        .setVisible(x > -24 && x < GAME_WIDTH + 24);
-      if (Math.abs(x - (playerX + this.player.visualOffset)) < 14) {
-        pickup.collected = true;
-        sprite.setVisible(false);
-        this.player.stamina = Math.min(STAMINA_MAX, this.player.stamina + 30);
-      }
-    });
-  }
 
   #updateEnvironment() {
     const cameraDistance = getRaceCameraDistance(
@@ -470,80 +303,10 @@ export class LandRaceScene extends Phaser.Scene {
     racer.mode = mode;
   }
 
-  #startAction(racer, action) {
-    if (racer.actionRemainingMs > 0 || racer.stumbleMs > 0 || this.session.finished) return;
-    const nextObstacle = this.obstacles[racer.obstacleIndex];
-    const distanceToGap = nextObstacle?.distance - racer.distance;
-    const isGapJump = action === 'jump' && nextObstacle?.type === 'gap' &&
-      distanceToGap >= 0 && distanceToGap <= LAND_RACE_GAP_TRIGGER_DISTANCE;
-    const duration = isGapJump ? LAND_RACE_GAP_JUMP_DURATION_MS : ACTION_DURATION_MS[action];
-    if (!duration) return;
-
-    racer.actionMode = action;
-    racer.actionDurationMs = duration;
-    racer.actionElapsedMs = 0;
-    racer.actionRemainingMs = duration;
-    this.#setMode(racer, action);
-  }
-
-  #fallAcrossGap(racer, endDistance) {
-    racer.gapStartDistance = null;
-    racer.gapEndDistance = null;
-    racer.fallDurationMs = LAND_RACE_GAP_FALL_DURATION_MS;
-    racer.fallRemainingMs = LAND_RACE_GAP_FALL_DURATION_MS;
-    racer.fallEndDistance = endDistance;
-    racer.actionMode = null;
-    racer.actionDurationMs = 0;
-    racer.actionElapsedMs = 0;
-    racer.actionRemainingMs = 0;
-    racer.stumbleMs = 0;
-    racer.stamina = Math.max(0, racer.stamina - 18);
-    this.#setMode(racer, 'walk');
-  }
-
   #advanceRacer(racer, delta, controls) {
-    const previousDistance = racer.distance;
     const isPlayer = racer.isPlayer;
     const accelerate = Boolean(controls?.accelerate && !controls?.brake);
     const brake = Boolean(controls?.brake && !controls?.accelerate);
-
-    if (racer.fallRemainingMs > 0) {
-      racer.fallRemainingMs = Math.max(0, racer.fallRemainingMs - delta);
-      if (racer.fallRemainingMs === 0) {
-        racer.distance = Math.max(racer.distance, racer.fallEndDistance ?? racer.distance);
-        racer.fallEndDistance = null;
-        racer.fallDurationMs = 0;
-        this.#setMode(racer, isPlayer && !accelerate ? 'walk' : 'run');
-      }
-      return;
-    }
-
-    if (!isPlayer) {
-      const nextObstacle = this.obstacles[racer.obstacleIndex];
-      const triggerDistance = nextObstacle?.type === 'gap'
-        ? LAND_RACE_GAP_TRIGGER_DISTANCE
-        : 92;
-      if (nextObstacle && nextObstacle.distance - racer.distance <= triggerDistance &&
-          nextObstacle.distance > racer.distance && racer.actionRemainingMs <= 0 &&
-          racer.stumbleMs <= 0) {
-        this.#startAction(racer, nextObstacle.action);
-      }
-    }
-
-    if (racer.actionRemainingMs > 0) {
-      racer.actionElapsedMs += delta;
-      racer.actionRemainingMs = Math.max(0, racer.actionRemainingMs - delta);
-      if (racer.actionRemainingMs === 0) {
-        racer.actionMode = null;
-        const nextMode = isPlayer ? (accelerate ? 'run' : 'walk') : 'run';
-        if (racer.stumbleMs <= 0) this.#setMode(racer, nextMode);
-      }
-    }
-
-    if (racer.stumbleMs > 0) {
-      racer.stumbleMs = Math.max(0, racer.stumbleMs - delta);
-      if (racer.stumbleMs === 0) this.#setMode(racer, isPlayer && !accelerate ? 'walk' : 'run');
-    }
 
     let speed;
     if (isPlayer) {
@@ -554,101 +317,32 @@ export class LandRaceScene extends Phaser.Scene {
         speed = brake ? 88 : 143;
         racer.stamina = Math.min(STAMINA_MAX, racer.stamina + 21 * delta / 1000);
       }
-      if (racer.stumbleMs > 0) speed = 66;
-      if (racer.actionMode === 'roll') speed *= 0.88;
-      if (racer.stumbleMs <= 0 && racer.actionRemainingMs <= 0) {
-        this.#setMode(racer, accelerate && racer.stamina > 0 ? 'dash' : 'run');
-      }
+      this.#setMode(racer, accelerate && racer.stamina > 0 ? 'dash' : (brake ? 'walk' : 'run'));
     } else {
       speed = 164 + Math.sin(this.time.now / 510) * 5;
-      if (racer.stumbleMs > 0) speed = 69;
-      if (racer.actionMode === 'roll') speed *= 0.92;
-      if (racer.stumbleMs <= 0 && racer.actionRemainingMs <= 0) this.#setMode(racer, 'run');
       racer.stamina = Math.min(STAMINA_MAX, racer.stamina + 8 * delta / 1000);
+      this.#setMode(racer, 'run');
     }
 
     racer.distance = Math.min(this.finishDistance, racer.distance + speed * delta / 1000);
-
-    const obstacle = this.obstacles[racer.obstacleIndex];
-    if (obstacle && previousDistance < obstacle.distance && racer.distance >= obstacle.distance) {
-      const cleared = racer.actionMode === obstacle.action && racer.actionRemainingMs > 0;
-      if (obstacle.type === 'gap') {
-        const gapEndDistance = obstacle.distance + obstacle.width;
-        if (cleared) {
-          racer.gapStartDistance = obstacle.distance;
-          racer.gapEndDistance = gapEndDistance;
-          racer.stamina = Math.min(STAMINA_MAX, racer.stamina + 8);
-        } else {
-          this.#fallAcrossGap(racer, gapEndDistance);
-        }
-      } else if (cleared) {
-        racer.stamina = Math.min(STAMINA_MAX, racer.stamina + 8);
-      } else {
-        racer.stumbleMs = 620;
-        racer.stamina = Math.max(0, racer.stamina - 8);
-        this.#setMode(racer, 'walk');
-      }
-      racer.obstacleIndex += 1;
-    }
-
-    if (racer.gapEndDistance !== null) {
-      if (racer.distance >= racer.gapEndDistance) {
-        racer.gapStartDistance = null;
-        racer.gapEndDistance = null;
-        if (racer.actionMode === 'jump') {
-          racer.actionMode = null;
-          racer.actionRemainingMs = 0;
-          this.#setMode(racer, isPlayer && !accelerate ? 'walk' : 'run');
-        }
-      } else if (racer.actionMode !== 'jump' || racer.actionRemainingMs <= 0) {
-        this.#fallAcrossGap(racer, racer.gapEndDistance);
-      }
-    }
-
   }
 
   #syncRacer(racer) {
     const x = this.#runnerX(racer) + racer.visualOffset;
     const groundY = racer.laneY + RUNNER_FOOT_OFFSET;
-    const fallProgress = racer.fallDurationMs > 0
-      ? Phaser.Math.Clamp(1 - racer.fallRemainingMs / racer.fallDurationMs, 0, 1)
-      : 0;
-    const fallDrop = Math.sin(fallProgress * Math.PI / 2) * 48;
-    const fallAlpha = 1 - fallProgress;
     const runPhase = racer.distance / 16;
     const movingBob = racer.mode === 'run' || racer.mode === 'walk' || racer.mode === 'dash'
       ? Math.abs(Math.sin(runPhase)) * 2.2
       : 0;
-    let lift = 0;
-    if (racer.actionMode === 'jump' && racer.actionDurationMs > 0) {
-      if (racer.gapStartDistance !== null && racer.gapEndDistance !== null) {
-        const progress = getLandRaceGapJumpProgress(
-          racer.distance,
-          racer.gapStartDistance,
-          racer.gapEndDistance,
-        );
-        lift = Math.sin(progress * Math.PI) * 27;
-      } else if (this.obstacles[racer.obstacleIndex]?.type !== 'gap') {
-        const progress = Phaser.Math.Clamp(racer.actionElapsedMs / racer.actionDurationMs, 0, 1);
-        lift = Math.sin(progress * Math.PI) * 27;
-      }
-    }
 
-    racer.sprite.setPosition(Math.round(x), Math.round(groundY - lift - movingBob + fallDrop))
+    racer.sprite.setPosition(Math.round(x), Math.round(groundY - movingBob))
       .setDepth(42)
-      .setScale(racer.laneScale * (racer.actionMode === 'roll' ? 0.9 : 1))
-      .setAlpha(fallAlpha);
-    racer.gif?.setPosition(Math.round(x), Math.round(groundY - lift - movingBob - 16 + fallDrop))
+      .setScale(racer.laneScale * 0.82);
+    racer.gif?.setPosition(Math.round(x), Math.round(groundY - movingBob - 16))
       .setDepth(44)
-      .setScale(racer.laneScale)
-      .setAlpha(fallAlpha);
-    racer.shadow.setPosition(Math.round(x), groundY + 1);
-    racer.shadow.setScale(racer.laneScale * (1 - lift / 90), racer.laneScale)
-      .setAlpha(fallAlpha);
-    const poseScale = racer.actionMode === 'roll'
-      ? 0.9
-      : (racer.mode === 'run' || racer.mode === 'walk' ? 0.82 : 0.9);
-    racer.sprite.setScale(racer.laneScale * poseScale, racer.laneScale * (racer.actionMode === 'roll' ? 0.68 : 1));
+      .setScale(racer.laneScale);
+    racer.shadow.setPosition(Math.round(x), groundY + 1)
+      .setScale(racer.laneScale);
   }
 
   #drawHud() {

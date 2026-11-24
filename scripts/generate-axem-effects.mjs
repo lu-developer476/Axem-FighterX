@@ -199,7 +199,7 @@ async function makeGif(config) {
 
 
 const WHITE_CANON_ACTIONS = [
-  { source: 'axem-white-canon-dash.png', output: 'canon-dash.gif', frameDelay: 90, expectedFrames: 7 },
+  { source: 'axem-white-canon-dash.png', output: 'canon-dash.gif', frameDelay: 90, maxEmptyColumns: 0, expectedFrames: 8 },
   { source: 'axem-white-special-attack.png', output: 'special-attack.gif', frameDelay: 100, expectedFrames: 6 },
   { source: 'axem-white-canon-pose.png', output: 'canon-pose.gif', frameDelay: 120, expectedFrames: 3 },
   { source: 'axem-white-charge.png', output: 'axem-white-charge.gif', frameDelay: 180, expectedFrames: 6 },
@@ -221,7 +221,7 @@ async function buildWhiteCanonGifs() {
       .raw()
       .toBuffer({ resolveWithObject: true });
     const { data, info } = decoded;
-    const segments = findHorizontalSegments(data, info.width, info.height, 2);
+    const segments = findHorizontalSegments(data, info.width, info.height, action.maxEmptyColumns ?? 2);
     assert(
       segments.length === action.expectedFrames,
       action.source + ': se esperaban ' + action.expectedFrames +

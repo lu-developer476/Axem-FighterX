@@ -13,7 +13,7 @@ describe('FighterAnimator con secuencias de Axem Red recoloreadas', () => {
     const { animator, sprite } = createAnimator();
     const states = [
       ['idle', 'axem-orange-idle'], ['walk', 'axem-orange-run'], ['dash', 'axem-orange-dash'],
-      ['attack', 'axem-orange-double-axe'], ['special-attack', 'axem-orange-charge'],
+      ['attack', 'axem-orange-attack'], ['special-attack', 'axem-orange-charge'],
       ['block', 'axem-orange-guard'], ['hurt', 'axem-orange-hurt-combo'],
       ['teleport', 'axem-orange-teleport'], ['ko', 'axem-orange-ko'],
     ];
@@ -38,7 +38,7 @@ describe('FighterAnimator con secuencias de Axem Red recoloreadas', () => {
     animator.update(fighter('idle'));
     animator.showVictory();
     animator.update(fighter('idle', { elapsedMs: 120 }));
-    expect(sprite.play).toHaveBeenLastCalledWith('axem-orange-battle-pose', true);
+    expect(sprite.play).toHaveBeenLastCalledWith('axem-orange-victory', true);
     animator.clearForcedState();
     animator.update(fighter('idle'));
     expect(sprite.play).toHaveBeenLastCalledWith('axem-orange-idle', true);

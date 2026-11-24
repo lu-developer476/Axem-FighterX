@@ -65,6 +65,20 @@ describe('Sprites canónicos de Axem Naranja', () => {
     expect((await sharp(masterBike, { animated: true }).metadata()).pages).toBeGreaterThan(1);
   });
 
+  it('mantiene retirados los GIF de doble hacha y battle-pose', async () => {
+    const retiredFiles = [
+      '../../../art/source/sprites/references/axem-red/axem-ranger-double-axe.gif',
+      '../../../art/source/sprites/results/male/orange/double-axe.gif',
+      '../../../art/source/sprites/results/male/red/double-axe.gif',
+      '../../../art/source/sprites/results/male/red/battle-pose.gif',
+      '../../../art/source/sprites/results/male/orange/battle-pose.gif',
+    ];
+    for (const path of retiredFiles) {
+      await expect(access(fileURLToPath(new URL(path, import.meta.url))))
+        .rejects.toMatchObject({ code: 'ENOENT' });
+    }
+  });
+
   it('genera las animaciones de combate naranja desde las referencias Red', async () => {
     const actions = ['bike', 'charge', 'dash', 'guard', 'hit', 'hurt', 'idle', 'jump', 'ko',
       'pose', 'punch-01', 'punch-02', 'punch-03', 'roll', 'run', 'teleport'];

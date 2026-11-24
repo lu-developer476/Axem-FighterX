@@ -6,7 +6,8 @@ Hay dos géneros, cada uno con su hoja de referencia. **Violet** y **Orange** so
 |---|---|---|---|---|
 | Masculino (referencia compuesta) | Axem Red | `references/axem-red/axem-red-spritesheet.png` | 1316 × 1230 px, paneles blancos sobre fondo negro | Derecha |
 | Masculino (atlas de animaciones) | Axem Red | `references/axem-red/axem-red-animation-atlas.png` | 730 × 804 px, fondo teal `rgb(0,128,128)` | Derecha |
-| Femenino | Axem Pink | `references/axem-pink/axem-pink-spritesheet.png` | 900 × 421 px, fondo blanco | Izquierda |
+| Femenino (referencia compuesta) | Axem Pink | `references/axem-pink/axem-pink-spritesheet.png` | 1316 × 717 px, paneles blancos sobre fondo negro | Izquierda |
+| Femenino (atlas de animaciones) | Axem Pink | `references/axem-pink/axem-pink-animation-atlas.png` | 900 × 421 px, fondo teal | Izquierda |
 
 La orientación nativa se conserva en todas las imágenes de cada fuente: Axem Red masculino, incluidos el retrato base y los GIF de acción, apunta a la derecha; Axem Pink femenino apunta a la izquierda. El renderizador espeja cada sprite solo cuando el luchador necesita mirar hacia el lado contrario.
 
@@ -14,7 +15,7 @@ La carpeta `references/axem-red/` conserva tanto la nueva hoja compuesta `axem-r
 
 ## Cómo se generan los resultados
 
-`npm run prepare:sprites` (también corre antes de `dev`, `build` y `test`) prepara los resultados de Axem Naranja masculino en `results/male/orange/`. Los masters y las secuencias de referencia de Axem Red permanecen en `references/axem-red/`, sin duplicarse bajo `results/male/red/`.
+`npm run prepare:sprites` prepara los resultados de Axem Naranja masculino en `results/male/orange/`. `npm run dev` inicia Vite sin ejecutar generadores; `npm test` y `npm run build` preparan y validan los recursos antes de continuar. Los masters y las secuencias de referencia de Axem Red permanecen en `references/axem-red/`, sin duplicarse bajo `results/male/red/`.
 
 ```
 results/
@@ -27,6 +28,10 @@ results/
 references/axem-red/
   axem-red-spritesheet.png  axem-red-animation-atlas.png
   super-axem-ranger-red.png
+
+references/axem-pink/
+  axem-pink-spritesheet.png  axem-pink-animation-atlas.png
+  axem-pink-pose.png  super-axem-pink.png
   axem-ranger-run.gif  axem-ranger-bike.gif
   dash.gif  idle.gif  jump.gif  run.gif  walk.gif
 
@@ -48,19 +53,19 @@ Los GIF de personaje conservan lienzos de **150 × 100 px**, transparencia y esc
 
 ## Regla global de transparencia y pixel art
 
-La política está centralizada en `processing-rules.json` y se aplica automáticamente a **todos los PNG y GIF dentro de `results/`**, de forma recursiva, cada vez que se ejecutan `npm run prepare:sprites`, `npm run dev`, `npm test` o `npm run build`.
+La política está centralizada en `processing-rules.json` y se aplica automáticamente a **todos los PNG y GIF dentro de `results/`**, de forma recursiva, cada vez que se ejecutan `npm run prepare:sprites`, `npm test` o `npm run build`.
 
-- **Fondo transparente:** se elimina únicamente el color uniforme (o casi uniforme) conectado al borde de cada imagen/cuadro. Los píxeles del mismo color encerrados dentro de la silueta se conservan. Si una imagen opaca no tiene un fondo reconocible, el proceso falla y exige una regla específica; no perfora ni adivina el fondo.
+- **Fondo transparente:** se elimina únicamente el color uniforme (o casi uniforme) conectado al borde de cada imagen/cuadro. Los píxeles del mismo color encerrados dentro de la silueta se conservan. Si una imagen opaca no tiene un fondo reconocible, se conserva intacta y se informa como omitida; no perfora ni adivina el fondo. Solo fallan los recursos que un generador concreto necesita y no puede interpretar.
 - **Bordes nítidos:** se conserva el lienzo y la resolución originales. No se aplica blur ni sharpen artificial: ambos pueden deformar el pixel art o crear halos. La limpieza de halo se limita a la franja exterior del fondo eliminado.
 - **Escalado:** cuando otro generador necesita redimensionar, usa `nearest` (vecino más cercano), sin interpolación ni suavizado. No se reescala como parte de la normalización global.
 - **Animaciones:** los GIF se revisan cuadro por cuadro; al corregir el fondo se mantienen cantidad de cuadros, dimensiones y tiempos de reproducción.
-- **Validación futura:** cualquier PNG/GIF nuevo que se agregue a `results/` entra en la misma regla en la siguiente ejecución. Los originales de `references/` se preservan como masters y deben pasar por sus generadores antes de convertirse en sprites de juego.
+- **Validación futura:** cualquier PNG/GIF nuevo que se agregue a `results/` se inspecciona en la siguiente preparación; si no es posible inferir el fondo sin riesgo, queda preservado sin cambios. Los originales de `references/` se preservan como masters y deben pasar por sus generadores antes de convertirse en sprites de juego.
 
 La configuración de Phaser ya refuerza el resultado con `pixelArt`, `antialias: false`, `roundPixels` y filtro `NEAREST` para las texturas que se cargan. Por eso el criterio visual es **píxel definido y borde limpio**, no bordes borrosos o suavizados por interpolación.
 
 ## El atlas no es una cuadrícula
 
-El detector automático no procesa todas las referencias con el mismo algoritmo. Para las secuencias masculinas utiliza `axem-red-animation-atlas.png` (730 × 804 px, fondo teal), que conserva las 14 filas estructuradas. Para la referencia femenina utiliza `axem-pink-spritesheet.png` (900 × 421 px, fondo blanco). La nueva hoja compuesta masculina `axem-red-spritesheet.png` (1316 × 1230 px) se conserva íntegra como referencia visual suplementaria: combina paneles blancos sobre fondo negro y no tiene todavía una clasificación de recortes por secuencia, por lo que no debe sustituir al atlas de animaciones en el generador.
+El detector automático no procesa todas las referencias con el mismo algoritmo. Para las secuencias masculinas utiliza `axem-red-animation-atlas.png` (730 × 804 px, fondo teal) y para las femeninas `axem-pink-animation-atlas.png` (900 × 421 px, fondo teal). Las hojas `axem-red-spritesheet.png` (1316 × 1230 px) y `axem-pink-spritesheet.png` (1316 × 717 px) se conservan como referencias compuestas independientes. Esas láminas combinan paneles blancos sobre fondo negro y no sustituyen a los atlas estructurados: los generadores usan únicamente las fuentes de animación declaradas en `atlasLayoutRules.js`.
 
 Los rectángulos de las dos fuentes procesables los detecta `scripts/analyze-atlas.mjs` y quedan en `src/infrastructure/assets/atlasFrames.json`; las reglas (color de fondo, tolerancia, zonas excluidas) están en `atlasLayoutRules.js` y el algoritmo en `atlasFrameDetection.js`. Para regenerar el índice: `node scripts/analyze-atlas.mjs`. `atlasFrames.test.js` comprueba las secuencias, los límites de los recortes y que la referencia compuesta nueva y el atlas de animaciones sigan preservados por separado.
 

@@ -1109,7 +1109,7 @@
  },
  "female": {
   "id": "axem-pink",
-  "source": "art/source/sprites/references/axem-pink/axem-pink-spritesheet.png",
+  "source": "art/source/sprites/references/axem-pink/axem-pink-animation-atlas.png",
   "width": 900,
   "height": 421,
   "strategy": "regions",

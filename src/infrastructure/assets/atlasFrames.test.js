@@ -108,6 +108,31 @@ describe('cuadros de la hoja masculina (Axem Red)', () => {
 describe('secuencias y recursos de la hoja femenina (Axem Pink)', () => {
   const { regions, groups, width, height } = atlasFrames.female;
 
+  it('mantiene separadas la referencia compuesta Pink y el atlas de animaciones', async () => {
+    const animationAtlas = fileURLToPath(new URL(
+      '../../../art/source/sprites/references/axem-pink/axem-pink-animation-atlas.png', import.meta.url,
+    ));
+    const compositeReference = fileURLToPath(new URL(
+      '../../../art/source/sprites/references/axem-pink/axem-pink-spritesheet.png', import.meta.url,
+    ));
+    const [animation, composite] = await Promise.all([
+      sharp(animationAtlas).metadata(),
+      sharp(compositeReference).metadata(),
+    ]);
+
+    expect([animation.width, animation.height]).toEqual([900, 421]);
+    expect(animation.format).toBe('png');
+    expect([composite.width, composite.height]).toEqual([1316, 717]);
+    expect(composite.format).toBe('png');
+    expect(ATLAS_SOURCES.female.file).toBe(
+      'art/source/sprites/references/axem-pink/axem-pink-animation-atlas.png',
+    );
+    expect(ATLAS_SOURCES.female.compositeReference).toBe(
+      'art/source/sprites/references/axem-pink/axem-pink-spritesheet.png',
+    );
+    expect(atlasFrames.female.source).toBe(ATLAS_SOURCES.female.file);
+  });
+
   it('reconoce las 116 regiones y distingue poses de recursos', () => {
     const characters = regions.filter((region) => region.kind === 'character');
     expect(regions).toHaveLength(116);
@@ -218,7 +243,7 @@ describe('resultados de las variantes canónicas', () => {
 
   it('conserva Axem Pink como referencia y deja vacío el destino femenino Violet', async () => {
     const source = await sharp(
-      fileURLToPath(new URL('../../../art/source/sprites/references/axem-pink/axem-pink-spritesheet.png', import.meta.url)),
+      fileURLToPath(new URL('../../../art/source/sprites/references/axem-pink/axem-pink-animation-atlas.png', import.meta.url)),
     ).metadata();
     expect(source.format).toBe('png');
     expect(source.width).toBe(900);

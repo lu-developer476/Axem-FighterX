@@ -110,8 +110,12 @@
           "role": "composite-reference"
         },
         {
-          "reference": "art/source/sprites/references/axem-pink/axem-pink-spritesheet.png",
+          "reference": "art/source/sprites/references/axem-pink/axem-pink-animation-atlas.png",
           "role": "animation-source"
+        },
+        {
+          "reference": "art/source/sprites/references/axem-pink/axem-pink-spritesheet.png",
+          "role": "composite-reference"
         }
       ]
     },

@@ -29,7 +29,8 @@ export const ATLAS_SOURCES = Object.freeze({
   }),
   female: Object.freeze({
     id: 'axem-pink',
-    file: 'art/source/sprites/references/axem-pink/axem-pink-spritesheet.png',
+    file: 'art/source/sprites/references/axem-pink/axem-pink-animation-atlas.png',
+    compositeReference: 'art/source/sprites/references/axem-pink/axem-pink-spritesheet.png',
     // Blanco con ruido tipo JPEG; las estelas rosa pálido exigen tolerancia baja.
     background: Object.freeze([255, 255, 255]),
     tolerance: 30,

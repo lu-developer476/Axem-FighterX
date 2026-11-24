@@ -3,7 +3,7 @@
   "sourcePolicy": {
     "directory": "art/source/sprites/references",
     "immutable": true,
-    "description": "Los archivos maestros de origen son inmutables. Los recursos de Orange se conservan en results/male/orange; las referencias de Axem Red mantienen los recursos requeridos por los minijuegos y los masters originales."
+    "description": "Los archivos maestros de references son inmutables. La hoja compuesta axem-red-spritesheet.png se conserva como referencia visual; axem-red-animation-atlas.png es la fuente estructurada para detección de secuencias y generación de recursos. Los recursos de Orange se conservan en results/male/orange."
   },
   "categories": {
     "characterArtwork": {
@@ -73,11 +73,17 @@
       "allowCropping": false,
       "families": [
         {
-          "reference": "art/source/sprites/references/axem-red/axem-red-spritesheet.png",
-          "result": "art/source/sprites/results/male/orange/spritesheet.png"
+          "reference": "art/source/sprites/references/axem-red/axem-red-animation-atlas.png",
+          "result": "art/source/sprites/results/male/orange/spritesheet.png",
+          "role": "animation-source"
         },
         {
-          "reference": "art/source/sprites/references/axem-pink/axem-pink-spritesheet.png"
+          "reference": "art/source/sprites/references/axem-red/axem-red-spritesheet.png",
+          "role": "composite-reference"
+        },
+        {
+          "reference": "art/source/sprites/references/axem-pink/axem-pink-spritesheet.png",
+          "role": "animation-source"
         }
       ]
     },

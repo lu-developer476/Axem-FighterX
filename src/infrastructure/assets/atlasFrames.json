@@ -1,7 +1,7 @@
 {
  "male": {
   "id": "axem-red",
-  "source": "art/source/sprites/references/axem-red/axem-red-spritesheet.png",
+  "source": "art/source/sprites/references/axem-red/axem-red-animation-atlas.png",
   "width": 730,
   "height": 804,
   "strategy": "rows",

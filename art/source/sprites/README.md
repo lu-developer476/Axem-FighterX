@@ -4,12 +4,13 @@ Hay dos géneros, cada uno con su hoja de referencia. **Violet** y **Orange** so
 
 | Género | Referencia | Hoja | Tamaño | Dirección nativa |
 |---|---|---|---|---|
-| Masculino | Axem Red | `references/axem-red/axem-red-spritesheet.png` | 730 × 804 px, fondo teal `rgb(0,128,128)` | Derecha |
+| Masculino (referencia compuesta) | Axem Red | `references/axem-red/axem-red-spritesheet.png` | 1316 × 1230 px, paneles blancos sobre fondo negro | Derecha |
+| Masculino (atlas de animaciones) | Axem Red | `references/axem-red/axem-red-animation-atlas.png` | 730 × 804 px, fondo teal `rgb(0,128,128)` | Derecha |
 | Femenino | Axem Pink | `references/axem-pink/axem-pink-spritesheet.png` | 900 × 421 px, fondo blanco | Izquierda |
 
 La orientación nativa se conserva en todas las imágenes de cada fuente: Axem Red masculino, incluidos el retrato base y los GIF de acción, apunta a la derecha; Axem Pink femenino apunta a la izquierda. El renderizador espeja cada sprite solo cuando el luchador necesita mirar hacia el lado contrario.
 
-Los masters y los GIF de acción de Axem Red se conservan juntos en `references/axem-red/`. `dash.gif`, `idle.gif`, `jump.gif`, `run.gif` y `walk.gif` son las secuencias de referencia; `axem-ranger-run.gif` y `axem-ranger-bike.gif` mantienen los nombres de sus GIF maestros. No se genera una copia redundante en `results/male/red/`: Red queda centralizado en `references/axem-red/`. El GIF maestro de batalla de Orange se conserva en `references/axem-orange/battle-pose.gif`. Orange y Violet siguen siendo variantes cromáticas independientes; Red no se obtiene recoloreando a Orange.
+La carpeta `references/axem-red/` conserva tanto la nueva hoja compuesta `axem-red-spritesheet.png` como el atlas estructurado `axem-red-animation-atlas.png`, del que se extraen las secuencias automáticamente. `dash.gif`, `idle.gif`, `jump.gif`, `run.gif` y `walk.gif` son las secuencias de referencia; `axem-ranger-run.gif` y `axem-ranger-bike.gif` mantienen los nombres de sus GIF maestros. No se genera una copia redundante en `results/male/red/`: Red queda centralizado en `references/axem-red/`. El GIF maestro de batalla de Orange se conserva en `references/axem-orange/battle-pose.gif`. Orange y Violet siguen siendo variantes cromáticas independientes; Red no se obtiene recoloreando a Orange.
 
 ## Cómo se generan los resultados
 
@@ -24,7 +25,8 @@ results/
     violet/          destino reservado para los resultados femeninos
 
 references/axem-red/
-  axem-red-spritesheet.png  super-axem-ranger-red.png
+  axem-red-spritesheet.png  axem-red-animation-atlas.png
+  super-axem-ranger-red.png
   axem-ranger-run.gif  axem-ranger-bike.gif
   dash.gif  idle.gif  jump.gif  run.gif  walk.gif
 
@@ -35,7 +37,7 @@ pickups/
   axem-boost.png  axem-boost.svg  axem-slow.png  axem-slow.svg  ATTRIBUTION.txt
 ```
 
-Los retratos laterales del menú se generan directamente desde la referencia original `references/axem-red/axem-red-spritesheet.png`; no se necesita una vista previa duplicada en `results/male/`. El recoloreado del cabello recorre cada componente rubio de todas las poses, incluso cuando está separado del casco o la cara, para evitar que queden mechones originales sin procesar.
+Los retratos laterales del menú y las secuencias automáticas se generan desde `references/axem-red/axem-red-animation-atlas.png`; la hoja compuesta `axem-red-spritesheet.png` se preserva como referencia visual independiente; no se necesita una vista previa duplicada en `results/male/`. El recoloreado del cabello recorre cada componente rubio de todas las poses, incluso cuando está separado del casco o la cara, para evitar que queden mechones originales sin procesar.
 
 La ruta de resultados femeninos es `results/female/violet/`; el contenido provisional `results/female/pink/` se retiró. La referencia original Pink permanece en `references/axem-pink/` y no se replica como una variante Pink dentro de `results/`.
 
@@ -58,9 +60,9 @@ La configuración de Phaser ya refuerza el resultado con `pixelArt`, `antialias:
 
 ## El atlas no es una cuadrícula
 
-Ninguna hoja tiene filas de cuadros uniformes: cambian la cantidad, el ancho y la separación (por ejemplo, la distancia entre inicios de cuadro de `group-01` va de 27 a 38 px) y ambas traen ruido de compresión en el fondo. Por eso no se usa un paso fijo: cada cuadro tiene su propio rectángulo `[x, y, ancho, alto]`, ajustado a los píxeles del personaje.
+El detector automático no procesa todas las referencias con el mismo algoritmo. Para las secuencias masculinas utiliza `axem-red-animation-atlas.png` (730 × 804 px, fondo teal), que conserva las 14 filas estructuradas. Para la referencia femenina utiliza `axem-pink-spritesheet.png` (900 × 421 px, fondo blanco). La nueva hoja compuesta masculina `axem-red-spritesheet.png` (1316 × 1230 px) se conserva íntegra como referencia visual suplementaria: combina paneles blancos sobre fondo negro y no tiene todavía una clasificación de recortes por secuencia, por lo que no debe sustituir al atlas de animaciones en el generador.
 
-Los rectángulos los detecta `scripts/analyze-atlas.mjs` y quedan en `src/infrastructure/assets/atlasFrames.json`; las reglas (color de fondo, tolerancia, zonas excluidas) están en `atlasLayoutRules.js` y el algoritmo en `atlasFrameDetection.js`. Para regenerarlo tras cambiar una hoja: `node scripts/analyze-atlas.mjs`. `atlasFrames.test.js` verifica las cantidades, que no haya superposiciones y que Violet y Orange tengan el mismo canal alfa en cada hoja generada.
+Los rectángulos de las dos fuentes procesables los detecta `scripts/analyze-atlas.mjs` y quedan en `src/infrastructure/assets/atlasFrames.json`; las reglas (color de fondo, tolerancia, zonas excluidas) están en `atlasLayoutRules.js` y el algoritmo en `atlasFrameDetection.js`. Para regenerar el índice: `node scripts/analyze-atlas.mjs`. `atlasFrames.test.js` comprueba las secuencias, los límites de los recortes y que la referencia compuesta nueva y el atlas de animaciones sigan preservados por separado.
 
 ## Masculino (Axem Red): 14 grupos, 107 cuadros
 

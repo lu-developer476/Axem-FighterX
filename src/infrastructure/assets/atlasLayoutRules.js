@@ -6,7 +6,8 @@
 export const ATLAS_SOURCES = Object.freeze({
   male: Object.freeze({
     id: 'axem-red',
-    file: 'art/source/sprites/references/axem-red/axem-red-spritesheet.png',
+    file: 'art/source/sprites/references/axem-red/axem-red-animation-atlas.png',
+    compositeReference: 'art/source/sprites/references/axem-red/axem-red-spritesheet.png',
     // Teal plano con ruido de compresión. Entre algunos cuadros contiguos solo hay
     // halos tenues (hasta ~100 de distancia al fondo): con menos tolerancia se fusionan.
     background: Object.freeze([0, 128, 128]),

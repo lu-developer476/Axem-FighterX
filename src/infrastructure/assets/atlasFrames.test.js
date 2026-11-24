@@ -21,6 +21,31 @@ const alphaOf = async (file) => {
 describe('cuadros de la hoja masculina (Axem Red)', () => {
   const { groups, width, height } = atlasFrames.male;
 
+  it('mantiene separadas la referencia compuesta y la fuente de animaciones', async () => {
+    const compositeReference = fileURLToPath(new URL(
+      '../../../art/source/sprites/references/axem-red/axem-red-spritesheet.png', import.meta.url,
+    ));
+    const animationAtlas = fileURLToPath(new URL(
+      '../../../art/source/sprites/references/axem-red/axem-red-animation-atlas.png', import.meta.url,
+    ));
+    const [composite, animation] = await Promise.all([
+      sharp(compositeReference).metadata(),
+      sharp(animationAtlas).metadata(),
+    ]);
+
+    expect(composite.format).toBe('png');
+    expect([composite.width, composite.height]).toEqual([1316, 1230]);
+    expect(animation.format).toBe('png');
+    expect([animation.width, animation.height]).toEqual([730, 804]);
+    expect(ATLAS_SOURCES.male.compositeReference).toBe(
+      'art/source/sprites/references/axem-red/axem-red-spritesheet.png',
+    );
+    expect(ATLAS_SOURCES.male.file).toBe(
+      'art/source/sprites/references/axem-red/axem-red-animation-atlas.png',
+    );
+    expect(atlasFrames.male.source).toBe(ATLAS_SOURCES.male.file);
+  });
+
   it('conserva la distribución irregular: 14 grupos con 107 cuadros', () => {
     expect(groups.map((group) => group.frames.length))
       .toEqual([7, 9, 10, 8, 8, 5, 5, 5, 5, 11, 8, 14, 6, 6]);

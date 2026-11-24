@@ -1459,7 +1459,7 @@ async function buildGender(gender, allowedColors) {
 
     if (gender === 'male') {
       // Use the actual checked-in Axem Red reference; legacy preview filenames are absent.
-      const redReference = SOURCE('sprites', 'references', 'axem-red', 'axem-red-spritesheet.png');
+      const redReference = SOURCE('sprites', 'references', 'axem-red', 'axem-red-animation-atlas.png');
       // El atlas Red trae ruido de compresión: con tolerancia 42 queda un halo verdoso.
       parts.push(await recolorAndKey(redReference, gender, targetHue, ATLAS_SOURCES.male.tolerance));
 

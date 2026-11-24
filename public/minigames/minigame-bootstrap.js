@@ -13,5 +13,5 @@
     }
   }
 
-  lime.embed("index", "content", 480, 270);
+  lime.embed("index", "openfl-content", 480, 270, { parameters: {} });
 }());

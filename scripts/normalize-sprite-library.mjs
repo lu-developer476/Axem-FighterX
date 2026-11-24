@@ -148,8 +148,8 @@ async function normalizeGif(file) {
     verified.format !== 'gif' ||
     !verified.hasAlpha ||
     verified.width !== metadata.width ||
-    verified.pageHeight !== pageHeight ||
-    verified.pages !== pages
+    (verified.pageHeight ?? verified.height) !== pageHeight ||
+    (verified.pages ?? 1) !== pages
   ) {
     throw new Error('Falló la verificación de transparencia o animación de ' + path.relative(ROOT, file));
   }

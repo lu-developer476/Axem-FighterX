@@ -98,7 +98,8 @@
           "mode": "center-strip",
           "maxEmptyColumns": 8,
           "frameDelay": 100,
-          "minFrames": 2
+          "minFrames": 2,
+          "frameCount": 2
         },
         {
           "source": "art/source/effects/axem/white-explotion.png",
@@ -106,7 +107,8 @@
           "mode": "center-strip",
           "maxEmptyColumns": 3,
           "frameDelay": 85,
-          "minFrames": 2
+          "minFrames": 2,
+          "frameCount": 2
         },
         {
           "source": "art/source/effects/canon/normal-canon-shoot.png",
@@ -114,7 +116,8 @@
           "mode": "travel-strip",
           "maxEmptyColumns": 2,
           "frameDelay": 55,
-          "minFrames": 3
+          "minFrames": 3,
+          "frameCount": 7
         },
         {
           "source": "art/source/effects/canon/special-canon-shoot.png",
@@ -122,7 +125,8 @@
           "mode": "travel-strip",
           "maxEmptyColumns": 3,
           "frameDelay": 65,
-          "minFrames": 3
+          "minFrames": 3,
+          "frameCount": 8
         },
         {
           "source": "art/source/effects/canon/turquoise-canon-shoot.png",
@@ -130,7 +134,8 @@
           "mode": "travel-strip",
           "maxEmptyColumns": 2,
           "frameDelay": 55,
-          "minFrames": 3
+          "minFrames": 3,
+          "frameCount": 6
         },
         {
           "source": "art/source/effects/sparks/turquoise-effect.png",

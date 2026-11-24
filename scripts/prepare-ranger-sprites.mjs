@@ -1100,20 +1100,13 @@ async function buildMaleGroup16Sequence(color, frames) {
   const axeHeight = (await sharp(axeTrimmed).metadata()).height;
   await writeMaleDefeatedPose(color, frames[0], STANDARD_STANDING_HEIGHT / axeHeight);
 
-  const battlePose = await readMaleGifFrames(color, 'battle-pose.gif');
-  const axePose = await normalizeMaleActionFrame(frames[1].input, false, STANDARD_STANDING_HEIGHT);
-  await writeMaleActionGif(
-    color,
-    'battle-pose',
-    [...battlePose.frames, axePose],
-    [...battlePose.delays, 120],
-  );
+  // La pose con hacha se conserva en el atlas suplementario; no se exporta como GIF.
 }
 
 /** Acciones de los GIF que el juego reproduce como hojas de sprites. */
 const GAME_GIF_ACTIONS = Object.freeze([
   'idle', 'dash', 'punch-01', 'punch-02', 'punch-03', 'hit', 'hurt',
-  'jump', 'teleport', 'charge', 'battle-pose', 'pose',
+  'jump', 'teleport', 'charge', 'pose',
   'guard', 'roll', 'ko',
 ]);
 
@@ -1779,7 +1772,7 @@ async function main() {
     'axem-female-orange-bike.png',
     ...['violet'].flatMap((color) => [
       'run', 'bike', 'bike-idle', 'bike-accelerate', 'bike-brake', 'bike-boost',
-      'bike-victory', 'bike-defeat', 'double-axe', 'defeated', 'idle', 'dash', 'jump', 'roll',
+      'bike-victory', 'bike-defeat', 'defeated', 'idle', 'dash', 'jump', 'roll',
       'guard', 'ko', 'charge', 'pose', 'battle-pose', 'teleport',
       'punch-01', 'punch-02', 'punch-03', 'hit', 'hurt',
     ].map((action) => 'axem-' + color + '-' + action + '.png')),

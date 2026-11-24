@@ -22,7 +22,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: HaxeFoundation/setup-haxe@v1
+      - uses: krdlab/setup-haxe@v2
         with:
           haxe-version: 4.3.7
 
@@ -44,12 +44,16 @@ jobs:
         run: |
           npm run prepare:haxe-assets
           npm run build:haxe
+          test -s public/minigames/index.html || { echo "No se generó public/minigames/index.html"; exit 1; }
 
       - name: Tests
         run: npm test
 
       - name: Build
         run: npm run build
+
+      - name: Verificar que Vite incluye los minijuegos HTML5
+        run: test -s dist/minigames/index.html
 
       - name: Confirmar sprites generados en main
         if: github.ref == 'refs/heads/main'

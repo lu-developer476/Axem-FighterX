@@ -17,9 +17,6 @@
   <assets path="../public/generated/haxeflixel/axem-red-idle.png" rename="assets/races/axem-red-idle.png" />
   <assets path="../public/generated/haxeflixel/axem-red-walk.png" rename="assets/races/axem-red-walk.png" />
   <assets path="../public/generated/haxeflixel/axem-red-dash.png" rename="assets/races/axem-red-dash.png" />
-  <assets path="../public/generated/haxeflixel/axem-red-idle.png" rename="assets/races/axem-red-idle.png" />
-  <assets path="../public/generated/haxeflixel/axem-red-walk.png" rename="assets/races/axem-red-walk.png" />
-  <assets path="../public/generated/haxeflixel/axem-red-dash.png" rename="assets/races/axem-red-dash.png" />
   <window width="480" height="270" fps="60" background="#080b18" />
   <define name="FLX_NO_DEBUG" />
 </project>

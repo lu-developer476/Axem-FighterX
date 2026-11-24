@@ -11,7 +11,7 @@
     "prepare:haxe-assets": "node scripts/prepare-haxeflixel-race-assets.mjs",
     "build:haxe": "node scripts/build-haxeflixel.mjs",
     "dev": "vite",
-    "prebuild": "node scripts/analyze-atlas.mjs && node scripts/prepare-super-rangers.mjs && node scripts/prepare-favicons.mjs && node scripts/prepare-title-art.mjs && node scripts/prepare-ranger-sprites.mjs && node scripts/normalize-sprite-library.mjs && node scripts/standardize-assets.mjs && node scripts/validate-assets.mjs && npm run prepare:haxe-assets",
+    "prebuild": "node scripts/analyze-atlas.mjs && node scripts/prepare-super-rangers.mjs && node scripts/prepare-favicons.mjs && node scripts/prepare-title-art.mjs && node scripts/prepare-ranger-sprites.mjs && node scripts/normalize-sprite-library.mjs && node scripts/standardize-assets.mjs && node scripts/validate-assets.mjs && npm run prepare:haxe-assets && node scripts/validate-haxeflixel-output.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",

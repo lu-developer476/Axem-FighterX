@@ -75,22 +75,26 @@ describe('Estándares centrales de recursos gráficos', () => {
 
 
   for (const [gender, family] of Object.entries(ASSET_STANDARDS.categories.characterArtwork.families)) {
-    it('mantiene el mismo lienzo entre el master y el artwork ' + gender, async () => {
-      const [master, artwork, prepared] = await Promise.all([
+    it('mantiene el lienzo del master y su fuente preparada ' + gender, async () => {
+      const [master, prepared] = await Promise.all([
         sharp(absolute(family.reference)).metadata(),
-        sharp(absolute(family.result)).metadata(),
         sharp(absolute(family.preparedSource)).metadata(),
       ]);
       expect(master.format).toBe('png');
       expect(master.width).toBe(family.width);
       expect(master.height).toBe(family.height);
-      expect(artwork.format).toBe('png');
-      expect(artwork.width).toBe(master.width);
-      expect(artwork.height).toBe(master.height);
-      expect(artwork.hasAlpha).toBe(true);
+      expect(prepared.format).toBe('png');
       expect(prepared.width).toBe(master.width);
       expect(prepared.height).toBe(master.height);
       expect(prepared.hasAlpha).toBe(true);
+
+      if (family.result) {
+        const artwork = await sharp(absolute(family.result)).metadata();
+        expect(artwork.format).toBe('png');
+        expect(artwork.width).toBe(master.width);
+        expect(artwork.height).toBe(master.height);
+        expect(artwork.hasAlpha).toBe(true);
+      }
     });
   }
 

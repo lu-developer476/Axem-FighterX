@@ -4,7 +4,7 @@ import { ARENA, FLIGHT } from '../arena/arena.js';
 import { BODY } from './Fighter.js';
 import { FighterState, TIMINGS } from './FighterState.js';
 
-const make = (id = 'violet', x = 100) => createFighter(id, { x, y: ARENA.groundY });
+const make = (id = 'orange', x = 100) => createFighter(id, { x, y: ARENA.groundY }, 1, 'male');
 const idle = { x: 0, y: 0, z: 0, attack: false, teleport: false };
 const run = (fighter, intent, totalMs, step = 16) => {
   for (let t = 0; t < totalMs; t += step) fighter.update(intent, step);
@@ -150,12 +150,12 @@ describe('Fighter: ataque', () => {
   });
 
   it('la caja de ataque se ubica delante según la orientación', () => {
-    const right = make('violet', 200);
+    const right = make('orange', 200);
     right.startAttack();
     run(right, idle, TIMINGS.attack.windupMs + 10);
     expect(right.attackHitbox.x).toBeGreaterThan(200);
 
-    const left = make('violet', 200);
+    const left = make('orange', 200);
     left.facing = -1;
     left.startAttack();
     run(left, idle, TIMINGS.attack.windupMs + 10);
@@ -219,7 +219,7 @@ describe('Fighter: daño, retroceso y KO', () => {
 
 describe('Fighter: teletransporte', () => {
   it('desaparece, reaparece en destino y es invulnerable en el proceso', () => {
-    const fighter = make('violet', 100);
+    const fighter = make('orange', 100);
     expect(fighter.startTeleport(300, -1)).toBe(true);
     expect(fighter.isInvulnerable).toBe(true);
     run(fighter, idle, TIMINGS.teleportOutMs + 20);
@@ -244,7 +244,7 @@ describe('Fighter: teletransporte', () => {
 
 describe('Fighter: defensa, esquiva y ataque especial', () => {
   it('mantiene el bloqueo y reduce el daño al recibir un golpe de frente', () => {
-    const fighter = make('violet', 300);
+    const fighter = make('orange', 300);
     fighter.facing = -1;
     fighter.update({ ...idle, block: true }, 16);
     expect(fighter.state).toBe(FighterState.BLOCK);
@@ -258,7 +258,7 @@ describe('Fighter: defensa, esquiva y ataque especial', () => {
   });
 
   it('no bloquea un golpe que llega desde atrás', () => {
-    const fighter = make('violet', 300);
+    const fighter = make('orange', 300);
     fighter.facing = 1;
     fighter.update({ ...idle, block: true }, 16);
     expect(fighter.takeHit({ damage: 20, fromDirection: 1 })).toBe(true);
@@ -268,7 +268,7 @@ describe('Fighter: defensa, esquiva y ataque especial', () => {
   });
 
   it('la esquiva tiene desplazamiento propio, invulnerabilidad breve y enfriamiento', () => {
-    const fighter = make('violet', 300);
+    const fighter = make('orange', 300);
     const initialX = fighter.position.x;
     fighter.update({ ...idle, dodge: true }, 80);
     expect(fighter.state).toBe(FighterState.DODGE);
@@ -282,7 +282,7 @@ describe('Fighter: defensa, esquiva y ataque especial', () => {
   });
 
   it('el ataque especial tiene anticipación, hitbox y daño superior con enfriamiento', () => {
-    const fighter = make('violet', 300);
+    const fighter = make('orange', 300);
     expect(fighter.startSpecialAttack()).toBe(true);
     expect(fighter.state).toBe(FighterState.SPECIAL_ATTACK);
     expect(fighter.attackHitbox).toBeNull();
@@ -296,7 +296,7 @@ describe('Fighter: defensa, esquiva y ataque especial', () => {
   });
 
   it('reproduce el estado de aterrizaje al tocar el suelo', () => {
-    const fighter = make('violet', 300);
+    const fighter = make('orange', 300);
     fighter.position.z = 30;
     fighter.update({ ...idle, z: -1 }, 2000);
     expect(fighter.position.z).toBe(0);

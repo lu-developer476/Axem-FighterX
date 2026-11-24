@@ -191,19 +191,21 @@ describe('resultados de las variantes canónicas', () => {
     expect(Math.abs(visibleHeights[0] - 78)).toBeLessThanOrEqual(1);
   });
 
-  it('mantiene el sprite-sheet canónico y la pose femenina de Axem Violeta', async () => {
-    const canonical = await readFile(resultsPath('female', 'violet', 'axem-ranger-violet.png'));
-    const pose = await readFile(resultsPath('female', 'violet', 'pose.png'));
-    expect(pose.equals(canonical)).toBe(true);
-    const metadata = await sharp(resultsPath('female', 'violet', 'spritesheet.png')).metadata();
-    expect(metadata.format).toBe('png');
-    expect(metadata.hasAlpha).toBe(true);
+  it('conserva la hoja de referencia de Axem Pink sin publicarla como variante jugable', async () => {
+    const source = await sharp(
+      fileURLToPath(new URL('../../../art/source/sprites/references/axem-pink/axem-pink-spritesheet.png', import.meta.url)),
+    ).metadata();
+    const processed = await sharp(resultsPath('female', 'pink', 'spritesheet.png')).metadata();
+    expect(processed.format).toBe('png');
+    expect(processed.width).toBe(source.width);
+    expect(processed.height).toBe(source.height);
+    expect(processed.hasAlpha).toBe(true);
   });
 
   it('mantiene retiradas las tiras auxiliares del repositorio', async () => {
     for (const parts of [
       ['male', 'orange', 'sequences', 'index.json'],
-      ['female', 'violet', 'sequences', 'index.json'],
+      ['female', 'pink', 'sequences', 'index.json'],
     ]) {
       await expect(readFile(resultsPath(...parts))).rejects.toMatchObject({ code: 'ENOENT' });
     }

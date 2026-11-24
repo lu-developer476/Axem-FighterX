@@ -69,6 +69,7 @@ describe('Sprites canónicos de Axem Naranja', () => {
     const retiredFiles = [
       '../../../art/source/sprites/references/axem-red/axem-ranger-double-axe.gif',
       '../../../art/source/sprites/results/male/orange/double-axe.gif',
+      '../../../art/source/sprites/results/male/orange/double-axe.png',
       '../../../art/source/sprites/results/male/red/double-axe.gif',
       '../../../art/source/sprites/results/male/red/battle-pose.gif',
       '../../../art/source/sprites/results/male/orange/battle-pose.gif',

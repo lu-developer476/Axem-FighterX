@@ -40,7 +40,7 @@ const oneShotDurationMs = (state) => {
  */
 export function registerCharacterAnimations(scene) {
   for (const rangerId of RANGER_ORDER) {
-    for (const [action, frameRate] of [['run', 10], ['bike', 9], ['double-axe', 12]]) {
+    for (const [action, frameRate] of [['run', 10], ['bike', 9]]) {
       const key = maleAnimationKey(rangerId, action);
       const texture = scene.textures.get(key);
       if (!scene.anims.exists(key) && texture) {
@@ -49,7 +49,7 @@ export function registerCharacterAnimations(scene) {
           key,
           frames,
           frameRate,
-          repeat: action === 'double-axe' ? 0 : -1,
+          repeat: -1,
         });
       }
     }
@@ -105,7 +105,10 @@ function registerGifAnimations(scene, rangerId) {
   define('ko', { duration: TIMINGS.koAnimationMs, repeat: 0 });
   define('charge', { frameRate: 10, repeat: -1 });
   define('pose', { frameRate: 8, repeat: -1 });
-  define('battle-pose', { frameRate: 10, repeat: 0 });
+  define('attack', { duration: attackTotalMs(), repeat: 0 },
+    ['punch-01', 'punch-02', 'punch-03'].flatMap((action) => gifFrames(scene, rangerId, action)));
+  define('victory', { duration: TIMINGS.victoryAnimationMs, repeat: 0 },
+    gifFrames(scene, rangerId, 'pose'));
   define('jump', { frameRate: 14, repeat: 0 });
   define('dash', { duration: DASH.durationMs, repeat: 0 });
   define('teleport', { duration: TIMINGS.teleportOutMs + TIMINGS.teleportInMs, repeat: 0 });

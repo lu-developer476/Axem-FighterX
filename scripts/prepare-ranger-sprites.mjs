@@ -1775,7 +1775,6 @@ async function main() {
   ));
   // Elimina salidas antiguas que ya no forman parte del juego.
   const retiredAssets = [
-    'super-axem-source-female.png',
     'menu-ranger-male-violet.png',
     'menu-ranger-female-violet.png',
     'ranger-male-violet.png',

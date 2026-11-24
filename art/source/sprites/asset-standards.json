@@ -87,6 +87,67 @@
       "alphaRequired": true,
       "description": "Armas, objetos, recursos suplementarios y efectos conservan sus dimensiones de origen."
     },
+    "effectAnimation": {
+      "sourcePolicy": "immutable",
+      "outputPolicy": "animated-transparent-gif",
+      "preserveSourceDimensions": true,
+      "files": [
+        {
+          "source": "art/source/effects/axem/big-white-explotion.png",
+          "output": "art/source/effects/axem/big-white-explotion.gif",
+          "mode": "center-strip",
+          "maxEmptyColumns": 8,
+          "frameDelay": 100,
+          "minFrames": 2
+        },
+        {
+          "source": "art/source/effects/axem/white-explotion.png",
+          "output": "art/source/effects/axem/white-explotion.gif",
+          "mode": "center-strip",
+          "maxEmptyColumns": 3,
+          "frameDelay": 85,
+          "minFrames": 2
+        },
+        {
+          "source": "art/source/effects/canon/normal-canon-shoot.png",
+          "output": "art/source/effects/canon/normal-canon-shoot.gif",
+          "mode": "travel-strip",
+          "maxEmptyColumns": 2,
+          "frameDelay": 55,
+          "minFrames": 3
+        },
+        {
+          "source": "art/source/effects/canon/special-canon-shoot.png",
+          "output": "art/source/effects/canon/special-canon-shoot.gif",
+          "mode": "travel-strip",
+          "maxEmptyColumns": 3,
+          "frameDelay": 65,
+          "minFrames": 3
+        },
+        {
+          "source": "art/source/effects/canon/turquoise-canon-shoot.png",
+          "output": "art/source/effects/canon/turquoise-canon-shoot.gif",
+          "mode": "travel-strip",
+          "maxEmptyColumns": 2,
+          "frameDelay": 55,
+          "minFrames": 3
+        },
+        {
+          "source": "art/source/effects/sparks/turquoise-effect.png",
+          "output": "art/source/effects/sparks/turquoise-effect.gif",
+          "mode": "spark-flicker",
+          "frameDelay": 75,
+          "frameCount": 8
+        },
+        {
+          "source": "art/source/effects/sparks/yellow-effect.png",
+          "output": "art/source/effects/sparks/yellow-effect.gif",
+          "mode": "spark-flicker",
+          "frameDelay": 75,
+          "frameCount": 8
+        }
+      ]
+    },
     "backgrounds": {
       "policy": "preserve-source-aspect-ratio",
       "crop": "explicit-per-stage-only",

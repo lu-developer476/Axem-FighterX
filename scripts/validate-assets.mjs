@@ -162,6 +162,29 @@ async function validateActionGifs() {
   return files.length;
 }
 
+async function validateEffectGifs() {
+  const effects = standards.categories.effectAnimation.files;
+  for (const effect of effects) {
+    const source = await sharp(absolute(effect.source), { failOn: 'error' }).metadata();
+    assertEqual(source.format, 'png', effect.source + ' formato');
+    if (!source.hasAlpha) throw new Error(effect.source + ': el PNG fuente debe conservar alfa.');
+
+    const gif = await sharp(absolute(effect.output), { animated: true, failOn: 'error' }).metadata();
+    assertEqual(gif.format, 'gif', effect.output + ' formato');
+    assertEqual(gif.width, source.width, effect.output + ' ancho');
+    assertEqual(gif.pageHeight ?? gif.height, source.height, effect.output + ' alto por cuadro');
+    if (!gif.hasAlpha) throw new Error(effect.output + ': falta la transparencia.');
+    if (!Number.isInteger(gif.pages) || gif.pages < 2) {
+      throw new Error(effect.output + ': se requieren al menos dos cuadros.');
+    }
+    if (!Array.isArray(gif.delay) || gif.delay.length !== gif.pages ||
+        gif.delay.some((delay) => !Number.isFinite(delay) || delay <= 0)) {
+      throw new Error(effect.output + ': la duración de los cuadros es inválida.');
+    }
+  }
+  return effects.length;
+}
+
 async function validateSequenceIndex(indexPath, gender) {
   const entries = JSON.parse(await fs.readFile(absolute(indexPath), 'utf8'));
   if (!Array.isArray(entries)) {
@@ -200,10 +223,11 @@ async function main() {
   await validateAtlasSheets();
 
   const gifCount = await validateActionGifs();
+  const effectGifCount = await validateEffectGifs();
 
   console.log(
     'Recursos gráficos validados: artwork, texturas, retratos, atlas y ' +
-    gifCount + ' GIF de acción de Orange y Red. Los recursos sin tamaño fijo conservan su resolución nativa.',
+    gifCount + ' GIF de acción y ' + effectGifCount + ' GIF de efectos Axem. Los recursos sin tamaño fijo conservan su resolución nativa.',
   );
 }
 

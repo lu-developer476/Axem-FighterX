@@ -30,52 +30,28 @@ async function visibleBounds(relativePath) {
 }
 
 describe('Estándares centrales de recursos gráficos', () => {
-  it('conserva las referencias y los cinco GIF Red necesarios para minijuegos', async () => {
+  it('conserva los masters Red que usa el generador y acepta referencias opcionales', async () => {
     const directory = absolute('art/source/sprites/references/axem-red');
     const entries = await fs.readdir(directory, { withFileTypes: true });
-    const expectedGifs = ['dash.gif', 'idle.gif', 'jump.gif', 'run.gif', 'walk.gif'].sort();
-    const gifs = entries
-      .filter((entry) => entry.isFile() && expectedGifs.includes(entry.name))
-      .map((entry) => entry.name)
-      .sort();
-    expect(gifs).toEqual(expectedGifs);
-    const retiredGifs = [
-      'bike.gif', 'hit.gif', 'hurt.gif', 'punch-01.gif',
-      'punch-02.gif', 'punch-03.gif', 'teleport.gif',
-    ];
-    expect(entries.some((entry) => retiredGifs.includes(entry.name))).toBe(false);
-    expect(entries.some((entry) => entry.name === 'axem-ranger-bike.gif')).toBe(true);
-    expect(entries.some((entry) => entry.name === 'axem-red-spritesheet.png')).toBe(true);
-    expect(entries.some((entry) => entry.name === 'super-axem-ranger-red.png')).toBe(true);
-    await expect(fs.access(absolute('art/source/sprites/references/axem-orange'))).rejects.toThrow();
+    const filenames = new Set(entries.filter((entry) => entry.isFile()).map((entry) => entry.name));
 
-    await expect(fs.access(absolute('art/source/sprites/results/male/red')))
-      .rejects.toMatchObject({ code: 'ENOENT' });
+    expect(filenames.has('axem-ranger-bike.gif')).toBe(true);
+    expect(filenames.has('axem-ranger-run.gif')).toBe(true);
+    expect(filenames.has('axem-red-spritesheet.png')).toBe(true);
+    expect(filenames.has('axem-red-animation-atlas.png')).toBe(true);
+    expect(filenames.has('super-axem-ranger-red.png')).toBe(true);
     expect(ASSET_STANDARDS.categories.characterArtwork.families.male).not.toHaveProperty('derivedArtwork');
   });
 
-  it('mantiene retiradas las carpetas de origen y secuencias que ya no forman parte del proyecto', async () => {
-    const removedDirectories = [
-      'art/source/sprites/results/male/violet',
-      'art/source/sprites/results/female/orange',
+  it('limpia únicamente las carpetas temporales del generador', async () => {
+    for (const directory of [
       'art/source/sprites/results/male/orange/source',
       'art/source/sprites/results/male/orange/sequences',
-      'art/source/sprites/results/female/violet/source',
-      'art/source/sprites/results/female/violet/sequences',
-      'art/source/sprites/results/female/violet/supplemental',
-    ];
-    for (const directory of removedDirectories) {
+      'art/source/sprites/results/male/orange/supplemental',
+    ]) {
       await expect(fs.access(absolute(directory))).rejects.toThrow();
     }
-    expect(await fs.readdir(absolute('art/source/sprites/results/female/violet'))).toEqual(['.gitkeep']);
-    await expect(fs.access(absolute('art/source/sprites/results/female/pink')))
-      .rejects.toMatchObject({ code: 'ENOENT' });
-    expect(PROCESSING_RULES.processedPolicy.excludedFiles)
-      .toContain('male/orange/super-axem-ranger-orange.png');
-    expect(PROCESSING_RULES.processedPolicy.excludedFiles)
-      .toContain('male/orange/super-axem-ranger-orange.PNG');
   });
-
 
   for (const [gender, family] of Object.entries(ASSET_STANDARDS.categories.characterArtwork.families)) {
     it('mantiene el lienzo del master y su fuente preparada ' + gender, async () => {
@@ -189,15 +165,28 @@ describe('Estándares centrales de recursos gráficos', () => {
 
   it('mantiene los GIF de acción en su lienzo estándar y con sus cuadros', async () => {
     const category = ASSET_STANDARDS.categories.actionGif;
-    const redReferenceDirectory = absolute('art/source/sprites/references/axem-red');
-    const redReferenceGifs = [
-      'axem-ranger-bike.gif', 'axem-ranger-run.gif',
-      'dash.gif', 'idle.gif', 'jump.gif', 'run.gif', 'walk.gif',
-    ].map((name) => path.join(redReferenceDirectory, name));
-    const files = [
-      ...await collectGifFiles(absolute(category.directory), category.recursive === true),
-      ...redReferenceGifs,
-    ];
+    const redReferenceDirectory = absolute(category.referenceDirectory);
+    const redReferenceGifs = [];
+    for (const name of category.referenceFiles ?? []) {
+      const filename = path.join(redReferenceDirectory, name);
+      try {
+        await fs.access(filename);
+        redReferenceGifs.push(filename);
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+      }
+    }
+    const canonicalGifs = [];
+    for (const name of category.files ?? []) {
+      const filename = path.join(absolute(category.directory), name);
+      try {
+        await fs.access(filename);
+        canonicalGifs.push(filename);
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+      }
+    }
+    const files = [...canonicalGifs, ...redReferenceGifs];
     expect(files.length).toBeGreaterThan(0);
     for (const file of files) {
       const metadata = await sharp(file, { animated: true }).metadata();

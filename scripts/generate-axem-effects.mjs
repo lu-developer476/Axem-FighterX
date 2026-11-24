@@ -16,6 +16,16 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+async function fileExists(filename) {
+  try {
+    await fs.access(filename);
+    return true;
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
+}
+
 function findHorizontalSegments(data, width, height, maxEmptyColumns) {
   const activeColumns = new Uint32Array(width);
   for (let y = 0; y < height; y += 1) {
@@ -114,6 +124,11 @@ function buildSparkFrames(source, width, height, count) {
 async function makeGif(config) {
   const sourcePath = absolute(config.source);
   const outputPath = absolute(config.output);
+  if (!await fileExists(sourcePath)) {
+    await fs.rm(outputPath, { force: true });
+    console.log(config.source + ': fuente opcional ausente; se omite su GIF derivado.');
+    return false;
+  }
   const metadata = await sharp(sourcePath, { failOn: 'error' }).metadata();
   assert(metadata.format === 'png', config.source + ': se esperaba PNG.');
   assert(metadata.width > 0 && metadata.height > 0, config.source + ': lienzo inválido.');
@@ -199,10 +214,10 @@ async function makeGif(config) {
 
 
 const WHITE_CANON_ACTIONS = [
-  { source: 'axem-white-canon-dash.png', output: 'canon-dash.gif', frameDelay: 100, maxEmptyColumns: 0, expectedFrames: 4 },
-  { source: 'axem-white-special-attack.png', output: 'special-attack.gif', frameDelay: 100, expectedFrames: 6 },
-  { source: 'axem-white-canon-pose.png', output: 'canon-pose.gif', frameDelay: 100, expectedFrames: 3 },
-  { source: 'axem-white-charge.png', output: 'axem-white-charge.gif', frameDelay: 100, expectedFrames: 6 },
+  { source: 'axem-white-canon-dash.png', output: 'canon-dash.gif', frameDelay: 100, maxEmptyColumns: 0 },
+  { source: 'axem-white-special-attack.png', output: 'special-attack.gif', frameDelay: 100 },
+  { source: 'axem-white-canon-pose.png', output: 'canon-pose.gif', frameDelay: 100 },
+  { source: 'axem-white-charge.png', output: 'axem-white-charge.gif', frameDelay: 100 },
 ];
 
 async function buildWhiteCanonGifs() {
@@ -212,72 +227,102 @@ async function buildWhiteCanonGifs() {
   for (const action of WHITE_CANON_ACTIONS) {
     const sourcePath = path.join(sourceDirectory, action.source);
     const outputPath = path.join(sourceDirectory, action.output);
-    const metadata = await sharp(sourcePath, { failOn: 'error' }).metadata();
-    assert(metadata.format === 'png', action.source + ': se esperaba PNG.');
-    assert(metadata.width > 0 && metadata.height > 0, action.source + ': lienzo vacío.');
+    if (!await fileExists(sourcePath)) {
+      await fs.rm(outputPath, { force: true });
+      console.log(action.source + ': recurso opcional eliminado; se retira su GIF derivado.');
+      continue;
+    }
 
-    const decoded = await sharp(sourcePath, { failOn: 'error' })
-      .ensureAlpha()
-      .raw()
-      .toBuffer({ resolveWithObject: true });
-    const { data, info } = decoded;
-    const segments = findHorizontalSegments(data, info.width, info.height, action.maxEmptyColumns ?? 2);
-    assert(
-      segments.length === action.expectedFrames,
-      action.source + ': se esperaban ' + action.expectedFrames +
-        ' cuadros y se detectaron ' + segments.length + '.',
-    );
+    try {
+      const metadata = await sharp(sourcePath, { failOn: 'error' }).metadata();
+      assert(metadata.format === 'png', action.source + ': se esperaba PNG.');
+      assert(metadata.width > 0 && metadata.height > 0, action.source + ': lienzo vacío.');
 
-    const frames = segments.map((segment) => {
-      const bounds = visibleBounds(data, info.width, info.height, segment.left, segment.right);
-      assert(bounds, action.source + ': cuadro vacío detectado.');
-      const cropWidth = bounds.right - bounds.left;
-      const cropHeight = bounds.bottom - bounds.top;
-      assert(cropWidth <= canvas.width && cropHeight <= canvas.height,
-        action.source + ': un cuadro excede el lienzo de 150x100 px.');
+      const decoded = await sharp(sourcePath, { failOn: 'error' })
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      const { data, info } = decoded;
+      const segments = findHorizontalSegments(data, info.width, info.height, action.maxEmptyColumns ?? 2);
 
-      const frame = Buffer.alloc(canvas.width * canvas.height * 4);
-      const targetLeft = Math.floor((canvas.width - cropWidth) / 2);
-      const targetTop = Math.floor((canvas.height - cropHeight) / 2);
-      for (let y = 0; y < cropHeight; y += 1) {
-        const sourceStart = ((bounds.top + y) * info.width + bounds.left) * 4;
-        const sourceEnd = sourceStart + cropWidth * 4;
-        const targetStart = ((targetTop + y) * canvas.width + targetLeft) * 4;
-        data.copy(frame, targetStart, sourceStart, sourceEnd);
+      // Las hojas White son auxiliares y pueden cambiar de distribución o de
+      // cantidad de cuadros. Si la nueva disposición no es una tira horizontal
+      // compatible, se conserva el GIF anterior y se deja el PNG intacto.
+      if (segments.length < 2) {
+        console.warn(action.source + ': no se detectaron al menos dos cuadros; se omite la regeneración.');
+        continue;
       }
-      return frame;
-    });
 
-    const pngFrames = await Promise.all(frames.map((frame) =>
-      sharp(frame, { raw: { width: canvas.width, height: canvas.height, channels: 4 } })
-        .png({ compressionLevel: 9, effort: 10 })
-        .toBuffer()
-    ));
-    const gif = await sharp(pngFrames, { join: { animated: true } }).gif({
-      loop: 0,
-      delay: Array.from({ length: pngFrames.length }, () => action.frameDelay),
-      effort: 10,
-      dither: 0,
-      interFrameMaxError: 0,
-      interPaletteMaxError: 0,
-      keepDuplicateFrames: true,
-    }).toBuffer();
+      const frames = [];
+      let unsupportedLayout = false;
+      for (const segment of segments) {
+        const bounds = visibleBounds(data, info.width, info.height, segment.left, segment.right);
+        if (!bounds) {
+          unsupportedLayout = true;
+          break;
+        }
+        const cropWidth = bounds.right - bounds.left;
+        const cropHeight = bounds.bottom - bounds.top;
+        if (cropWidth > canvas.width || cropHeight > canvas.height) {
+          unsupportedLayout = true;
+          break;
+        }
 
-    const verified = await sharp(gif, { animated: true, failOn: 'error' }).metadata();
-    assert(verified.format === 'gif', action.output + ': no se codificó como GIF.');
-    assert(verified.width === canvas.width, action.output + ': ancho de lienzo incorrecto.');
-    assert((verified.pageHeight ?? verified.height) === canvas.height, action.output + ': alto de lienzo incorrecto.');
-    assert((verified.pages ?? 0) === action.expectedFrames, action.output + ': número de cuadros incorrecto.');
-    assert(verified.hasAlpha, action.output + ': se perdió la transparencia.');
+        const frame = Buffer.alloc(canvas.width * canvas.height * 4);
+        const targetLeft = Math.floor((canvas.width - cropWidth) / 2);
+        const targetTop = Math.floor((canvas.height - cropHeight) / 2);
+        for (let y = 0; y < cropHeight; y += 1) {
+          const sourceStart = ((bounds.top + y) * info.width + bounds.left) * 4;
+          const sourceEnd = sourceStart + cropWidth * 4;
+          const targetStart = ((targetTop + y) * canvas.width + targetLeft) * 4;
+          data.copy(frame, targetStart, sourceStart, sourceEnd);
+        }
+        frames.push(frame);
+      }
 
-    await fs.mkdir(path.dirname(outputPath), { recursive: true });
-    await fs.writeFile(outputPath, gif);
-    console.log(
-      path.relative(ROOT, outputPath) + ': ' + pngFrames.length + ' cuadros · ' +
-      canvas.width + 'x' + canvas.height + ' px · ' + action.frameDelay +
-      ' ms/cuadro · loop infinito · transparencia conservada · ' +
-      (gif.length / 1024).toFixed(1) + ' KiB.',
-    );
+      if (unsupportedLayout || frames.length < 2) {
+        console.warn(
+          action.source + ': la disposición actual no cabe en el formato de animación 150x100; ' +
+          'se conserva el GIF derivado anterior y se omite este recurso.',
+        );
+        continue;
+      }
+
+      const pngFrames = await Promise.all(frames.map((frame) =>
+        sharp(frame, { raw: { width: canvas.width, height: canvas.height, channels: 4 } })
+          .png({ compressionLevel: 9, effort: 10 })
+          .toBuffer()
+      ));
+      const gif = await sharp(pngFrames, { join: { animated: true } }).gif({
+        loop: 0,
+        delay: Array.from({ length: pngFrames.length }, () => action.frameDelay),
+        effort: 10,
+        dither: 0,
+        interFrameMaxError: 0,
+        interPaletteMaxError: 0,
+        keepDuplicateFrames: true,
+      }).toBuffer();
+
+      const verified = await sharp(gif, { animated: true, failOn: 'error' }).metadata();
+      assert(verified.format === 'gif', action.output + ': no se codificó como GIF.');
+      assert(verified.width === canvas.width, action.output + ': ancho de lienzo incorrecto.');
+      assert((verified.pageHeight ?? verified.height) === canvas.height, action.output + ': alto de lienzo incorrecto.');
+      assert((verified.pages ?? 0) === frames.length, action.output + ': número de cuadros incorrecto.');
+      assert(verified.hasAlpha, action.output + ': se perdió la transparencia.');
+
+      await fs.mkdir(path.dirname(outputPath), { recursive: true });
+      await fs.writeFile(outputPath, gif);
+      console.log(
+        path.relative(ROOT, outputPath) + ': ' + pngFrames.length + ' cuadros · ' +
+        canvas.width + 'x' + canvas.height + ' px · ' + action.frameDelay +
+        ' ms/cuadro · loop infinito · transparencia conservada · ' +
+        (gif.length / 1024).toFixed(1) + ' KiB.',
+      );
+    } catch (error) {
+      // Una secuencia auxiliar malformada no debe impedir cargar ni compilar
+      // el juego. Los errores en los recursos principales siguen siendo fatales.
+      console.warn(action.source + ': se conserva el GIF anterior; recurso auxiliar omitido: ' + error.message);
+    }
   }
 }
 

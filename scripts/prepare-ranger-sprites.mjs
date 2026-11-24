@@ -1582,15 +1582,9 @@ async function buildGender(gender, allowedColors) {
 
 async function main() {
   await fs.mkdir(GENERATED, { recursive: true });
-  const retiredActionGifs = [
-    RESULTS('male', 'orange', 'double-axe.gif'),
-    RESULTS('male', 'orange', 'battle-pose.gif'),
-  ];
-  await Promise.all(retiredActionGifs.map((filename) => fs.rm(filename, { force: true })));
-
+  // Solo se limpian directorios de trabajo creados por este generador.
+  // Las carpetas de variantes y los recursos manuales del usuario se preservan.
   const retiredSpriteDirectories = [
-    RESULTS('male', 'violet'),
-    RESULTS('female', 'orange'),
     RESULTS('male', 'orange', 'source'),
     RESULTS('male', 'orange', 'sequences'),
     RESULTS('male', 'orange', 'supplemental'),
@@ -1619,16 +1613,6 @@ async function main() {
     ].map((action) => 'axem-' + color + '-' + action + '.png')),
   ];
   await Promise.all(retiredAssets.map((name) => fs.rm(path.join(GENERATED, name), { force: true })));
-  // El atlas femenino se agrupó por fila, no por acción. Estas salidas se habían
-  // etiquetado sin evidencia de secuencia y no deben sobrevivir al pipeline.
-  const retiredFemaleActionGifs = [
-    'animations.json', 'idle.gif', 'walk.gif',
-    'attack-01.gif', 'attack-02.gif', 'attack-03.gif',
-    'charge.gif', 'teleport.gif',
-  ];
-  await Promise.all(retiredFemaleActionGifs.map((name) =>
-    fs.rm(path.join(RESULTS('female', 'violet'), name), { force: true })
-  ));
   await buildGender('male', ['orange']);
   await buildMenuSuperPoses();
   // Las tiras auxiliares solo existen durante la generación; no quedan versionadas.

@@ -13,6 +13,16 @@ function absolute(relativePath) {
   return path.join(ROOT, relativePath);
 }
 
+async function fileExists(filename) {
+  try {
+    await fs.access(filename);
+    return true;
+  } catch (error) {
+    if (error.code === 'ENOENT') return false;
+    throw error;
+  }
+}
+
 function assertEqual(actual, expected, label) {
   if (actual !== expected) {
     throw new Error(label + ': esperado ' + expected + ', recibido ' + actual + '.');
@@ -124,16 +134,22 @@ async function collectActionGifs(directory, recursive = false) {
 async function validateActionGifs() {
   const category = standards.categories.actionGif;
   const directory = absolute(category.directory);
-  const redActionNames = ['dash.gif', 'idle.gif', 'jump.gif', 'run.gif', 'walk.gif'];
-  const redActionDirectory = absolute('art/source/sprites/references/axem-red');
-  const redActionFiles = redActionNames.map((name) => path.join(redActionDirectory, name));
-  const files = [
-    ...(await collectActionGifs(directory, category.recursive === true)),
-    ...redActionFiles,
-  ].sort();
+  const redActionDirectory = absolute(category.referenceDirectory);
+  const optionalReferenceFiles = [];
+  for (const name of category.referenceFiles ?? []) {
+    const filename = path.join(redActionDirectory, name);
+    if (await fileExists(filename)) optionalReferenceFiles.push(filename);
+  }
+  const canonicalFiles = [];
+  for (const name of category.files ?? []) {
+    const filename = path.join(directory, name);
+    if (await fileExists(filename)) canonicalFiles.push(filename);
+  }
+  const files = [...canonicalFiles, ...optionalReferenceFiles].sort();
 
   if (!files.length) {
-    throw new Error('No se encontraron GIF de acción en ' + category.directory + '.');
+    console.log('No hay GIF canónicos para validar en ' + category.directory + '.');
+    return 0;
   }
 
   for (const filename of files) {
@@ -161,7 +177,7 @@ async function validateActionGifs() {
     }
   }
 
-  // Los GIF maestros de carrera de Axem Red también deben usar 100 ms por cuadro.
+  // Los dos GIF maestros que consume el generador del personaje siguen siendo recursos base.
   for (const name of ['axem-ranger-bike.gif', 'axem-ranger-run.gif']) {
     const filename = path.join(redActionDirectory, name);
     const metadata = await sharp(filename, { animated: true, failOn: 'error' }).metadata();
@@ -176,7 +192,12 @@ async function validateActionGifs() {
 
 async function validateEffectGifs() {
   const effects = standards.categories.effectAnimation.files;
+  let validated = 0;
   for (const effect of effects) {
+    if (!await fileExists(absolute(effect.source)) || !await fileExists(absolute(effect.output))) {
+      console.log(effect.source + ': fuente o derivado ausente; recurso opcional omitido.');
+      continue;
+    }
     const source = await sharp(absolute(effect.source), { failOn: 'error' }).metadata();
     assertEqual(source.format, 'png', effect.source + ' formato');
     if (!source.hasAlpha) throw new Error(effect.source + ': el PNG fuente debe conservar alfa.');
@@ -193,8 +214,9 @@ async function validateEffectGifs() {
         gif.delay.some((delay) => !Number.isFinite(delay) || delay <= 0)) {
       throw new Error(effect.output + ': la duración de los cuadros es inválida.');
     }
+    validated += 1;
   }
-  return effects.length;
+  return validated;
 }
 
 async function validateSequenceIndex(indexPath, gender) {

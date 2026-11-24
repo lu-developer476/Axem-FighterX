@@ -56,10 +56,38 @@
       "width": 150,
       "height": 100,
       "alphaRequired": true,
-      "directory": "art/source/sprites/results/male",
+      "directory": "art/source/sprites/results/male/orange",
       "recursive": true,
       "preserveFrameCount": true,
-      "preserveFrameTiming": true
+      "preserveFrameTiming": true,
+      "referenceDirectory": "art/source/sprites/references/axem-red",
+      "referenceFiles": [
+        "axem-ranger-bike.gif",
+        "axem-ranger-run.gif",
+        "dash.gif",
+        "idle.gif",
+        "jump.gif",
+        "run.gif",
+        "walk.gif"
+      ],
+      "files": [
+        "bike.gif",
+        "run.gif",
+        "idle.gif",
+        "dash.gif",
+        "punch-01.gif",
+        "punch-02.gif",
+        "punch-03.gif",
+        "hit.gif",
+        "hurt.gif",
+        "jump.gif",
+        "teleport.gif",
+        "charge.gif",
+        "pose.gif",
+        "guard.gif",
+        "roll.gif",
+        "ko.gif"
+      ]
     },
     "actionFrameCell": {
       "width": 86,

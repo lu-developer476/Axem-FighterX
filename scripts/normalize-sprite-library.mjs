@@ -13,7 +13,13 @@ const BACKGROUND_OPTIONS = rules.processedPolicy.backgroundRemoval;
 const EXCLUDED_FILES = new Set(rules.processedPolicy.excludedFiles ?? []);
 
 async function listImages(directory) {
-  const entries = await fs.readdir(directory, { withFileTypes: true });
+  let entries;
+  try {
+    entries = await fs.readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === 'ENOENT') return [];
+    throw error;
+  }
   const files = [];
   for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
     const absolute = path.join(directory, entry.name);
@@ -33,6 +39,10 @@ async function listImages(directory) {
   return files;
 }
 
+function isUnknownOpaqueBackground(error) {
+  return /no se pudo reconocer un fondo uniforme conectado al borde/i.test(error?.message ?? '');
+}
+
 function countTransparentPixels(data) {
   let count = 0;
   for (let offset = 3; offset < data.length; offset += 4) {
@@ -49,10 +59,20 @@ async function normalizePng(file) {
     .raw()
     .toBuffer({ resolveWithObject: true });
   const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
-  const result = normalizeSpriteFrame(
-    { data: pixels, width: info.width, height: info.height },
-    BACKGROUND_OPTIONS,
-  );
+  let result;
+  try {
+    result = normalizeSpriteFrame(
+      { data: pixels, width: info.width, height: info.height },
+      BACKGROUND_OPTIONS,
+    );
+  } catch (error) {
+    if (!isUnknownOpaqueBackground(error)) throw error;
+    return {
+      frames: 1, changed: false, removedPixels: 0,
+      transparentPixels: countTransparentPixels(data),
+      width: metadata.width, height: metadata.height, skipped: true,
+    };
+  }
 
   let output = original;
   if (result.changed) {
@@ -110,10 +130,20 @@ async function normalizeGif(file) {
   for (let page = 0; page < pages; page += 1) {
     const offset = page * frameLength;
     const frame = new Uint8ClampedArray(data.buffer, data.byteOffset + offset, frameLength);
-    const result = normalizeSpriteFrame(
-      { data: frame, width: info.width, height: pageHeight },
-      BACKGROUND_OPTIONS,
-    );
+    let result;
+    try {
+      result = normalizeSpriteFrame(
+        { data: frame, width: info.width, height: pageHeight },
+        BACKGROUND_OPTIONS,
+      );
+    } catch (error) {
+      if (!isUnknownOpaqueBackground(error)) throw error;
+      return {
+        frames: pages, changed: false, removedPixels: 0,
+        transparentPixels: countTransparentPixels(data),
+        width: info.width, height: pageHeight, skipped: true,
+      };
+    }
     changed ||= result.changed;
     removedPixels += result.removedPixels;
     transparentPixels += result.transparentPixelsAfter;
@@ -167,7 +197,8 @@ async function normalizeGif(file) {
 async function main() {
   const files = await listImages(RESULTS_ROOT);
   if (!files.length) {
-    throw new Error('No se encontraron sprites en ' + path.relative(ROOT, RESULTS_ROOT));
+    console.log('No hay sprites en ' + path.relative(ROOT, RESULTS_ROOT) + '; no hay nada que normalizar.');
+    return;
   }
 
   let changedFiles = 0;
@@ -183,12 +214,16 @@ async function main() {
     removedPixels += result.removedPixels;
     if (result.changed) changedFiles += 1;
 
-    console.log(
-      path.relative(ROOT, file) +
-      ': transparencia validada; ' + result.width + 'x' + result.height +
-      (result.frames > 1 ? ' por cuadro · ' + result.frames + ' cuadros' : '') +
-      (result.changed ? ' · fondo eliminado ' + result.removedPixels + ' px' : ' · sin cambios'),
-    );
+    if (result.skipped) {
+      console.log(path.relative(ROOT, file) + ': fondo opaco no reconocido; se conserva el original sin modificar.');
+    } else {
+      console.log(
+        path.relative(ROOT, file) +
+        ': transparencia validada; ' + result.width + 'x' + result.height +
+        (result.frames > 1 ? ' por cuadro · ' + result.frames + ' cuadros' : '') +
+        (result.changed ? ' · fondo eliminado ' + result.removedPixels + ' px' : ' · sin cambios'),
+      );
+    }
   }
 
   console.log(

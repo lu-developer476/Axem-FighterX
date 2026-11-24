@@ -13,11 +13,14 @@ HaxeFlixel compila los minijuegos de carreras a HTML5; Phaser 3 gestiona el comb
 
 ```bash
 npm install
-npm run dev      # servidor de desarrollo
-npm test         # tests de dominio y casos de uso (Vitest)
-npm run build    # genera dist/
-npm run preview  # sirve dist/ localmente
+npm run dev             # inicia Vite directamente, sin regenerar recursos
+npm run prepare:sprites # regenera sprites derivados luego de cambiar sus fuentes
+npm test                # prepara y valida recursos, luego ejecuta Vitest
+npm run build           # prepara y valida recursos, luego genera dist/
+npm run preview         # sirve dist/ localmente
 ```
+
+El servidor de desarrollo ya no ejecuta generadores antes de arrancar. Agregar o quitar archivos de arte no bloquea el inicio; al cambiar una fuente que tenga derivados, ejecutá `npm run prepare:sprites` para regenerarlos. Los recursos auxiliares con tamaños propios se conservan y no se fuerzan al lienzo de las animaciones Orange.
 
 Controles:
 

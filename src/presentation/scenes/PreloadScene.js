@@ -59,7 +59,7 @@ export class PreloadScene extends Phaser.Scene {
     for (const { id, gender } of AVAILABLE_RANGER_VARIANTS) {
       this.load.image(spriteKeyFor(id, gender), spriteUrlFor(id, gender));
       this.load.image(menuSpriteKeyFor(id, gender), menuSpriteUrlFor(id, gender));
-      for (const action of ['run', 'bike', 'double-axe']) {
+      for (const action of ['run', 'bike']) {
         const key = maleAnimationKey(id, action);
         this.load.spritesheet(key, maleAnimationUrl(id, action), { frameWidth: 53, frameHeight: 83 });
       }

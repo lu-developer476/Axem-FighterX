@@ -30,7 +30,7 @@ async function visibleBounds(relativePath) {
 }
 
 describe('Estándares centrales de recursos gráficos', () => {
-  it('conserva solo las referencias Red necesarias y el master de moto', async () => {
+  it('conserva las referencias y los cinco GIF Red necesarios para minijuegos', async () => {
     const directory = absolute('art/source/sprites/references/axem-red');
     const entries = await fs.readdir(directory, { withFileTypes: true });
     const expectedGifs = ['dash.gif', 'idle.gif', 'jump.gif', 'run.gif', 'walk.gif'].sort();
@@ -50,7 +50,8 @@ describe('Estándares centrales de recursos gráficos', () => {
     await expect(fs.access(absolute('art/source/sprites/references/axem-orange'))).rejects.toThrow();
 
     const resultsDirectory = absolute('art/source/sprites/results/male/red');
-    await expect(fs.readdir(resultsDirectory)).resolves.toHaveLength(0);
+    const redResultFiles = (await fs.readdir(resultsDirectory)).sort();
+    expect(redResultFiles).toEqual(['dash.gif', 'idle.gif', 'jump.gif', 'run.gif', 'walk.gif']);
     expect(ASSET_STANDARDS.categories.characterArtwork.families.male).not.toHaveProperty('derivedArtwork');
   });
 

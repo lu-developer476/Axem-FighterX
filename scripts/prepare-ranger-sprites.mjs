@@ -34,11 +34,7 @@ const KI_AURA_GRID = Object.freeze({ columns: 2, rows: 2, cellWidth: 64, cellHei
 const KI_AURA_HOLD_DELAY = 180;
 
 async function writeResult(gender, color, relativePath, buffer) {
-  const isRedActionGif = gender === 'male' && color === 'red' &&
-    relativePath.endsWith('.gif') && !relativePath.includes(path.sep);
-  const target = isRedActionGif
-    ? SOURCE('sprites', 'references', 'axem-red', relativePath)
-    : path.join(RESULTS(gender, color), relativePath);
+  const target = path.join(RESULTS(gender, color), relativePath);
   await fs.mkdir(path.dirname(target), { recursive: true });
   await fs.writeFile(target, buffer);
   console.log('Generado ' + path.relative(ROOT, target));
@@ -1563,21 +1559,17 @@ async function buildGender(gender, allowedColors) {
 
       const run = await extractGifFrames(SOURCE('sprites', 'references', 'axem-red', 'axem-ranger-run.gif'), gender, targetHue);
       const bike = await extractGifFrames(SOURCE('sprites', 'references', 'axem-red', 'axem-ranger-bike.gif'), gender, targetHue);
-      const doubleAxe = await extractGifFrames(SOURCE('sprites', 'references', 'axem-red', 'axem-ranger-double-axe.gif'), gender, targetHue);
       parts.push(await makeHorizontalStrip(run.frames, run.width, run.height));
       parts.push(await makeHorizontalStrip(bike.frames, bike.width, bike.height));
-      parts.push(await makeHorizontalStrip(doubleAxe.frames, doubleAxe.width, doubleAxe.height));
       await writeResult(gender, color, 'spritesheet.png', parts[0]);
       await writeResult(gender, color, 'run.png', parts[1]);
       await writeResult(gender, color, 'bike.png', parts[2]);
-      await writeResult(gender, color, 'double-axe.png', parts[3]);
       await writeMaleAnimation(run.frames, color, 'run', run.delay, run.loop);
       await writeMaleAnimation(bike.frames, color, 'bike', bike.delay, bike.loop);
       if (color === 'orange') {
         const manifest = JSON.parse(await fs.readFile(ATLAS_FRAMES_PATH, 'utf8'));
         // Solo Orange tiene los grupos auxiliares completos para crear las acciones de combate.
         const sequenceIndex = await writeMaleSequences(color, parts[0], manifest.male.groups);
-        await writeMaleAnimation(doubleAxe.frames, color, 'double-axe', doubleAxe.delay, doubleAxe.loop, { writeGif: false });
         await buildMaleActionGifs(color, sequenceIndex);
         // charge/guard/roll/KO ya tienen GIF maestros versionados; no se reconstruyen
         // desde tiras auxiliares antiguas que fueron retiradas del repositorio.
@@ -1736,7 +1728,6 @@ async function buildRedRangerGifs() {
   // El master de moto se procesa para la hoja del juego, sin crear bike.gif duplicado.
   for (const [action, sourceName, writeGif] of [
     ['bike', 'axem-ranger-bike.gif', false],
-    ['double-axe', 'axem-ranger-double-axe.gif', false],
   ]) {
     const animation = await readRawGifFrames(path.join(sourceDirectory, sourceName));
     await writeMaleAnimation(animation.frames, 'red', action, animation.delay, animation.loop, { writeGif });

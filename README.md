@@ -2,6 +2,13 @@
 
 Juego de pelea retro hecho con **Phaser 3** y **Vite**, listo para desplegar en **Vercel**.
 
+
+## Languages & stack
+
+![Haxe 4.3.7](https://img.shields.io/badge/Haxe-4.3.7-EA822A?logo=haxe&logoColor=white) ![Phaser 3.90](https://img.shields.io/badge/Phaser-3.90-313866?logo=phaser&logoColor=white) ![Vite 6](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)
+
+HaxeFlixel compila los minijuegos de carreras a HTML5; Phaser 3 gestiona el combate y la presentación; Vite resuelve el entorno de desarrollo y la compilación web.
+
 ## Comandos
 
 ```bash

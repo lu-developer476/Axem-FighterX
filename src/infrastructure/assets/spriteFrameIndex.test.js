@@ -8,8 +8,11 @@ import spriteFrameIndex from './spriteFrameIndex.json';
 const resultsPath = (...parts) =>
   fileURLToPath(new URL('../../../art/source/sprites/results/' + parts.join('/'), import.meta.url));
 
-const overlaps = (a, b) =>
-  a.x < b.x + b.w && b.x < b.x + a.w && a.y < b.y + b.h && b.y < b.y + a.h;
+const overlaps = (a, b) => {
+  const disjointHorizontally = a.x + a.w <= b.x || b.x + b.w <= a.x;
+  const disjointVertically = a.y + a.h <= b.y || b.y + b.h <= a.y;
+  return !disjointHorizontally && !disjointVertically;
+};
 
 describe('mapa versionado de recortes masculinos', () => {
   const { groups, width, height, excluded, supplementalGroups } = spriteFrameIndex.male;

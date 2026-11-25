@@ -115,6 +115,8 @@ Se necesita Haxe, Haxelib, Lime, OpenFL y HaxeFlixel. El proyecto está en `haxe
 
 ## Sprites y animaciones
 
+Los GIF de acciones de personaje usan un estándar único: **150 × 100 px por cuadro, fondo transparente y 100 ms por cuadro (10 FPS)**. Los GIF de efectos y el favicon mantienen sus estándares específicos; no se redimensionan ni se les fuerza la misma cadencia.
+
 La variante seleccionable actual es **Axem Naranja masculino**. Sus recursos de combate se generan desde las referencias originales de Axem Red en `art/source/sprites/references/axem-red/`. El pipeline conserva los fotogramas fuente y genera tiras PNG transparentes con un pivote común para el combate.
 
 El combate reproduce secuencias cuadro a cuadro de reposo, carrera, hachazo doble, carga, guardia, daño, rodada, salto, teletransporte, victoria y KO. Las hojas que todavía no están terminadas no se ofrecen en los selectores ni se cargan en las pantallas de juego. Las referencias Pink se conservan como material fuente, sin publicar una variante jugable incompleta.

@@ -20,7 +20,10 @@ const PALETTE_SOURCES = Object.freeze({
 // Así el resultado mejorado queda versionable y no depende de un PNG congelado.
 const BASE_SIZE = Object.freeze({ width: ASSET_STANDARDS.categories.combatTexture.width, height: ASSET_STANDARDS.categories.combatTexture.height });
 const ACTION_GIF_SIZE = Object.freeze({ width: ASSET_STANDARDS.categories.actionGif.width, height: ASSET_STANDARDS.categories.actionGif.height });
-const FRAME_DELAY_MS = 100;
+const FRAME_DELAY_MS = ASSET_STANDARDS.categories.actionGif.frameDelayMs;
+if (!Number.isInteger(FRAME_DELAY_MS) || FRAME_DELAY_MS <= 0) {
+  throw new Error('asset-standards.json debe definir un frameDelayMs positivo para los GIF de acción.');
+}
 const SEQUENCE_GIF_SCALE = 1.75;
 const SEQUENCE_GIF_FEET_MARGIN = 4;
 /** Altura visible estándar del personaje de pie, común a todas las animaciones masculinas. */
@@ -680,7 +683,7 @@ async function makeHorizontalStrip(frames, width, height) {
  * Every GIF frame uses one fixed 53×83 cell. Do not trim each frame:
  * weapons and effects may extend beyond the body and must not shrink the ranger.
  */
-async function writeMaleAnimation(frames, rangerId, action, frameDelays, loop = 0, { writeGif = true } = {}) {
+async function writeMaleAnimation(frames, rangerId, action, loop = 0, { writeGif = true } = {}) {
   // La tira PNG de combate conserva sus celdas compactas de 53×83 px.
   const normalized = await Promise.all(frames.map((frame) =>
     sharp(frame)
@@ -766,7 +769,7 @@ async function readMaleSequenceFrames(color, entry) {
  * El escalado nearest-neighbor preserva el pixel-art; el pivote de los pies
  * queda centrado y la línea de suelo permanece constante entre fotogramas.
  */
-async function writeMaleSequenceGif(frames, color, filename, _delay = FRAME_DELAY_MS) {
+async function writeMaleSequenceGif(frames, color, filename) {
   if (!Array.isArray(frames) || frames.length === 0) {
     throw new Error('La animación ' + filename + ' no contiene fotogramas.');
   }
@@ -834,18 +837,18 @@ async function buildMaleActionGifs(color, sequenceIndex) {
 
   // idle.gif conserva sus ocho cuadros maestros; no se reemplaza por el atlas completo.
 
-  await writeMaleSequenceGif(frames('group-03'), color, 'punch-01', 90);
-  await writeMaleSequenceGif(frames('group-04'), color, 'punch-02', 90);
-  await writeMaleSequenceGif(frames('group-05'), color, 'punch-03', 90);
+  await writeMaleSequenceGif(frames('group-03'), color, 'punch-01');
+  await writeMaleSequenceGif(frames('group-04'), color, 'punch-02');
+  await writeMaleSequenceGif(frames('group-05'), color, 'punch-03');
 
   // battle-pose.gif y teleport.gif mantienen sus GIF maestros completos.
 
-  await writeMaleSequenceGif(frames('group-10'), color, 'run', 80);
-  await writeMaleSequenceGif(frames('group-11'), color, 'dash', 80);
-  await writeMaleSequenceGif(frames('group-12'), color, 'jump', 100);
+  await writeMaleSequenceGif(frames('group-10'), color, 'run');
+  await writeMaleSequenceGif(frames('group-11'), color, 'dash');
+  await writeMaleSequenceGif(frames('group-12'), color, 'jump');
 
-  await writeMaleSequenceGif(groups.get('group-13').slice(0, 2), color, 'hit', 120);
-  await writeMaleSequenceGif(groups.get('group-13').slice(3, 6), color, 'hurt', 150);
+  await writeMaleSequenceGif(groups.get('group-13').slice(0, 2), color, 'hit');
+  await writeMaleSequenceGif(groups.get('group-13').slice(3, 6), color, 'hurt');
 
 }
 
@@ -967,7 +970,6 @@ async function readMaleGifFrames(color, filename) {
   const metadata = await sharp(file, { animated: true }).metadata();
   const count = Math.max(1, metadata.pages || 1);
   const frames = [];
-  const delays = [];
 
   for (let page = 0; page < count; page++) {
     const frame = await sharp(file, { page, pages: 1 })
@@ -980,12 +982,11 @@ async function readMaleGifFrames(color, filename) {
       .png()
       .toBuffer();
     frames.push(frame);
-    delays.push(Array.isArray(metadata.delay) ? metadata.delay[page] || 100 : metadata.delay || 100);
   }
-  return { frames, delays };
+  return { frames };
 }
 
-async function writeMaleActionGif(color, filename, frames, delays) {
+async function writeMaleActionGif(color, filename, frames) {
   if (!frames.length) throw new Error('La animación ' + filename + ' no tiene fotogramas.');
   const gif = await sharp(frames, { join: { animated: true } })
     .gif({
@@ -1076,13 +1077,12 @@ async function buildMaleSharedExtraGifs(color) {
     color,
     'teleport',
     [...teleport.frames, ...teleportTail],
-    [...teleport.delays, ...teleportTail.map(() => 100)],
   );
 
   const charged = await Promise.all(
     chargeFrames.map((frame) => normalizeMaleActionFrame(frame.input, STANDARD_STANDING_HEIGHT)),
   );
-  await writeMaleActionGif(color, 'charge', charged, charged.map(() => 100));
+  await writeMaleActionGif(color, 'charge', charged);
 
   await buildMaleIdleGif(color);
   await buildMaleCombatEnhancementGifs(color);
@@ -1100,7 +1100,7 @@ async function buildMaleIdleGif(color) {
   const idle = await Promise.all(
     idleFrames.map((frame) => normalizeMaleActionFrame(frame.input, STANDARD_STANDING_HEIGHT)),
   );
-  await writeMaleActionGif(color, 'idle', idle, idle.map(() => 140));
+  await writeMaleActionGif(color, 'idle', idle);
 }
 
 /** Aplica inclinación/compresión a cuadros ya normalizados sin cambiar el pivote del suelo. */
@@ -1329,7 +1329,7 @@ async function buildMaleCombatEnhancementGifs(color) {
   ]);
 
   const guardFrames = battlePose.frames.slice(-Math.min(6, battlePose.frames.length));
-  await writeMaleActionGif(color, 'guard', guardFrames, guardFrames.map(() => 135));
+  await writeMaleActionGif(color, 'guard', guardFrames);
 
   // La rodada recorre una vuelta completa: el cuerpo pasa por 360° en el eje Z.
   const rollAngles = [0, 45, 90, 135, 180, 225, 270, 315, 360];
@@ -1343,7 +1343,7 @@ async function buildMaleCombatEnhancementGifs(color) {
     });
   }));
   const blurredRollFrames = await Promise.all(rollFrames.map((frame, index) => addGrayRollMotionBlur(frame, rollAngles[index], index)));
-  await writeMaleActionGif(color, 'roll', blurredRollFrames, blurredRollFrames.map(() => 45));
+  await writeMaleActionGif(color, 'roll', blurredRollFrames);
 
   // La pose KO se refleja horizontalmente para mantener la misma orientación
   // que los cuadros de impacto: ambos terminan mirando hacia la derecha.
@@ -1352,7 +1352,7 @@ async function buildMaleCombatEnhancementGifs(color) {
     .png()
     .toBuffer();
   const koFrames = [...hurt.frames.slice(0, 2), defeatedFrame, defeatedFrame];
-  await writeMaleActionGif(color, 'ko', koFrames, [95, 110, 220, 400]);
+  await writeMaleActionGif(color, 'ko', koFrames);
 }
 
 /**
@@ -1421,7 +1421,7 @@ async function buildGender(gender, allowedColors) {
       parts.push(await makeHorizontalStrip(bike.frames, bike.width, bike.height));
       await writeResult(gender, color, 'spritesheet.png', parts[0]);
       await writeResult(gender, color, 'bike.png', parts[1]);
-      await writeMaleAnimation(bike.frames, color, 'bike', bike.delay, bike.loop);
+      await writeMaleAnimation(bike.frames, color, 'bike', bike.loop);
       if (color === 'orange') {
         const sequenceIndex = await writeMaleSequences(color, parts[0], frameIndex.male.groups);
         const runEntry = sequenceIndex.find((entry) => entry.id === 'group-10');
@@ -1438,7 +1438,6 @@ async function buildGender(gender, allowedColors) {
           runBuffers,
           color,
           'run',
-          runBuffers.map(() => FRAME_DELAY_MS),
           0,
           { writeGif: false },
         );

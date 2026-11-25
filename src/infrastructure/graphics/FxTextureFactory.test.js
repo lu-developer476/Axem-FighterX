@@ -12,7 +12,8 @@ describe('Biblioteca de efectos de combate', () => {
   });
   it('incluye partículas ambientales específicas', () => {
     expect(FX_PARTICLES).toMatchObject({ pixel:'fx-px', ember:'fx-ember', leaf:'fx-leaf', rubble:'fx-rubble', star:'fx-star' });
-    expect(FX_PARTICLES.heart).toBe('fx-heart');
-    expect(FX_PARTICLES.shield).toBe('fx-shield');
+    for (const icon of ['heart', 'sword', 'shield', 'boot']) {
+      expect(FX_PARTICLES).not.toHaveProperty(icon);
+    }
   });
 });

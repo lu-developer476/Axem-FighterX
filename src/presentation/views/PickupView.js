@@ -1,13 +1,15 @@
 import { ARENA } from '../../domain/arena/arena.js';
 import { PICKUP_TYPES } from '../../domain/entities/PowerUpPickup.js';
-import { FX_PARTICLES, fxFrameKey } from '../../infrastructure/graphics/FxTextureFactory.js';
+import { fxFrameKey } from '../../infrastructure/graphics/FxTextureFactory.js';
+import { pickupTextureKeyFor } from '../../infrastructure/assets/pickupAssetManifest.js';
 
 const PICKUP_STYLE = {
-  [PICKUP_TYPES.HEALTH]: { texture: FX_PARTICLES.heart, color: 0xff668d, scale: 2.1 },
-  [PICKUP_TYPES.FURY]: { texture: FX_PARTICLES.sword, color: 0xffa64d, scale: 1.7 },
-  [PICKUP_TYPES.HASTE]: { texture: FX_PARTICLES.boot, color: 0x70ddff, scale: 1.7 },
-  [PICKUP_TYPES.SHIELD]: { texture: FX_PARTICLES.shield, color: 0x9da9ff, scale: 1.7 },
+  [PICKUP_TYPES.HEALTH]: { asset: 'heart', color: 0xff668d },
+  [PICKUP_TYPES.FURY]: { asset: 'sword', color: 0xffa64d },
+  [PICKUP_TYPES.HASTE]: { asset: 'thunder', color: 0x70ddff },
+  [PICKUP_TYPES.SHIELD]: { asset: 'shield', color: 0x9da9ff },
 };
+const PICKUP_MAX_SIZE = 32;
 
 /** Dibuja el icono del objeto activo con un aura de color, sin rótulos ni sombras. */
 export class PickupView {
@@ -47,6 +49,12 @@ export class PickupView {
     this.#clear();
     const style = PICKUP_STYLE[type];
     if (!style) return;
+
+    const textureKey = pickupTextureKeyFor(style.asset);
+    if (!this.scene.textures.exists(textureKey)) return;
+    const source = this.scene.textures.get(textureKey).getSourceImage();
+    const scale = PICKUP_MAX_SIZE / Math.max(source.width, source.height);
+
     this.type = type;
     this.aura = this.scene.add
       .image(0, 0, fxFrameKey('healRing', 0))
@@ -54,10 +62,10 @@ export class PickupView {
       .setTint(style.color)
       .setAlpha(0.34)
       .setDepth(89);
+    // El PNG conserva sus colores originales; solo se ajusta su tamaño visual.
     this.sprite = this.scene.add
-      .image(0, 0, style.texture)
-      .setScale(style.scale)
-      .setTint(style.color)
+      .image(0, 0, textureKey)
+      .setScale(scale)
       .setDepth(90);
   }
 

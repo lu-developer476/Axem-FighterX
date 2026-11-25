@@ -3,15 +3,16 @@ import { ARENA } from '../../domain/arena/arena.js';
 import { FighterState, TIMINGS } from '../../domain/entities/FighterState.js';
 import { POWER_UPS, PICKUP_TYPES } from '../../domain/entities/PowerUpPickup.js';
 import { FX_PARTICLES, fxAnimKey, fxFrameKey } from '../../infrastructure/graphics/FxTextureFactory.js';
+import { pickupTextureKeyFor } from '../../infrastructure/assets/pickupAssetManifest.js';
 
 const FX_DEPTH = 500;
 const DUST_INTERVAL_MS = 190;
 const DASH_DUST_INTERVAL_MS = 54;
 const SPARK_COLORS = [0xfff3b0, 0xffc23a, 0xff7a2b, 0xffffff];
 const POWER_UP_TEXTURES = {
-  [PICKUP_TYPES.FURY]: FX_PARTICLES.sword,
-  [PICKUP_TYPES.HASTE]: FX_PARTICLES.boot,
-  [PICKUP_TYPES.SHIELD]: FX_PARTICLES.shield,
+  [PICKUP_TYPES.FURY]: pickupTextureKeyFor('sword'),
+  [PICKUP_TYPES.HASTE]: pickupTextureKeyFor('thunder'),
+  [PICKUP_TYPES.SHIELD]: pickupTextureKeyFor('shield'),
 };
 
 /**
@@ -198,10 +199,11 @@ export class FxDirector {
 
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2;
+      const source = this.scene.textures.get(texture).getSourceImage();
+      const scale = 18 / Math.max(source.width, source.height);
       const particle = this.scene.add
         .image(event.x, event.y, texture)
-        .setScale(0.9)
-        .setTint(definition.color)
+        .setScale(scale)
         .setDepth(FX_DEPTH + 4);
       this.scene.tweens.add({
         targets: particle,

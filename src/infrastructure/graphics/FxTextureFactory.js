@@ -30,10 +30,6 @@ export const FX_PARTICLES = Object.freeze({
   pixel: 'fx-px',
   plus: 'fx-plus',
   diamond: 'fx-diamond',
-  heart: 'fx-heart',
-  sword: 'fx-sword',
-  shield: 'fx-shield',
-  boot: 'fx-boot',
   ember: 'fx-ember',
   leaf: 'fx-leaf',
   rubble: 'fx-rubble',
@@ -65,10 +61,6 @@ export function createFxTextures(scene) {
   createCanvasTexture(scene, FX_PARTICLES.pixel, 2, 2, (ctx) => rect(ctx, PAL.white, 0, 0, 2, 2));
   createCanvasTexture(scene, FX_PARTICLES.plus, 7, 7, drawPlus);
   createCanvasTexture(scene, FX_PARTICLES.diamond, 5, 5, drawDiamond);
-  createCanvasTexture(scene, FX_PARTICLES.heart, 11, 10, drawHeart);
-  createCanvasTexture(scene, FX_PARTICLES.sword, 16, 16, drawSword);
-  createCanvasTexture(scene, FX_PARTICLES.shield, 16, 16, drawShield);
-  createCanvasTexture(scene, FX_PARTICLES.boot, 16, 16, drawBoot);
   createCanvasTexture(scene, FX_PARTICLES.ember, 5, 6, drawEmberParticle);
   createCanvasTexture(scene, FX_PARTICLES.leaf, 8, 6, drawLeafParticle);
   createCanvasTexture(scene, FX_PARTICLES.rubble, 6, 6, drawRubbleParticle);
@@ -320,55 +312,6 @@ function drawDiamond(ctx) {
   rect(ctx, PAL.heal, 2, 0, 1, 5);
   rect(ctx, PAL.heal, 0, 2, 5, 1);
   rect(ctx, PAL.white, 2, 2, 1, 1);
-}
-
-const HEART_MAP = [
-  '..ooo.ooo..',
-  '.orrrorrro.',
-  'orhrrrrrrro',
-  'orhrrrrrrro',
-  'orrrrrrrrdo',
-  '.orrrrrrdo.',
-  '..orrrrdo..',
-  '...orrdo...',
-  '....odo....',
-  '.....o.....',
-];
-
-function drawHeart(ctx) {
-  const colors = { o: PAL.heartOutline, r: PAL.heart, h: PAL.heartLite, d: PAL.heartDark };
-  HEART_MAP.forEach((line, y) => {
-    [...line].forEach((char, x) => {
-      if (colors[char]) rect(ctx, colors[char], x, y);
-    });
-  });
-}
-
-function drawSword(ctx) {
-  rect(ctx, '#f8f0d7', 7, 1, 2, 9);
-  rect(ctx, '#9aabd8', 6, 3, 1, 6);
-  rect(ctx, '#9aabd8', 9, 3, 1, 6);
-  rect(ctx, '#ffc35b', 4, 10, 8, 2);
-  rect(ctx, '#9b633f', 7, 12, 2, 3);
-}
-
-function drawShield(ctx) {
-  const widths = [6, 10, 12, 12, 10, 8, 4];
-  widths.forEach((width, row) => {
-    const x = Math.round((16 - width) / 2);
-    rect(ctx, '#7180c7', x, row + 2, width, 2);
-    if (width > 6) rect(ctx, '#c5d5ff', x + 2, row + 2, width - 4, 2);
-  });
-  rect(ctx, '#f7e7b0', 7, 4, 2, 7);
-}
-
-function drawBoot(ctx) {
-  rect(ctx, '#7edfff', 5, 2, 6, 2);
-  rect(ctx, '#7edfff', 6, 4, 5, 4);
-  rect(ctx, '#b4efff', 4, 7, 7, 3);
-  rect(ctx, '#b4efff', 3, 9, 10, 3);
-  rect(ctx, '#477cae', 2, 12, 12, 2);
-  rect(ctx, '#ffffff', 8, 3, 2, 2);
 }
 
 function drawEmberParticle(ctx) {

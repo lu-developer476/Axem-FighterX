@@ -15,6 +15,7 @@ import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory
 import { STAGE_MAP_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
 import { createStageAssetTextures } from '../../infrastructure/graphics/StageAssetTextureFactory.js';
 import { registerFxAnimations } from '../animation/registerFxAnimations.js';
+import { PICKUP_ASSETS, pickupTextureKeyFor } from '../../infrastructure/assets/pickupAssetManifest.js';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -67,6 +68,10 @@ export class PreloadScene extends Phaser.Scene {
         });
       }
     }
+    // Todos los PNG de pickups/ se cargan automáticamente.
+    Object.entries(PICKUP_ASSETS).forEach(([name, url]) => {
+      this.load.image(pickupTextureKeyFor(name), url);
+    });
     this.load.image('title-art', import.meta.env.BASE_URL + 'generated/title.png');
     Object.values(STAGE_MAP_ASSETS).forEach(({ key, url }) => this.load.image(key, url));
   }

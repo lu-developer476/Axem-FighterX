@@ -43,6 +43,17 @@ function hasTransparentMargin(data, width, height) {
   return true;
 }
 
+function hasCleanArtworkBounds(data, width, height, bounds) {
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if (x >= bounds.left && x < bounds.right &&
+          y >= bounds.top && y < bounds.bottom) continue;
+      if (data[(y * width + x) * 4 + 3] !== 0) return false;
+    }
+  }
+  return true;
+}
+
 function isStandard(metadata, bounds, data) {
   if (!bounds || metadata.width !== canvas.width || metadata.height !== canvas.height) return false;
   if (bounds.width > artwork.maxWidth || bounds.height > artwork.maxHeight) return false;
@@ -51,7 +62,8 @@ function isStandard(metadata, bounds, data) {
       canvas.height - bounds.bottom < artwork.minTransparentPadding) return false;
   if (Math.abs((bounds.left + bounds.right) / 2 - canvas.width / 2) > artwork.centeringTolerance ||
       Math.abs((bounds.top + bounds.bottom) / 2 - canvas.height / 2) > artwork.centeringTolerance) return false;
-  return hasTransparentMargin(data, canvas.width, canvas.height);
+  return hasTransparentMargin(data, canvas.width, canvas.height) &&
+    hasCleanArtworkBounds(data, canvas.width, canvas.height, bounds);
 }
 
 async function standardizeFile(filename) {

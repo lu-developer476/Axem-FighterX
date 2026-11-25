@@ -89,6 +89,14 @@ describe('Recursos PNG de consumibles', () => {
       expect(top, file).toBeGreaterThanOrEqual(artwork.minTransparentPadding);
       expect(info.width - right, file).toBeGreaterThanOrEqual(artwork.minTransparentPadding);
       expect(info.height - bottom, file).toBeGreaterThanOrEqual(artwork.minTransparentPadding);
+      for (let y = 0; y < info.height; y += 1) {
+        for (let x = 0; x < info.width; x += 1) {
+          if (x >= left && x < right && y >= top && y < bottom) continue;
+          expect(data[(y * info.width + x) * 4 + 3], file)
+            .toBe(0);
+        }
+      }
+
       expect(Math.abs((left + right) / 2 - info.width / 2), file)
         .toBeLessThanOrEqual(artwork.centeringTolerance);
       expect(Math.abs((top + bottom) / 2 - info.height / 2), file)

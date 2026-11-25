@@ -46,7 +46,7 @@ La ruta de resultados femeninos es `results/female/violet/`; el contenido provis
 
 El `charge.gif` masculino conserva los tres cuadros de preparación y luego sostiene el quinto (último) sprite de `sequences/group-09.png` mientras anima cuatro fotogramas de la hoja `super-saiyan-aura.webp`. El aura que aparece en el GIF es la misma hoja que se muestra en `super-saiyan-aura.svg`: un aro de llamas doradas envolventes, con borde blanco-amarillo, centro transparente y chispas ascendentes. Cada celda de 64×64 px se amplía con nearest-neighbor y se coloca detrás del ranger, sin recolorearla ni recortar sus llamas laterales. Es arte original creado para Axem-FighterX con estética Super Saiyan de Dragon Ball Z, no un recorte de sprites oficiales; la procedencia está documentada en `art/source/effects/dragon-ball-style/SOURCE.md`.
 
-Los GIF de personaje conservan lienzos de **150 × 100 px**, transparencia y escalado nearest-neighbor. Todas las animaciones de personaje usan **100 ms por cuadro (10 fps)** en los GIF, Phaser y los minijuegos HaxeFlixel. El pivote de los pies se centra horizontalmente y mantiene una línea de suelo fija para evitar saltos entre fotogramas.
+Los GIF de acciones de personaje conservan lienzos de **150 × 100 px por cuadro**, transparencia y escalado nearest-neighbor. Su temporización está centralizada en `asset-standards.json`: **100 ms por cuadro (10 FPS)**. El generador y el validador leen el mismo valor; `idle`, `run`, `hit`, `hurt`, `guard`, `roll`, `ko` y las demás acciones no tienen cadencias de exportación individuales. El pivote de los pies se centra horizontalmente y mantiene una línea de suelo fija para evitar saltos entre fotogramas.
 
 
 ## Regla global de transparencia y pixel art
@@ -326,8 +326,10 @@ Las reglas dimensionales viven en `asset-standards.json`. Los generadores, el ju
 | Artwork Super Axem femenino | 745 × 1372 px | Violet usa el lienzo de su master Axem Pink |
 | Textura base de combate | 53 × 83 px | Lienzo fijo y transparente |
 | Retrato lateral de menú | 104 × 150 px | Lienzo fijo y transparente |
-| GIF de acción | 150 × 100 px por cuadro | Se conserva la cantidad de cuadros y sus tiempos |
+| GIF de acción | 150 × 100 px por cuadro | Transparencia obligatoria; 100 ms por cuadro (10 FPS); cantidad de cuadros estable |
 | Celda de tiras PNG derivadas de GIF | 86 × 57 px | Pivote de pies declarado en la configuración |
+
+**Alcance:** este estándar de 150 × 100 px y 100 ms se aplica a los GIF de acciones de personaje definidos en `categories.actionGif`. Los GIF de efectos visuales (`categories.effectAnimation`) conservan las dimensiones de su PNG fuente y usan la cadencia específica declarada para cada efecto. El favicon animado es una salida independiente de 32 × 32 px que conserva los tiempos de su GIF fuente. No se deben normalizar todos los GIF del repositorio con una única dimensión o velocidad.
 
 ### Artwork Super Axem: Orange fija la escala visual
 

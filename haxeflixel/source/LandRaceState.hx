@@ -167,18 +167,28 @@ class LandRaceState extends RaceBaseState
             ? "idle"
             : (accelerate ? (stamina > 0 ? "dash" : "run") : "walk");
 
-        if (playerActionMs <= 0)
+        if (brake)
         {
-            if (FlxG.keys.justPressed.W || FlxG.keys.justPressed.UP)
-                beginPlayerAction("jump");
-            else if (FlxG.keys.justPressed.S || FlxG.keys.justPressed.DOWN)
-                beginPlayerAction("roll");
+            // Frenar siempre fuerza idle, incluso si estaba reproduciéndose
+            // una animación temporal de salto o rodada.
+            playerActionMode = "";
+            playerActionMs = 0;
         }
-        if (playerActionMs > 0)
+        else
         {
-            playerActionMs = Math.max(0, playerActionMs - elapsed * 1000);
-            if (playerActionMs > 0) playerMode = playerActionMode;
-            else playerActionMode = "";
+            if (playerActionMs <= 0)
+            {
+                if (FlxG.keys.justPressed.W || FlxG.keys.justPressed.UP)
+                    beginPlayerAction("jump");
+                else if (FlxG.keys.justPressed.S || FlxG.keys.justPressed.DOWN)
+                    beginPlayerAction("roll");
+            }
+            if (playerActionMs > 0)
+            {
+                playerActionMs = Math.max(0, playerActionMs - elapsed * 1000);
+                if (playerActionMs > 0) playerMode = playerActionMode;
+                else playerActionMode = "";
+            }
         }
         playerMode = resolvePlayerMode(playerMode);
 

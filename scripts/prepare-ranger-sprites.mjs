@@ -1396,31 +1396,10 @@ async function buildMenuSuperPoses() {
  * usando nearest-neighbor y manteniendo el lienzo original y el centro de cada
  * región. Los píxeles fuera de los personajes permanecen transparentes.
  */
-/**
- * Elimina únicamente el fondo conectado al borde de la referencia Pink,
- * conservando intacta su paleta original.
- */
-async function keyFemaleReferenceBackground(inputPath) {
-  const { data, info } = await sharp(inputPath)
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const pixels = new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength);
-  removeSpriteBackground({
-    data: pixels,
-    width: info.width,
-    height: info.height,
-  }, { tolerance: 24, minBorderCoverage: 0.08 });
-  return sharp(Buffer.from(pixels), {
-    raw: { width: info.width, height: info.height, channels: 4 },
-  }).png().toBuffer();
-}
-
 async function buildGender(gender, allowedColors) {
   for (const [color, targetHue] of Object.entries(COLORS).filter(([color]) => allowedColors.includes(color))) {
     const parts = [];
     let baseSource;
-    let canonicalPosePath;
 
     if (gender === 'male') {
       // The versioned, transparent Orange sheet replaces the removed Red animation atlas.
@@ -1436,17 +1415,33 @@ async function buildGender(gender, allowedColors) {
       }
       parts.push(await fs.readFile(redReference));
 
-      const run = await extractGifFrames(SOURCE('sprites', 'references', 'axem-red', 'axem-ranger-run.gif'), gender, targetHue);
+      // La única animación maestra externa que se conserva en axem-red es bicicleta.
+      // Correr se deriva de los recortes versionados del spritesheet Orange (group-10).
       const bike = await extractGifFrames(SOURCE('sprites', 'references', 'axem-red', 'axem-ranger-bike.gif'), gender, targetHue);
-      parts.push(await makeHorizontalStrip(run.frames, run.width, run.height));
       parts.push(await makeHorizontalStrip(bike.frames, bike.width, bike.height));
       await writeResult(gender, color, 'spritesheet.png', parts[0]);
-      await writeResult(gender, color, 'run.png', parts[1]);
-      await writeResult(gender, color, 'bike.png', parts[2]);
-      await writeMaleAnimation(run.frames, color, 'run', run.delay, run.loop);
+      await writeResult(gender, color, 'bike.png', parts[1]);
       await writeMaleAnimation(bike.frames, color, 'bike', bike.delay, bike.loop);
       if (color === 'orange') {
         const sequenceIndex = await writeMaleSequences(color, parts[0], frameIndex.male.groups);
+        const runEntry = sequenceIndex.find((entry) => entry.id === 'group-10');
+        if (!runEntry) throw new Error('No existe group-10 en spriteFrameIndex para generar run.');
+        const runFrames = await readMaleSequenceFrames(color, runEntry);
+        const runBuffers = runFrames.map((frame) => frame.input);
+        await writeResult(
+          gender,
+          color,
+          'run.png',
+          await makeHorizontalStrip(runBuffers, runEntry.cellWidth, runEntry.cellHeight),
+        );
+        await writeMaleAnimation(
+          runBuffers,
+          color,
+          'run',
+          runBuffers.map(() => FRAME_DELAY_MS),
+          0,
+          { writeGif: false },
+        );
         await buildMaleActionGifs(color, sequenceIndex);
         // charge/guard/roll/KO ya tienen GIF maestros versionados; no se reconstruyen
         // desde tiras auxiliares antiguas que fueron retiradas del repositorio.
@@ -1454,82 +1449,23 @@ async function buildGender(gender, allowedColors) {
       }
       baseSource = await fs.readFile(path.join(GENERATED, 'super-axem-source-male.png'));
     } else {
-      const pinkReference = SOURCE('sprites', 'references', 'axem-pink');
-      const files = [
-        'axem-pink-spritesheet.png',
-        'axem-pink-pose.png',
-      ];
-      // Publica también una copia Pink normalizada, sin alterar la referencia original.
-      const pinkReferenceSheet = await keyFemaleReferenceBackground(
-        path.join(pinkReference, 'axem-pink-spritesheet.png'),
-      );
-      await writeResult(gender, color, 'spritesheet.png', pinkReferenceSheet);
-      // Las poses canónicas femeninas viven dentro de results/female/<color>/.
-      // Mantener el color en la ruta evita depender del antiguo archivo en la raíz.
-      canonicalPosePath = RESULTS(
+      // La pose femenina proviene del master Pink preparado por prepare-super-rangers.
+      // Solo se deriva la animación de bicicleta, la única referencia GIF conservada.
+      const bike = await extractGifFrames(
+        SOURCE('sprites', 'references', 'axem-red', 'axem-ranger-bike.gif'),
         gender,
-        color,
-        'axem-ranger-' + color + '.png',
+        targetHue,
       );
-      let canonicalPose;
-      try {
-        canonicalPose = await fs.readFile(canonicalPosePath);
-      } catch (error) {
-        if (error.code !== 'ENOENT') throw error;
-        const generatedPose = await recolorAndKey(
-          path.join(pinkReference, 'axem-pink-pose.png'),
-          gender,
-          targetHue,
-        );
-        canonicalPose = await harmonizeFemalePalette(generatedPose);
-      }
-
-      for (const file of files) {
-        const outputName = file.replace(/^axem-pink-/, '');
-        let corrected;
-
-        if (file === 'axem-pink-pose.png') {
-          // La pose final del usuario es la fuente canónica, no una reconstrucción.
-          corrected = canonicalPose;
-        } else {
-          const recolored = await recolorAndKey(
-            path.join(pinkReference, file),
-            gender,
-            targetHue,
-          );
-          corrected = await harmonizeFemalePalette(recolored);
-        }
-
-        parts.push(corrected);
-        await writeResult(gender, color, outputName, corrected);
-      }
-      for (const [action, sourceName] of [
-        ['run', 'axem-ranger-run.gif'],
-        ['bike', 'axem-ranger-bike.gif'],
-      ]) {
-        const animation = await extractGifFrames(
-          SOURCE('sprites', 'references', 'axem-red', sourceName),
-          gender,
-          targetHue,
-        );
-        const cells = await Promise.all(animation.frames.map((frame) =>
-          sharp(frame).resize(BASE_SIZE.width, BASE_SIZE.height, {
-            fit: 'fill', kernel: 'nearest', background: TRANSPARENT,
-          }).png().toBuffer(),
-        ));
-        const strip = await makeHorizontalStrip(cells, BASE_SIZE.width, BASE_SIZE.height);
-        const outputPath = path.join(GENERATED, 'axem-female-' + color + '-' + action + '.png');
-        await fs.writeFile(outputPath, strip);
-        console.log('Generada animación femenina ' + color + '/' + action);
-      }
+      const cells = await Promise.all(bike.frames.map((frame) =>
+        sharp(frame).resize(BASE_SIZE.width, BASE_SIZE.height, {
+          fit: 'fill', kernel: 'nearest', background: TRANSPARENT,
+        }).png().toBuffer(),
+      ));
+      const strip = await makeHorizontalStrip(cells, BASE_SIZE.width, BASE_SIZE.height);
+      const outputPath = path.join(GENERATED, 'axem-female-' + color + '-bike.png');
+      await fs.writeFile(outputPath, strip);
+      console.log('Generada animación femenina ' + color + '/bike');
       baseSource = await fs.readFile(path.join(GENERATED, 'super-axem-source-female.png'));
-    }
-
-    if (gender === 'female') {
-      console.log(
-        'Se conserva la imagen canónica femenina: ' +
-        path.relative(ROOT, canonicalPosePath)
-      );
     }
 
     const basePath = path.join(GENERATED, 'ranger-' + gender + '-' + color + '.png');

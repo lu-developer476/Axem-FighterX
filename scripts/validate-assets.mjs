@@ -177,8 +177,8 @@ async function validateActionGifs() {
     }
   }
 
-  // Los dos GIF maestros que consume el generador del personaje siguen siendo recursos base.
-  for (const name of ['axem-ranger-bike.gif', 'axem-ranger-run.gif']) {
+  // El único GIF maestro externo que consume el generador es la bicicleta.
+  for (const name of ['axem-ranger-bike.gif']) {
     const filename = path.join(redActionDirectory, name);
     const metadata = await sharp(filename, { animated: true, failOn: 'error' }).metadata();
     if (!Array.isArray(metadata.delay) || metadata.delay.length !== metadata.pages ||

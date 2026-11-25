@@ -30,22 +30,18 @@ async function visibleBounds(relativePath) {
 }
 
 describe('Estándares centrales de recursos gráficos', () => {
-  it('conserva los masters Red que usa el generador y acepta referencias opcionales', async () => {
+  it('conserva únicamente el master Red y el GIF de bicicleta', async () => {
     const directory = absolute('art/source/sprites/references/axem-red');
     const entries = await fs.readdir(directory, { withFileTypes: true });
-    const filenames = new Set(entries.filter((entry) => entry.isFile()).map((entry) => entry.name));
+    const filenames = entries.filter((entry) => entry.isFile()).map((entry) => entry.name).sort();
 
-    expect(filenames.has('axem-ranger-bike.gif')).toBe(true);
-    expect(filenames.has('axem-ranger-run.gif')).toBe(true);
-    expect(filenames.has('axem-red-spritesheet.png')).toBe(true);
-    expect(filenames.has('axem-red-animation-atlas.png')).toBe(false);
-    expect(filenames.has('super-axem-ranger-red.png')).toBe(true);
+    expect(filenames).toEqual(['axem-ranger-bike.gif', 'super-axem-ranger-red.png']);
+    expect(ASSET_STANDARDS.categories.actionGif.referenceFiles).toEqual(['axem-ranger-bike.gif']);
 
     const pinkDirectory = absolute('art/source/sprites/references/axem-pink');
     const pinkEntries = await fs.readdir(pinkDirectory, { withFileTypes: true });
-    const pinkFiles = new Set(pinkEntries.filter((entry) => entry.isFile()).map((entry) => entry.name));
-    expect(pinkFiles.has('axem-pink-spritesheet.png')).toBe(true);
-    expect(pinkFiles.has('axem-pink-animation-atlas.png')).toBe(false);
+    const pinkFiles = pinkEntries.filter((entry) => entry.isFile()).map((entry) => entry.name).sort();
+    expect(pinkFiles).toEqual(['super-axem-pink.png']);
     expect(ASSET_STANDARDS.categories.characterArtwork.families.male).not.toHaveProperty('derivedArtwork');
   });
 
@@ -159,17 +155,8 @@ describe('Estándares centrales de recursos gráficos', () => {
     }
   });
 
-  it('conserva las hojas compuestas Red y Pink como referencias visuales', async () => {
-    const families = ASSET_STANDARDS.categories.referenceSheet.families;
-    expect(families.map((family) => family.reference)).toEqual([
-      'art/source/sprites/references/axem-red/axem-red-spritesheet.png',
-      'art/source/sprites/references/axem-pink/axem-pink-spritesheet.png',
-    ]);
-    for (const family of families) {
-      const source = await sharp(absolute(family.reference)).metadata();
-      expect(source.format).toBe('png');
-      expect(family.result).toBeUndefined();
-    }
+  it('no depende de atlas compuestos retirados', () => {
+    expect(ASSET_STANDARDS.categories.referenceSheet.families).toEqual([]);
   });
 
   it('mantiene los GIF de acción en su lienzo estándar y con sus cuadros', async () => {

@@ -132,13 +132,13 @@ describe('resultados de las variantes canónicas', () => {
     expect(Math.abs(visibleHeights[0] - 78)).toBeLessThanOrEqual(1);
   });
 
-  it('conserva la hoja compuesta Pink y deja vacío el destino femenino Violet', async () => {
+  it('conserva el master Pink y deja vacío el destino femenino Violet', async () => {
     const source = await sharp(
-      fileURLToPath(new URL('../../../art/source/sprites/references/axem-pink/axem-pink-spritesheet.png', import.meta.url)),
+      fileURLToPath(new URL('../../../art/source/sprites/references/axem-pink/super-axem-pink.png', import.meta.url)),
     ).metadata();
     expect(source.format).toBe('png');
-    expect(source.width).toBe(1316);
-    expect(source.height).toBe(717);
+    expect(source.width).toBe(745);
+    expect(source.height).toBe(1372);
     expect(await readdir(resultsPath('female', 'violet'))).toEqual(['.gitkeep']);
     await expect(readFile(resultsPath('female', 'pink', 'spritesheet.png')))
       .rejects.toMatchObject({ code: 'ENOENT' });

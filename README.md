@@ -95,9 +95,9 @@ Para cambiar el control (gamepad, táctil), basta con otro adaptador que impleme
 Los dos minijuegos se ejecutan en **HaxeFlixel compilado a HTML5**. Phaser conserva el menú, las cinemáticas y todo el combate; las carreras se montan en un iframe aislado y regresan al menú mediante un mensaje entre ventanas. No se comparten objetos de escena ni instancias de motor.
 
 - **Carrera Axem:** carrera de motos de dos carriles, con un rival controlado por IA, aceleración, frenado, nitro y objetos de impulso o ralentización. Se puede elegir 7 km o 25 km.
-- **Carrera terrestre:** carrera de resistencia de 5 km contra un rival IA, con aceleración, frenado y recuperación de resistencia.
+- **Carrera terrestre:** carrera de resistencia contra un rival IA, con selector de 750 km o 2500 km, con aceleración, frenado y recuperación de resistencia.
 
-Controles de Carrera Axem: D acelera, A frena, flechas izquierda/derecha mueven lateralmente, flechas arriba/abajo cambian de carril, N activa nitro, P pausa y ESC vuelve al menú. Carrera terrestre: D/→ corre, A/← frena, P pausa, R reinicia y ESC vuelve al menú.
+Controles de Carrera Axem: D acelera, A frena, ESPACIO dispara (toque breve) o carga el disparo (mantener presionado), flechas izquierda/derecha mueven lateralmente, flechas arriba/abajo cambian de carril, P pausa y ESC vuelve al menú. Carrera terrestre: ↑/↓ selecciona 750 km o 2500 km, ENTER comienza, D/→ corre, A/← frena, P pausa, R reinicia y ESC vuelve al menú.
 
 Se necesita Haxe, Haxelib, Lime, OpenFL y HaxeFlixel. El proyecto está en `haxeflixel/`; `npm run prepare:haxe-assets && npm run build:haxe` genera el HTML5 en `public/minigames/`. `npm run dev` lo compila antes de iniciar Vite. CI también lo compila y versiona junto con los sprites; el build de Vercel consume el HTML5 ya generado desde el repositorio.
 
@@ -146,7 +146,7 @@ Requiere **Settings → Pages → Source: GitHub Actions**. Para correr la captu
 - **Esquiva:** J1 pulsa `X`; J2 pulsa `J`. Ejecuta una rodada diferenciada del dash, con una ventana corta de evasión y enfriamiento propio.
 - **Ataque especial:** J1 pulsa `Z`; J2 pulsa `M`. Tiene anticipación, impacto y recuperación más largos; inflige más daño y requiere esperar su enfriamiento.
 - **Aterrizaje y resultado:** el contacto con el suelo reproduce una animación breve; el KO y la victoria usan secuencias de cierre independientes.
-- **Carrera:** durante la cuenta regresiva el ciclista usa una espera lenta; aceleración, frenado y nitro modifican la cadencia y la inclinación. La meta activa animaciones distintas para victoria y derrota.
+- **Carrera:** durante la cuenta regresiva el ciclista usa una espera lenta; aceleración y frenado modifican la cadencia y la inclinación. La meta activa animaciones distintas para victoria y derrota.
 - **Escenarios:** cada mapa disponible se utiliza como fondo de combate y cada tileset genera un entorno procedural reproducible. Los nuevos recursos compatibles se incorporan automáticamente al selector.
 - **Música:** pistas WAV contextuales con carga diferida y reproducción en bucle.
 - **Efectos contextuales:** polvo y estela al hacer dash, nube de aterrizaje, chispas eléctricas, ráfagas de impacto, explosiones, humo, escombros y partículas que cambian según el material de cada escenario.
@@ -157,7 +157,7 @@ La selección ofrece temporalmente solo **Axem Naranja masculino**. Hasta que es
 
 ## Carrera de motos
 
-La carrera de motos usa HaxeFlixel y mantiene cuatro participantes: J1 y tres rivales controlados por IA. El jugador compite con la variante Orange actual; los otros rivales se distinguen por el tinte de sus sprites. Tiene dos carriles, cambio lateral, aceleración, frenado, nitro y objetos de impulso/ralentización.
+La carrera de motos usa HaxeFlixel y mantiene cuatro participantes: J1 y tres rivales controlados por IA. El jugador compite con la variante Orange actual; los otros rivales se distinguen por el tinte de sus sprites. Tiene dos carriles, cambio lateral, aceleración, frenado y disparo clásico/cargado. La distancia se elige entre 750 km y 2500 km.
 
 ## Música
 

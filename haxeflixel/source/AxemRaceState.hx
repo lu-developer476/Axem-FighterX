@@ -19,10 +19,9 @@ class AxemRaceState extends RaceBaseState
     static inline var PLAYER_X:Float = 126;
     static inline var TRACK_SCALE:Float = 0.14;
     static inline var PLAYER_BASE_SPEED:Float = 172;
-    static inline var NITRO_SPEED:Float = 135;
     static inline var LATERAL_SPEED:Float = 280;
     static inline var LANE_SWITCH_MS:Float = 145;
-    static final DISTANCES:Array<Int> = [7000, 25000];
+    static final DISTANCES:Array<Int> = [750000, 2500000];
     static final LANE_Y:Array<Float> = [173, 233];
 
     var player:FlxSprite;
@@ -32,6 +31,8 @@ class AxemRaceState extends RaceBaseState
     var bikeShootEffect:FlxSprite;
     var bikeSpecialShootEffect:FlxSprite;
     var bikeShootEffectMs:Float = 0;
+    var shootHoldMs:Float = 0;
+    var shootWasPressed:Bool = false;
     var pickups:Array<RacePickup> = [];
     var playerDistance:Float = 0;
     var opponentDistance:Float = 0;
@@ -46,17 +47,15 @@ class AxemRaceState extends RaceBaseState
     var opponentLaneTimer:Float = 2200;
     var playerOffset:Float = 0;
     var distanceIndex:Int = 0;
-    var finishDistance:Float = 7000;
+    var finishDistance:Float = 750000;
     var countdown:Float = 3;
     var speed:Float = PLAYER_BASE_SPEED;
-    var nitro:Float = 100;
     var pickupEffect:Float = 0;
     var pickupEffectMs:Float = 0;
     var started:Bool = false;
     var finished:Bool = false;
     var playerWon:Bool = false;
     var progressLabel:FlxText;
-    var nitroLabel:FlxText;
     var resultLabel:FlxText;
 
     override public function create():Void
@@ -64,11 +63,10 @@ class AxemRaceState extends RaceBaseState
         super.create();
         addBackground("assets/maps/castle.png");
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/axem-race.wav"));
-        addHeader("CARRERA AXEM", "D ACELERAR · A FRENAR · N NITRO · ↑/↓ CARRIL · ←/→ MOVER · P PAUSA · ESC MENÚ");
+        addHeader("CARRERA AXEM", "D ACELERAR · A FRENAR · ESPACIO DISPARAR / MANTENER CARGADO · ↑/↓ CARRIL · ←/→ MOVER · P PAUSA · ESC MENÚ");
         status.text = "ELEGÍ LA DISTANCIA";
-        detail.text = "↑/↓ CAMBIAR · ENTER COMENZAR · 7 KM / 25 KM";
-        progressLabel = addLabel(8, 38, 160, "0 / 7 KM", 7, FlxColor.WHITE);
-        nitroLabel = addLabel(312, 38, 160, "NITRO 100%", 7, FlxColor.CYAN);
+        detail.text = "↑/↓ CAMBIAR · ENTER COMENZAR · 750 KM / 2500 KM";
+        progressLabel = addLabel(8, 38, 200, "0 / 750 KM", 7, FlxColor.WHITE);
         resultLabel = addLabel(50, 118, 380, "", 12, FlxColor.YELLOW);
 
         player = loadAnimatedSprite("assets/races/axem-orange-bike.png", PLAYER_X, LANE_Y[0],
@@ -100,38 +98,24 @@ class AxemRaceState extends RaceBaseState
         opponentUp.updateHitbox();
         opponentDown.updateHitbox();
 
-        var cycles:Int = Std.int(Math.ceil(25000 / 3400)) + 1;
+        // Obstáculos espaciados para cubrir carreras largas sin saturar la escena.
+        var cycles:Int = Std.int(Math.ceil(2500000 / 34000)) + 1;
         for (cycle in 0...cycles)
         {
-            var offset:Float = cycle * 3400;
-            addPickup(offset + 280, "boost", 0);
+            var offset:Float = cycle * 34000;
             addPickup(offset + 840, "slow", 1);
-            addPickup(offset + 1380, "boost", 1);
-            addPickup(offset + 1940, "boost", 0);
-            addPickup(offset + 2500, "slow", 1);
-            addPickup(offset + 3100, "boost", 1);
+            addPickup(offset + 2500, "slow", 0);
         }
     }
 
     function addPickup(distance:Float, kind:String, lane:Int):Void
     {
-        var pickup:FlxSprite;
-        if (kind == "slow")
-        {
-            // Una moto sin piloto funciona como obstáculo visual para los impulsos negativos.
-            pickup = loadAnimatedSprite("assets/races/unpiloted-bike.png", 0, 0,
-                150, 100, "unpiloted", 9);
-            pickup.scale.set(0.24, 0.24);
-            pickup.updateHitbox();
-        }
-        else
-        {
-            pickup = new FlxSprite(0, 0);
-            pickup.makeGraphic(18, 18, 0xFFFFB347);
-            pickup.updateHitbox();
-            pickup.antialiasing = false;
-            add(pickup);
-        }
+        // La moto sin piloto queda como obstáculo. Los recursos de impulso/nitro
+        // permanecen preparados en el pipeline, pero no se muestran en la carrera.
+        var pickup = loadAnimatedSprite("assets/races/unpiloted-bike.png", 0, 0,
+            150, 100, "unpiloted", 9);
+        pickup.scale.set(0.24, 0.24);
+        pickup.updateHitbox();
         pickup.visible = false;
         pickups.push({
             distance: distance,
@@ -182,7 +166,6 @@ class AxemRaceState extends RaceBaseState
         var frame = Math.min(elapsed, 0.05);
         var accelerate = FlxG.keys.pressed.D;
         var brake = FlxG.keys.pressed.A;
-        var boosting = FlxG.keys.pressed.N && nitro > 0;
         var steering = (FlxG.keys.pressed.RIGHT ? 1 : 0) - (FlxG.keys.pressed.LEFT ? 1 : 0);
 
         if (FlxG.keys.justPressed.UP) changeLane(-1);
@@ -190,14 +173,13 @@ class AxemRaceState extends RaceBaseState
         playerLaneSwitchMs = Math.max(0, playerLaneSwitchMs - elapsed * 1000);
         if (playerLaneSwitchMs == 0) playerLane = playerTargetLane;
 
-        nitro = clamp(nitro + (boosting ? -34 : 16) * frame, 0, 100);
         pickupEffectMs = Math.max(0, pickupEffectMs - elapsed * 1000);
         if (pickupEffectMs == 0) pickupEffect = 0;
         bikeShootEffectMs = Math.max(0, bikeShootEffectMs - elapsed * 1000);
         if (bikeShootEffectMs == 0) bikeShootEffect.visible = false;
 
         var targetSpeed = clamp(172 + (accelerate ? 100 : 0) - (brake ? 70 : 0)
-            + (boosting ? NITRO_SPEED : 0) + pickupEffect, 85, 410);
+            + pickupEffect, 85, 310);
         speed += (targetSpeed - speed) * Math.min(1, frame * 3.2);
         playerOffset = clamp(playerOffset + steering * LATERAL_SPEED * elapsed, -78, 78);
         playerDistance += speed * frame;
@@ -210,16 +192,7 @@ class AxemRaceState extends RaceBaseState
         var fromLane = playerLaneSwitchMs > 0 ? 1 - playerTargetLane : playerLane;
         player.y = LANE_Y[fromLane] + (LANE_Y[playerTargetLane] - LANE_Y[fromLane]) * laneProgress;
 
-        if (boosting)
-        {
-            bikeSpecialShootEffect.visible = true;
-            bikeSpecialShootEffect.x = playerX + 42;
-            bikeSpecialShootEffect.y = player.y + 8;
-        }
-        else
-        {
-            bikeSpecialShootEffect.visible = false;
-        }
+        updateShooting(elapsed, playerX);
 
         var opponentX = clamp(PLAYER_X + (opponentDistance - playerDistance) * TRACK_SCALE
             + Math.sin(raceTimeMs / 520) * 28, 48, 432);
@@ -227,13 +200,44 @@ class AxemRaceState extends RaceBaseState
 
         updatePickups(playerX);
         progressLabel.text = Math.round(playerDistance / 100) / 10 + " / " + Math.round(finishDistance / 1000) + " KM";
-        nitroLabel.text = "NITRO " + Math.round(nitro) + "%";
 
         if (playerDistance >= finishDistance || opponentDistance >= finishDistance)
         {
             finished = true;
             playerWon = playerDistance >= opponentDistance;
             showResult();
+        }
+    }
+
+    function updateShooting(elapsed:Float, playerX:Float):Void
+    {
+        var pressed = FlxG.keys.pressed.SPACE;
+        if (pressed)
+        {
+            shootHoldMs += elapsed * 1000;
+            shootWasPressed = true;
+            if (shootHoldMs >= 180)
+            {
+                bikeShootEffect.visible = false;
+                bikeSpecialShootEffect.visible = true;
+                bikeSpecialShootEffect.x = playerX + 42;
+                bikeSpecialShootEffect.y = player.y + 8;
+            }
+            return;
+        }
+
+        if (shootWasPressed)
+        {
+            if (shootHoldMs < 180)
+            {
+                bikeShootEffect.x = playerX + 42;
+                bikeShootEffect.y = player.y + 8;
+                bikeShootEffect.visible = true;
+                bikeShootEffectMs = 420;
+            }
+            bikeSpecialShootEffect.visible = false;
+            shootHoldMs = 0;
+            shootWasPressed = false;
         }
     }
 
@@ -291,16 +295,8 @@ class AxemRaceState extends RaceBaseState
             {
                 pickup.active = false;
                 pickup.sprite.visible = false;
-                pickupEffect = pickup.kind == "boost" ? 105 : -75;
+                pickupEffect = -75;
                 pickupEffectMs = 1900;
-                if (pickup.kind == "boost")
-                {
-                    nitro = clamp(nitro + 24, 0, 100);
-                    bikeShootEffect.x = playerX + 42;
-                    bikeShootEffect.y = player.y + 8;
-                    bikeShootEffect.visible = true;
-                    bikeShootEffectMs = 420;
-                }
             }
         }
     }

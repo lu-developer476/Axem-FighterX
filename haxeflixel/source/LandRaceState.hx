@@ -8,16 +8,18 @@ import openfl.utils.Assets;
 
 class LandRaceState extends RaceBaseState
 {
-    static inline var FINISH_DISTANCE:Float = 5000;
+    static final DISTANCES:Array<Int> = [750000, 2500000];
     static inline var MAX_STAMINA:Float = 100;
 
     var playerModes:Map<String, FlxSprite>;
     var rivalModes:Map<String, FlxSprite>;
+    var finishDistance:Float = 750000;
+    var distanceIndex:Int = 0;
     var playerDistance:Float = 0;
     var rivalDistance:Float = 0;
     var stamina:Float = MAX_STAMINA;
     var countdown:Float = 3;
-    var started:Bool = true;
+    var started:Bool = false;
     var finished:Bool = false;
     var staminaFill:FlxSprite;
     var progressLabel:FlxText;
@@ -29,11 +31,11 @@ class LandRaceState extends RaceBaseState
         addBackground("assets/maps/desert.png");
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/land-race.wav"));
         addHeader("CARRERA TERRESTRE", "D / → CORRER · A / ← FRENAR · P PAUSA · R REPETIR · ESC MENÚ");
-        status.text = "3";
-        detail.text = "PREPARADOS PARA 5 KM";
+        status.text = "ELEGÍ LA DISTANCIA";
+        detail.text = "↑/↓ CAMBIAR · ENTER COMENZAR · 750 KM / 2500 KM";
         playerModes = createRunnerModes(true, 110);
         rivalModes = createRunnerModes(false, 320);
-        progressLabel = addLabel(8, 38, 200, "0 / 5 KM", 7, FlxColor.WHITE);
+        progressLabel = addLabel(8, 38, 200, "0 / 750 KM", 7, FlxColor.WHITE);
         addLabel(12, 244, 88, "RESISTENCIA", 6, FlxColor.CYAN);
         var staminaBack = new FlxSprite(16, 258);
         staminaBack.makeGraphic(96, 5, FlxColor.fromRGB(20, 35, 48));
@@ -101,6 +103,21 @@ class LandRaceState extends RaceBaseState
     {
         super.update(elapsed);
         if (commonInput()) return;
+        if (!started)
+        {
+            if (FlxG.keys.justPressed.UP || FlxG.keys.justPressed.DOWN)
+                distanceIndex = 1 - distanceIndex;
+            finishDistance = DISTANCES[distanceIndex];
+            status.text = "DISTANCIA: " + Math.round(finishDistance / 1000) + " KM";
+            if (FlxG.keys.justPressed.ENTER)
+            {
+                started = true;
+                countdown = 3;
+                status.text = "3";
+                detail.text = "PREPARADOS...";
+            }
+            return;
+        }
         if (finished)
         {
             if (FlxG.keys.justPressed.R) FlxG.resetState();
@@ -129,8 +146,8 @@ class LandRaceState extends RaceBaseState
         }
 
         var rivalSpeed = 164 + Math.sin(playerDistance / 510) * 5;
-        playerDistance = Math.min(FINISH_DISTANCE, playerDistance + playerSpeed * elapsed);
-        rivalDistance = Math.min(FINISH_DISTANCE, rivalDistance + rivalSpeed * elapsed);
+        playerDistance = Math.min(finishDistance, playerDistance + playerSpeed * elapsed);
+        rivalDistance = Math.min(finishDistance, rivalDistance + rivalSpeed * elapsed);
         scrollBackground(playerDistance, 0.14);
         var playerMode = accelerate && !brake && stamina > 0 ? "dash" : (brake ? "walk" : "run");
         var playerX = 112 + Math.sin(playerDistance / 20) * 2;
@@ -139,9 +156,9 @@ class LandRaceState extends RaceBaseState
         syncRunnerModes(rivalModes, "run", rivalX, 166);
         staminaFill.scale.x = Math.max(0.01, stamina / MAX_STAMINA);
         staminaFill.updateHitbox();
-        progressLabel.text = Math.round(playerDistance / 100) / 10 + " / 5 KM";
+        progressLabel.text = Math.round(playerDistance / 100) / 10 + " / " + Math.round(finishDistance / 1000) + " KM";
 
-        if (playerDistance >= FINISH_DISTANCE || rivalDistance >= FINISH_DISTANCE)
+        if (playerDistance >= finishDistance || rivalDistance >= finishDistance)
         {
             finished = true;
             var won = playerDistance >= rivalDistance;

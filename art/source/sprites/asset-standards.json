@@ -56,6 +56,8 @@
       "width": 150,
       "height": 100,
       "alphaRequired": true,
+      "frameDelayMs": 100,
+      "frameRateFps": 10,
       "directory": "art/source/sprites/results/male/orange",
       "recursive": true,
       "preserveFrameCount": true,

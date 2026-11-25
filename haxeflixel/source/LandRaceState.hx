@@ -24,13 +24,15 @@ class LandRaceState extends RaceBaseState
     var staminaFill:FlxSprite;
     var progressLabel:FlxText;
     var resultLabel:FlxText;
+    var playerActionMode:String = "";
+    var playerActionMs:Float = 0;
 
     override public function create():Void
     {
         super.create();
         addBackground("assets/maps/desert.png");
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/land-race.wav"));
-        addHeader("CARRERA TERRESTRE", "D / → CORRER · A / ← FRENAR · P PAUSA · R REPETIR · ESC MENÚ");
+        addHeader("CARRERA TERRESTRE", "D/→ CORRER · A/← FRENAR · W/↑ SALTO · S/↓ RODAR · P PAUSA · ESC MENÚ");
         status.text = "ELEGÍ LA DISTANCIA";
         detail.text = "↑/↓ CAMBIAR · ENTER COMENZAR · 750 KM / 2500 KM";
         playerModes = createRunnerModes(true, 110);
@@ -49,37 +51,49 @@ class LandRaceState extends RaceBaseState
     function createRunnerModes(isPlayer:Bool, x:Float):Map<String, FlxSprite>
     {
         var prefix = isPlayer ? "axem-orange-" : "axem-red-";
-        var specs:Array<{ mode:String, action:String, fps:Int }> = isPlayer
-            ? [
-                { mode: "idle", action: "idle", fps: 10 },
-                { mode: "walk", action: "run", fps: 10 },
-                { mode: "run", action: "run", fps: 10 },
-                { mode: "dash", action: "dash", fps: 10 }
-            ]
-            : [
-                { mode: "idle", action: "idle", fps: 10 },
-                { mode: "walk", action: "walk", fps: 10 },
-                { mode: "run", action: "run", fps: 10 },
-                { mode: "dash", action: "dash", fps: 10 }
-            ];
+        var actions = isPlayer
+            ? ["idle", "walk", "run", "dash", "jump", "roll"]
+            : ["idle", "walk", "run", "dash"];
         var result = new Map<String, FlxSprite>();
-        for (spec in specs)
+        for (action in actions)
         {
+            var assetPath = "assets/races/" + prefix + action + ".png";
+            // Las acciones se cargan solo cuando el GIF fuente existe y el
+            // generador lo incluyó en el proyecto HaxeFlixel.
+            if (!Assets.exists(assetPath)) continue;
             var sprite = loadAnimatedSprite(
-                "assets/races/" + prefix + spec.action + ".png",
+                assetPath,
                 x,
                 166,
                 150,
                 100,
-                spec.mode,
-                spec.fps
+                action,
+                10
             );
             sprite.scale.set(isPlayer ? 0.56 : 0.54, isPlayer ? 0.56 : 0.54);
             sprite.updateHitbox();
-            sprite.visible = spec.mode == "idle";
-            result.set(spec.mode, sprite);
+            sprite.visible = action == "idle";
+            result.set(action, sprite);
         }
         return result;
+    }
+
+    function resolvePlayerMode(requestedMode:String):String
+    {
+        if (playerModes.exists(requestedMode)) return requestedMode;
+        // Orange todavía no tiene un walk.gif dedicado: se usa run como
+        // sustituto hasta que se incorpore esa animación.
+        if (requestedMode == "walk" && playerModes.exists("run")) return "run";
+        return "idle";
+    }
+
+    function beginPlayerAction(mode:String):Void
+    {
+        var sprite = playerModes.get(mode);
+        if (sprite == null) return;
+        sprite.animation.play(mode, true);
+        playerActionMode = mode;
+        playerActionMs = Math.max(350, sprite.numFrames * 100);
     }
 
     function syncRunnerModes(
@@ -149,7 +163,25 @@ class LandRaceState extends RaceBaseState
         playerDistance = Math.min(finishDistance, playerDistance + playerSpeed * elapsed);
         rivalDistance = Math.min(finishDistance, rivalDistance + rivalSpeed * elapsed);
         scrollBackground(playerDistance, 0.14);
-        var playerMode = accelerate && !brake && stamina > 0 ? "dash" : (brake ? "walk" : "run");
+        var playerMode = brake
+            ? "idle"
+            : (accelerate ? (stamina > 0 ? "dash" : "run") : "walk");
+
+        if (playerActionMs <= 0)
+        {
+            if (FlxG.keys.justPressed.W || FlxG.keys.justPressed.UP)
+                beginPlayerAction("jump");
+            else if (FlxG.keys.justPressed.S || FlxG.keys.justPressed.DOWN)
+                beginPlayerAction("roll");
+        }
+        if (playerActionMs > 0)
+        {
+            playerActionMs = Math.max(0, playerActionMs - elapsed * 1000);
+            if (playerActionMs > 0) playerMode = playerActionMode;
+            else playerActionMode = "";
+        }
+        playerMode = resolvePlayerMode(playerMode);
+
         var playerX = 112 + Math.sin(playerDistance / 20) * 2;
         var rivalX = 310 + Math.sin(rivalDistance / 20 + 1) * 2;
         syncRunnerModes(playerModes, playerMode, playerX, 166);

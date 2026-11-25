@@ -94,10 +94,10 @@ Para cambiar el control (gamepad, táctil), basta con otro adaptador que impleme
 
 Los dos minijuegos se ejecutan en **HaxeFlixel compilado a HTML5**. Phaser conserva el menú, las cinemáticas y todo el combate; las carreras se montan en un iframe aislado y regresan al menú mediante un mensaje entre ventanas. No se comparten objetos de escena ni instancias de motor.
 
-- **Carrera Axem:** carrera de motos de dos carriles, con un rival controlado por IA, aceleración, frenado, nitro y objetos de impulso o ralentización. Se puede elegir 7 km o 25 km.
+- **Carrera Axem:** carrera de motos de dos carriles, con un rival controlado por IA, aceleración, frenado y disparo clásico/cargado. Se puede elegir 750 km o 2500 km.
 - **Carrera terrestre:** carrera de resistencia contra un rival IA, con selector de 750 km o 2500 km, con aceleración, frenado y recuperación de resistencia.
 
-Controles de Carrera Axem: D acelera, A frena, ESPACIO dispara (toque breve) o carga el disparo (mantener presionado), flechas izquierda/derecha mueven lateralmente, flechas arriba/abajo cambian de carril, P pausa y ESC vuelve al menú. Carrera terrestre: ↑/↓ selecciona 750 km o 2500 km, ENTER comienza, D/→ corre, A/← frena, P pausa, R reinicia y ESC vuelve al menú.
+Controles de Carrera Axem: D acelera, A frena, F dispara (toque breve) o carga el disparo (mantener presionado), flechas izquierda/derecha mueven lateralmente y flechas arriba/abajo cambian de carril; P pausa y ESC vuelve al menú. Carrera terrestre: ↑/↓ selecciona 750 km o 2500 km y ENTER comienza; D/→ acelera, A/← frena y muestra idle, W/↑ activa salto, S/↓ activa rodada, P pausa, R reinicia y ESC vuelve al menú. La animación walk es opcional: si falta walk.gif se utiliza run como alternativa; jump y roll se incorporan automáticamente cuando están sus GIF fuente.
 
 Se necesita Haxe, Haxelib, Lime, OpenFL y HaxeFlixel. El proyecto está en `haxeflixel/`; `npm run prepare:haxe-assets && npm run build:haxe` genera el HTML5 en `public/minigames/`. `npm run dev` lo compila antes de iniciar Vite. CI también lo compila y versiona junto con los sprites; el build de Vercel consume el HTML5 ya generado desde el repositorio.
 

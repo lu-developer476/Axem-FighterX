@@ -20,6 +20,10 @@ const SOURCES = Object.freeze({
   'axem-orange-run': { file: 'art/source/sprites/results/male/orange/run.gif' },
   'axem-orange-idle': { file: 'art/source/sprites/results/male/orange/idle.gif' },
   'axem-orange-dash': { file: 'art/source/sprites/results/male/orange/dash.gif' },
+  // Las acciones opcionales se incorporan automáticamente cuando aparece su GIF fuente.
+  'axem-orange-walk': { file: 'art/source/sprites/results/male/orange/walk.gif', optional: true },
+  'axem-orange-jump': { file: 'art/source/sprites/results/male/orange/jump.gif', optional: true },
+  'axem-orange-roll': { file: 'art/source/sprites/results/male/orange/roll.gif', optional: true },
   // Red reutiliza las animaciones Orange versionadas y vuelve a teñir la armadura a rojo.
   'axem-red-run': { file: 'art/source/sprites/results/male/orange/run.gif', recolorToRed: true },
   'axem-red-idle': { file: 'art/source/sprites/results/male/orange/idle.gif', recolorToRed: true },
@@ -125,15 +129,54 @@ async function convertGifToSpritesheet(sourcePath, targetPath, { recolorToRed = 
   console.log('Hoja HaxeFlixel: ' + path.relative(ROOT, targetPath) + ' (' + pages + ' cuadros)');
 }
 
+async function syncLandRaceActionAssets(generatedNames) {
+  const projectPath = path.join(ROOT, 'haxeflixel', 'project.xml');
+  const project = await fs.readFile(projectPath, 'utf8');
+  const marker = /<!-- BEGIN GENERATED LAND RACE ACTION ASSETS -->[\s\S]*?<!-- END GENERATED LAND RACE ACTION ASSETS -->/;
+  const matches = project.match(marker);
+  if (!matches || matches.length !== 1) {
+    throw new Error('haxeflixel/project.xml debe contener una única región de assets generados para Carrera Terrestre.');
+  }
+
+  const actions = ['idle', 'walk', 'run', 'dash', 'jump', 'roll'];
+  const entries = actions
+    .filter((action) => generatedNames.has('axem-orange-' + action))
+    .map((action) =>
+      '  <assets path="../public/generated/haxeflixel/axem-orange-' + action +
+      '.png" rename="assets/races/axem-orange-' + action + '.png" />'
+    );
+  const block = [
+    '<!-- BEGIN GENERATED LAND RACE ACTION ASSETS -->',
+    ...entries,
+    '<!-- END GENERATED LAND RACE ACTION ASSETS -->',
+  ].join('\n');
+  await fs.writeFile(projectPath, project.replace(marker, block));
+}
+
 async function main() {
   await fs.mkdir(OUTPUT, { recursive: true });
+  const generatedNames = new Set();
   for (const [name, specification] of Object.entries(SOURCES)) {
     const source = path.join(ROOT, specification.file);
     const target = path.join(OUTPUT, name + '.png');
+    try {
+      await fs.access(source);
+    } catch {
+      if (specification.optional === true) {
+        await fs.rm(target, { force: true });
+        console.log('Animación opcional no disponible: ' + specification.file);
+        continue;
+      }
+      throw new Error('Falta el recurso requerido: ' + specification.file);
+    }
+
     await convertGifToSpritesheet(source, target, {
       recolorToRed: specification.recolorToRed === true,
     });
+    generatedNames.add(name);
   }
+
+  await syncLandRaceActionAssets(generatedNames);
 }
 
 main().catch((error) => {

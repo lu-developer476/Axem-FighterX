@@ -13,9 +13,8 @@
   <assets path="../public/generated/haxeflixel/unpiloted-bike.png" rename="assets/races/unpiloted-bike.png" />
   <assets path="../public/generated/haxeflixel/bike-shoot.png" rename="assets/races/bike-shoot.png" />
   <assets path="../public/generated/haxeflixel/bike-special-shoot.png" rename="assets/races/bike-special-shoot.png" />
-  <assets path="../public/generated/haxeflixel/axem-orange-run.png" rename="assets/races/axem-orange-run.png" />
-  <assets path="../public/generated/haxeflixel/axem-orange-idle.png" rename="assets/races/axem-orange-idle.png" />
-  <assets path="../public/generated/haxeflixel/axem-orange-dash.png" rename="assets/races/axem-orange-dash.png" />
+  <!-- BEGIN GENERATED LAND RACE ACTION ASSETS -->
+  <!-- END GENERATED LAND RACE ACTION ASSETS -->
   <assets path="../public/generated/haxeflixel/axem-red-run.png" rename="assets/races/axem-red-run.png" />
   <assets path="../public/generated/haxeflixel/axem-red-idle.png" rename="assets/races/axem-red-idle.png" />
   <assets path="../public/generated/haxeflixel/axem-red-walk.png" rename="assets/races/axem-red-walk.png" />

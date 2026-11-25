@@ -63,7 +63,7 @@ class AxemRaceState extends RaceBaseState
         super.create();
         addBackground("assets/maps/castle.png");
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/axem-race.wav"));
-        addHeader("CARRERA AXEM", "D ACELERAR · A FRENAR · ESPACIO DISPARAR / MANTENER CARGADO · ↑/↓ CARRIL · ←/→ MOVER · P PAUSA · ESC MENÚ");
+        addHeader("CARRERA AXEM", "D ACELERAR · A FRENAR · F DISPARAR / MANTENER CARGADO · ↑/↓ CARRIL · ←/→ MOVER · P PAUSA · ESC MENÚ");
         status.text = "ELEGÍ LA DISTANCIA";
         detail.text = "↑/↓ CAMBIAR · ENTER COMENZAR · 750 KM / 2500 KM";
         progressLabel = addLabel(8, 38, 200, "0 / 750 KM", 7, FlxColor.WHITE);
@@ -211,7 +211,7 @@ class AxemRaceState extends RaceBaseState
 
     function updateShooting(elapsed:Float, playerX:Float):Void
     {
-        var pressed = FlxG.keys.pressed.SPACE;
+        var pressed = FlxG.keys.pressed.F;
         if (pressed)
         {
             shootHoldMs += elapsed * 1000;

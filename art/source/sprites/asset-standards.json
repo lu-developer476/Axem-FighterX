@@ -16,12 +16,12 @@
       "alignment": "center",
       "families": {
         "male": {
-          "reference": "art/source/sprites/references/axem-red/super-axem-ranger-red.png",
+          "reference": "art/source/sprites/results/male/orange/super-axem-ranger-orange.png",
           "result": "art/source/sprites/results/male/orange/super-axem-ranger-orange.png",
           "preparedSource": "public/generated/super-axem-source-male.png",
           "width": 857,
           "height": 1171,
-          "note": "Orange conserva la escala de su upload original. El derivado Red se escala proporcionalmente con nearest-neighbor para ocupar la misma caja visible que Orange, manteniendo 857×1171 px.",
+          "note": "El artwork Super Axem masculino canónico se reutiliza como fuente preparada; ya no se mantiene una referencia Red redundante.",
           "visualBoundsReference": "art/source/sprites/results/male/orange/super-axem-ranger-orange.png",
           "visualBoundsTolerance": 2,
           "visualBoundsRatioTolerance": 0.04,

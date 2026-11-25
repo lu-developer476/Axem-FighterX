@@ -30,12 +30,12 @@ async function visibleBounds(relativePath) {
 }
 
 describe('Estándares centrales de recursos gráficos', () => {
-  it('conserva únicamente el master Red y el GIF de bicicleta', async () => {
+  it('conserva únicamente el GIF maestro de bicicleta en la referencia Red', async () => {
     const directory = absolute('art/source/sprites/references/axem-red');
     const entries = await fs.readdir(directory, { withFileTypes: true });
     const filenames = entries.filter((entry) => entry.isFile()).map((entry) => entry.name).sort();
 
-    expect(filenames).toEqual(['axem-ranger-bike.gif', 'super-axem-ranger-red.png']);
+    expect(filenames).toEqual(['axem-ranger-bike.gif']);
     expect(ASSET_STANDARDS.categories.actionGif.referenceFiles).toEqual(['axem-ranger-bike.gif']);
 
     const pinkDirectory = absolute('art/source/sprites/references/axem-pink');
@@ -110,7 +110,7 @@ describe('Estándares centrales de recursos gráficos', () => {
   });
 
 
-  it('hace que el Red derivado ocupe la misma caja visible que Orange', async () => {
+  it('mantiene la fuente masculina preparada alineada con el artwork Orange canónico', async () => {
     const family = ASSET_STANDARDS.categories.characterArtwork.families.male;
     const [master, orange, orangeBounds, redBounds] = await Promise.all([
       sharp(absolute(family.reference)).metadata(),

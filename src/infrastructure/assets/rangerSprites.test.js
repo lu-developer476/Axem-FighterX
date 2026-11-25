@@ -58,13 +58,13 @@ describe('Sprites canónicos de Axem Naranja', () => {
     }
   });
 
-  it('conserva únicamente el master Red y la bicicleta, y deriva las acciones desde Orange', async () => {
+  it('conserva únicamente el GIF maestro de bicicleta en la referencia Red y deriva las acciones desde Orange', async () => {
     const redDirectory = fileURLToPath(new URL('../../../art/source/sprites/references/axem-red', import.meta.url));
     const redFiles = (await readdir(redDirectory, { withFileTypes: true }))
       .filter((entry) => entry.isFile())
       .map((entry) => entry.name)
       .sort();
-    expect(redFiles).toEqual(['axem-ranger-bike.gif', 'super-axem-ranger-red.png']);
+    expect(redFiles).toEqual(['axem-ranger-bike.gif']);
 
     const masterBike = fileURLToPath(new URL(
       '../../../art/source/sprites/references/axem-red/axem-ranger-bike.gif',

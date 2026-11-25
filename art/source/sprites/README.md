@@ -25,7 +25,6 @@ results/
 
 references/axem-red/
   axem-red-spritesheet.png
-  super-axem-ranger-red.png
 
 references/axem-pink/
   axem-pink-spritesheet.png
@@ -333,15 +332,15 @@ Las reglas dimensionales viven en `asset-standards.json`. Los generadores, el ju
 
 ### Artwork Super Axem: Orange fija la escala visual
 
-El master masculino `references/axem-red/super-axem-ranger-red.png` y el resultado `results/male/orange/super-axem-ranger-orange.png` usan exactamente **857 × 1171 px**. Orange conserva la escala, los colores y el lienzo de su upload original. El fondo oscuro se vuelve transparente únicamente cuando está conectado al borde; el alfa de los píxeles de contorno se suaviza con un mínimo de 216/255. Los píxeles interiores y el RGB del arte se conservan, sin blur, sharpening, reescalado ni recorte. El pipeline genera el artwork Red ajustado exclusivamente en `public/generated/super-axem-source-male.png` para el juego; se escala proporcionalmente con vecino más cercano para caber en la caja visible de Orange. Se centra horizontalmente y se alinea por la línea de apoyo de los pies. Cuando las proporciones originales difieren, el derivado queda contenido dentro de esa caja con una diferencia máxima del 4 %; no se deforma ni se recorta, y la referencia original Red permanece intacta.
+El artwork Super Axem masculino canónico `results/male/orange/super-axem-ranger-orange.png` es la fuente de `public/generated/super-axem-source-male.png`. Ya no se conserva una imagen Red individual redundante: la referencia de Axem Red queda reservada a sus GIF maestros y la hoja de sprites completa.
 
 La misma regla incluye a la Ranger femenina Violeta: el master Pink y el resultado Violet usan **745 × 1372 px**. Cada familia conserva la proporción de su referencia; no se fuerza una relación de aspecto común entre el artwork masculino y el femenino.
 
-Los masters de `references/` son inmutables y contienen únicamente las referencias base Red y Pink. Los uploads originales de Orange y Violet se conservan dentro de sus propias rutas de variante: `results/male/orange/source/super-axem-orange-upload.png` y `results/female/violet/source/super-axem-violet-upload.png`. `prepare-super-rangers.mjs` crea copias de trabajo en `public/generated/super-axem-source-male.png` y `public/generated/super-axem-source-female.png`, conservando el lienzo original. Los generadores de texturas y retratos consumen esas copias. Los uploads fuente están excluidos de la normalización automática.
+Los masters de `references/` son inmutables y contienen las referencias base Red y Pink; la imagen individual Super Axem Red redundante fue retirada. Los uploads originales de Orange y Violet se conservan dentro de sus propias rutas de variante: `results/male/orange/source/super-axem-orange-upload.png` y `results/female/violet/source/super-axem-violet-upload.png`. `prepare-super-rangers.mjs` crea copias de trabajo en `public/generated/super-axem-source-male.png` y `public/generated/super-axem-source-female.png`, conservando el lienzo original. Los generadores de texturas y retratos consumen esas copias. Los uploads fuente están excluidos de la normalización automática.
 
 ### Qué se normaliza y qué se conserva
 
-- Los artworks de personaje conservan el lienzo de su master. Orange mantiene la escala de su upload original; el derivado Red se escala proporcionalmente para igualar la altura visible de Orange mediante nearest-neighbor, con centrado horizontal y pies alineados. Violet mantiene la normalización de su familia. Nunca se aplica deformación ni recorte automático.
+- Los artworks de personaje conservan el lienzo de su fuente canónica. Orange mantiene la escala de su upload original; la fuente masculina preparada reutiliza el artwork Super Axem Orange mediante nearest-neighbor, sin deformación ni recorte. Violet mantiene la normalización de su familia.
 - Las texturas de combate, retratos y GIF se generan con sus medidas de categoría.
 - Las hojas compuestas de referencia conservan sus dimensiones originales. Las animaciones usan las celdas declaradas en sus `index.json`, y el mapa de recortes masculino permanece versionado.
 - Armas, objetos, efectos, recursos suplementarios, fondos y tilesets conservan sus dimensiones nativas. Los fondos pueden tener proporciones distintas según la escena.

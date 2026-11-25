@@ -19,7 +19,7 @@ const REFERENCES = Object.freeze([
   {
     gender: 'male',
     file: path.join(ROOT, CHARACTER_ARTWORK.families.male.reference),
-    label: 'Super Axem Red',
+    label: 'Super Axem masculino',
   },
 ]);
 
@@ -115,8 +115,8 @@ async function scaleRedToOrange(sourceBuffer, family, label) {
 
 async function prepareReference({ file, label, gender }) {
   // Los masters de references nunca se reescriben. Se prepara una copia de
-  // trabajo en el mismo lienzo. El Red masculino se escala proporcionalmente
-  // para igualar la ocupación visual del artwork Orange original.
+  // trabajo en el mismo lienzo. El artwork masculino canónico se reutiliza
+  // para la textura del juego sin depender de una referencia Red redundante.
   const source = await fs.readFile(file);
   const metadata = await sharp(source, { failOn: 'error' }).metadata();
   const family = CHARACTER_ARTWORK.families[gender];

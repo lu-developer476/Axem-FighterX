@@ -175,16 +175,8 @@
       "preserveIrregularLayout": true,
       "allowResampling": false,
       "allowCropping": false,
-      "families": [
-        {
-          "reference": "art/source/sprites/references/axem-red/axem-red-spritesheet.png",
-          "role": "composite-reference"
-        },
-        {
-          "reference": "art/source/sprites/references/axem-pink/axem-pink-spritesheet.png",
-          "role": "composite-reference"
-        }
-      ]
+      "families": []
     }
-  }
+  },
+  "description": "Los atlas compuestos de Axem Red y Axem Pink se retiraron deliberadamente y no son fuentes necesarias para validar o compilar. Las acciones masculinas se generan desde results/male/orange/spritesheet.png y el mapa de recortes versionado; los GIF maestros Red permanecen como fuentes de animación."
 }

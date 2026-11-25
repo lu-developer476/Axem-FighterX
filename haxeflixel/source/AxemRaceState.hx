@@ -27,6 +27,11 @@ class AxemRaceState extends RaceBaseState
 
     var player:FlxSprite;
     var opponent:FlxSprite;
+    var opponentUp:FlxSprite;
+    var opponentDown:FlxSprite;
+    var bikeShootEffect:FlxSprite;
+    var bikeSpecialShootEffect:FlxSprite;
+    var bikeShootEffectMs:Float = 0;
     var pickups:Array<RacePickup> = [];
     var playerDistance:Float = 0;
     var opponentDistance:Float = 0;
@@ -34,6 +39,11 @@ class AxemRaceState extends RaceBaseState
     var playerLane:Int = 0;
     var playerTargetLane:Int = 0;
     var playerLaneSwitchMs:Float = 0;
+    var opponentLane:Int = 1;
+    var opponentFromLane:Int = 1;
+    var opponentTargetLane:Int = 1;
+    var opponentLaneSwitchMs:Float = 0;
+    var opponentLaneTimer:Float = 2200;
     var playerOffset:Float = 0;
     var distanceIndex:Int = 0;
     var finishDistance:Float = 7000;
@@ -64,11 +74,31 @@ class AxemRaceState extends RaceBaseState
         player = loadAnimatedSprite("assets/races/axem-orange-bike.png", PLAYER_X, LANE_Y[0],
             150, 100, "bike", 10);
         opponent = loadAnimatedSprite("assets/races/axem-red-bike.png", PLAYER_X, LANE_Y[1],
-            150, 100, "bike", 10);
+            150, 100, "ride", 10);
+        opponentUp = loadAnimatedSprite("assets/races/axem-red-bike-up.png", PLAYER_X, LANE_Y[1],
+            150, 100, "up", 10);
+        opponentDown = loadAnimatedSprite("assets/races/axem-red-bike-down.png", PLAYER_X, LANE_Y[1],
+            150, 100, "down", 10);
+        opponentUp.visible = false;
+        opponentDown.visible = false;
+
+        bikeShootEffect = loadAnimatedSprite("assets/races/bike-shoot.png", 0, 0,
+            150, 100, "shoot", 14);
+        bikeSpecialShootEffect = loadAnimatedSprite("assets/races/bike-special-shoot.png", 0, 0,
+            150, 100, "special-shoot", 14);
+        bikeShootEffect.scale.set(0.30, 0.30);
+        bikeSpecialShootEffect.scale.set(0.34, 0.34);
+        bikeShootEffect.visible = false;
+        bikeSpecialShootEffect.visible = false;
+
         player.scale.set(0.56, 0.56);
         opponent.scale.set(0.56, 0.56);
+        opponentUp.scale.set(0.56, 0.56);
+        opponentDown.scale.set(0.56, 0.56);
         player.updateHitbox();
         opponent.updateHitbox();
+        opponentUp.updateHitbox();
+        opponentDown.updateHitbox();
 
         var cycles:Int = Std.int(Math.ceil(25000 / 3400)) + 1;
         for (cycle in 0...cycles)
@@ -85,13 +115,24 @@ class AxemRaceState extends RaceBaseState
 
     function addPickup(distance:Float, kind:String, lane:Int):Void
     {
-        var pickup = new FlxSprite(0, 0);
-        // Iconos geométricos procedurales: el minijuego ya no depende de sprites de pickup externos.
-        pickup.makeGraphic(18, 18, kind == "boost" ? 0xFFFFB347 : 0xFF70DDFF);
-        pickup.updateHitbox();
-        pickup.antialiasing = false;
+        var pickup:FlxSprite;
+        if (kind == "slow")
+        {
+            // Una moto sin piloto funciona como obstáculo visual para los impulsos negativos.
+            pickup = loadAnimatedSprite("assets/races/unpiloted-bike.png", 0, 0,
+                150, 100, "unpiloted", 9);
+            pickup.scale.set(0.24, 0.24);
+            pickup.updateHitbox();
+        }
+        else
+        {
+            pickup = new FlxSprite(0, 0);
+            pickup.makeGraphic(18, 18, 0xFFFFB347);
+            pickup.updateHitbox();
+            pickup.antialiasing = false;
+            add(pickup);
+        }
         pickup.visible = false;
-        add(pickup);
         pickups.push({
             distance: distance,
             lane: lane,
@@ -152,6 +193,8 @@ class AxemRaceState extends RaceBaseState
         nitro = clamp(nitro + (boosting ? -34 : 16) * frame, 0, 100);
         pickupEffectMs = Math.max(0, pickupEffectMs - elapsed * 1000);
         if (pickupEffectMs == 0) pickupEffect = 0;
+        bikeShootEffectMs = Math.max(0, bikeShootEffectMs - elapsed * 1000);
+        if (bikeShootEffectMs == 0) bikeShootEffect.visible = false;
 
         var targetSpeed = clamp(172 + (accelerate ? 100 : 0) - (brake ? 70 : 0)
             + (boosting ? NITRO_SPEED : 0) + pickupEffect, 85, 410);
@@ -167,10 +210,20 @@ class AxemRaceState extends RaceBaseState
         var fromLane = playerLaneSwitchMs > 0 ? 1 - playerTargetLane : playerLane;
         player.y = LANE_Y[fromLane] + (LANE_Y[playerTargetLane] - LANE_Y[fromLane]) * laneProgress;
 
+        if (boosting)
+        {
+            bikeSpecialShootEffect.visible = true;
+            bikeSpecialShootEffect.x = playerX + 42;
+            bikeSpecialShootEffect.y = player.y + 8;
+        }
+        else
+        {
+            bikeSpecialShootEffect.visible = false;
+        }
+
         var opponentX = clamp(PLAYER_X + (opponentDistance - playerDistance) * TRACK_SCALE
             + Math.sin(raceTimeMs / 520) * 28, 48, 432);
-        opponent.x = opponentX;
-        opponent.y = LANE_Y[1];
+        updateOpponentLane(frame, opponentX);
 
         updatePickups(playerX);
         progressLabel.text = Math.round(playerDistance / 100) / 10 + " / " + Math.round(finishDistance / 1000) + " KM";
@@ -182,6 +235,39 @@ class AxemRaceState extends RaceBaseState
             playerWon = playerDistance >= opponentDistance;
             showResult();
         }
+    }
+
+    function updateOpponentLane(frame:Float, opponentX:Float):Void
+    {
+        if (opponentLaneSwitchMs <= 0)
+        {
+            opponentLaneTimer -= frame * 1000;
+            if (opponentLaneTimer <= 0)
+            {
+                opponentFromLane = opponentLane;
+                opponentTargetLane = 1 - opponentLane;
+                opponentLaneSwitchMs = LANE_SWITCH_MS;
+                opponentLaneTimer = 2700 + Math.abs(Math.sin(raceTimeMs / 730)) * 1300;
+            }
+        }
+
+        var opponentY = LANE_Y[opponentLane];
+        var activeOpponent = opponent;
+        if (opponentLaneSwitchMs > 0)
+        {
+            var laneProgress = 1 - opponentLaneSwitchMs / LANE_SWITCH_MS;
+            opponentY = LANE_Y[opponentFromLane]
+                + (LANE_Y[opponentTargetLane] - LANE_Y[opponentFromLane]) * laneProgress;
+            activeOpponent = opponentTargetLane < opponentFromLane ? opponentUp : opponentDown;
+            opponentLaneSwitchMs = Math.max(0, opponentLaneSwitchMs - frame * 1000);
+            if (opponentLaneSwitchMs == 0) opponentLane = opponentTargetLane;
+        }
+
+        opponent.visible = activeOpponent == opponent;
+        opponentUp.visible = activeOpponent == opponentUp;
+        opponentDown.visible = activeOpponent == opponentDown;
+        activeOpponent.x = opponentX;
+        activeOpponent.y = opponentY;
     }
 
     function changeLane(direction:Int):Void
@@ -196,8 +282,10 @@ class AxemRaceState extends RaceBaseState
         for (pickup in pickups)
         {
             var x = PLAYER_X + (pickup.distance - playerDistance) * TRACK_SCALE;
-            pickup.sprite.x = x;
-            pickup.sprite.y = LANE_Y[pickup.lane] - 9;
+            pickup.sprite.x = pickup.kind == "slow" ? x - 18 : x;
+            pickup.sprite.y = pickup.kind == "slow"
+                ? LANE_Y[pickup.lane] - 12
+                : LANE_Y[pickup.lane] - 9;
             pickup.sprite.visible = pickup.active && x > -34 && x < 514;
             if (pickup.active && pickup.lane == playerLane && Math.abs(x - playerX) < 18)
             {
@@ -205,13 +293,22 @@ class AxemRaceState extends RaceBaseState
                 pickup.sprite.visible = false;
                 pickupEffect = pickup.kind == "boost" ? 105 : -75;
                 pickupEffectMs = 1900;
-                if (pickup.kind == "boost") nitro = clamp(nitro + 24, 0, 100);
+                if (pickup.kind == "boost")
+                {
+                    nitro = clamp(nitro + 24, 0, 100);
+                    bikeShootEffect.x = playerX + 42;
+                    bikeShootEffect.y = player.y + 8;
+                    bikeShootEffect.visible = true;
+                    bikeShootEffectMs = 420;
+                }
             }
         }
     }
 
     function showResult():Void
     {
+        bikeShootEffect.visible = false;
+        bikeSpecialShootEffect.visible = false;
         status.text = playerWon ? "¡GANASTE LA CARRERA!" : "¡GANA AXEM RED!";
         detail.text = "R PARA REPETIR · ENTER / ESC PARA VOLVER AL MENÚ";
         resultLabel.text = playerWon ? "1.º · AXEM NARANJA" : "INTENTÁ OTRA VEZ";

@@ -11,7 +11,12 @@ const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
 
 const SOURCES = Object.freeze({
   'axem-orange-bike': { file: 'art/source/sprites/results/male/orange/bike.gif' },
-  'axem-red-bike': { file: 'art/source/sprites/references/axem-red/axem-ranger-bike.gif' },
+  'axem-red-bike': { file: 'art/source/effects/bike/axem-red-bike_x4.gif' },
+  'axem-red-bike-up': { file: 'art/source/effects/bike/axem-red-bike-up_x4.gif' },
+  'axem-red-bike-down': { file: 'art/source/effects/bike/axem-red-bike-down_x4.gif' },
+  'unpiloted-bike': { file: 'art/source/effects/bike/unpiloted-bike_x4.gif' },
+  'bike-shoot': { file: 'art/source/effects/bike/bike-shoot_x8.gif' },
+  'bike-special-shoot': { file: 'art/source/effects/bike/bike-special-shoot_x8.gif' },
   'axem-orange-run': { file: 'art/source/sprites/results/male/orange/run.gif' },
   'axem-orange-idle': { file: 'art/source/sprites/results/male/orange/idle.gif' },
   'axem-orange-dash': { file: 'art/source/sprites/results/male/orange/dash.gif' },

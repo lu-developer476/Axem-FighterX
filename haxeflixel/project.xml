@@ -8,6 +8,11 @@
   <assets path="../art/source/effects/music/race--slow-dark-music.wav" rename="assets/audio/land-race.wav" />
   <assets path="../public/generated/haxeflixel/axem-orange-bike.png" rename="assets/races/axem-orange-bike.png" />
   <assets path="../public/generated/haxeflixel/axem-red-bike.png" rename="assets/races/axem-red-bike.png" />
+  <assets path="../public/generated/haxeflixel/axem-red-bike-up.png" rename="assets/races/axem-red-bike-up.png" />
+  <assets path="../public/generated/haxeflixel/axem-red-bike-down.png" rename="assets/races/axem-red-bike-down.png" />
+  <assets path="../public/generated/haxeflixel/unpiloted-bike.png" rename="assets/races/unpiloted-bike.png" />
+  <assets path="../public/generated/haxeflixel/bike-shoot.png" rename="assets/races/bike-shoot.png" />
+  <assets path="../public/generated/haxeflixel/bike-special-shoot.png" rename="assets/races/bike-special-shoot.png" />
   <assets path="../public/generated/haxeflixel/axem-orange-run.png" rename="assets/races/axem-orange-run.png" />
   <assets path="../public/generated/haxeflixel/axem-orange-idle.png" rename="assets/races/axem-orange-idle.png" />
   <assets path="../public/generated/haxeflixel/axem-orange-dash.png" rename="assets/races/axem-orange-dash.png" />

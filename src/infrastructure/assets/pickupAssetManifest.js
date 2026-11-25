@@ -1,7 +1,9 @@
 /**
- * Manifiesto automático de los iconos de consumibles del combate.
- * Los PNG conservan dimensiones y colores de origen; Phaser aplica NEAREST.
+ * Manifiesto automático: todo PNG de art/source/pickups/ se incorpora al juego.
+ * Los archivos deben pasar por standardize-pickups.mjs antes de compilar.
  */
+export { PICKUP_ASSET_STANDARD } from './pickupAssetStandard.js';
+
 const PICKUP_MODULES = import.meta.glob('../../../art/source/pickups/*.png', {
   eager: true,
   query: '?url',

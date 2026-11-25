@@ -1,7 +1,10 @@
 import { ARENA } from '../../domain/arena/arena.js';
 import { PICKUP_TYPES } from '../../domain/entities/PowerUpPickup.js';
 import { fxFrameKey } from '../../infrastructure/graphics/FxTextureFactory.js';
-import { pickupTextureKeyFor } from '../../infrastructure/assets/pickupAssetManifest.js';
+import {
+  PICKUP_ASSET_STANDARD,
+  pickupTextureKeyFor,
+} from '../../infrastructure/assets/pickupAssetManifest.js';
 
 const PICKUP_STYLE = {
   [PICKUP_TYPES.HEALTH]: { asset: 'heart', color: 0xff668d },
@@ -9,9 +12,8 @@ const PICKUP_STYLE = {
   [PICKUP_TYPES.HASTE]: { asset: 'thunder', color: 0x70ddff },
   [PICKUP_TYPES.SHIELD]: { asset: 'shield', color: 0x9da9ff },
 };
-const PICKUP_MAX_SIZE = 32;
 
-/** Dibuja el icono del objeto activo con un aura de color, sin rótulos ni sombras. */
+/** Dibuja el pickup conservando proporción y tamaño máximo del arte visible. */
 export class PickupView {
   /** @param {Phaser.Scene} scene */
   constructor(scene) {
@@ -52,8 +54,12 @@ export class PickupView {
 
     const textureKey = pickupTextureKeyFor(style.asset);
     if (!this.scene.textures.exists(textureKey)) return;
-    const source = this.scene.textures.get(textureKey).getSourceImage();
-    const scale = PICKUP_MAX_SIZE / Math.max(source.width, source.height);
+
+    const artworkSize = Math.max(
+      PICKUP_ASSET_STANDARD.artwork.maxWidth,
+      PICKUP_ASSET_STANDARD.artwork.maxHeight,
+    );
+    const scale = PICKUP_ASSET_STANDARD.display.maxVisibleSize / artworkSize;
 
     this.type = type;
     this.aura = this.scene.add
@@ -62,7 +68,7 @@ export class PickupView {
       .setTint(style.color)
       .setAlpha(0.34)
       .setDepth(89);
-    // El PNG conserva sus colores originales; solo se ajusta su tamaño visual.
+    // La transparencia del margen no reduce el tamaño visible del objeto.
     this.sprite = this.scene.add
       .image(0, 0, textureKey)
       .setScale(scale)

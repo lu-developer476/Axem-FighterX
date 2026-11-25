@@ -58,16 +58,44 @@ describe('Sprites canónicos de Axem Naranja', () => {
     }
   });
 
-  it('conserva las referencias de Axem Red para los minijuegos', async () => {
-    for (const action of ['idle', 'walk', 'run', 'dash', 'jump']) {
-      const file = fileURLToPath(new URL(`../../../art/source/sprites/references/axem-red/${action}.gif`, import.meta.url));
+  it('conserva únicamente el master Red y la bicicleta, y deriva las acciones desde Orange', async () => {
+    const redDirectory = fileURLToPath(new URL('../../../art/source/sprites/references/axem-red', import.meta.url));
+    const redFiles = (await readdir(redDirectory, { withFileTypes: true }))
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name)
+      .sort();
+    expect(redFiles).toEqual(['axem-ranger-bike.gif', 'super-axem-ranger-red.png']);
+
+    const masterBike = fileURLToPath(new URL(
+      '../../../art/source/sprites/references/axem-red/axem-ranger-bike.gif',
+      import.meta.url,
+    ));
+    const bikeMetadata = await sharp(masterBike, { animated: true }).metadata();
+    expect(bikeMetadata.format).toBe('gif');
+    expect(bikeMetadata.pages).toBeGreaterThan(1);
+    expect(bikeMetadata.hasAlpha).toBe(true);
+
+    // Las animaciones Red de carrera se construyen a partir de las fuentes Orange versionadas.
+    const generatorPath = fileURLToPath(new URL('../../../scripts/prepare-haxeflixel-race-assets.mjs', import.meta.url));
+    const generator = await readFile(generatorPath, 'utf8');
+    for (const [name, action] of [
+      ['axem-red-run', 'run'],
+      ['axem-red-idle', 'idle'],
+      ['axem-red-walk', 'run'],
+      ['axem-red-dash', 'dash'],
+    ]) {
+      expect(generator).toContain(
+        `'${name}': { file: 'art/source/sprites/results/male/orange/${action}.gif', recolorToRed: true }`,
+      );
+    }
+
+    for (const action of ['idle', 'run', 'dash']) {
+      const file = resultGifPath(action);
       const metadata = await sharp(file, { animated: true }).metadata();
       expect(metadata.format, action).toBe('gif');
       expect(metadata.pages, action).toBeGreaterThan(1);
       expect(metadata.hasAlpha, action).toBe(true);
     }
-    const masterBike = fileURLToPath(new URL('../../../art/source/sprites/references/axem-red/axem-ranger-bike.gif', import.meta.url));
-    expect((await sharp(masterBike, { animated: true }).metadata()).pages).toBeGreaterThan(1);
   });
 
   it('mantiene retirados los GIF de doble hacha y battle-pose', async () => {

@@ -134,6 +134,12 @@ async function collectActionGifs(directory, recursive = false) {
 async function validateActionGifs() {
   const category = standards.categories.actionGif;
   const directory = absolute(category.directory);
+  if (!Number.isInteger(category.frameDelayMs) || category.frameDelayMs <= 0) {
+    throw new Error('asset-standards.json debe definir un frameDelayMs positivo para los GIF de acción.');
+  }
+  if (category.frameRateFps !== 1000 / category.frameDelayMs) {
+    throw new Error('frameRateFps debe coincidir con 1000 / frameDelayMs en asset-standards.json.');
+  }
   const redActionDirectory = absolute(category.referenceDirectory);
   const optionalReferenceFiles = [];
   for (const name of category.referenceFiles ?? []) {
@@ -170,20 +176,10 @@ async function validateActionGifs() {
       (
         !Array.isArray(metadata.delay) ||
         metadata.delay.length !== metadata.pages ||
-        metadata.delay.some((delay) => delay !== 100)
+        metadata.delay.some((delay) => delay !== category.frameDelayMs)
       )
     ) {
-      throw new Error(relativePath + ': todos los cuadros deben durar exactamente 100 ms.');
-    }
-  }
-
-  // El único GIF maestro externo que consume el generador es la bicicleta.
-  for (const name of ['axem-ranger-bike.gif']) {
-    const filename = path.join(redActionDirectory, name);
-    const metadata = await sharp(filename, { animated: true, failOn: 'error' }).metadata();
-    if (!Array.isArray(metadata.delay) || metadata.delay.length !== metadata.pages ||
-        metadata.delay.some((delay) => delay !== 100)) {
-      throw new Error(path.relative(ROOT, filename) + ': todos los cuadros deben durar exactamente 100 ms.');
+      throw new Error(relativePath + ': todos los cuadros deben durar exactamente ' + category.frameDelayMs + ' ms.');
     }
   }
 

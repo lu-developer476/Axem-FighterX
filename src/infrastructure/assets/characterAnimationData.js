@@ -12,4 +12,3 @@ export const characterAnimationData = Object.freeze({
 export const spriteFacingFor = (rangerId, gender = 'male') =>
   characterAnimationData[rangerId]?.spriteFacing?.[gender] ?? -1;
 
-export const animationKey = (rangerId, state) => rangerId + ':' + state;

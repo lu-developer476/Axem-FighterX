@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import titleArtUrl from '../../../art/source/title.png?url';
 import { GAME_WIDTH } from '../../config/gameConfig.js';
 import {
   spriteKeyFor,
@@ -9,7 +10,6 @@ import {
   maleAnimationUrl,
 } from '../../infrastructure/assets/assetManifest.js';
 import { AVAILABLE_RANGER_VARIANTS } from '../../domain/rangers/rangerVariants.js';
-import { GIF_ACTIONS, GIF_CELL } from '../../infrastructure/assets/characterAnimationData.js';
 import { registerCharacterAnimations } from '../animation/registerCharacterAnimations.js';
 import { createFxTextures } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { STAGE_MAP_ASSETS } from '../../infrastructure/assets/stageAssetManifest.js';
@@ -56,23 +56,22 @@ export class PreloadScene extends Phaser.Scene {
     for (const { id, gender } of AVAILABLE_RANGER_VARIANTS) {
       this.load.image(spriteKeyFor(id, gender), spriteUrlFor(id, gender));
       this.load.image(menuSpriteKeyFor(id, gender), menuSpriteUrlFor(id, gender));
-      for (const action of ['run', 'bike']) {
-        const key = maleAnimationKey(id, action);
-        this.load.spritesheet(key, maleAnimationUrl(id, action), { frameWidth: 53, frameHeight: 83 });
-      }
-      for (const action of GIF_ACTIONS) {
-        const key = maleAnimationKey(id, action);
-        this.load.spritesheet(key, maleAnimationUrl(id, action), {
-          frameWidth: GIF_CELL.width,
-          frameHeight: GIF_CELL.height,
-        });
-      }
+      const runKey = maleAnimationKey(id, 'run');
+      const bikeKey = maleAnimationKey(id, 'bike');
+      this.load.spritesheet(runKey, maleAnimationUrl(id, 'run'), {
+        frameWidth: 90,
+        frameHeight: 100,
+      });
+      this.load.spritesheet(bikeKey, maleAnimationUrl(id, 'bike'), {
+        frameWidth: 150,
+        frameHeight: 100,
+      });
     }
     // Todos los PNG de pickups/ se cargan automáticamente.
     Object.entries(PICKUP_ASSETS).forEach(([name, url]) => {
       this.load.image(pickupTextureKeyFor(name), url);
     });
-    this.load.image('title-art', import.meta.env.BASE_URL + 'generated/title.png');
+    this.load.image('title-art', titleArtUrl);
     Object.values(STAGE_MAP_ASSETS).forEach(({ key, url }) => this.load.image(key, url));
   }
 

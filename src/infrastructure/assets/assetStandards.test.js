@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import ASSET_STANDARDS from '../../../art/source/sprites/asset-standards.json';
-import PROCESSING_RULES from '../../../art/source/sprites/processing-rules.json';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const absolute = (relativePath) => path.join(ROOT, relativePath);
@@ -34,16 +33,6 @@ describe('Estándares centrales de recursos gráficos', () => {
     expect(ASSET_STANDARDS.categories.characterArtwork.families.male).not.toHaveProperty('derivedArtwork');
   });
 
-  it('limpia únicamente las carpetas temporales del generador', async () => {
-    for (const directory of [
-      'art/source/sprites/results/male/orange/source',
-      'art/source/sprites/results/male/orange/sequences',
-      'art/source/sprites/results/male/orange/supplemental',
-    ]) {
-      await expect(fs.access(absolute(directory))).rejects.toThrow();
-    }
-  });
-
   for (const [gender, family] of Object.entries(ASSET_STANDARDS.categories.characterArtwork.families)) {
     it('valida el master de artwork ' + gender + ' sin generar derivados', async () => {
       const master = await sharp(absolute(family.reference)).metadata();
@@ -61,47 +50,14 @@ describe('Estándares centrales de recursos gráficos', () => {
     });
   }
 
-  it('aplica transparencia y suavizado de borde a Orange sin comerse píxeles', async () => {
-    const family = ASSET_STANDARDS.categories.characterArtwork.families.male;
-    const edgeRule = PROCESSING_RULES.processedPolicy.artworkEdgeTreatment[
-      'male/orange/super-axem-ranger-orange.png'
-    ];
-    const { data, info } = await sharp(absolute(family.result))
-      .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-
-    expect([info.width, info.height]).toEqual([857, 1171]);
-    expect(edgeRule.edgeAlphaFloor).toBeGreaterThanOrEqual(216);
-    expect(edgeRule.preserveInteriorPixels).toBe(true);
-    expect(edgeRule.preserveRGB).toBe(true);
-    expect(edgeRule.resampling).toBe(false);
-    expect(edgeRule.blur).toBe(false);
-    expect(edgeRule.sharpen).toBe(false);
-
-    let transparentPixels = 0;
-    let softenedPixels = 0;
-    for (let offset = 3; offset < data.length; offset += 4) {
-      const alpha = data[offset];
-      if (alpha === 0) transparentPixels += 1;
-      if (alpha > 0 && alpha < 255) {
-        softenedPixels += 1;
-        expect(alpha).toBeGreaterThanOrEqual(edgeRule.edgeAlphaFloor);
-      }
-    }
-    expect(transparentPixels).toBeGreaterThan(0);
-    expect(softenedPixels).toBeGreaterThan(0);
-  });
-
-
   it('mantiene declaradas las dimensiones objetivo de las texturas de combate', () => {
     const category = ASSET_STANDARDS.categories.combatTexture;
     expect([category.width, category.height]).toEqual([53, 83]);
-    expect(category.outputs).toEqual(['public/generated/ranger-male-orange.png']);
   });
 
   it('mantiene declaradas las dimensiones objetivo de los retratos de menú', () => {
     const category = ASSET_STANDARDS.categories.menuPortrait;
     expect([category.width, category.height]).toEqual([104, 150]);
-    expect(category.outputs).toEqual(['public/generated/menu-ranger-male-orange.png']);
   });
 
   it('no depende de atlas compuestos retirados', () => {

@@ -725,7 +725,7 @@ async function writeMaleAnimation(frames, rangerId, action, loop = 0, { writeGif
     .gif({
       loop,
       delay: delays,
-      colours: 256,
+      colours,
       dither: 0,
       effort: 10,
       keepDuplicateFrames: true,
@@ -986,7 +986,7 @@ async function readMaleGifFrames(color, filename) {
   return { frames };
 }
 
-async function writeMaleActionGif(color, filename, frames) {
+async function writeMaleActionGif(color, filename, frames, colours = 256) {
   if (!frames.length) throw new Error('La animación ' + filename + ' no tiene fotogramas.');
   const gif = await sharp(frames, { join: { animated: true } })
     .gif({
@@ -1378,7 +1378,8 @@ async function buildMaleCombatEnhancementGifs(color) {
         .png()
         .toBuffer();
     }));
-    await writeMaleActionGif(color, 'ko', koFrames);
+    // La paleta compacta reserva el blanco del ojo y evita que el key transparente lo absorba.
+    await writeMaleActionGif(color, 'ko', koFrames, 16);
   } else {
     const defeatedFrame = await sharp(RESULTS('male', color, 'defeated.png'))
       .flop()

@@ -99,18 +99,41 @@ describe('Sprites canónicos de Axem Naranja', () => {
     }
   });
 
-  it('construye el KO naranja desde las dos poses de la referencia dedicada', async () => {
+  it('construye el KO naranja desde las dos poses y conserva el ojo blanco del último cuadro', async () => {
     const source = await sharp(koSourcePath).metadata();
     expect(source.format).toBe('png');
     expect([source.width, source.height]).toEqual([145, 22]);
     expect(source.hasAlpha).toBe(true);
 
-    const ko = await sharp(resultGifPath('ko'), { animated: true }).metadata();
+    const whitePixels = (pixels) => {
+      let count = 0;
+      for (let offset = 0; offset < pixels.length; offset += 4) {
+        if (pixels[offset] >= 245 && pixels[offset + 1] >= 245 &&
+            pixels[offset + 2] >= 245 && pixels[offset + 3] >= 200) count += 1;
+      }
+      return count;
+    };
+    const sourceEye = await sharp(koSourcePath)
+      .extract({ left: 88, top: 11, width: 4, height: 3 })
+      .ensureAlpha()
+      .raw()
+      .toBuffer();
+    expect(whitePixels(sourceEye)).toBe(12);
+
+    const koPath = resultGifPath('ko');
+    const ko = await sharp(koPath, { animated: true }).metadata();
     expect(ko.format).toBe('gif');
     expect(ko.width).toBe(ASSET_STANDARDS.categories.actionGif.width);
     expect(ko.pageHeight).toBe(ASSET_STANDARDS.categories.actionGif.height);
     expect(ko.pages).toBe(2);
     expect(ko.hasAlpha).toBe(true);
+
+    const finalEye = await sharp(koPath, { page: 1, pages: 1 })
+      .extract({ left: 92, top: 81, width: 4, height: 3 })
+      .ensureAlpha()
+      .raw()
+      .toBuffer();
+    expect(whitePixels(finalEye)).toBe(12);
   });
 
   it('mantiene retirados los GIF de doble hacha y battle-pose', async () => {

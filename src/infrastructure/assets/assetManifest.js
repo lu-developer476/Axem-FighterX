@@ -8,7 +8,7 @@ export const DEFAULT_RANGER_GENDER = 'male';
 export const spriteKeyFor = (rangerId, gender = genderForRanger(rangerId) ?? DEFAULT_RANGER_GENDER) =>
   'ranger-' + gender + '-' + rangerId;
 
-// Phaser usa el artwork fuente versionado. No existen pasos de exportación a public/generated.
+// Phaser usa directamente el artwork fuente versionado.
 export const spriteUrlFor = () => rangerArtworkUrl;
 
 export const menuSpriteKeyFor = (rangerId, gender = 'male') =>

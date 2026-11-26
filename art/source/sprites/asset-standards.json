@@ -96,140 +96,16 @@
       "description": "Armas, objetos, recursos suplementarios y efectos conservan sus dimensiones de origen."
     },
     "effectAnimation": {
-      "sourcePolicy": "immutable",
-      "outputPolicy": "animated-transparent-gif",
-      "preserveSourceDimensions": false,
-      "files": [
-        {
-          "source": "art/source/effects/axem/big-white-explotion.png",
-          "output": "art/source/effects/axem/big-white-explotion.gif",
-          "mode": "center-strip",
-          "frameDelay": 100,
-          "minFrames": 3,
-          "frameCount": 3,
-          "backgroundRemoval": "white",
-          "whiteThreshold": 250,
-          "strictFrameCount": true,
-          "frameLayout": "detected-segments",
-          "maxEmptyColumns": 0,
-          "framePadding": 2
-        },
-        {
-          "source": "art/source/effects/axem/white-explotion.png",
-          "output": "art/source/effects/axem/white-explotion.gif",
-          "mode": "center-strip",
-          "frameDelay": 85,
-          "minFrames": 8,
-          "frameCount": 8,
-          "backgroundRemoval": "white",
-          "whiteThreshold": 250,
-          "strictFrameCount": true,
-          "frameLayout": "detected-segments",
-          "maxEmptyColumns": 0,
-          "framePadding": 2
-        },
-        {
-          "source": "art/source/effects/canon/normal-canon-shoot.png",
-          "output": "art/source/effects/canon/normal-canon-shoot.gif",
-          "mode": "center-strip",
-          "frameDelay": 55,
-          "minFrames": 7,
-          "frameCount": 7,
-          "frameLayout": "detected-segments",
-          "backgroundRemoval": "white",
-          "whiteThreshold": 250,
-          "strictFrameCount": true,
-          "maxEmptyColumns": 2,
-          "framePadding": 2,
-          "mergeSegments": [
-            [
-              0,
-              1
-            ]
-          ]
-        },
-        {
-          "source": "art/source/effects/canon/special-canon-shoot.png",
-          "output": "art/source/effects/canon/special-canon-shoot.gif",
-          "mode": "center-strip",
-          "frameDelay": 65,
-          "minFrames": 5,
-          "frameCount": 5,
-          "frameLayout": "detected-segments",
-          "backgroundRemoval": "white",
-          "whiteThreshold": 250,
-          "strictFrameCount": true,
-          "maxEmptyColumns": 0,
-          "framePadding": 2,
-          "mergeSegments": [
-            [
-              0,
-              1,
-              2,
-              3
-            ],
-            [
-              4,
-              5,
-              6
-            ],
-            [
-              7,
-              8,
-              9
-            ],
-            [
-              10,
-              11
-            ],
-            [
-              12,
-              13
-            ]
-          ]
-        },
-        {
-          "source": "art/source/effects/canon/turquoise-canon-shoot.png",
-          "output": "art/source/effects/canon/turquoise-canon-shoot.gif",
-          "mode": "center-strip",
-          "frameDelay": 55,
-          "minFrames": 6,
-          "frameCount": 6,
-          "frameLayout": "detected-segments",
-          "backgroundRemoval": "white",
-          "whiteThreshold": 250,
-          "strictFrameCount": true,
-          "maxEmptyColumns": 2,
-          "framePadding": 2
-        },
-        {
-          "source": "art/source/effects/sparks/turquoise-effect.png",
-          "output": "art/source/effects/sparks/turquoise-effect.gif",
-          "mode": "horizontal-cells",
-          "frameDelay": 75,
-          "frameCount": 8,
-          "frameLayout": "horizontal-cells",
-          "backgroundRemoval": "white",
-          "whiteThreshold": 250,
-          "strictFrameCount": true,
-          "minFrames": 8
-        },
-        {
-          "source": "art/source/effects/sparks/yellow-effect.png",
-          "output": "art/source/effects/sparks/yellow-effect.gif",
-          "mode": "horizontal-cells",
-          "frameDelay": 75,
-          "frameCount": 8,
-          "frameLayout": "horizontal-cells",
-          "backgroundRemoval": "white",
-          "whiteThreshold": 250,
-          "strictFrameCount": true,
-          "minFrames": 8
-        }
+      "assetPolicy": "manual-immutable",
+      "directories": [
+        "art/source/effects/axem",
+        "art/source/effects/canon",
+        "art/source/effects/sparks"
       ],
-      "preserveFrameHeight": true,
-      "frameWidthPolicy": "per-frame-max-visible-width-plus-two-pixel-padding-for-detected-segments; ceil-source-width-divided-by-count-for-cell-sheets",
-      "description": "Canon y explosiones Axem extraen límites visibles reales, centran cada dibujo completo en un lienzo por fotograma; Sparks extrae sus celdas horizontales individuales. Todos los GIF conservan el alto de origen y transparencia."
+      "alphaRequired": true,
+      "minimumFrames": 2,
+      "validateFrameTiming": true,
+      "description": "Los GIF de efectos son recursos manuales inmutables. La validación solo inspecciona y decodifica los archivos existentes; nunca genera, reemplaza, elimina ni normaliza recursos."
     },
     "backgrounds": {
       "policy": "preserve-source-aspect-ratio",

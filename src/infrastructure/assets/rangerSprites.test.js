@@ -8,6 +8,7 @@ import ASSET_STANDARDS from '../../../art/source/sprites/asset-standards.json';
 const generatedSpritePath = fileURLToPath(new URL('../../../public/generated/ranger-male-orange.png', import.meta.url));
 const generatedMenuOrangePath = fileURLToPath(new URL('../../../public/generated/menu-ranger-male-orange.png', import.meta.url));
 const resultGifPath = (action) => fileURLToPath(new URL(`../../../art/source/sprites/results/male/orange/${action}.gif`, import.meta.url));
+const koSourcePath = fileURLToPath(new URL('../../../art/source/sprites/references/axem-orange/ko-source.png', import.meta.url));
 const resultGifDirectory = fileURLToPath(new URL('../../../art/source/sprites/results/male/orange', import.meta.url));
 
 describe('Sprites canónicos de Axem Naranja', () => {
@@ -96,6 +97,20 @@ describe('Sprites canónicos de Axem Naranja', () => {
       expect(metadata.pages, action).toBeGreaterThan(1);
       expect(metadata.hasAlpha, action).toBe(true);
     }
+  });
+
+  it('construye el KO naranja desde las dos poses de la referencia dedicada', async () => {
+    const source = await sharp(koSourcePath).metadata();
+    expect(source.format).toBe('png');
+    expect([source.width, source.height]).toEqual([145, 22]);
+    expect(source.hasAlpha).toBe(true);
+
+    const ko = await sharp(resultGifPath('ko'), { animated: true }).metadata();
+    expect(ko.format).toBe('gif');
+    expect(ko.width).toBe(ASSET_STANDARDS.categories.actionGif.width);
+    expect(ko.pageHeight).toBe(ASSET_STANDARDS.categories.actionGif.height);
+    expect(ko.pages).toBe(2);
+    expect(ko.hasAlpha).toBe(true);
   });
 
   it('mantiene retirados los GIF de doble hacha y battle-pose', async () => {

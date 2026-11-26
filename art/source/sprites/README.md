@@ -303,7 +303,8 @@ El proceso de preparación también genera para Orange y Violet los GIF `guard.g
 y `ko.gif`. Se construyen desde recortes masculinos versionados: guardia
 y reacción al bloqueo desde la pose de combate, rodada desde el dash, aterrizaje
 desde los últimos cuadros del salto, especial desde la secuencia del hacha, y
-victoria/KO desde las poses de combate, reposo y derrota disponibles.
+victoria desde las poses de combate y reposo disponibles. El KO naranja se construye
+desde las dos poses de `references/axem-orange/ko-source.png`, sin escalar el pixel art.
 
 Todos conservan el lienzo transparente de 150×100 px y el apoyo del sprite en la misma
 línea de suelo. El pipeline también exporta sus tiras de 86×57 px en

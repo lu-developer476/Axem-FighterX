@@ -1345,14 +1345,47 @@ async function buildMaleCombatEnhancementGifs(color) {
   const blurredRollFrames = await Promise.all(rollFrames.map((frame, index) => addGrayRollMotionBlur(frame, rollAngles[index], index)));
   await writeMaleActionGif(color, 'roll', blurredRollFrames);
 
-  // La pose KO se refleja horizontalmente para mantener la misma orientación
-  // que los cuadros de impacto: ambos terminan mirando hacia la derecha.
-  const defeatedFrame = await sharp(RESULTS('male', color, 'defeated.png'))
-    .flop()
-    .png()
-    .toBuffer();
-  const koFrames = [...hurt.frames.slice(0, 2), defeatedFrame, defeatedFrame];
-  await writeMaleActionGif(color, 'ko', koFrames);
+  // Orange usa el strip KO entregado como referencia: son dos poses consecutivas.
+  // Se extraen por separado, se reflejan para mirar a la derecha y se colocan
+  // sobre el lienzo de acción sin escalar el pixel art.
+  if (color === 'orange') {
+    const koSourcePath = path.join(ROOT, 'art/source/sprites/references/axem-orange/ko-source.png');
+    const koSourceMetadata = await sharp(koSourcePath).metadata();
+    const frameWidth = Math.floor(koSourceMetadata.width / 2);
+    if (koSourceMetadata.width < 2 || koSourceMetadata.height > ASSET_STANDARDS.categories.actionGif.height) {
+      throw new Error('La fuente ko-source.png debe contener dos poses horizontales válidas.');
+    }
+    const koFrames = await Promise.all([0, 1].map(async (index) => {
+      const left = index === 0 ? 0 : koSourceMetadata.width - frameWidth;
+      const frame = await sharp(koSourcePath)
+        .extract({ left, top: 0, width: frameWidth, height: koSourceMetadata.height })
+        .flop()
+        .png()
+        .toBuffer();
+      return sharp({
+        create: {
+          width: ASSET_STANDARDS.categories.actionGif.width,
+          height: ASSET_STANDARDS.categories.actionGif.height,
+          channels: 4,
+          background: TRANSPARENT,
+        },
+      })
+        .composite([{
+          input: frame,
+          left: Math.floor((ASSET_STANDARDS.categories.actionGif.width - frameWidth) / 2),
+          top: Math.max(0, ASSET_STANDARDS.categories.actionGif.height - koSourceMetadata.height - 8),
+        }])
+        .png()
+        .toBuffer();
+    }));
+    await writeMaleActionGif(color, 'ko', koFrames);
+  } else {
+    const defeatedFrame = await sharp(RESULTS('male', color, 'defeated.png'))
+      .flop()
+      .png()
+      .toBuffer();
+    await writeMaleActionGif(color, 'ko', [...hurt.frames.slice(0, 2), defeatedFrame, defeatedFrame]);
+  }
 }
 
 /**

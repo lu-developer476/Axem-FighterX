@@ -47,7 +47,7 @@ jobs:
       - name: Tests
         run: npm test
 
-      - name: Exportar GIF regenerados para verificación visual
+      - name: Exportar GIF manuales para verificación visual
         run: |
           for file in \
             art/source/effects/axem/big-white-explotion.gif \

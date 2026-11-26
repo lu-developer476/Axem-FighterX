@@ -179,8 +179,10 @@ export class MenuScene extends Phaser.Scene {
     const orangeX = GAME_WIDTH / 2;
     const baseline = 154;
     addAura(orangeX, baseline, 0xff8b3d);
-    const orange = this.add.image(orangeX, baseline, menuSpriteKeyFor(RANGER_IDS.ORANGE, 'male'))
-      .setOrigin(0.5, 1).setScale(0.47).setDepth(1);
+    const orangeKey = menuSpriteKeyFor(RANGER_IDS.ORANGE, 'male');
+    const artwork = this.textures.get(orangeKey).getSourceImage();
+    const orange = this.add.image(orangeX, baseline, orangeKey)
+      .setOrigin(0.5, 1).setScale(150 / artwork.height).setDepth(1);
     this.ui.add(orange);
   }
   #beginPage(title, width = 282, height = 120) {

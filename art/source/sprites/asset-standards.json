@@ -139,8 +139,14 @@
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
           "strictFrameCount": true,
-          "maxEmptyColumns": 3,
-          "framePadding": 2
+          "maxEmptyColumns": 2,
+          "framePadding": 2,
+          "mergeSegments": [
+            [
+              0,
+              1
+            ]
+          ]
         },
         {
           "source": "art/source/effects/canon/special-canon-shoot.png",

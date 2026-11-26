@@ -226,6 +226,34 @@ async function makeGif(config) {
       height,
       config.maxEmptyColumns ?? 0,
     );
+    if (config.mergeSegments?.length) {
+      const mergeEndByStart = new Map();
+      for (const group of config.mergeSegments) {
+        assert(
+          Array.isArray(group) && group.length >= 2 &&
+            group.every((index, offset) => Number.isInteger(index) &&
+              (offset === 0 || index === group[offset - 1] + 1)),
+          config.source + ': mergeSegments debe contener índices contiguos.',
+        );
+        const first = group[0];
+        const last = group[group.length - 1];
+        assert(last < segments.length && !mergeEndByStart.has(first),
+          config.source + ': mergeSegments referencia índices inválidos o duplicados.');
+        mergeEndByStart.set(first, last);
+      }
+      const grouped = [];
+      for (let index = 0; index < segments.length;) {
+        const end = mergeEndByStart.get(index);
+        if (end === undefined) {
+          grouped.push(segments[index]);
+          index += 1;
+        } else {
+          grouped.push({ left: segments[index].left, right: segments[end].right });
+          index = end + 1;
+        }
+      }
+      segments.splice(0, segments.length, ...grouped);
+    }
     assert(
       segments.length === config.frameCount,
       config.source + ': se detectaron ' + segments.length +

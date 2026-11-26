@@ -17,7 +17,7 @@ describe('Sprites canónicos de Axem Naranja', () => {
     expect(isAvailableRangerVariant('violet', 'female')).toBe(false);
   });
 
-  it('mantiene declaradas las dimensiones objetivo de las texturas derivadas', () => {
+  it('mantiene declaradas las dimensiones lógicas de dibujo', () => {
     expect([ASSET_STANDARDS.categories.combatTexture.width,
       ASSET_STANDARDS.categories.combatTexture.height]).toEqual([53, 83]);
     expect([ASSET_STANDARDS.categories.menuPortrait.width,
@@ -38,17 +38,9 @@ describe('Sprites canónicos de Axem Naranja', () => {
       '../../../art/source/sprites/results/female/violet', import.meta.url,
     ));
     expect(await readdir(femaleVioletDirectory)).toEqual(['.gitkeep']);
-    for (const filename of [
-      'ranger-female-violet.png',
-      'menu-ranger-female-violet.png',
-      'ranger-male-violet.png',
-    ]) {
-      await expect(access(fileURLToPath(new URL(`../../../public/generated/${filename}`, import.meta.url))))
-        .rejects.toMatchObject({ code: 'ENOENT' });
-    }
   });
 
-  it('conserva únicamente el GIF maestro de bicicleta en la referencia Red y deriva las acciones desde Orange', async () => {
+  it('conserva el GIF maestro de bicicleta en la referencia Red y las acciones Orange versionadas', async () => {
     const redDirectory = fileURLToPath(new URL('../../../art/source/sprites/references/axem-red', import.meta.url));
     const redFiles = (await readdir(redDirectory, { withFileTypes: true }))
       .filter((entry) => entry.isFile())

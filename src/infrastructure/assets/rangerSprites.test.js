@@ -1,4 +1,4 @@
-import { access, readFile, readdir } from 'node:fs/promises';
+import { access, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
@@ -40,57 +40,33 @@ describe('Sprites canónicos de Axem Naranja', () => {
     expect(await readdir(femaleVioletDirectory)).toEqual(['.gitkeep']);
   });
 
-  it('conserva el GIF maestro de bicicleta en la referencia Red y las acciones Orange versionadas', async () => {
+  it('conserva el GIF maestro de bicicleta con el nombre Axem Red y su PNG de referencia', async () => {
     const redDirectory = fileURLToPath(new URL('../../../art/source/sprites/references/axem-red', import.meta.url));
     const redFiles = (await readdir(redDirectory, { withFileTypes: true }))
       .filter((entry) => entry.isFile())
       .map((entry) => entry.name)
       .sort();
     expect(redFiles).toEqual([
-      'axem-ranger-nitro-bike.gif',
-      'axem-ranger-bike-spritesheet.json',
-      'axem-ranger-nitro-bike.png',
+      'axem-red-nitro-bike.gif',
+      'axem-red-nitro-bike.png',
     ].sort());
 
-    const redManifestPath = fileURLToPath(new URL(
-      '../../../art/source/sprites/references/axem-red/axem-ranger-bike-spritesheet.json',
-      import.meta.url,
-    ));
-    const redManifest = JSON.parse(await readFile(redManifestPath, 'utf8'));
-    expect(redManifest).toMatchObject({
-      image: 'axem-ranger-nitro-bike.png',
-      source: 'art/source/sprites/references/axem-red/axem-ranger-nitro-bike.gif',
-      frameWidth: 101,
-      frameHeight: 49,
-      frames: 5,
-      columns: 5,
-      rows: 1,
-      frameDurationMs: 100,
-      loop: true,
-      cropFromSource: { x: 22, y: 22, width: 101, height: 49 },
-      sourceFrameSize: { width: 150, height: 100 },
-    });
-
-    const redSheetPath = fileURLToPath(new URL(
-      '../../../art/source/sprites/references/axem-red/axem-ranger-nitro-bike.png',
-      import.meta.url,
-    ));
-    const redSheet = await sharp(redSheetPath).metadata();
-    expect(redSheet.format).toBe('png');
-    expect([redSheet.width, redSheet.height]).toEqual([
-      redManifest.frameWidth * redManifest.columns,
-      redManifest.frameHeight * redManifest.rows,
-    ]);
-    expect(redSheet.hasAlpha).toBe(true);
-
     const masterBike = fileURLToPath(new URL(
-      '../../../art/source/sprites/references/axem-red/axem-ranger-nitro-bike.gif',
+      '../../../art/source/sprites/references/axem-red/axem-red-nitro-bike.gif',
       import.meta.url,
     ));
     const bikeMetadata = await sharp(masterBike, { animated: true }).metadata();
     expect(bikeMetadata.format).toBe('gif');
+    expect(bikeMetadata.width).toBe(150);
+    expect(bikeMetadata.pageHeight ?? bikeMetadata.height).toBe(100);
     expect(bikeMetadata.pages).toBeGreaterThan(1);
     expect(bikeMetadata.hasAlpha).toBe(true);
+
+    const redReferencePng = fileURLToPath(new URL(
+      '../../../art/source/sprites/references/axem-red/axem-red-nitro-bike.png',
+      import.meta.url,
+    ));
+    expect((await sharp(redReferencePng).metadata()).format).toBe('png');
 
     for (const action of ['idle', 'run', 'dash']) {
       const file = resultGifPath(action);

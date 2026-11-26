@@ -9,7 +9,7 @@ Los PNG y GIF que están en este árbol son archivos versionados y constituyen l
 - Tiras PNG mantenidas para carrera y combate: `results/male/orange/run.png` y `results/male/orange/bike.png`.
 - Animaciones versionadas: los GIF de `results/male/orange/`.
 - Referencia Pink: `references/axem-pink/super-axem-pink.png`.
-- GIF maestro de bicicleta Red: `references/axem-red/axem-ranger-bike.gif`.
+- GIF maestro de bicicleta Red: `references/axem-red/axem-red-nitro-bike.gif`.
 
 Los recursos de efectos manuales están en `art/source/effects/`. Los PNG y GIF originales se conservan tal como están versionados, incluyendo los directorios `axem`, `canon` y `sparks`.
 

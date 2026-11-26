@@ -18,43 +18,29 @@ async function collectGifFiles(directory, recursive = false) {
   return files;
 }
 describe('Estándares centrales de recursos gráficos', () => {
-  it('conserva el GIF maestro y el spritesheet de referencia de bicicleta en Red', async () => {
+  it('conserva el GIF maestro de bicicleta y el PNG de referencia en Red', async () => {
     const directory = absolute('art/source/sprites/references/axem-red');
     const entries = await fs.readdir(directory, { withFileTypes: true });
     const filenames = entries.filter((entry) => entry.isFile()).map((entry) => entry.name).sort();
 
     expect(filenames).toEqual([
-      'axem-ranger-nitro-bike.gif',
-      'axem-ranger-bike-spritesheet.json',
-      'axem-ranger-nitro-bike.png',
+      'axem-red-nitro-bike.gif',
+      'axem-red-nitro-bike.png',
     ].sort());
 
-    const manifestPath = absolute('art/source/sprites/references/axem-red/axem-ranger-bike-spritesheet.json');
-    const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
-    expect(manifest).toMatchObject({
-      image: 'axem-ranger-nitro-bike.png',
-      source: 'art/source/sprites/references/axem-red/axem-ranger-nitro-bike.gif',
-      frameWidth: 101,
-      frameHeight: 49,
-      frames: 5,
-      columns: 5,
-      rows: 1,
-      frameDurationMs: 100,
-      loop: true,
-      cropFromSource: { x: 22, y: 22, width: 101, height: 49 },
-      sourceFrameSize: { width: 150, height: 100 },
-    });
+    const masterPath = absolute('art/source/sprites/references/axem-red/axem-red-nitro-bike.gif');
+    const master = await sharp(masterPath, { animated: true }).metadata();
+    expect(master.format).toBe('gif');
+    expect(master.width).toBe(150);
+    expect(master.pageHeight ?? master.height).toBe(100);
+    expect(master.pages).toBeGreaterThan(1);
+    expect(master.hasAlpha).toBe(true);
 
-    const sheet = await sharp(absolute(
-      'art/source/sprites/references/axem-red/axem-ranger-nitro-bike.png',
+    const referencePng = await sharp(absolute(
+      'art/source/sprites/references/axem-red/axem-red-nitro-bike.png',
     )).metadata();
-    expect(sheet.format).toBe('png');
-    expect([sheet.width, sheet.height]).toEqual([
-      manifest.frameWidth * manifest.columns,
-      manifest.frameHeight * manifest.rows,
-    ]);
-    expect(sheet.hasAlpha).toBe(true);
-    expect(ASSET_STANDARDS.categories.actionGif.referenceFiles).toEqual(['axem-ranger-nitro-bike.gif']);
+    expect(referencePng.format).toBe('png');
+    expect(ASSET_STANDARDS.categories.actionGif.referenceFiles).toEqual(['axem-red-nitro-bike.gif']);
 
     const pinkDirectory = absolute('art/source/sprites/references/axem-pink');
     const pinkEntries = await fs.readdir(pinkDirectory, { withFileTypes: true });

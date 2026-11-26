@@ -47,9 +47,9 @@ describe('Sprites canónicos de Axem Naranja', () => {
       .map((entry) => entry.name)
       .sort();
     expect(redFiles).toEqual([
-      'axem-ranger-bike.gif',
+      'axem-ranger-nitro-bike.gif',
       'axem-ranger-bike-spritesheet.json',
-      'axem-ranger-bike-spritesheet.png',
+      'axem-ranger-nitro-bike.png',
     ].sort());
 
     const redManifestPath = fileURLToPath(new URL(
@@ -58,8 +58,8 @@ describe('Sprites canónicos de Axem Naranja', () => {
     ));
     const redManifest = JSON.parse(await readFile(redManifestPath, 'utf8'));
     expect(redManifest).toMatchObject({
-      image: 'axem-ranger-bike-spritesheet.png',
-      source: 'art/source/sprites/references/axem-red/axem-ranger-bike.gif',
+      image: 'axem-ranger-nitro-bike.png',
+      source: 'art/source/sprites/references/axem-red/axem-ranger-nitro-bike.gif',
       frameWidth: 101,
       frameHeight: 49,
       frames: 5,
@@ -72,7 +72,7 @@ describe('Sprites canónicos de Axem Naranja', () => {
     });
 
     const redSheetPath = fileURLToPath(new URL(
-      '../../../art/source/sprites/references/axem-red/axem-ranger-bike-spritesheet.png',
+      '../../../art/source/sprites/references/axem-red/axem-ranger-nitro-bike.png',
       import.meta.url,
     ));
     const redSheet = await sharp(redSheetPath).metadata();
@@ -84,7 +84,7 @@ describe('Sprites canónicos de Axem Naranja', () => {
     expect(redSheet.hasAlpha).toBe(true);
 
     const masterBike = fileURLToPath(new URL(
-      '../../../art/source/sprites/references/axem-red/axem-ranger-bike.gif',
+      '../../../art/source/sprites/references/axem-red/axem-ranger-nitro-bike.gif',
       import.meta.url,
     ));
     const bikeMetadata = await sharp(masterBike, { animated: true }).metadata();

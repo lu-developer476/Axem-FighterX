@@ -1,6 +1,6 @@
 {
-  "image": "axem-ranger-bike-spritesheet.png",
-  "source": "art/source/sprites/references/axem-red/axem-ranger-bike.gif",
+  "image": "axem-ranger-nitro-bike.png",
+  "source": "art/source/sprites/references/axem-red/axem-ranger-nitro-bike.gif",
   "frameWidth": 101,
   "frameHeight": 49,
   "frames": 5,

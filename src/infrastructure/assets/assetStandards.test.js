@@ -24,16 +24,16 @@ describe('Estándares centrales de recursos gráficos', () => {
     const filenames = entries.filter((entry) => entry.isFile()).map((entry) => entry.name).sort();
 
     expect(filenames).toEqual([
-      'axem-ranger-bike.gif',
+      'axem-ranger-nitro-bike.gif',
       'axem-ranger-bike-spritesheet.json',
-      'axem-ranger-bike-spritesheet.png',
+      'axem-ranger-nitro-bike.png',
     ].sort());
 
     const manifestPath = absolute('art/source/sprites/references/axem-red/axem-ranger-bike-spritesheet.json');
     const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
     expect(manifest).toMatchObject({
-      image: 'axem-ranger-bike-spritesheet.png',
-      source: 'art/source/sprites/references/axem-red/axem-ranger-bike.gif',
+      image: 'axem-ranger-nitro-bike.png',
+      source: 'art/source/sprites/references/axem-red/axem-ranger-nitro-bike.gif',
       frameWidth: 101,
       frameHeight: 49,
       frames: 5,
@@ -46,7 +46,7 @@ describe('Estándares centrales de recursos gráficos', () => {
     });
 
     const sheet = await sharp(absolute(
-      'art/source/sprites/references/axem-red/axem-ranger-bike-spritesheet.png',
+      'art/source/sprites/references/axem-red/axem-ranger-nitro-bike.png',
     )).metadata();
     expect(sheet.format).toBe('png');
     expect([sheet.width, sheet.height]).toEqual([
@@ -54,7 +54,7 @@ describe('Estándares centrales de recursos gráficos', () => {
       manifest.frameHeight * manifest.rows,
     ]);
     expect(sheet.hasAlpha).toBe(true);
-    expect(ASSET_STANDARDS.categories.actionGif.referenceFiles).toEqual(['axem-ranger-bike.gif']);
+    expect(ASSET_STANDARDS.categories.actionGif.referenceFiles).toEqual(['axem-ranger-nitro-bike.gif']);
 
     const pinkDirectory = absolute('art/source/sprites/references/axem-pink');
     const pinkEntries = await fs.readdir(pinkDirectory, { withFileTypes: true });

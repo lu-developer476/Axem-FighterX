@@ -50,7 +50,7 @@
       "preserveFrameTiming": true,
       "referenceDirectory": "art/source/sprites/references/axem-red",
       "referenceFiles": [
-        "axem-ranger-bike.gif"
+        "axem-ranger-nitro-bike.gif"
       ],
       "files": [
         "bike.gif",

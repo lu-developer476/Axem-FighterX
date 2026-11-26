@@ -5,8 +5,12 @@ import { MenuScene } from './presentation/scenes/MenuScene.js';
 import { CinematicScene } from './presentation/scenes/CinematicScene.js';
 import { FightScene } from './presentation/scenes/FightScene.js';
 import { HaxeMinigameScene } from './presentation/scenes/HaxeMinigameScene.js';
-import { startFaviconAnimation } from './infrastructure/browser/faviconAnimator.js';
+import faviconUrl from '../art/source/favicon.png?url';
 
-startFaviconAnimation();
+const favicon = document.createElement('link');
+favicon.rel = 'icon';
+favicon.type = 'image/png';
+favicon.href = faviconUrl;
+document.head.appendChild(favicon);
 
 new Phaser.Game(createGameConfig([PreloadScene, MenuScene, CinematicScene, FightScene, HaxeMinigameScene]));

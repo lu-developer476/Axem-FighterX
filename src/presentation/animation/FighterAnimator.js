@@ -1,4 +1,4 @@
-import { spriteFacingFor, GIF_ORIGIN_Y } from '../../infrastructure/assets/characterAnimationData.js';
+import { spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
 import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
 import { flashOnlyPose } from './proceduralPoses.js';
 
@@ -18,7 +18,7 @@ const ACTION_BY_STATE = Object.freeze({
   ko: 'ko',
 });
 
-/** Reproduce las secuencias cuadro a cuadro derivadas de los GIF originales de Axem Red. */
+/** Reproduce las animaciones que tienen hojas PNG fuente versionadas; el resto usa el artwork estático. */
 export class FighterAnimator {
   constructor(sprite, rangerId, gender, fallbackTexture, animations) {
     this.sprite = sprite;
@@ -56,11 +56,11 @@ export class FighterAnimator {
     this.state = state;
     this.sprite.stop();
     this.sprite.setTexture(this.fallbackTexture);
+    this.sprite.setOrigin(0.5, 1);
     const action = ACTION_BY_STATE[state];
     if (!action) return;
-    const originY = action === 'run' ? 1 : GIF_ORIGIN_Y;
-    this.sprite.setOrigin?.(0.5, originY);
     const key = maleAnimationKey(this.rangerId, action);
-    if (this.animations?.exists?.(key)) this.sprite.play(key, true);
+    if (!this.animations?.exists?.(key)) return;
+    this.sprite.play(key, true);
   }
 }

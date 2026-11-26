@@ -3,33 +3,25 @@
   "sourcePolicy": {
     "directory": "art/source/sprites/references",
     "immutable": true,
-    "description": "Los masters de artwork son inmutables. art/source/sprites/references/axem-red conserva únicamente super-axem-ranger-red.png y axem-ranger-bike.gif. Las secuencias de correr se derivan de results/male/orange/spritesheet.png y de su mapa de recortes versionado; no requieren GIFs ni atlas adicionales en references."
+    "description": "Los archivos de referencia, artwork y animaciones versionados son fuentes inmutables. Las pruebas y validadores solo inspeccionan los recursos existentes."
   },
   "categories": {
     "characterArtwork": {
       "format": "png",
       "canvasPolicy": "match-family-master",
       "preserveArtworkScale": true,
-      "allowResampling": "nearest-neighbor-only",
+      "allowResampling": false,
       "allowCropping": false,
-      "mismatchCorrection": "uniform-nearest-neighbor-scale-and-transparent-padding",
+      "mismatchCorrection": "none",
       "alignment": "center",
       "families": {
         "male": {
           "reference": "art/source/sprites/results/male/orange/super-axem-ranger-orange.png",
-          "result": "art/source/sprites/results/male/orange/super-axem-ranger-orange.png",
-          "preparedSource": "public/generated/super-axem-source-male.png",
           "width": 857,
-          "height": 1171,
-          "note": "El artwork Super Axem masculino canónico se reutiliza como fuente preparada; ya no se mantiene una referencia Red redundante.",
-          "visualBoundsReference": "art/source/sprites/results/male/orange/super-axem-ranger-orange.png",
-          "visualBoundsTolerance": 2,
-          "visualBoundsRatioTolerance": 0.04,
-          "alignment": "horizontal-center-and-feet-baseline"
+          "height": 1171
         },
         "female": {
           "reference": "art/source/sprites/references/axem-pink/super-axem-pink.png",
-          "preparedSource": "public/generated/super-axem-source-female.png",
           "width": 745,
           "height": 1372
         }
@@ -39,18 +31,12 @@
       "width": 53,
       "height": 83,
       "alphaRequired": true,
-      "outputs": [
-        "public/generated/ranger-male-orange.png"
-      ],
       "feetY": 27
     },
     "menuPortrait": {
       "width": 104,
       "height": 150,
-      "alphaRequired": true,
-      "outputs": [
-        "public/generated/menu-ranger-male-orange.png"
-      ]
+      "alphaRequired": true
     },
     "actionGif": {
       "width": 150,
@@ -85,11 +71,6 @@
         "ko.gif"
       ]
     },
-    "actionFrameCell": {
-      "width": 86,
-      "height": 57,
-      "feetY": 55
-    },
     "otherProcessedSprites": {
       "policy": "preserve-native-dimensions",
       "alphaRequired": true,
@@ -120,5 +101,5 @@
       "families": []
     }
   },
-  "description": "La carpeta axem-red conserva exclusivamente el master de artwork Red y el GIF maestro de bicicleta. Las acciones de correr, salto, golpes y demás movimientos se derivan del spritesheet Orange versionado y de los generadores del proyecto."
+  "description": "Los PNG y GIF versionados son la fuente de verdad del proyecto. No se generan ni normalizan recursos durante test, build o CI."
 }

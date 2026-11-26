@@ -94,15 +94,15 @@ describe('resultados de las variantes canónicas', () => {
     }
   });
 
-  it('conserva charge y la pose de derrota de Axem Naranja', async () => {
+  it('conserva charge y la tira facial de derrota de Axem Naranja', async () => {
     const charge = await sharp(resultsPath('male', 'orange', 'charge.gif'), { animated: true }).metadata();
     expect(charge.pages).toBe(7);
     expect(charge.width).toBe(150);
     expect(charge.pageHeight).toBe(100);
     const defeated = await sharp(resultsPath('male', 'orange', 'defeated.png')).metadata();
     expect(defeated.format).toBe('png');
-    expect(defeated.width).toBe(150);
-    expect(defeated.height).toBe(100);
+    expect(defeated.width).toBe(145);
+    expect(defeated.height).toBe(22);
     expect(defeated.hasAlpha).toBe(true);
   });
 

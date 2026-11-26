@@ -5,10 +5,3 @@ dist/
 .DS_Store
 artifacts/
 
-# Generated from art/source by scripts/prepare-favicons.mjs
-/public/favicon.png
-/public/favicon.gif
-/public/favicon-frames/
-
-# Generated from art/source by scripts/prepare-ranger-sprites.mjs
-/public/generated/

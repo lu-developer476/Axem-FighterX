@@ -45,7 +45,7 @@ describe('Estándares centrales de recursos gráficos', () => {
     const pinkDirectory = absolute('art/source/sprites/references/axem-pink');
     const pinkEntries = await fs.readdir(pinkDirectory, { withFileTypes: true });
     const pinkFiles = pinkEntries.filter((entry) => entry.isFile()).map((entry) => entry.name).sort();
-    expect(pinkFiles).toEqual(['super-axem-pink.png']);
+    expect(pinkFiles).toEqual(['super-pink.png']);
     expect(ASSET_STANDARDS.categories.characterArtwork.families.male).not.toHaveProperty('derivedArtwork');
   });
 
@@ -65,6 +65,31 @@ describe('Estándares centrales de recursos gráficos', () => {
       }
     });
   }
+
+
+  it('valida los artworks adicionales y decodifica el spritesheet X de referencia', async () => {
+    for (const relativePath of ASSET_STANDARDS.categories.characterArtwork.additionalReferences ?? []) {
+      const filename = absolute(relativePath);
+      const metadata = await sharp(filename, { failOn: 'error' }).metadata();
+      expect(metadata.format, relativePath).toBe('png');
+      expect(metadata.width, relativePath).toBeGreaterThan(0);
+      expect(metadata.height, relativePath).toBeGreaterThan(0);
+      const decoded = await sharp(filename, { failOn: 'error' }).stats();
+      expect(decoded.channels.length, relativePath).toBeGreaterThan(0);
+    }
+
+    const referenceSheet = ASSET_STANDARDS.categories.referenceSheet;
+    expect(referenceSheet.families).toEqual([]);
+    for (const relativePath of referenceSheet.files ?? []) {
+      const filename = absolute(relativePath);
+      const metadata = await sharp(filename, { failOn: 'error' }).metadata();
+      expect(metadata.format, relativePath).toBe(referenceSheet.format ?? 'png');
+      expect(metadata.width, relativePath).toBeGreaterThan(0);
+      expect(metadata.height, relativePath).toBeGreaterThan(0);
+      const decoded = await sharp(filename, { failOn: 'error' }).stats();
+      expect(decoded.channels.length, relativePath).toBeGreaterThan(0);
+    }
+  });
 
   it('mantiene declaradas las dimensiones objetivo de las texturas de combate', () => {
     const category = ASSET_STANDARDS.categories.combatTexture;

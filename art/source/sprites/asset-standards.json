@@ -16,16 +16,21 @@
       "alignment": "center",
       "families": {
         "male": {
-          "reference": "art/source/sprites/results/male/orange/super-orange/super-axem-ranger-orange.png",
+          "reference": "art/source/sprites/results/male/orange/super-orange/super-orange.png",
           "width": 857,
           "height": 1171
         },
         "female": {
-          "reference": "art/source/sprites/references/axem-pink/super-axem-pink.png",
+          "reference": "art/source/sprites/references/axem-pink/super-pink.png",
           "width": 745,
           "height": 1372
         }
-      }
+      },
+      "additionalReferences": [
+        "art/source/sprites/results/female/violet/super-violet.png",
+        "art/source/sprites/results/male/super-brown.png",
+        "art/source/sprites/results/male/super-gray.png"
+      ]
     },
     "combatTexture": {
       "width": 53,
@@ -98,7 +103,11 @@
       "preserveIrregularLayout": true,
       "allowResampling": false,
       "allowCropping": false,
-      "families": []
+      "families": [],
+      "format": "png",
+      "files": [
+        "art/source/sprites/references/axem-rangers-x-spritesheet-2.png"
+      ]
     }
   },
   "description": "Los PNG y GIF versionados son la fuente de verdad del proyecto. No se generan ni normalizan recursos durante test, build o CI."

@@ -51,6 +51,21 @@ async function validateArtwork() {
       await validatePng(family.result, dimensions, 'Artwork Super Axem ' + gender, true);
     }
   }
+
+  for (const relativePath of standards.categories.characterArtwork.additionalReferences ?? []) {
+    const filename = absolute(relativePath);
+    if (!await fileExists(filename)) {
+      throw new Error('No existe el artwork adicional: ' + relativePath);
+    }
+    const metadata = await sharp(filename, { failOn: 'error' }).metadata();
+    assertEqual(metadata.format, 'png', relativePath + ' formato');
+    if (!Number.isInteger(metadata.width) || metadata.width <= 0 ||
+        !Number.isInteger(metadata.height) || metadata.height <= 0) {
+      throw new Error(relativePath + ': dimensiones PNG inválidas.');
+    }
+    await sharp(filename, { failOn: 'error' }).stats();
+  }
+
 }
 
 async function collectGifFiles(directory, recursive = false) {
@@ -119,9 +134,9 @@ async function validateSpriteNaming() {
     .filter((entry) => entry.isFile())
     .map((entry) => entry.name)
     .sort();
-  if (masterFiles.length !== 1 || masterFiles[0] !== 'super-axem-ranger-orange.png') {
+  if (masterFiles.length !== 1 || masterFiles[0] !== 'super-orange.png') {
     throw new Error(
-      'super-orange debe contener únicamente super-axem-ranger-orange.png. Archivos encontrados: ' +
+      'super-orange debe contener únicamente super-orange.png. Archivos encontrados: ' +
       masterFiles.join(', '),
     );
   }
@@ -132,6 +147,52 @@ async function validateSpriteNaming() {
   }
 
   return validatedFiles + masterFiles.length;
+}
+
+
+async function validateReferenceSheets() {
+  const category = standards.categories.referenceSheet;
+  const files = category.files ?? [];
+  if (!files.length) {
+    console.log('No hay spritesheets de referencia registrados.');
+    return 0;
+  }
+
+  for (const relativePath of files) {
+    const filename = absolute(relativePath);
+    if (!await fileExists(filename)) {
+      throw new Error('No existe el spritesheet de referencia: ' + relativePath);
+    }
+    const fileStats = await fs.stat(filename);
+    if (fileStats.size <= 0) {
+      throw new Error(relativePath + ': el archivo está vacío.');
+    }
+
+    const metadata = await sharp(filename, { failOn: 'error' }).metadata();
+    assertEqual(metadata.format, category.format ?? 'png', relativePath + ' formato');
+    if (!Number.isInteger(metadata.width) || metadata.width <= 0 ||
+        !Number.isInteger(metadata.height) || metadata.height <= 0) {
+      throw new Error(relativePath + ': dimensiones de imagen inválidas.');
+    }
+    if (category.alphaRequired && !metadata.hasAlpha) {
+      throw new Error(relativePath + ': el spritesheet requiere canal alfa.');
+    }
+
+    // stats() recorre y decodifica el contenido completo sin reescribir el recurso.
+    const decoded = await sharp(filename, { failOn: 'error' }).stats();
+    if (!Array.isArray(decoded.channels) || decoded.channels.length < 1 ||
+        decoded.channels.some((channel) => !Number.isFinite(channel.min) || !Number.isFinite(channel.max))) {
+      throw new Error(relativePath + ': no se pudieron decodificar los canales de imagen.');
+    }
+
+    console.log(
+      relativePath + ': ' + metadata.format.toUpperCase() + ' ' +
+      metadata.width + 'x' + metadata.height + ', ' + fileStats.size +
+      ' bytes, alpha=' + Boolean(metadata.hasAlpha) + ', decodificación completa correcta.',
+    );
+  }
+
+  return files.length;
 }
 
 async function validateActionGifs() {
@@ -244,13 +305,14 @@ async function main() {
   await validateArtwork();
   const spriteFileCount = await validateSpriteNaming();
 
+  const referenceSheetCount = await validateReferenceSheets();
   const gifCount = await validateActionGifs();
   const effectGifCount = await validateEffectGifs();
 
   console.log(
     'Recursos fuente validados en modo de solo lectura: ' +
     gifCount + ' GIF de acción y ' + effectGifCount +
-    ' GIF de efectos manuales, ' + spriteFileCount + ' archivos con nomenclatura verificada y los masters de artwork.',
+    ' GIF de efectos manuales, ' + spriteFileCount + ' archivos con nomenclatura verificada, ' + referenceSheetCount + ' spritesheets decodificados y los masters de artwork.',
   );
 }
 

@@ -65,7 +65,7 @@ describe('Sprites canónicos de Axem Naranja', () => {
     const superOrangeDirectory = fileURLToPath(new URL(
       '../../../art/source/sprites/results/male/orange/super-orange', import.meta.url,
     ));
-    expect((await readdir(superOrangeDirectory)).sort()).toEqual(['super-axem-ranger-orange.png']);
+    expect((await readdir(superOrangeDirectory)).sort()).toEqual(['super-orange.png']);
   });
 
   it('no contiene recursos de variantes incompletas', async () => {
@@ -81,7 +81,13 @@ describe('Sprites canónicos de Axem Naranja', () => {
     const femaleVioletDirectory = fileURLToPath(new URL(
       '../../../art/source/sprites/results/female/violet', import.meta.url,
     ));
-    expect(await readdir(femaleVioletDirectory)).toEqual(['.gitkeep']);
+    expect((await readdir(femaleVioletDirectory)).sort()).toEqual(['.gitkeep', 'super-violet.png']);
+    const violetArtwork = await sharp(fileURLToPath(new URL(
+      '../../../art/source/sprites/results/female/violet/super-violet.png', import.meta.url,
+    ))).metadata();
+    expect(violetArtwork.format).toBe('png');
+    expect(violetArtwork.width).toBeGreaterThan(0);
+    expect(violetArtwork.height).toBeGreaterThan(0);
   });
 
   it('conserva el GIF maestro de bicicleta con el nombre Axem Red y su PNG de referencia', async () => {

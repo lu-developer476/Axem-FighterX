@@ -118,8 +118,8 @@
           "mode": "center-strip",
           "maxEmptyColumns": 0,
           "frameDelay": 85,
-          "minFrames": 7,
-          "frameCount": 7,
+          "minFrames": 8,
+          "frameCount": 8,
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
           "strictFrameCount": true

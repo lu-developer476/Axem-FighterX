@@ -13,14 +13,15 @@ HaxeFlixel compila los minijuegos de carreras a HTML5; Phaser 3 gestiona el comb
 
 ```bash
 npm install
-npm run dev             # inicia Vite directamente, sin regenerar recursos
-npm run prepare:sprites # regenera sprites derivados luego de cambiar sus fuentes
-npm test                # prepara y valida recursos, luego ejecuta Vitest
-npm run build           # prepara y valida recursos, luego genera dist/
+npm run dev             # inicia Vite
+npm test                # ejecuta Vitest
+npm run validate:assets # inspecciona PNG/GIF versionados, sin escribir archivos
+npm run build           # compila la aplicación Phaser/Vite
+npm run build:haxe      # compila HaxeFlixel con recursos ya versionados
 npm run preview         # sirve dist/ localmente
 ```
 
-El servidor de desarrollo ya no ejecuta generadores antes de arrancar. Agregar o quitar archivos de arte no bloquea el inicio; al cambiar una fuente que tenga derivados, ejecutá `npm run prepare:sprites` para regenerarlos. Los recursos auxiliares con tamaños propios se conservan y no se fuerzan al lienzo de las animaciones Orange.
+Los PNG y GIF del repositorio son la fuente de verdad. No hay scripts de preparación, generación ni normalización de imágenes. `npm test` y `npm run validate:assets` solo leen archivos; `npm run build` compila la aplicación y `npm run build:haxe` compila el código de los minijuegos usando recursos ya versionados.
 
 Controles:
 
@@ -43,13 +44,13 @@ El selector de personajes ofrece únicamente **Axem Naranja masculino** mientras
 
 En los formatos normales, el menú presenta directamente los escenarios descubiertos en las carpetas de recursos. Se retiró el catálogo fijo de arenas que se había definido al comienzo del juego: cada mapa y cada tileset existente pasa a ser una opción independiente.
 
-Los mapas se descubren en `art/source/environments/maps/`. El inventario actual incluye `castle.png`, `cave-1.png`, `cave-2.png`, `practice-zone.png` y `sidescroll-1.png` a `sidescroll-4.png`. Los tilesets se descubren en `art/source/environments/maps/tilesets/` y generan fondos procedurales reproducibles; hoy se incluyen `cave1-tileset.png`, `cave2-tileset.png`, `darknes-tileset.png`, `sidescroll-tileset.png` y `space-merc-tileset.png`.
+Los mapas se descubren en `art/source/environments/maps/`. El inventario actual incluye `castle.png`, `cave-1.png`, `cave-2.png`, `practice-zone.png` y `sidescroll-1.png` a `sidescroll-4.png`. Los tilesets se descubren en `art/source/environments/maps/tilesets/` y se dibujan en memoria como fondos procedurales reproducibles; hoy se incluyen `cave1-tileset.png`, `cave2-tileset.png`, `darknes-tileset.png`, `sidescroll-tileset.png` y `space-merc-tileset.png`.
 
-La selección se pagina automáticamente cuando el inventario supera ocho opciones. Los mapas usan su imagen como fondo y los tilesets generan un escenario visual a partir de sus celdas. Ninguno modifica hitboxes, el plano del suelo ni las reglas de combate. Cada escenario conserva una cinemática contextual genérica y los diálogos de resultado.
+La selección se pagina automáticamente cuando el inventario supera ocho opciones. Los mapas usan su imagen como fondo y los tilesets se representan en memoria a partir de sus celdas. Ninguno modifica hitboxes, el plano del suelo ni las reglas de combate. Cada escenario conserva una cinemática contextual genérica y los diálogos de resultado.
 
 ### Recursos automáticos de mapas, tilesets y música
 
-El descubrimiento usa `import.meta.glob` de Vite: al incorporar un mapa compatible en `art/source/environments/maps/` o un tileset en `maps/tilesets/` y ejecutar el siguiente build, aparece como escenario seleccionable sin modificar manifiestos ni código. Los mapas admiten PNG, WebP, JPG y JPEG. Cada tileset genera una variante ambiental mediante composición determinista de sus celdas; el tamaño predeterminado es 32×32 y se puede sobrescribir con un JSON del mismo nombre base. Las piezas generadas son decoración, no plataformas ni colisiones.
+El descubrimiento usa `import.meta.glob` de Vite: al incorporar un mapa compatible en `art/source/environments/maps/` o un tileset en `maps/tilesets/` y ejecutar el siguiente build, aparece como escenario seleccionable sin modificar manifiestos ni código. Los mapas admiten PNG, WebP, JPG y JPEG. Cada tileset genera una variante ambiental mediante composición determinista de sus celdas; el tamaño predeterminado es 32×32 y se puede sobrescribir con un JSON del mismo nombre base. Las piezas dibujadas son decoración en ejecución, no plataformas ni colisiones; no se escriben PNG ni se alteran fuentes.
 
 La música también se descubre automáticamente en `art/source/effects/music/`. Se admiten OGG, MP3, WAV, M4A, AAC y WebM. Si hay varias codificaciones con el mismo nombre base, se prioriza OGG y se utiliza otra compatible cuando el navegador no puede reproducirlo. `menu.ogg` se reserva para el menú; `<stage-id>--<nombre>.ogg` identifica música de un escenario; las pistas sin etiqueta alimentan una rotación global determinista. La reproducción es en bucle, bajo demanda y sujeta a la política de interacción del navegador. El modo entrenamiento conserva su fondo sólido.
 
@@ -97,9 +98,9 @@ Los dos minijuegos se ejecutan en **HaxeFlixel compilado a HTML5**. Phaser conse
 - **Carrera Axem:** carrera de motos de dos carriles, con un rival controlado por IA, aceleración, frenado y disparo clásico/cargado. Se puede elegir 750 km o 2500 km.
 - **Carrera terrestre:** carrera de resistencia contra un rival IA, con selector de 750 km o 2500 km, con aceleración, frenado y recuperación de resistencia.
 
-Controles de Carrera Axem: D acelera, A frena, F dispara (toque breve) o carga el disparo (mantener presionado), flechas izquierda/derecha mueven lateralmente y flechas arriba/abajo cambian de carril; P pausa y ESC vuelve al menú. Carrera terrestre: ↑/↓ selecciona 750 km o 2500 km y ENTER comienza; D/→ acelera, A/← frena y muestra idle, W/↑ activa salto, S/↓ activa rodada, P pausa, R reinicia y ESC vuelve al menú. La animación walk es opcional: si falta walk.gif se utiliza run como alternativa; jump y roll se incorporan automáticamente cuando están sus GIF fuente.
+Controles de Carrera Axem: D acelera, A frena, F dispara (toque breve) o carga el disparo (mantener presionado), flechas izquierda/derecha mueven lateralmente y flechas arriba/abajo cambian de carril; P pausa y ESC vuelve al menú. Carrera terrestre: ↑/↓ selecciona 750 km o 2500 km y ENTER comienza; D/→ acelera, A/← frena y muestra idle, W/↑ activa salto, S/↓ activa rodada, P pausa, R reinicia y ESC vuelve al menú. La animación de caminata reutiliza la tira PNG de carrera; las acciones sin recursos raster versionados conservan el arte estático.
 
-Se necesita Haxe, Haxelib, Lime, OpenFL y HaxeFlixel. El proyecto está en `haxeflixel/`; `npm run prepare:haxe-assets && npm run build:haxe` genera el HTML5 en `public/minigames/`. `npm run dev` lo compila antes de iniciar Vite. CI también lo compila y versiona junto con los sprites; el build de Vercel consume el HTML5 ya generado desde el repositorio.
+Se necesita Haxe, Haxelib, Lime, OpenFL y HaxeFlixel. El proyecto está en `haxeflixel/`; `npm run build:haxe` compila el HTML5 en `public/minigames/` a partir de recursos que ya están versionados. No existe un paso previo que convierta GIF ni genere hojas de sprites.
 
 ## Combate
 
@@ -117,11 +118,11 @@ Se necesita Haxe, Haxelib, Lime, OpenFL y HaxeFlixel. El proyecto está en `haxe
 
 Los GIF de acciones de personaje usan un estándar único: **150 × 100 px por cuadro, fondo transparente y 100 ms por cuadro (10 FPS)**. Los GIF de efectos y el favicon mantienen sus estándares específicos; no se redimensionan ni se les fuerza la misma cadencia.
 
-La variante seleccionable actual es **Axem Naranja masculino**. Sus recursos de combate se generan desde las referencias originales de Axem Red en `art/source/sprites/references/axem-red/`. El pipeline conserva los fotogramas fuente y genera tiras PNG transparentes con un pivote común para el combate.
+La variante seleccionable actual es **Axem Naranja masculino**. El juego carga directamente el artwork y las tiras PNG versionadas de `art/source/sprites/results/male/orange/`. Las fuentes no pasan por recoloreadores, recortadores ni normalizadores durante los tests o el build.
 
-El combate reproduce secuencias cuadro a cuadro de reposo, carrera, hachazo doble, carga, guardia, daño, rodada, salto, teletransporte, victoria y KO. Las hojas que todavía no están terminadas no se ofrecen en los selectores ni se cargan en las pantallas de juego. Las referencias Pink se conservan como material fuente, sin publicar una variante jugable incompleta.
+El juego reproduce la tira de carrera versionada y usa el artwork estático como fallback para las acciones que no tienen una hoja PNG versionada. Las animaciones faltantes no se fabrican ni se generan durante el arranque; las hojas incompletas no se ofrecen en los selectores. Las referencias Pink se conservan como material fuente, sin publicar una variante jugable incompleta.
 
-`npm run prepare:sprites` regenera los recursos. También se ejecuta automáticamente antes de los tests y del build de Vite.
+No hay comando de regeneración de sprites. Los tests, la validación y el build no escriben ni normalizan archivos PNG/GIF fuente.
 
 ## Despliegue en Vercel
 
@@ -133,7 +134,7 @@ El combate reproduce secuencias cuadro a cuadro de reposo, carrera, hachazo dobl
 
 Cada push a `main` ejecuta `.github/workflows/ci.yml`:
 
-1. Tests y build.
+1. Compilación HaxeFlixel, tests de solo lectura, validación de archivos fuente y build Vite.
 2. Captura automática con Playwright: menú, cinemática, combate, movimiento, golpes, teletransporte y reinicio; guarda video y screenshots en el artefacto `capturas-y-video`.
 3. Publicación jugable en GitHub Pages.
 

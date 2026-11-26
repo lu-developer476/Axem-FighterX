@@ -67,6 +67,73 @@ async function collectGifFiles(directory, recursive = false) {
   return files;
 }
 
+async function validateSpriteNaming() {
+  const directories = [
+    {
+      path: 'art/source/sprites/results/male/white',
+      prefix: 'axem-white-',
+      requiredSubdirectory: 'super-white',
+    },
+    {
+      path: 'art/source/sprites/results/male/white/super-white',
+      prefix: 'super-white-',
+    },
+    {
+      path: 'art/source/sprites/results/male/orange',
+      prefix: 'axem-orange-',
+      requiredSubdirectory: 'super-orange',
+    },
+  ];
+
+  let validatedFiles = 0;
+  for (const rule of directories) {
+    const directory = absolute(rule.path);
+    if (!await fileExists(directory)) {
+      throw new Error('No existe el directorio de sprites: ' + rule.path);
+    }
+
+    const entries = await fs.readdir(directory, { withFileTypes: true });
+    const files = entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
+    const invalid = files.filter((name) => !name.startsWith(rule.prefix));
+    if (invalid.length) {
+      throw new Error(
+        rule.path + ': todos los archivos deben comenzar con "' + rule.prefix +
+        '". Archivos inválidos: ' + invalid.join(', '),
+      );
+    }
+
+    if (rule.requiredSubdirectory &&
+        !entries.some((entry) => entry.isDirectory() && entry.name === rule.requiredSubdirectory)) {
+      throw new Error(
+        rule.path + ': falta el subdirectorio obligatorio "' + rule.requiredSubdirectory + '".',
+      );
+    }
+    validatedFiles += files.length;
+  }
+
+  const superOrangeDirectory = absolute('art/source/sprites/results/male/orange/super-orange');
+  if (!await fileExists(superOrangeDirectory)) {
+    throw new Error('No existe el directorio de artwork maestro: art/source/sprites/results/male/orange/super-orange.');
+  }
+  const masterFiles = (await fs.readdir(superOrangeDirectory, { withFileTypes: true }))
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .sort();
+  if (masterFiles.length !== 1 || masterFiles[0] !== 'super-axem-ranger-orange.png') {
+    throw new Error(
+      'super-orange debe contener únicamente super-axem-ranger-orange.png. Archivos encontrados: ' +
+      masterFiles.join(', '),
+    );
+  }
+
+  const misplacedMaster = absolute('art/source/sprites/results/male/orange/super-axem-ranger-orange.png');
+  if (await fileExists(misplacedMaster)) {
+    throw new Error('El artwork maestro Orange debe residir en la carpeta super-orange.');
+  }
+
+  return validatedFiles + masterFiles.length;
+}
+
 async function validateActionGifs() {
   const category = standards.categories.actionGif;
   const directory = absolute(category.directory);
@@ -175,6 +242,7 @@ async function validateEffectGifs() {
 
 async function main() {
   await validateArtwork();
+  const spriteFileCount = await validateSpriteNaming();
 
   const gifCount = await validateActionGifs();
   const effectGifCount = await validateEffectGifs();
@@ -182,7 +250,7 @@ async function main() {
   console.log(
     'Recursos fuente validados en modo de solo lectura: ' +
     gifCount + ' GIF de acción y ' + effectGifCount +
-    ' GIF de efectos manuales, además de los masters de artwork.',
+    ' GIF de efectos manuales, ' + spriteFileCount + ' archivos con nomenclatura verificada y los masters de artwork.',
   );
 }
 

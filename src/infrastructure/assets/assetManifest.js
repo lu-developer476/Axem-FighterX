@@ -1,7 +1,7 @@
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
-import rangerArtworkUrl from '../../../art/source/sprites/results/male/orange/super-axem-ranger-orange.png?url';
-import runAnimationUrl from '../../../art/source/sprites/results/male/orange/run.png?url';
-import bikeAnimationUrl from '../../../art/source/sprites/results/male/orange/bike.png?url';
+import rangerArtworkUrl from '../../../art/source/sprites/results/male/orange/super-orange/super-axem-ranger-orange.png?url';
+import runAnimationUrl from '../../../art/source/sprites/results/male/orange/axem-orange-run.png?url';
+import bikeAnimationUrl from '../../../art/source/sprites/results/male/orange/axem-orange-bike.png?url';
 
 export const DEFAULT_RANGER_GENDER = 'male';
 

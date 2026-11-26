@@ -16,7 +16,7 @@
       "alignment": "center",
       "families": {
         "male": {
-          "reference": "art/source/sprites/results/male/orange/super-axem-ranger-orange.png",
+          "reference": "art/source/sprites/results/male/orange/super-orange/super-axem-ranger-orange.png",
           "width": 857,
           "height": 1171
         },
@@ -53,22 +53,22 @@
         "axem-red-nitro-bike.gif"
       ],
       "files": [
-        "bike.gif",
-        "run.gif",
-        "idle.gif",
-        "dash.gif",
-        "punch-01.gif",
-        "punch-02.gif",
-        "punch-03.gif",
-        "hit.gif",
-        "hurt.gif",
-        "jump.gif",
-        "teleport.gif",
-        "charge.gif",
-        "pose.gif",
-        "guard.gif",
-        "roll.gif",
-        "ko.gif"
+        "axem-orange-bike.gif",
+        "axem-orange-run.gif",
+        "axem-orange-idle.gif",
+        "axem-orange-dash.gif",
+        "axem-orange-punch-01.gif",
+        "axem-orange-punch-02.gif",
+        "axem-orange-punch-03.gif",
+        "axem-orange-hit.gif",
+        "axem-orange-hurt.gif",
+        "axem-orange-jump.gif",
+        "axem-orange-teleport.gif",
+        "axem-orange-charge.gif",
+        "axem-orange-pose.gif",
+        "axem-orange-guard.gif",
+        "axem-orange-roll.gif",
+        "axem-orange-ko.gif"
       ]
     },
     "otherProcessedSprites": {

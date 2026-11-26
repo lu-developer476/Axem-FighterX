@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { genderForRanger, isAvailableRangerVariant } from '../../domain/rangers/rangerVariants.js';
 import ASSET_STANDARDS from '../../../art/source/sprites/asset-standards.json';
 
-const resultGifPath = (action) => fileURLToPath(new URL(`../../../art/source/sprites/results/male/orange/${action}.gif`, import.meta.url));
-const defeatedOutputPath = fileURLToPath(new URL('../../../art/source/sprites/results/male/orange/defeated.png', import.meta.url));
+const resultGifPath = (action) => fileURLToPath(new URL(`../../../art/source/sprites/results/male/orange/axem-orange-${action}.gif`, import.meta.url));
+const defeatedOutputPath = fileURLToPath(new URL('../../../art/source/sprites/results/male/orange/axem-orange-defeated.png', import.meta.url));
 const resultGifDirectory = fileURLToPath(new URL('../../../art/source/sprites/results/male/orange', import.meta.url));
 
 describe('Sprites canónicos de Axem Naranja', () => {
@@ -22,6 +22,50 @@ describe('Sprites canónicos de Axem Naranja', () => {
       ASSET_STANDARDS.categories.combatTexture.height]).toEqual([53, 83]);
     expect([ASSET_STANDARDS.categories.menuPortrait.width,
       ASSET_STANDARDS.categories.menuPortrait.height]).toEqual([104, 150]);
+  });
+
+
+  it('mantiene los prefijos de recursos White, Super White y Orange', async () => {
+    const whiteDirectory = fileURLToPath(new URL(
+      '../../../art/source/sprites/results/male/white', import.meta.url,
+    ));
+    const whiteEntries = await readdir(whiteDirectory, { withFileTypes: true });
+    const whiteFiles = whiteEntries.filter((entry) => entry.isFile()).map((entry) => entry.name).sort();
+    expect(whiteFiles.filter((name) => !name.startsWith('axem-white-'))).toEqual([]);
+    expect(whiteEntries.filter((entry) => entry.isDirectory()).map((entry) => entry.name))
+      .toContain('super-white');
+    expect(whiteFiles).toEqual(expect.arrayContaining([
+      'axem-white-punch-01.png',
+      'axem-white-punch-02.png',
+      'axem-white-punch-03.png',
+    ]));
+
+    const superWhiteDirectory = fileURLToPath(new URL(
+      '../../../art/source/sprites/results/male/white/super-white', import.meta.url,
+    ));
+    const superWhiteFiles = (await readdir(superWhiteDirectory, { withFileTypes: true }))
+      .filter((entry) => entry.isFile()).map((entry) => entry.name);
+    expect(superWhiteFiles.filter((name) => !name.startsWith('super-white-'))).toEqual([]);
+    expect(superWhiteFiles).toEqual(expect.arrayContaining([
+      'super-white-battle-pose.png',
+      'super-white-battle-pose.gif',
+      'super-white-attack-01-init.png',
+      'super-white-attack-01-final.png',
+      'super-white-attack-02.png',
+      'super-white-pose-01.png',
+      'super-white-pose-02.png',
+    ]));
+
+    const orangeEntries = await readdir(resultGifDirectory, { withFileTypes: true });
+    const orangeFiles = orangeEntries.filter((entry) => entry.isFile()).map((entry) => entry.name);
+    expect(orangeFiles.filter((name) => !name.startsWith('axem-orange-'))).toEqual([]);
+    expect(orangeEntries.filter((entry) => entry.isDirectory()).map((entry) => entry.name))
+      .toContain('super-orange');
+
+    const superOrangeDirectory = fileURLToPath(new URL(
+      '../../../art/source/sprites/results/male/orange/super-orange', import.meta.url,
+    ));
+    expect((await readdir(superOrangeDirectory)).sort()).toEqual(['super-axem-ranger-orange.png']);
   });
 
   it('no contiene recursos de variantes incompletas', async () => {
@@ -168,6 +212,6 @@ describe('Sprites canónicos de Axem Naranja', () => {
       expect(metadata.hasAlpha, action).toBe(true);
     }
     expect((await readdir(resultGifDirectory)).filter((name) => name.endsWith('.gif')).sort())
-      .toEqual(actions.map((action) => action + '.gif').sort());
+      .toEqual(actions.map((action) => 'axem-orange-' + action + '.gif').sort());
   });
 });

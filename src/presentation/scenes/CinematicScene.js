@@ -36,13 +36,11 @@ export class CinematicScene extends Phaser.Scene {
 
   /** Muestra el mismo arte Super Axem que se usará durante todo el combate. */
   #createCharacterSprite(x, character, facing) {
-    return this.add.image(
-      x,
-      ARENA.groundY,
-      spriteKeyFor(character.id, character.gender),
-    )
+    const key = spriteKeyFor(character.id, character.gender);
+    const artwork = this.textures.get(key).getSourceImage();
+    return this.add.image(x, ARENA.groundY, key)
       .setOrigin(0.5, 1)
-      .setScale(1)
+      .setScale(100 / artwork.height)
       .setFlipX(shouldFlip(facing, spriteFacingFor(character.id, character.gender)))
       .setDepth(100);
   }

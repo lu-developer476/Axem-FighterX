@@ -117,7 +117,7 @@ async function validateReferenceSheets() {
   }
 }
 
-async function collectActionGifs(directory, recursive = false) {
+async function collectGifFiles(directory, recursive = false) {
   const entries = await fs.readdir(directory, { withFileTypes: true });
   const files = [];
   for (const entry of entries) {
@@ -125,7 +125,7 @@ async function collectActionGifs(directory, recursive = false) {
     if (entry.isFile() && path.extname(entry.name).toLowerCase() === '.gif') {
       files.push(fullPath);
     } else if (recursive && entry.isDirectory()) {
-      files.push(...await collectActionGifs(fullPath, true));
+      files.push(...await collectGifFiles(fullPath, true));
     }
   }
   return files;
@@ -187,41 +187,51 @@ async function validateActionGifs() {
 }
 
 async function validateEffectGifs() {
-  const effects = standards.categories.effectAnimation.files;
-  let validated = 0;
-  for (const effect of effects) {
-    if (!await fileExists(absolute(effect.source)) || !await fileExists(absolute(effect.output))) {
-      console.log(effect.source + ': fuente o derivado ausente; recurso opcional omitido.');
-      continue;
-    }
-    const source = await sharp(absolute(effect.source), { failOn: 'error' }).metadata();
-    assertEqual(source.format, 'png', effect.source + ' formato');
-    if (!source.hasAlpha) throw new Error(effect.source + ': el PNG fuente debe conservar alfa.');
+  const category = standards.categories.effectAnimation;
+  const files = [];
 
-    const gif = await sharp(absolute(effect.output), { animated: true, failOn: 'error' }).metadata();
-    assertEqual(gif.format, 'gif', effect.output + ' formato');
-    if (effect.frameLayout === 'horizontal-cells') {
-      const expectedFrameWidth = Math.ceil(source.width / effect.frameCount);
-      assertEqual(gif.width, expectedFrameWidth, effect.output + ' ancho de celda');
-    } else if (effect.frameLayout === 'detected-segments') {
-      if (!Number.isInteger(gif.width) || gif.width <= 0 || gif.width >= source.width) {
-        throw new Error(effect.output + ': el GIF debe usar un lienzo de fotograma, no la hoja completa.');
-      }
-    } else {
-      assertEqual(gif.width, source.width, effect.output + ' ancho');
+  for (const directory of category.directories) {
+    const absoluteDirectory = absolute(directory);
+    if (!await fileExists(absoluteDirectory)) {
+      throw new Error('No existe el directorio de efectos manuales: ' + directory);
     }
-    assertEqual(gif.pageHeight ?? gif.height, source.height, effect.output + ' alto por cuadro');
-    if (!gif.hasAlpha) throw new Error(effect.output + ': falta la transparencia.');
-    if (!Number.isInteger(gif.pages) || gif.pages < 2) {
-      throw new Error(effect.output + ': se requieren al menos dos cuadros.');
+    files.push(...await collectGifFiles(absoluteDirectory, true));
+  }
+
+  if (!files.length) {
+    throw new Error('No se encontraron GIF manuales para validar en los directorios de efectos.');
+  }
+
+  let validated = 0;
+  for (const filename of files.sort()) {
+    const relativePath = path.relative(ROOT, filename).split(path.sep).join('/');
+    const gif = await sharp(filename, { animated: true, failOn: 'error' }).metadata();
+
+    assertEqual(gif.format, 'gif', relativePath + ' formato');
+    if (!Number.isInteger(gif.width) || gif.width <= 0 ||
+        !Number.isInteger(gif.pageHeight ?? gif.height) || (gif.pageHeight ?? gif.height) <= 0) {
+      throw new Error(relativePath + ': dimensiones de fotograma inválidas.');
     }
-    if (Number.isInteger(effect.frameCount)) {
-      assertEqual(gif.pages, effect.frameCount, effect.output + ' cantidad de fotogramas');
+    if (category.alphaRequired && !gif.hasAlpha) {
+      throw new Error(relativePath + ': falta la transparencia.');
+    }
+    if (!Number.isInteger(gif.pages) || gif.pages < category.minimumFrames) {
+      throw new Error(relativePath + ': se requieren al menos ' + category.minimumFrames + ' fotogramas.');
     }
     if (!Array.isArray(gif.delay) || gif.delay.length !== gif.pages ||
         gif.delay.some((delay) => !Number.isFinite(delay) || delay <= 0)) {
-      throw new Error(effect.output + ': la duración de los cuadros es inválida.');
+      throw new Error(relativePath + ': la duración de los fotogramas es inválida.');
     }
+
+    // Fuerza la decodificación de todos los fotogramas sin escribir ni modificar archivos.
+    const decoded = await sharp(filename, { animated: true, failOn: 'error' })
+      .ensureAlpha()
+      .raw()
+      .toBuffer();
+    if (!decoded.length) {
+      throw new Error(relativePath + ': no se pudo decodificar el contenido de los fotogramas.');
+    }
+
     validated += 1;
   }
   return validated;

@@ -38,9 +38,8 @@ jobs:
       - name: Instalar dependencias
         run: npm ci --no-audit --no-fund
 
-      - name: Preparar y compilar minijuegos HaxeFlixel
+      - name: Compilar minijuegos HaxeFlixel
         run: |
-          npm run prepare:haxe-assets
           npm run build:haxe
           test -s public/minigames/index.html || { echo "No se generó public/minigames/index.html"; exit 1; }
 

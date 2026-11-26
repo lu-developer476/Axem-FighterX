@@ -9,7 +9,6 @@
     "prepare:haxe-assets": "node scripts/prepare-haxeflixel-race-assets.mjs",
     "build:haxe": "node scripts/build-haxeflixel.mjs",
     "dev": "vite",
-    "prebuild": "node scripts/prepare-super-rangers.mjs && node scripts/prepare-favicons.mjs && node scripts/prepare-title-art.mjs && node scripts/prepare-ranger-sprites.mjs && node scripts/normalize-sprite-library.mjs && node scripts/standardize-assets.mjs && node scripts/standardize-pickups.mjs && node scripts/validate-assets.mjs && npm run prepare:haxe-assets && node scripts/validate-haxeflixel-output.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
@@ -17,8 +16,7 @@
     "standardize:assets": "node scripts/standardize-assets.mjs && node scripts/standardize-pickups.mjs && node scripts/validate-assets.mjs",
     "validate:assets": "node scripts/validate-assets.mjs && node scripts/standardize-pickups.mjs --check",
     "standardize:pickups": "node scripts/standardize-pickups.mjs",
-    "validate:pickups": "node scripts/standardize-pickups.mjs --check",
-    "pretest": "node scripts/prepare-super-rangers.mjs && node scripts/prepare-ranger-sprites.mjs && node scripts/normalize-sprite-library.mjs && node scripts/standardize-assets.mjs && node scripts/standardize-pickups.mjs && node scripts/validate-assets.mjs"
+    "validate:pickups": "node scripts/standardize-pickups.mjs --check"
   },
   "dependencies": {
     "phaser": "^3.90.0"

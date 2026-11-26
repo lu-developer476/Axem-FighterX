@@ -20,29 +20,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: krdlab/setup-haxe@v2
-        with:
-          haxe-version: 4.3.7
-
-      - name: Instalar HaxeFlixel
-        run: |
-          haxelib install lime --quiet
-          haxelib install openfl --quiet
-          haxelib install flixel --quiet
-          haxelib run lime setup -y
-
       - uses: actions/setup-node@v7
         with:
           node-version: 22
 
       - name: Instalar dependencias
         run: npm ci --no-audit --no-fund
-
-      - name: Preparar y compilar minijuegos HaxeFlixel
-        run: |
-          npm run prepare:haxe-assets
-          npm run build:haxe
-          test -s public/minigames/index.html || { echo "No se generó public/minigames/index.html"; exit 1; }
 
       - name: Tests
         run: npm test
@@ -79,15 +62,6 @@ jobs:
             sleep 1
           done
           node scripts/capture.mjs http://localhost:4173/
-
-      - name: Adjuntar sprites procesados para revisión
-        if: always()
-        run: |
-          mkdir -p artifacts/sprites-review
-          cp -R art/source/sprites/results/female artifacts/sprites-review/
-          cp -R art/source/sprites/results/male artifacts/sprites-review/
-          mkdir -p artifacts/sprites-review/generated
-          cp public/generated/axem-*.png artifacts/sprites-review/generated/ 2>/dev/null || true
 
       - name: Subir capturas y video
         if: always()

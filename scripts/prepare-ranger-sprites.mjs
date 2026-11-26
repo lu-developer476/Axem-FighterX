@@ -725,7 +725,7 @@ async function writeMaleAnimation(frames, rangerId, action, loop = 0, { writeGif
     .gif({
       loop,
       delay: delays,
-      colours,
+      colours: 256,
       dither: 0,
       effort: 10,
       keepDuplicateFrames: true,
@@ -992,7 +992,7 @@ async function writeMaleActionGif(color, filename, frames, colours = 256) {
     .gif({
       loop: 0,
       delay: frames.map(() => FRAME_DELAY_MS),
-      colours: 256,
+      colours,
       dither: 0,
       effort: 10,
       keepDuplicateFrames: true,

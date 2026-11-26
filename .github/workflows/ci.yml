@@ -47,6 +47,9 @@ jobs:
       - name: Tests
         run: npm test
 
+      - name: Validar recursos fuente sin modificarlos
+        run: npm run validate:assets
+
       - name: Exportar GIF manuales para verificación visual
         run: |
           for file in \

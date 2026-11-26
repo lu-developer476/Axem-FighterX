@@ -1,6 +1,6 @@
 import { ARENA } from '../../domain/arena/arena.js';
 import { FighterState } from '../../domain/entities/FighterState.js';
-import { characterAnimationData, GIF_ORIGIN_Y } from '../../infrastructure/assets/characterAnimationData.js';
+import { characterAnimationData } from '../../infrastructure/assets/characterAnimationData.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { FighterAnimator } from '../animation/FighterAnimator.js';
 import { shouldFlip } from './orientation.js';
@@ -24,7 +24,7 @@ export class FighterView {
     const fallbackTexture = spriteKeyFor(fighter.id, fighter.gender);
 
     this.shadow = scene.add.ellipse(0, ARENA.groundY, 44, 8, 0x000000, 0.4).setDepth(FIGHTER_DEPTH - 1);
-    this.sprite = scene.add.sprite(0, 0, fallbackTexture).setOrigin(0.5, GIF_ORIGIN_Y);
+    this.sprite = scene.add.sprite(0, 0, fallbackTexture).setOrigin(0.5, 1);
     this.animator = new FighterAnimator(this.sprite, fighter.id, fighter.gender, fallbackTexture, scene.anims);
     this.sync();
   }

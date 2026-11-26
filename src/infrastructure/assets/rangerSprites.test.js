@@ -8,7 +8,9 @@ import ASSET_STANDARDS from '../../../art/source/sprites/asset-standards.json';
 const generatedSpritePath = fileURLToPath(new URL('../../../public/generated/ranger-male-orange.png', import.meta.url));
 const generatedMenuOrangePath = fileURLToPath(new URL('../../../public/generated/menu-ranger-male-orange.png', import.meta.url));
 const resultGifPath = (action) => fileURLToPath(new URL(`../../../art/source/sprites/results/male/orange/${action}.gif`, import.meta.url));
-const koSourcePath = fileURLToPath(new URL('../../../art/source/sprites/references/axem-orange/ko-source.png', import.meta.url));
+const defeatedSourcePath = fileURLToPath(new URL('../../../art/source/sprites/references/axem-orange/defeated-source.png', import.meta.url));
+const defeatedBasePath = fileURLToPath(new URL('../../../art/source/sprites/references/axem-orange/defeated-closed.png', import.meta.url));
+const defeatedOutputPath = fileURLToPath(new URL('../../../art/source/sprites/results/male/orange/defeated.png', import.meta.url));
 const resultGifDirectory = fileURLToPath(new URL('../../../art/source/sprites/results/male/orange', import.meta.url));
 
 describe('Sprites canónicos de Axem Naranja', () => {
@@ -99,41 +101,100 @@ describe('Sprites canónicos de Axem Naranja', () => {
     }
   });
 
-  it('construye el KO naranja desde las dos poses y conserva el ojo blanco del último cuadro', async () => {
-    const source = await sharp(koSourcePath).metadata();
+  it('mantiene defeated.png en 150×100 y cambia solo los píxeles del ojo', async () => {
+    const source = await sharp(defeatedSourcePath).metadata();
     expect(source.format).toBe('png');
     expect([source.width, source.height]).toEqual([145, 22]);
     expect(source.hasAlpha).toBe(true);
 
-    const whitePixels = (pixels) => {
-      let count = 0;
-      for (let offset = 0; offset < pixels.length; offset += 4) {
-        if (pixels[offset] >= 245 && pixels[offset + 1] >= 245 &&
-            pixels[offset + 2] >= 245 && pixels[offset + 3] >= 200) count += 1;
-      }
-      return count;
-    };
-    const sourceEye = await sharp(koSourcePath)
-      .extract({ left: 88, top: 11, width: 4, height: 3 })
-      .ensureAlpha()
-      .raw()
-      .toBuffer();
-    expect(whitePixels(sourceEye)).toBe(12);
+    const base = await sharp(defeatedBasePath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const defeated = await sharp(defeatedOutputPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    expect([defeated.info.width, defeated.info.height]).toEqual([150, 100]);
+    expect(defeated.info.channels).toBe(4);
 
+    const changed = [];
+    for (let y = 0; y < 100; y++) {
+      for (let x = 0; x < 150; x++) {
+        const offset = (y * 150 + x) * 4;
+        if (!base.data.subarray(offset, offset + 4).equals(defeated.data.subarray(offset, offset + 4))) {
+          changed.push([x, y]);
+        }
+      }
+    }
+    const expected = [
+      [53, 86], [54, 86], [55, 86], [56, 86],
+      [53, 87], [54, 87], [55, 87], [56, 87],
+      [53, 88], [54, 88], [55, 88], [56, 88],
+      [69, 95],
+    ];
+    expect(changed).toEqual(expected);
+
+    const eye = await sharp(defeatedOutputPath)
+      .extract({ left: 53, top: 86, width: 4, height: 3 })
+      .ensureAlpha().raw().toBuffer();
+    let white = 0;
+    for (let offset = 0; offset < eye.length; offset += 4) {
+      if (eye[offset] >= 245 && eye[offset + 1] >= 245 &&
+          eye[offset + 2] >= 245 && eye[offset + 3] >= 200) white++;
+    }
+    expect(white).toBe(12);
+  });
+
+  it('genera el KO con ambos cuadros en la misma altura y posición; solo se abre el ojo', async () => {
     const koPath = resultGifPath('ko');
     const ko = await sharp(koPath, { animated: true }).metadata();
     expect(ko.format).toBe('gif');
-    expect(ko.width).toBe(ASSET_STANDARDS.categories.actionGif.width);
-    expect(ko.pageHeight).toBe(ASSET_STANDARDS.categories.actionGif.height);
+    expect(ko.width).toBe(150);
+    expect(ko.pageHeight).toBe(100);
     expect(ko.pages).toBe(2);
     expect(ko.hasAlpha).toBe(true);
 
+    const frames = await Promise.all([0, 1].map((page) =>
+      sharp(koPath, { page, pages: 1 }).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    ));
+    const bounds = frames.map(({ data }) => {
+      let left = 150;
+      let top = 100;
+      let right = -1;
+      let bottom = -1;
+      for (let y = 0; y < 100; y++) {
+        for (let x = 0; x < 150; x++) {
+          if (data[(y * 150 + x) * 4 + 3] === 0) continue;
+          left = Math.min(left, x);
+          top = Math.min(top, y);
+          right = Math.max(right, x);
+          bottom = Math.max(bottom, y);
+        }
+      }
+      return [left, top, right + 1, bottom + 1];
+    });
+    expect(bounds).toEqual([[41, 76, 109, 96], [41, 76, 109, 96]]);
+
+    const changed = [];
+    for (let y = 0; y < 100; y++) {
+      for (let x = 0; x < 150; x++) {
+        const offset = (y * 150 + x) * 4;
+        if (!frames[0].data.subarray(offset, offset + 4).equals(frames[1].data.subarray(offset, offset + 4))) {
+          changed.push([x, y]);
+        }
+      }
+    }
+    const expectedEye = [
+      [53, 86], [54, 86], [55, 86], [56, 86],
+      [53, 87], [54, 87], [55, 87], [56, 87],
+      [53, 88], [54, 88], [55, 88], [56, 88],
+    ];
+    expect(changed).toEqual(expectedEye);
+
     const finalEye = await sharp(koPath, { page: 1, pages: 1 })
-      .extract({ left: 92, top: 81, width: 4, height: 3 })
-      .ensureAlpha()
-      .raw()
-      .toBuffer();
-    expect(whitePixels(finalEye)).toBe(12);
+      .extract({ left: 53, top: 86, width: 4, height: 3 })
+      .ensureAlpha().raw().toBuffer();
+    let white = 0;
+    for (let offset = 0; offset < finalEye.length; offset += 4) {
+      if (finalEye[offset] >= 245 && finalEye[offset + 1] >= 245 &&
+          finalEye[offset + 2] >= 245 && finalEye[offset + 3] >= 200) white++;
+    }
+    expect(white).toBe(12);
   });
 
   it('mantiene retirados los GIF de doble hacha y battle-pose', async () => {

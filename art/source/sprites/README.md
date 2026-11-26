@@ -9,7 +9,7 @@ Hay dos géneros, cada uno con su hoja de referencia. **Violet** y **Orange** so
 
 La orientación nativa se conserva en todas las imágenes de cada fuente: Axem Red masculino, incluidos el retrato base y los GIF de acción, apunta a la derecha; Axem Pink femenino apunta a la izquierda. El renderizador espeja cada sprite solo cuando el luchador necesita mirar hacia el lado contrario.
 
-La carpeta `references/axem-red/` conserva la hoja compuesta `axem-red-spritesheet.png`, las secuencias de referencia `dash.gif`, `idle.gif`, `jump.gif`, `run.gif` y `walk.gif`, y los GIF maestros `axem-ranger-run.gif` y `axem-ranger-bike.gif`. Las hojas de animación separadas de Red y Pink se eliminaron; los recortes de combate se reconstruyen desde la hoja Orange procesada y su índice versionado. No se genera una copia redundante en `results/male/red/`: Red queda centralizado en `references/axem-red/`. El GIF maestro de batalla de Orange se conserva en `references/axem-orange/battle-pose.gif`. La tira `references/axem-orange/ko-source.png` conserva las dos poses originales del KO y es la entrada del GIF `ko.gif`. Orange y Violet siguen siendo variantes cromáticas independientes; Red no se obtiene recoloreando a Orange.
+La carpeta `references/axem-red/` conserva la hoja compuesta `axem-red-spritesheet.png`, las secuencias de referencia `dash.gif`, `idle.gif`, `jump.gif`, `run.gif` y `walk.gif`, y los GIF maestros `axem-ranger-run.gif` y `axem-ranger-bike.gif`. Las hojas de animación separadas de Red y Pink se eliminaron; los recortes de combate se reconstruyen desde la hoja Orange procesada y su índice versionado. No se genera una copia redundante en `results/male/red/`: Red queda centralizado en `references/axem-red/`. El GIF maestro de batalla de Orange se conserva en `references/axem-orange/battle-pose.gif`. `references/axem-orange/defeated-closed.png` conserva la pose base de 150 × 100 px; `defeated-source.png` aporta las dos variantes del ojo. El generador corrige el desplazamiento de 2 px de la segunda celda y copia únicamente los 13 píxeles diferentes, por lo que `results/male/orange/defeated.png` conserva el lienzo, la altura y la posición originales. `ko.gif` usa dos cuadros de 150 × 100 px con la misma caja de píxeles; únicamente cambia la apertura del ojo. Orange y Violet siguen siendo variantes cromáticas independientes; Red no se obtiene recoloreando a Orange.
 
 ## Cómo se generan los resultados
 
@@ -74,7 +74,7 @@ La clasificación de las secuencias para el masculino naranja es: `group-01` + `
 
 ### Grupo 16 — derrota e invocación del hacha
 
-La secuencia complementaria `group-16.png` contiene dos cuadros alineados: el primero se exporta como `defeated.png` y se pre-carga para mostrar la pose de derrota cuando un Ranger masculino entra en KO; el segundo se añade al final de `battle-pose.gif`, cerrando la animación con el hacha invocada y el personaje listo para combatir. El generador produce ambos resultados para Orange y Violet.
+La secuencia complementaria `group-16.png` conserva el cuadro del hacha para el cierre de `battle-pose.gif`. La pose de derrota Orange se conserva por separado en un lienzo fijo de **150 × 100 px**: `defeated-closed.png` es la base y `defeated-source.png` aporta el ojo abierto. El generador corrige el desfase horizontal de la tira y actualiza únicamente el área del ojo; tanto `defeated.png` como los dos cuadros de `ko.gif` mantienen exactamente la misma caja, altura y posición.
 
 ### Secuencias complementarias del Axem Violeta
 
@@ -303,8 +303,9 @@ El proceso de preparación también genera para Orange y Violet los GIF `guard.g
 y `ko.gif`. Se construyen desde recortes masculinos versionados: guardia
 y reacción al bloqueo desde la pose de combate, rodada desde el dash, aterrizaje
 desde los últimos cuadros del salto, especial desde la secuencia del hacha, y
-victoria desde las poses de combate y reposo disponibles. El KO naranja se construye
-desde las dos poses de `references/axem-orange/ko-source.png`, sin escalar el pixel art.
+victoria desde las poses de combate y reposo disponibles. El KO naranja se construye desde `defeated-closed.png` y `defeated-source.png`.
+Ambos cuadros usan el mismo lienzo de 150×100 px y la misma posición; únicamente se abre
+el ojo blanco del último cuadro, sin desplazar ni reescalar el personaje.
 
 Todos conservan el lienzo transparente de 150×100 px y el apoyo del sprite en la misma
 línea de suelo. El pipeline también exporta sus tiras de 86×57 px en

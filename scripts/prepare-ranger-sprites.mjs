@@ -1010,13 +1010,110 @@ async function writeMaleDefeatedPose(color, frame, targetScale = null) {
   console.log('Generada pose de derrota ' + path.relative(ROOT, generatedPath));
 }
 
+
+function measureAlphaBounds(data, width, height) {
+  let left = width;
+  let top = height;
+  let right = -1;
+  let bottom = -1;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (data[(y * width + x) * 4 + 3] === 0) continue;
+      left = Math.min(left, x);
+      top = Math.min(top, y);
+      right = Math.max(right, x);
+      bottom = Math.max(bottom, y);
+    }
+  }
+  if (right < left || bottom < top) throw new Error('Un sprite de derrota está vacío.');
+  return { left, top, right: right + 1, bottom: bottom + 1, width: right - left + 1, height: bottom - top + 1 };
+}
+
+/**
+ * Actualiza únicamente la apertura del ojo sobre la pose 150×100 ya alineada.
+ * La segunda celda de la tira viene corrida 2 px a la derecha; se compensa antes
+ * de copiar sus 13 píxeles distintos, sin escalar ni mover el personaje.
+ */
+async function buildOrangeDefeatedPose() {
+  const basePath = SOURCE('sprites', 'references', 'axem-orange', 'defeated-closed.png');
+  const sourcePath = SOURCE('sprites', 'references', 'axem-orange', 'defeated-source.png');
+  const base = await sharp(basePath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const sourceMetadata = await sharp(sourcePath).metadata();
+
+  if (base.info.width !== ACTION_GIF_SIZE.width ||
+      base.info.height !== ACTION_GIF_SIZE.height ||
+      sourceMetadata.width !== 145 || sourceMetadata.height !== 22) {
+    throw new Error('La base defeated-closed.png debe medir 150×100 y defeated-source.png 145×22.');
+  }
+
+  const [closed, opened] = await Promise.all([
+    sharp(sourcePath).extract({ left: 0, top: 0, width: 72, height: 22 })
+      .ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    sharp(sourcePath).extract({ left: 73, top: 0, width: 72, height: 22 })
+      .ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+  ]);
+  const baseBounds = measureAlphaBounds(base.data, base.info.width, base.info.height);
+  const closedBounds = measureAlphaBounds(closed.data, 72, 22);
+  const openedBounds = measureAlphaBounds(opened.data, 72, 22);
+  const shiftX = closedBounds.left - openedBounds.left;
+  const shiftY = closedBounds.top - openedBounds.top;
+
+  if (baseBounds.width !== closedBounds.width || baseBounds.height !== closedBounds.height ||
+      openedBounds.width !== closedBounds.width || openedBounds.height !== closedBounds.height ||
+      shiftX !== -2 || shiftY !== 0) {
+    throw new Error('Las poses de defeated-source.png ya no coinciden con la base o cambiaron su alineación.');
+  }
+
+  const left = baseBounds.left - closedBounds.left;
+  const top = baseBounds.top - closedBounds.top;
+  const output = Buffer.from(base.data);
+  let changedPixels = 0;
+  for (let y = 0; y < 22; y++) {
+    for (let x = 0; x < 72; x++) {
+      const openX = x - shiftX;
+      const openY = y - shiftY;
+      if (openX < 0 || openX >= 72 || openY < 0 || openY >= 22) continue;
+      const closedOffset = (y * 72 + x) * 4;
+      const openOffset = (openY * 72 + openX) * 4;
+      if (closed.data.subarray(closedOffset, closedOffset + 4)
+        .equals(opened.data.subarray(openOffset, openOffset + 4))) continue;
+      const targetOffset = ((top + y) * base.info.width + left + x) * 4;
+      opened.data.copy(output, targetOffset, openOffset, openOffset + 4);
+      changedPixels++;
+    }
+  }
+
+  if (changedPixels !== 13) {
+    throw new Error('La fuente de derrota debe cambiar solo los 13 píxeles del ojo; se detectaron ' + changedPixels + '.');
+  }
+
+  const defeated = await sharp(output, {
+    raw: { width: base.info.width, height: base.info.height, channels: 4 },
+  }).png().toBuffer();
+  const boundsAfter = measureAlphaBounds(output, base.info.width, base.info.height);
+  if (boundsAfter.left !== baseBounds.left || boundsAfter.top !== baseBounds.top ||
+      boundsAfter.right !== baseBounds.right || boundsAfter.bottom !== baseBounds.bottom) {
+    throw new Error('La pose defeated.png cambió de posición o de altura.');
+  }
+
+  await writeResult('male', 'orange', 'defeated.png', defeated);
+  await fs.mkdir(GENERATED, { recursive: true });
+  await fs.writeFile(path.join(GENERATED, 'axem-orange-defeated.png'), defeated);
+  console.log('Generada pose defeated.png 150×100; solo cambió la apertura del ojo.');
+  return { closedFrame: await fs.readFile(basePath), openFrame: defeated };
+}
+
 /** El grupo 16 termina la preparación y deja la pose estática que se usa al caer KO. */
 async function buildMaleGroup16Sequence(color, frames) {
   if (frames.length !== 2) {
     throw new Error('group-16.png debe contener exactamente dos fotogramas.');
   }
+  if (color === 'orange') {
+    await buildOrangeDefeatedPose();
+    return;
+  }
 
-  // El cuadro del hacha es la pose de pie: fija la escala estándar y la derrota la comparte.
+  // Para otras variantes, la pose de pie fija la escala de la derrota.
   const axeTrimmed = await sharp(frames[1].input)
     .trim({ background: TRANSPARENT, threshold: 1 })
     .png()
@@ -1345,41 +1442,11 @@ async function buildMaleCombatEnhancementGifs(color) {
   const blurredRollFrames = await Promise.all(rollFrames.map((frame, index) => addGrayRollMotionBlur(frame, rollAngles[index], index)));
   await writeMaleActionGif(color, 'roll', blurredRollFrames);
 
-  // Orange usa el strip KO entregado como referencia: son dos poses consecutivas.
-  // Se extraen por separado, se reflejan para mirar a la derecha y se colocan
-  // sobre el lienzo de acción sin escalar el pixel art.
+  // El KO Orange alterna dos PNG de 150×100 con la misma caja y el mismo ancla.
   if (color === 'orange') {
-    const koSourcePath = path.join(ROOT, 'art/source/sprites/references/axem-orange/ko-source.png');
-    const koSourceMetadata = await sharp(koSourcePath).metadata();
-    const frameWidth = Math.floor(koSourceMetadata.width / 2);
-    if (koSourceMetadata.width < 2 || koSourceMetadata.height > ASSET_STANDARDS.categories.actionGif.height) {
-      throw new Error('La fuente ko-source.png debe contener dos poses horizontales válidas.');
-    }
-    const koFrames = await Promise.all([0, 1].map(async (index) => {
-      const left = index === 0 ? 0 : koSourceMetadata.width - frameWidth;
-      const frame = await sharp(koSourcePath)
-        .extract({ left, top: 0, width: frameWidth, height: koSourceMetadata.height })
-        .flop()
-        .png()
-        .toBuffer();
-      return sharp({
-        create: {
-          width: ASSET_STANDARDS.categories.actionGif.width,
-          height: ASSET_STANDARDS.categories.actionGif.height,
-          channels: 4,
-          background: TRANSPARENT,
-        },
-      })
-        .composite([{
-          input: frame,
-          left: Math.floor((ASSET_STANDARDS.categories.actionGif.width - frameWidth) / 2),
-          top: Math.max(0, ASSET_STANDARDS.categories.actionGif.height - koSourceMetadata.height - 8),
-        }])
-        .png()
-        .toBuffer();
-    }));
-    // La paleta compacta reserva el blanco del ojo y evita que el key transparente lo absorba.
-    await writeMaleActionGif(color, 'ko', koFrames, 16);
+    const closedFrame = await fs.readFile(SOURCE('sprites', 'references', 'axem-orange', 'defeated-closed.png'));
+    const openFrame = await fs.readFile(RESULTS('male', color, 'defeated.png'));
+    await writeMaleActionGif(color, 'ko', [closedFrame, openFrame]);
   } else {
     const defeatedFrame = await sharp(RESULTS('male', color, 'defeated.png'))
       .flop()
@@ -1476,8 +1543,8 @@ async function buildGender(gender, allowedColors) {
           { writeGif: false },
         );
         await buildMaleActionGifs(color, sequenceIndex);
-        // charge/guard/roll/KO ya tienen GIF maestros versionados; no se reconstruyen
-        // desde tiras auxiliares antiguas que fueron retiradas del repositorio.
+        const defeatedPoses = await buildOrangeDefeatedPose();
+        await writeMaleActionGif(color, 'ko', [defeatedPoses.closedFrame, defeatedPoses.openFrame]);
         await writeMaleGameStrips(color);
       }
       baseSource = await fs.readFile(path.join(GENERATED, 'super-axem-source-male.png'));

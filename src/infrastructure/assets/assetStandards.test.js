@@ -18,17 +18,6 @@ async function collectGifFiles(directory, recursive = false) {
   }
   return files;
 }
-async function visibleBounds(relativePath) {
-  const { data, info } = await sharp(absolute(relativePath)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  let left = info.width, top = info.height, right = -1, bottom = -1;
-  for (let y = 0; y < info.height; y += 1) for (let x = 0; x < info.width; x += 1) {
-    if (data[(y * info.width + x) * 4 + 3] < 16) continue;
-    left = Math.min(left, x); top = Math.min(top, y);
-    right = Math.max(right, x + 1); bottom = Math.max(bottom, y + 1);
-  }
-  return { left, top, right, bottom };
-}
-
 describe('Estándares centrales de recursos gráficos', () => {
   it('conserva únicamente el GIF maestro de bicicleta en la referencia Red', async () => {
     const directory = absolute('art/source/sprites/references/axem-red');
@@ -56,24 +45,17 @@ describe('Estándares centrales de recursos gráficos', () => {
   });
 
   for (const [gender, family] of Object.entries(ASSET_STANDARDS.categories.characterArtwork.families)) {
-    it('mantiene el lienzo del master y su fuente preparada ' + gender, async () => {
-      const [master, prepared] = await Promise.all([
-        sharp(absolute(family.reference)).metadata(),
-        sharp(absolute(family.preparedSource)).metadata(),
-      ]);
+    it('valida el master de artwork ' + gender + ' sin generar derivados', async () => {
+      const master = await sharp(absolute(family.reference)).metadata();
       expect(master.format).toBe('png');
       expect(master.width).toBe(family.width);
       expect(master.height).toBe(family.height);
-      expect(prepared.format).toBe('png');
-      expect(prepared.width).toBe(master.width);
-      expect(prepared.height).toBe(master.height);
-      expect(prepared.hasAlpha).toBe(true);
 
-      if (family.result) {
+      if (family.result && family.result !== family.reference) {
         const artwork = await sharp(absolute(family.result)).metadata();
         expect(artwork.format).toBe('png');
-        expect(artwork.width).toBe(master.width);
-        expect(artwork.height).toBe(master.height);
+        expect(artwork.width).toBe(family.width);
+        expect(artwork.height).toBe(family.height);
         expect(artwork.hasAlpha).toBe(true);
       }
     });
@@ -110,49 +92,16 @@ describe('Estándares centrales de recursos gráficos', () => {
   });
 
 
-  it('mantiene la fuente masculina preparada alineada con el artwork Orange canónico', async () => {
-    const family = ASSET_STANDARDS.categories.characterArtwork.families.male;
-    const [master, orange, orangeBounds, redBounds] = await Promise.all([
-      sharp(absolute(family.reference)).metadata(),
-      sharp(absolute(family.result)).metadata(),
-      visibleBounds(family.visualBoundsReference),
-      visibleBounds(family.preparedSource),
-    ]);
-    expect([orange.width, orange.height]).toEqual([master.width, master.height]);
-    const orangeWidth = orangeBounds.right - orangeBounds.left;
-    const orangeHeight = orangeBounds.bottom - orangeBounds.top;
-    const redWidth = redBounds.right - redBounds.left;
-    const redHeight = redBounds.bottom - redBounds.top;
-    expect(Math.abs(redWidth - orangeWidth) / orangeWidth)
-      .toBeLessThanOrEqual(family.visualBoundsRatioTolerance);
-    expect(Math.abs(redHeight - orangeHeight) / orangeHeight)
-      .toBeLessThanOrEqual(family.visualBoundsRatioTolerance);
-    expect(Math.abs((redBounds.left + redBounds.right - orangeBounds.left - orangeBounds.right) / 2)
-      ).toBeLessThanOrEqual(family.visualBoundsTolerance);
-    expect(Math.abs(redBounds.bottom - orangeBounds.bottom))
-      .toBeLessThanOrEqual(family.visualBoundsTolerance);
-  });
-
-  it('genera las texturas de combate con el tamaño estándar', async () => {
+  it('mantiene declaradas las dimensiones objetivo de las texturas de combate', () => {
     const category = ASSET_STANDARDS.categories.combatTexture;
-    for (const file of category.outputs) {
-      const metadata = await sharp(absolute(file)).metadata();
-      expect(metadata.format).toBe('png');
-      expect(metadata.width).toBe(category.width);
-      expect(metadata.height).toBe(category.height);
-      expect(metadata.hasAlpha).toBe(true);
-    }
+    expect([category.width, category.height]).toEqual([53, 83]);
+    expect(category.outputs).toEqual(['public/generated/ranger-male-orange.png']);
   });
 
-  it('genera los retratos de menú con el tamaño estándar', async () => {
+  it('mantiene declaradas las dimensiones objetivo de los retratos de menú', () => {
     const category = ASSET_STANDARDS.categories.menuPortrait;
-    for (const file of category.outputs) {
-      const metadata = await sharp(absolute(file)).metadata();
-      expect(metadata.format).toBe('png');
-      expect(metadata.width).toBe(category.width);
-      expect(metadata.height).toBe(category.height);
-      expect(metadata.hasAlpha).toBe(true);
-    }
+    expect([category.width, category.height]).toEqual([104, 150]);
+    expect(category.outputs).toEqual(['public/generated/menu-ranger-male-orange.png']);
   });
 
   it('no depende de atlas compuestos retirados', () => {

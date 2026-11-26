@@ -29,6 +29,7 @@ describe('Sprites canónicos de Axem Naranja', () => {
       '../../../art/source/sprites/results/male/violet',
       '../../../art/source/sprites/results/female/orange',
       '../../../art/source/sprites/results/female/pink',
+      '../../../art/source/sprites/results/male/red',
     ]) {
       await expect(access(fileURLToPath(new URL(path, import.meta.url))))
         .rejects.toMatchObject({ code: 'ENOENT' });
@@ -38,22 +39,28 @@ describe('Sprites canónicos de Axem Naranja', () => {
     ));
     expect(await readdir(femaleVioletDirectory)).toEqual(['.gitkeep']);
 
-    // Red todavía no es una variante jugable: solo puede conservar su primer recurso versionado.
-    const redDirectory = fileURLToPath(new URL(
-      '../../../art/source/sprites/results/male/red', import.meta.url,
-    ));
-    expect((await readdir(redDirectory)).sort()).toEqual([
-      'bike-spritesheet.json',
-      'bike-spritesheet.png',
-    ]);
+
+  });
+
+  it('conserva el GIF maestro de bicicleta en la referencia Red y las acciones Orange versionadas', async () => {
+    const redDirectory = fileURLToPath(new URL('../../../art/source/sprites/references/axem-red', import.meta.url));
+    const redFiles = (await readdir(redDirectory, { withFileTypes: true }))
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name)
+      .sort();
+    expect(redFiles).toEqual([
+      'axem-ranger-bike.gif',
+      'axem-ranger-bike-spritesheet.json',
+      'axem-ranger-bike-spritesheet.png',
+    ].sort());
 
     const redManifestPath = fileURLToPath(new URL(
-      '../../../art/source/sprites/results/male/red/bike-spritesheet.json',
+      '../../../art/source/sprites/references/axem-red/axem-ranger-bike-spritesheet.json',
       import.meta.url,
     ));
     const redManifest = JSON.parse(await readFile(redManifestPath, 'utf8'));
     expect(redManifest).toMatchObject({
-      image: 'bike-spritesheet.png',
+      image: 'axem-ranger-bike-spritesheet.png',
       source: 'art/source/sprites/references/axem-red/axem-ranger-bike.gif',
       frameWidth: 101,
       frameHeight: 49,
@@ -67,7 +74,7 @@ describe('Sprites canónicos de Axem Naranja', () => {
     });
 
     const redSheetPath = fileURLToPath(new URL(
-      '../../../art/source/sprites/results/male/red/bike-spritesheet.png',
+      '../../../art/source/sprites/references/axem-red/axem-ranger-bike-spritesheet.png',
       import.meta.url,
     ));
     const redSheet = await sharp(redSheetPath).metadata();
@@ -77,15 +84,6 @@ describe('Sprites canónicos de Axem Naranja', () => {
       redManifest.frameHeight * redManifest.rows,
     ]);
     expect(redSheet.hasAlpha).toBe(true);
-  });
-
-  it('conserva el GIF maestro de bicicleta en la referencia Red y las acciones Orange versionadas', async () => {
-    const redDirectory = fileURLToPath(new URL('../../../art/source/sprites/references/axem-red', import.meta.url));
-    const redFiles = (await readdir(redDirectory, { withFileTypes: true }))
-      .filter((entry) => entry.isFile())
-      .map((entry) => entry.name)
-      .sort();
-    expect(redFiles).toEqual(['axem-ranger-bike.gif']);
 
     const masterBike = fileURLToPath(new URL(
       '../../../art/source/sprites/references/axem-red/axem-ranger-bike.gif',

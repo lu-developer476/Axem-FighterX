@@ -120,7 +120,7 @@ Los GIF de acciones de personaje usan un estándar único: **150 × 100 px por c
 
 La variante seleccionable actual es **Axem Naranja masculino**. El juego carga directamente el artwork y las tiras PNG versionadas de `art/source/sprites/results/male/orange/`. Las fuentes no pasan por recoloreadores, recortadores ni normalizadores durante los tests o el build.
 
-El juego reproduce la tira de carrera versionada y usa el artwork estático como fallback para las acciones que no tienen una hoja PNG versionada. Las animaciones faltantes no se fabrican ni se generan durante el arranque; las hojas incompletas no se ofrecen en los selectores. Las referencias Pink se conservan como material fuente, sin publicar una variante jugable incompleta.
+El juego reproduce la tira de carrera versionada y usa el artwork estático como fallback para las acciones que no tienen una hoja PNG versionada. Las animaciones faltantes no se fabrican ni se generan durante el arranque; las hojas incompletas no se ofrecen en los selectores. Las referencias Pink y Red se conservan como material fuente, sin publicar variantes jugables incompletas. El spritesheet de bicicleta de Red permanece junto al GIF maestro en `art/source/sprites/references/axem-red/`; no es un recurso de resultados ni se carga como variante jugable.
 
 No hay comando de regeneración de sprites. Los tests, la validación y el build no escriben ni normalizan archivos PNG/GIF fuente.
 

@@ -200,10 +200,16 @@ async function validateEffectGifs() {
 
     const gif = await sharp(absolute(effect.output), { animated: true, failOn: 'error' }).metadata();
     assertEqual(gif.format, 'gif', effect.output + ' formato');
-    const expectedFrameWidth = effect.frameLayout === 'horizontal-cells'
-      ? (effect.frameWidth ?? Math.ceil(source.width / effect.frameCount))
-      : source.width;
-    assertEqual(gif.width, expectedFrameWidth, effect.output + ' ancho');
+    if (effect.frameLayout === 'horizontal-cells') {
+      const expectedFrameWidth = Math.ceil(source.width / effect.frameCount);
+      assertEqual(gif.width, expectedFrameWidth, effect.output + ' ancho de celda');
+    } else if (effect.frameLayout === 'detected-segments') {
+      if (!Number.isInteger(gif.width) || gif.width <= 0 || gif.width >= source.width) {
+        throw new Error(effect.output + ': el GIF debe usar un lienzo de fotograma, no la hoja completa.');
+      }
+    } else {
+      assertEqual(gif.width, source.width, effect.output + ' ancho');
+    }
     assertEqual(gif.pageHeight ?? gif.height, source.height, effect.output + ' alto por cuadro');
     if (!gif.hasAlpha) throw new Error(effect.output + ': falta la transparencia.');
     if (!Number.isInteger(gif.pages) || gif.pages < 2) {

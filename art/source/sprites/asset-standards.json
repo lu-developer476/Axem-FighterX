@@ -103,62 +103,72 @@
         {
           "source": "art/source/effects/axem/big-white-explotion.png",
           "output": "art/source/effects/axem/big-white-explotion.gif",
-          "mode": "horizontal-cells",
+          "mode": "center-strip",
           "frameDelay": 100,
           "minFrames": 3,
           "frameCount": 3,
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
           "strictFrameCount": true,
-          "frameLayout": "horizontal-cells"
+          "frameLayout": "detected-segments",
+          "maxEmptyColumns": 0,
+          "framePadding": 2
         },
         {
           "source": "art/source/effects/axem/white-explotion.png",
           "output": "art/source/effects/axem/white-explotion.gif",
-          "mode": "horizontal-cells",
+          "mode": "center-strip",
           "frameDelay": 85,
           "minFrames": 8,
           "frameCount": 8,
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
           "strictFrameCount": true,
-          "frameLayout": "horizontal-cells"
+          "frameLayout": "detected-segments",
+          "maxEmptyColumns": 0,
+          "framePadding": 2
         },
         {
           "source": "art/source/effects/canon/normal-canon-shoot.png",
           "output": "art/source/effects/canon/normal-canon-shoot.gif",
-          "mode": "horizontal-cells",
+          "mode": "center-strip",
           "frameDelay": 55,
           "minFrames": 7,
           "frameCount": 7,
-          "frameLayout": "horizontal-cells",
+          "frameLayout": "detected-segments",
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
-          "strictFrameCount": true
+          "strictFrameCount": true,
+          "maxEmptyColumns": 2,
+          "framePadding": 2
         },
         {
           "source": "art/source/effects/canon/special-canon-shoot.png",
           "output": "art/source/effects/canon/special-canon-shoot.gif",
-          "mode": "horizontal-cells",
+          "mode": "center-strip",
           "frameDelay": 65,
           "minFrames": 8,
           "frameCount": 8,
-          "frameLayout": "horizontal-cells",
+          "frameLayout": "detected-segments",
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
-          "strictFrameCount": true
+          "strictFrameCount": true,
+          "maxEmptyColumns": 3,
+          "framePadding": 2
         },
         {
           "source": "art/source/effects/canon/turquoise-canon-shoot.png",
           "output": "art/source/effects/canon/turquoise-canon-shoot.gif",
-          "mode": "horizontal-cells",
+          "mode": "center-strip",
           "frameDelay": 55,
           "minFrames": 6,
           "frameCount": 6,
-          "frameLayout": "horizontal-cells",
+          "frameLayout": "detected-segments",
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
-          "strictFrameCount": true
+          "strictFrameCount": true,
+          "maxEmptyColumns": 2,
+          "framePadding": 2
         },
         {
           "source": "art/source/effects/sparks/turquoise-effect.png",
@@ -186,8 +196,8 @@
         }
       ],
       "preserveFrameHeight": true,
-      "frameWidthPolicy": "ceil-source-width-divided-by-frame-count",
-      "description": "Cada PNG horizontal se divide en celdas reales; cada GIF conserva un fotograma por celda, el alto de origen y el fondo transparente."
+      "frameWidthPolicy": "per-frame-max-visible-width-plus-two-pixel-padding-for-detected-segments; ceil-source-width-divided-by-count-for-cell-sheets",
+      "description": "Canon y explosiones Axem extraen límites visibles reales, centran cada dibujo completo en un lienzo por fotograma; Sparks extrae sus celdas horizontales individuales. Todos los GIF conservan el alto de origen y transparencia."
     },
     "backgrounds": {
       "policy": "preserve-source-aspect-ratio",

@@ -147,6 +147,24 @@ function buildHorizontalCellFrame(source, width, height, segment, frameWidth) {
   return frame;
 }
 
+function buildCenteredSegmentFrame(source, width, height, segment, frameWidth) {
+  const bounds = visibleBounds(source, width, height, segment.left, segment.right);
+  if (!bounds) return null;
+  const cropWidth = bounds.right - bounds.left;
+  const cropHeight = bounds.bottom - bounds.top;
+  const frame = Buffer.alloc(frameWidth * height * 4);
+  const targetLeft = Math.floor((frameWidth - cropWidth) / 2);
+  const targetTop = Math.floor((height - cropHeight) / 2);
+
+  for (let y = 0; y < cropHeight; y += 1) {
+    const sourceStart = ((bounds.top + y) * width + bounds.left) * 4;
+    const sourceEnd = sourceStart + cropWidth * 4;
+    const targetStart = ((targetTop + y) * frameWidth + targetLeft) * 4;
+    source.copy(frame, targetStart, sourceStart, sourceEnd);
+  }
+  return frame;
+}
+
 function createHorizontalSegments(width, count) {
   return Array.from({ length: count }, (_, index) => ({
     left: Math.floor(index * width / count),
@@ -200,6 +218,27 @@ async function makeGif(config) {
     const segments = createHorizontalSegments(width, frameCount);
     frames = segments.map((segment) =>
       buildHorizontalCellFrame(data, width, height, segment, frameWidth)
+    );
+  } else if (config.frameLayout === 'detected-segments') {
+    const segments = findHorizontalSegments(
+      data,
+      width,
+      height,
+      config.maxEmptyColumns ?? 0,
+    );
+    assert(
+      segments.length === config.frameCount,
+      config.source + ': se detectaron ' + segments.length +
+        ' segmentos visibles; se esperaban exactamente ' + config.frameCount + '.',
+    );
+    const bounds = segments.map((segment) =>
+      visibleBounds(data, width, height, segment.left, segment.right)
+    );
+    assert(bounds.every(Boolean), config.source + ': se detectó un fotograma vacío.');
+    frameWidth = Math.max(...bounds.map((bound) => bound.right - bound.left)) +
+      (config.framePadding ?? 2);
+    frames = segments.map((segment) =>
+      buildCenteredSegmentFrame(data, width, height, segment, frameWidth)
     );
   } else if (config.frameLayout === 'horizontal-strip') {
     const frameCount = config.frameCount;

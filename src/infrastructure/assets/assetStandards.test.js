@@ -18,12 +18,42 @@ async function collectGifFiles(directory, recursive = false) {
   return files;
 }
 describe('Estándares centrales de recursos gráficos', () => {
-  it('conserva únicamente el GIF maestro de bicicleta en la referencia Red', async () => {
+  it('conserva el GIF maestro y el spritesheet de referencia de bicicleta en Red', async () => {
     const directory = absolute('art/source/sprites/references/axem-red');
     const entries = await fs.readdir(directory, { withFileTypes: true });
     const filenames = entries.filter((entry) => entry.isFile()).map((entry) => entry.name).sort();
 
-    expect(filenames).toEqual(['axem-ranger-bike.gif']);
+    expect(filenames).toEqual([
+      'axem-ranger-bike.gif',
+      'axem-ranger-bike-spritesheet.json',
+      'axem-ranger-bike-spritesheet.png',
+    ].sort());
+
+    const manifestPath = absolute('art/source/sprites/references/axem-red/axem-ranger-bike-spritesheet.json');
+    const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+    expect(manifest).toMatchObject({
+      image: 'axem-ranger-bike-spritesheet.png',
+      source: 'art/source/sprites/references/axem-red/axem-ranger-bike.gif',
+      frameWidth: 101,
+      frameHeight: 49,
+      frames: 5,
+      columns: 5,
+      rows: 1,
+      frameDurationMs: 100,
+      loop: true,
+      cropFromSource: { x: 22, y: 22, width: 101, height: 49 },
+      sourceFrameSize: { width: 150, height: 100 },
+    });
+
+    const sheet = await sharp(absolute(
+      'art/source/sprites/references/axem-red/axem-ranger-bike-spritesheet.png',
+    )).metadata();
+    expect(sheet.format).toBe('png');
+    expect([sheet.width, sheet.height]).toEqual([
+      manifest.frameWidth * manifest.columns,
+      manifest.frameHeight * manifest.rows,
+    ]);
+    expect(sheet.hasAlpha).toBe(true);
     expect(ASSET_STANDARDS.categories.actionGif.referenceFiles).toEqual(['axem-ranger-bike.gif']);
 
     const pinkDirectory = absolute('art/source/sprites/references/axem-pink');

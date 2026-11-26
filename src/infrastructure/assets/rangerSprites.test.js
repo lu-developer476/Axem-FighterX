@@ -38,8 +38,6 @@ describe('Sprites canónicos de Axem Naranja', () => {
       '../../../art/source/sprites/results/female/violet', import.meta.url,
     ));
     expect(await readdir(femaleVioletDirectory)).toEqual(['.gitkeep']);
-
-
   });
 
   it('conserva el GIF maestro de bicicleta en la referencia Red y las acciones Orange versionadas', async () => {

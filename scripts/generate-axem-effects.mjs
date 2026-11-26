@@ -51,6 +51,24 @@ function findHorizontalSegments(data, width, height, maxEmptyColumns) {
   return segments;
 }
 
+// Las hojas Axem de esta carpeta son ilustraciones grises sobre blanco opaco.
+// Se elimina ese blanco antes de detectar las columnas ocupadas: de lo contrario,
+// todo el lienzo parece un único cuadro y el generador corta la imagen por mitades.
+function removeWhiteBackground(data, threshold = 250) {
+  let removedPixels = 0;
+  for (let offset = 0; offset < data.length; offset += 4) {
+    if (
+      data[offset] >= threshold &&
+      data[offset + 1] >= threshold &&
+      data[offset + 2] >= threshold
+    ) {
+      data[offset + 3] = 0;
+      removedPixels += 1;
+    }
+  }
+  return removedPixels;
+}
+
 function visibleBounds(data, width, height, left, right) {
   let top = height;
   let bottom = -1;
@@ -142,6 +160,11 @@ async function makeGif(config) {
   const height = info.height;
   let frames;
 
+  if (config.backgroundRemoval === 'white') {
+    const removedPixels = removeWhiteBackground(data, config.whiteThreshold ?? 250);
+    assert(removedPixels > 0, config.source + ': no se detectó el fondo blanco que debía eliminarse.');
+  }
+
   if (config.mode === 'spark-flicker') {
     frames = buildSparkFrames(data, width, height, config.frameCount ?? 8);
   } else {
@@ -152,6 +175,13 @@ async function makeGif(config) {
       config.maxEmptyColumns ?? 2,
     );
     const minimumFrames = config.minFrames ?? 2;
+    if (config.strictFrameCount) {
+      assert(
+        segments.length === config.frameCount,
+        config.source + ': se detectaron ' + segments.length +
+          ' fotogramas; se esperaban exactamente ' + config.frameCount + '.',
+      );
+    }
     if (segments.length < minimumFrames) {
       // Las tiras continuas no tienen columnas transparentes entre cuadros.
       // Su número de celdas se declara en asset-standards.json para evitar

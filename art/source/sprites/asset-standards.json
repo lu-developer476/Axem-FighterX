@@ -104,19 +104,25 @@
           "source": "art/source/effects/axem/big-white-explotion.png",
           "output": "art/source/effects/axem/big-white-explotion.gif",
           "mode": "center-strip",
-          "maxEmptyColumns": 8,
+          "maxEmptyColumns": 0,
           "frameDelay": 100,
-          "minFrames": 2,
-          "frameCount": 2
+          "minFrames": 3,
+          "frameCount": 3,
+          "backgroundRemoval": "white",
+          "whiteThreshold": 250,
+          "strictFrameCount": true
         },
         {
           "source": "art/source/effects/axem/white-explotion.png",
           "output": "art/source/effects/axem/white-explotion.gif",
           "mode": "center-strip",
-          "maxEmptyColumns": 3,
+          "maxEmptyColumns": 0,
           "frameDelay": 85,
-          "minFrames": 2,
-          "frameCount": 2
+          "minFrames": 7,
+          "frameCount": 7,
+          "backgroundRemoval": "white",
+          "whiteThreshold": 250,
+          "strictFrameCount": true
         },
         {
           "source": "art/source/effects/canon/normal-canon-shoot.png",

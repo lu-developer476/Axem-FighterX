@@ -206,6 +206,9 @@ async function validateEffectGifs() {
     if (!Number.isInteger(gif.pages) || gif.pages < 2) {
       throw new Error(effect.output + ': se requieren al menos dos cuadros.');
     }
+    if (Number.isInteger(effect.frameCount)) {
+      assertEqual(gif.pages, effect.frameCount, effect.output + ' cantidad de fotogramas');
+    }
     if (!Array.isArray(gif.delay) || gif.delay.length !== gif.pages ||
         gif.delay.some((delay) => !Number.isFinite(delay) || delay <= 0)) {
       throw new Error(effect.output + ': la duración de los cuadros es inválida.');

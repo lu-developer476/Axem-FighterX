@@ -73,17 +73,13 @@ class AxemRaceState extends RaceBaseState
             150, 100, "bike", 10);
         opponent = loadAnimatedSprite("assets/races/axem-red-bike.png", PLAYER_X, LANE_Y[1],
             150, 100, "ride", 10);
-        opponentUp = loadAnimatedSprite("assets/races/axem-red-bike-up.png", PLAYER_X, LANE_Y[1],
-            150, 100, "up", 10);
-        opponentDown = loadAnimatedSprite("assets/races/axem-red-bike-down.png", PLAYER_X, LANE_Y[1],
-            150, 100, "down", 10);
+        opponentUp = loadStaticSprite("assets/races/axem-red-bike-up.png", PLAYER_X, LANE_Y[1]);
+        opponentDown = loadStaticSprite("assets/races/axem-red-bike-down.png", PLAYER_X, LANE_Y[1]);
         opponentUp.visible = false;
         opponentDown.visible = false;
 
-        bikeShootEffect = loadAnimatedSprite("assets/races/bike-shoot.png", 0, 0,
-            150, 100, "shoot", 14);
-        bikeSpecialShootEffect = loadAnimatedSprite("assets/races/bike-special-shoot.png", 0, 0,
-            150, 100, "special-shoot", 14);
+        bikeShootEffect = loadStaticSprite("assets/races/bike-shoot.png", 0, 0);
+        bikeSpecialShootEffect = loadStaticSprite("assets/races/bike-special-shoot.png", 0, 0);
         bikeShootEffect.scale.set(0.30, 0.30);
         bikeSpecialShootEffect.scale.set(0.34, 0.34);
         bikeShootEffect.visible = false;
@@ -108,12 +104,20 @@ class AxemRaceState extends RaceBaseState
         }
     }
 
+    function loadStaticSprite(assetPath:String, x:Float, y:Float):FlxSprite
+    {
+        var sprite = new FlxSprite(x, y);
+        sprite.loadGraphic(Assets.getBitmapData(assetPath));
+        sprite.antialiasing = false;
+        add(sprite);
+        return sprite;
+    }
+
     function addPickup(distance:Float, kind:String, lane:Int):Void
     {
         // La moto sin piloto queda como obstáculo. Los recursos de impulso/nitro
         // permanecen preparados en el pipeline, pero no se muestran en la carrera.
-        var pickup = loadAnimatedSprite("assets/races/unpiloted-bike.png", 0, 0,
-            150, 100, "unpiloted", 9);
+        var pickup = loadStaticSprite("assets/races/unpiloted-bike.png", 0, 0);
         pickup.scale.set(0.24, 0.24);
         pickup.updateHitbox();
         pickup.visible = false;

@@ -1,4 +1,4 @@
-import { access, readFile, readdir } from 'node:fs/promises';
+import { access, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
@@ -24,7 +24,7 @@ describe('Sprites canónicos de Axem Naranja', () => {
       ASSET_STANDARDS.categories.menuPortrait.height]).toEqual([104, 150]);
   });
 
-  it('no genera recursos de variantes incompletas', async () => {
+  it('no contiene recursos de variantes incompletas', async () => {
     for (const path of [
       '../../../art/source/sprites/results/male/violet',
       '../../../art/source/sprites/results/female/orange',
@@ -65,20 +65,6 @@ describe('Sprites canónicos de Axem Naranja', () => {
     expect(bikeMetadata.pages).toBeGreaterThan(1);
     expect(bikeMetadata.hasAlpha).toBe(true);
 
-    // Las animaciones Red de carrera se construyen a partir de las fuentes Orange versionadas.
-    const generatorPath = fileURLToPath(new URL('../../../scripts/prepare-haxeflixel-race-assets.mjs', import.meta.url));
-    const generator = await readFile(generatorPath, 'utf8');
-    for (const [name, action] of [
-      ['axem-red-run', 'run'],
-      ['axem-red-idle', 'idle'],
-      ['axem-red-walk', 'run'],
-      ['axem-red-dash', 'dash'],
-    ]) {
-      expect(generator).toContain(
-        `'${name}': { file: 'art/source/sprites/results/male/orange/${action}.gif', recolorToRed: true }`,
-      );
-    }
-
     for (const action of ['idle', 'run', 'dash']) {
       const file = resultGifPath(action);
       const metadata = await sharp(file, { animated: true }).metadata();
@@ -95,7 +81,7 @@ describe('Sprites canónicos de Axem Naranja', () => {
     expect(metadata.hasAlpha).toBe(true);
   });
 
-  it('genera el KO con ambos cuadros en la misma altura y posición; solo se abre el ojo', async () => {
+  it('conserva el KO con ambos cuadros en la misma altura y posición; solo se abre el ojo', async () => {
     const koPath = resultGifPath('ko');
     const ko = await sharp(koPath, { animated: true }).metadata();
     expect(ko.format).toBe('gif');
@@ -167,7 +153,7 @@ describe('Sprites canónicos de Axem Naranja', () => {
     }
   });
 
-  it('genera las animaciones de combate naranja desde las referencias Red', async () => {
+  it('conserva las animaciones de combate naranja versionadas', async () => {
     const actions = ['bike', 'charge', 'dash', 'guard', 'hit', 'hurt', 'idle', 'jump', 'ko',
       'pose', 'punch-01', 'punch-02', 'punch-03', 'roll', 'run', 'teleport'];
     for (const action of actions) {

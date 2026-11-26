@@ -98,41 +98,40 @@
     "effectAnimation": {
       "sourcePolicy": "immutable",
       "outputPolicy": "animated-transparent-gif",
-      "preserveSourceDimensions": true,
+      "preserveSourceDimensions": false,
       "files": [
         {
           "source": "art/source/effects/axem/big-white-explotion.png",
           "output": "art/source/effects/axem/big-white-explotion.gif",
-          "mode": "center-strip",
-          "maxEmptyColumns": 0,
+          "mode": "horizontal-cells",
           "frameDelay": 100,
           "minFrames": 3,
           "frameCount": 3,
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
-          "strictFrameCount": true
+          "strictFrameCount": true,
+          "frameLayout": "horizontal-cells"
         },
         {
           "source": "art/source/effects/axem/white-explotion.png",
           "output": "art/source/effects/axem/white-explotion.gif",
-          "mode": "center-strip",
-          "maxEmptyColumns": 0,
+          "mode": "horizontal-cells",
           "frameDelay": 85,
           "minFrames": 8,
           "frameCount": 8,
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
-          "strictFrameCount": true
+          "strictFrameCount": true,
+          "frameLayout": "horizontal-cells"
         },
         {
           "source": "art/source/effects/canon/normal-canon-shoot.png",
           "output": "art/source/effects/canon/normal-canon-shoot.gif",
-          "mode": "travel-strip",
-          "maxEmptyColumns": 2,
+          "mode": "horizontal-cells",
           "frameDelay": 55,
-          "minFrames": 3,
+          "minFrames": 7,
           "frameCount": 7,
-          "frameLayout": "horizontal-strip",
+          "frameLayout": "horizontal-cells",
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
           "strictFrameCount": true
@@ -140,12 +139,11 @@
         {
           "source": "art/source/effects/canon/special-canon-shoot.png",
           "output": "art/source/effects/canon/special-canon-shoot.gif",
-          "mode": "travel-strip",
-          "maxEmptyColumns": 3,
+          "mode": "horizontal-cells",
           "frameDelay": 65,
-          "minFrames": 3,
+          "minFrames": 8,
           "frameCount": 8,
-          "frameLayout": "horizontal-strip",
+          "frameLayout": "horizontal-cells",
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
           "strictFrameCount": true
@@ -153,12 +151,11 @@
         {
           "source": "art/source/effects/canon/turquoise-canon-shoot.png",
           "output": "art/source/effects/canon/turquoise-canon-shoot.gif",
-          "mode": "travel-strip",
-          "maxEmptyColumns": 2,
+          "mode": "horizontal-cells",
           "frameDelay": 55,
-          "minFrames": 3,
+          "minFrames": 6,
           "frameCount": 6,
-          "frameLayout": "horizontal-strip",
+          "frameLayout": "horizontal-cells",
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
           "strictFrameCount": true
@@ -172,8 +169,8 @@
           "frameLayout": "horizontal-cells",
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
-          "frameWidth": 62,
-          "strictFrameCount": true
+          "strictFrameCount": true,
+          "minFrames": 8
         },
         {
           "source": "art/source/effects/sparks/yellow-effect.png",
@@ -184,10 +181,13 @@
           "frameLayout": "horizontal-cells",
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
-          "frameWidth": 62,
-          "strictFrameCount": true
+          "strictFrameCount": true,
+          "minFrames": 8
         }
-      ]
+      ],
+      "preserveFrameHeight": true,
+      "frameWidthPolicy": "ceil-source-width-divided-by-frame-count",
+      "description": "Cada PNG horizontal se divide en celdas reales; cada GIF conserva un fotograma por celda, el alto de origen y el fondo transparente."
     },
     "backgrounds": {
       "policy": "preserve-source-aspect-ratio",

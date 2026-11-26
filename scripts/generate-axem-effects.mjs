@@ -134,6 +134,8 @@ function buildSegmentFrame(source, width, height, segment, mode) {
   return frame;
 }
 
+// Extrae una sola celda de la hoja y mantiene su posición local. Todas las
+// salidas comparten el ancho de celda, no el ancho completo del spritesheet.
 function buildHorizontalCellFrame(source, width, height, segment, frameWidth) {
   const frame = Buffer.alloc(frameWidth * height * 4);
   const cellWidth = segment.right - segment.left;
@@ -190,7 +192,7 @@ async function makeGif(config) {
       Number.isInteger(frameCount) && frameCount >= 2 && frameCount <= width,
       config.source + ': frameCount inválido para separar celdas horizontales.',
     );
-    frameWidth = config.frameWidth ?? Math.ceil(width / frameCount);
+    frameWidth = Math.ceil(width / frameCount);
     assert(
       Number.isInteger(frameWidth) && frameWidth >= Math.ceil(width / frameCount),
       config.source + ': frameWidth no alcanza para todas las celdas.',

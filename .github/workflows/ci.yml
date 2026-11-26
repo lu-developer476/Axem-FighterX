@@ -47,6 +47,21 @@ jobs:
       - name: Tests
         run: npm test
 
+      - name: Exportar GIF regenerados para verificación visual
+        run: |
+          for file in \
+            art/source/effects/axem/big-white-explotion.gif \
+            art/source/effects/axem/white-explotion.gif \
+            art/source/effects/canon/normal-canon-shoot.gif \
+            art/source/effects/canon/special-canon-shoot.gif \
+            art/source/effects/canon/turquoise-canon-shoot.gif \
+            art/source/effects/sparks/turquoise-effect.gif \
+            art/source/effects/sparks/yellow-effect.gif; do
+            printf '\\n__AXEM_GIF_BEGIN__%s\\n' "$file"
+            base64 -w0 "$file"
+            printf '\\n__AXEM_GIF_END__\\n'
+          done
+
       - name: Build
         run: npm run build
 

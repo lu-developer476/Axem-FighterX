@@ -1,26 +1,30 @@
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
+import rangerArtworkUrl from '../../../art/source/sprites/results/male/orange/super-axem-ranger-orange.png?url';
+import runAnimationUrl from '../../../art/source/sprites/results/male/orange/run.png?url';
+import bikeAnimationUrl from '../../../art/source/sprites/results/male/orange/bike.png?url';
 
 export const DEFAULT_RANGER_GENDER = 'male';
 
 export const spriteKeyFor = (rangerId, gender = genderForRanger(rangerId) ?? DEFAULT_RANGER_GENDER) =>
   'ranger-' + gender + '-' + rangerId;
 
-export const spriteUrlFor = (rangerId, gender = genderForRanger(rangerId) ?? DEFAULT_RANGER_GENDER) =>
-  import.meta.env.BASE_URL + 'generated/ranger-' + gender + '-' + rangerId + '.png';
+// Phaser usa el artwork fuente versionado. No existen pasos de exportación a public/generated.
+export const spriteUrlFor = () => rangerArtworkUrl;
 
-/** Reservado para futuras hojas de animación registradas por estado. */
 export const sheetTextureKey = (rangerId, state, gender = genderForRanger(rangerId) ?? DEFAULT_RANGER_GENDER) =>
   'motion-' + gender + '-' + rangerId + '-' + state;
 
-/** Texturas laterales del menú: poses masculinas extraídas de Axem Red. */
 export const menuSpriteKeyFor = (rangerId, gender = 'male') =>
   'menu-ranger-' + gender + '-' + rangerId;
 
-export const menuSpriteUrlFor = (rangerId, gender = 'male') =>
-  import.meta.env.BASE_URL + 'generated/menu-ranger-' + gender + '-' + rangerId + '.png';
+// El retrato usa el mismo master; su escala se ajusta en la escena.
+export const menuSpriteUrlFor = () => rangerArtworkUrl;
 
 export const maleAnimationKey = (rangerId, action) =>
   'axem-' + rangerId + '-' + action;
 
-export const maleAnimationUrl = (rangerId, action) =>
-  import.meta.env.BASE_URL + 'generated/axem-' + rangerId + '-' + action + '.png';
+// Solo se conservan las tiras PNG versionadas de run y bike.
+export const maleAnimationUrl = (_rangerId, action) => ({
+  run: runAnimationUrl,
+  bike: bikeAnimationUrl,
+}[action] ?? null);

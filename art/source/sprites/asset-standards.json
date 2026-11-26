@@ -159,7 +159,7 @@
           "backgroundRemoval": "white",
           "whiteThreshold": 250,
           "strictFrameCount": true,
-          "maxEmptyColumns": 3,
+          "maxEmptyColumns": 0,
           "framePadding": 2
         },
         {

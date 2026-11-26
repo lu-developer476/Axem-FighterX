@@ -17,7 +17,8 @@
     "standardize:assets": "node scripts/standardize-assets.mjs && node scripts/standardize-pickups.mjs && node scripts/validate-assets.mjs",
     "validate:assets": "node scripts/validate-assets.mjs && node scripts/standardize-pickups.mjs --check",
     "standardize:pickups": "node scripts/standardize-pickups.mjs",
-    "validate:pickups": "node scripts/standardize-pickups.mjs --check"
+    "validate:pickups": "node scripts/standardize-pickups.mjs --check",
+    "pretest": "node scripts/prepare-super-rangers.mjs && node scripts/prepare-ranger-sprites.mjs && node scripts/normalize-sprite-library.mjs && node scripts/standardize-assets.mjs && node scripts/standardize-pickups.mjs && node scripts/validate-assets.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0"

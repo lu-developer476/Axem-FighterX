@@ -200,7 +200,10 @@ async function validateEffectGifs() {
 
     const gif = await sharp(absolute(effect.output), { animated: true, failOn: 'error' }).metadata();
     assertEqual(gif.format, 'gif', effect.output + ' formato');
-    assertEqual(gif.width, source.width, effect.output + ' ancho');
+    const expectedFrameWidth = effect.frameLayout === 'horizontal-cells'
+      ? (effect.frameWidth ?? Math.ceil(source.width / effect.frameCount))
+      : source.width;
+    assertEqual(gif.width, expectedFrameWidth, effect.output + ' ancho');
     assertEqual(gif.pageHeight ?? gif.height, source.height, effect.output + ' alto por cuadro');
     if (!gif.hasAlpha) throw new Error(effect.output + ': falta la transparencia.');
     if (!Number.isInteger(gif.pages) || gif.pages < 2) {

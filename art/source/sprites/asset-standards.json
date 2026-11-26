@@ -131,7 +131,11 @@
           "maxEmptyColumns": 2,
           "frameDelay": 55,
           "minFrames": 3,
-          "frameCount": 7
+          "frameCount": 7,
+          "frameLayout": "horizontal-strip",
+          "backgroundRemoval": "white",
+          "whiteThreshold": 250,
+          "strictFrameCount": true
         },
         {
           "source": "art/source/effects/canon/special-canon-shoot.png",
@@ -140,7 +144,11 @@
           "maxEmptyColumns": 3,
           "frameDelay": 65,
           "minFrames": 3,
-          "frameCount": 8
+          "frameCount": 8,
+          "frameLayout": "horizontal-strip",
+          "backgroundRemoval": "white",
+          "whiteThreshold": 250,
+          "strictFrameCount": true
         },
         {
           "source": "art/source/effects/canon/turquoise-canon-shoot.png",
@@ -149,21 +157,35 @@
           "maxEmptyColumns": 2,
           "frameDelay": 55,
           "minFrames": 3,
-          "frameCount": 6
+          "frameCount": 6,
+          "frameLayout": "horizontal-strip",
+          "backgroundRemoval": "white",
+          "whiteThreshold": 250,
+          "strictFrameCount": true
         },
         {
           "source": "art/source/effects/sparks/turquoise-effect.png",
           "output": "art/source/effects/sparks/turquoise-effect.gif",
-          "mode": "spark-flicker",
+          "mode": "horizontal-cells",
           "frameDelay": 75,
-          "frameCount": 8
+          "frameCount": 8,
+          "frameLayout": "horizontal-cells",
+          "backgroundRemoval": "white",
+          "whiteThreshold": 250,
+          "frameWidth": 62,
+          "strictFrameCount": true
         },
         {
           "source": "art/source/effects/sparks/yellow-effect.png",
           "output": "art/source/effects/sparks/yellow-effect.gif",
-          "mode": "spark-flicker",
+          "mode": "horizontal-cells",
           "frameDelay": 75,
-          "frameCount": 8
+          "frameCount": 8,
+          "frameLayout": "horizontal-cells",
+          "backgroundRemoval": "white",
+          "whiteThreshold": 250,
+          "frameWidth": 62,
+          "strictFrameCount": true
         }
       ]
     },

@@ -51,22 +51,48 @@ function findHorizontalSegments(data, width, height, maxEmptyColumns) {
   return segments;
 }
 
-// Las hojas Axem de esta carpeta son ilustraciones grises sobre blanco opaco.
-// Se elimina ese blanco antes de detectar las columnas ocupadas: de lo contrario,
-// todo el lienzo parece un único cuadro y el generador corta la imagen por mitades.
-function removeWhiteBackground(data, threshold = 250) {
-  let removedPixels = 0;
-  for (let offset = 0; offset < data.length; offset += 4) {
+// Elimina solo el blanco conectado al borde. Los píxeles blancos encerrados
+// dentro del dibujo (brillos y núcleos) forman parte del arte y deben conservarse.
+function removeWhiteBackground(data, width, height, threshold = 250) {
+  const visited = new Uint8Array(width * height);
+  const queue = new Int32Array(width * height);
+  let head = 0;
+  let tail = 0;
+
+  const enqueueIfBackground = (pixelIndex) => {
+    if (visited[pixelIndex]) return;
+    const offset = pixelIndex * 4;
     if (
-      data[offset] >= threshold &&
-      data[offset + 1] >= threshold &&
-      data[offset + 2] >= threshold
-    ) {
-      data[offset + 3] = 0;
-      removedPixels += 1;
-    }
+      data[offset] < threshold ||
+      data[offset + 1] < threshold ||
+      data[offset + 2] < threshold
+    ) return;
+    visited[pixelIndex] = 1;
+    queue[tail] = pixelIndex;
+    tail += 1;
+  };
+
+  for (let x = 0; x < width; x += 1) {
+    enqueueIfBackground(x);
+    enqueueIfBackground((height - 1) * width + x);
   }
-  return removedPixels;
+  for (let y = 0; y < height; y += 1) {
+    enqueueIfBackground(y * width);
+    enqueueIfBackground(y * width + width - 1);
+  }
+
+  while (head < tail) {
+    const pixelIndex = queue[head];
+    head += 1;
+    data[pixelIndex * 4 + 3] = 0;
+    const x = pixelIndex % width;
+    const y = Math.floor(pixelIndex / width);
+    if (x > 0) enqueueIfBackground(pixelIndex - 1);
+    if (x + 1 < width) enqueueIfBackground(pixelIndex + 1);
+    if (y > 0) enqueueIfBackground(pixelIndex - width);
+    if (y + 1 < height) enqueueIfBackground(pixelIndex + width);
+  }
+  return tail;
 }
 
 function visibleBounds(data, width, height, left, right) {
@@ -108,35 +134,22 @@ function buildSegmentFrame(source, width, height, segment, mode) {
   return frame;
 }
 
-function buildSparkFrames(source, width, height, count) {
-  const frames = [];
-  const frameOffsets = [0, 0, 1, 1, 0, 0, -1, -1];
-  for (let frameIndex = 0; frameIndex < count; frameIndex += 1) {
-    const output = Buffer.alloc(width * height * 4);
-    const yOffset = frameOffsets[frameIndex % frameOffsets.length];
-    for (let y = 0; y < height; y += 1) {
-      for (let x = 0; x < width; x += 1) {
-        const sourceOffset = (y * width + x) * 4;
-        const alpha = source[sourceOffset + 3];
-        if (alpha === 0) continue;
-
-        // Desincroniza el parpadeo por partícula para evitar que toda la hoja
-        // desaparezca a la vez; el desplazamiento de un píxel aporta vibración.
-        const phase = (frameIndex / count) * Math.PI * 2 +
-          (((x * 17 + y * 31) % 37) / 37) * Math.PI * 2;
-        const pulse = 0.24 + 0.76 * ((Math.sin(phase) + 1) / 2);
-        const targetY = y + yOffset;
-        if (targetY < 0 || targetY >= height) continue;
-        const targetOffset = (targetY * width + x) * 4;
-        output[targetOffset] = source[sourceOffset];
-        output[targetOffset + 1] = source[sourceOffset + 1];
-        output[targetOffset + 2] = source[sourceOffset + 2];
-        output[targetOffset + 3] = Math.max(1, Math.round(alpha * pulse));
-      }
-    }
-    frames.push(output);
+function buildHorizontalCellFrame(source, width, height, segment, frameWidth) {
+  const frame = Buffer.alloc(frameWidth * height * 4);
+  const cellWidth = segment.right - segment.left;
+  for (let y = 0; y < height; y += 1) {
+    const sourceStart = (y * width + segment.left) * 4;
+    const sourceEnd = sourceStart + cellWidth * 4;
+    source.copy(frame, y * frameWidth * 4, sourceStart, sourceEnd);
   }
-  return frames;
+  return frame;
+}
+
+function createHorizontalSegments(width, count) {
+  return Array.from({ length: count }, (_, index) => ({
+    left: Math.floor(index * width / count),
+    right: Math.floor((index + 1) * width / count),
+  }));
 }
 
 async function makeGif(config) {
@@ -161,54 +174,70 @@ async function makeGif(config) {
   let frames;
 
   if (config.backgroundRemoval === 'white') {
-    const removedPixels = removeWhiteBackground(data, config.whiteThreshold ?? 250);
-    assert(removedPixels > 0, config.source + ': no se detectó el fondo blanco que debía eliminarse.');
+    const removedPixels = removeWhiteBackground(
+      data,
+      width,
+      height,
+      config.whiteThreshold ?? 250,
+    );
+    assert(removedPixels > 0, config.source + ': no se detectó el fondo blanco conectado al borde.');
   }
 
-  if (config.mode === 'spark-flicker') {
-    frames = buildSparkFrames(data, width, height, config.frameCount ?? 8);
+  let frameWidth = width;
+  if (config.frameLayout === 'horizontal-cells') {
+    const frameCount = config.frameCount;
+    assert(
+      Number.isInteger(frameCount) && frameCount >= 2 && frameCount <= width,
+      config.source + ': frameCount inválido para separar celdas horizontales.',
+    );
+    frameWidth = config.frameWidth ?? Math.ceil(width / frameCount);
+    assert(
+      Number.isInteger(frameWidth) && frameWidth >= Math.ceil(width / frameCount),
+      config.source + ': frameWidth no alcanza para todas las celdas.',
+    );
+    const segments = createHorizontalSegments(width, frameCount);
+    frames = segments.map((segment) =>
+      buildHorizontalCellFrame(data, width, height, segment, frameWidth)
+    );
+  } else if (config.frameLayout === 'horizontal-strip') {
+    const frameCount = config.frameCount;
+    assert(
+      Number.isInteger(frameCount) && frameCount >= 2 && frameCount <= width,
+      config.source + ': frameCount inválido para separar la tira horizontal.',
+    );
+    const segments = createHorizontalSegments(width, frameCount);
+    frames = segments
+      .map((segment) => buildSegmentFrame(data, width, height, segment, 'travel-strip'))
+      .filter(Boolean);
   } else {
-    let segments = findHorizontalSegments(
+    const segments = findHorizontalSegments(
       data,
       width,
       height,
       config.maxEmptyColumns ?? 2,
     );
     const minimumFrames = config.minFrames ?? 2;
-    if (config.strictFrameCount) {
-      assert(
-        segments.length === config.frameCount,
-        config.source + ': se detectaron ' + segments.length +
-          ' fotogramas; se esperaban exactamente ' + config.frameCount + '.',
-      );
-    }
-    if (segments.length < minimumFrames) {
-      // Las tiras continuas no tienen columnas transparentes entre cuadros.
-      // Su número de celdas se declara en asset-standards.json para evitar
-      // cortes arbitrarios o GIF estáticos.
-      const frameCount = config.frameCount;
-      assert(
-        Number.isInteger(frameCount) && frameCount >= minimumFrames && frameCount <= width,
-        config.source + ': frameCount explícito inválido para separar la tira.',
-      );
-      segments = Array.from({ length: frameCount }, (_, index) => ({
-        left: Math.floor(index * width / frameCount),
-        right: Math.floor((index + 1) * width / frameCount),
-      }));
-    }
     assert(
       segments.length >= minimumFrames,
       config.source + ': se detectaron solo ' + segments.length +
-        ' segmentos; se requieren al menos ' + minimumFrames + '.',
+        ' fotogramas; no se aplicarán cortes aproximados.',
     );
     frames = segments
       .map((segment) => buildSegmentFrame(data, width, height, segment, config.mode))
       .filter(Boolean);
   }
 
+  if (config.strictFrameCount) {
+    assert(
+      frames.length === config.frameCount,
+      config.source + ': se generaron ' + frames.length +
+        ' fotogramas; se esperaban exactamente ' + config.frameCount + '.',
+    );
+  }
+
   assert(frames.length >= 2, config.source + ': la animación necesita al menos dos cuadros.');
   const pngFrames = await Promise.all(frames.map((frame) =>
-    sharp(frame, { raw: { width, height, channels: 4 } })
+    sharp(frame, { raw: { width: frameWidth, height, channels: 4 } })
       .png({ compressionLevel: 9, effort: 10 })
       .toBuffer()
   ));
@@ -227,7 +256,7 @@ async function makeGif(config) {
 
   const verified = await sharp(gif, { animated: true, failOn: 'error' }).metadata();
   assert(verified.format === 'gif', config.output + ': no se codificó como GIF.');
-  assert(verified.width === width, config.output + ': cambió el ancho del lienzo.');
+  assert(verified.width === frameWidth, config.output + ': ancho del fotograma incorrecto.');
   assert((verified.pageHeight ?? verified.height) === height, config.output + ': cambió el alto del lienzo.');
   assert((verified.pages ?? 0) === pngFrames.length, config.output + ': se alteró la cantidad de cuadros.');
   assert(verified.hasAlpha, config.output + ': se perdió la transparencia.');
@@ -236,7 +265,7 @@ async function makeGif(config) {
   await fs.writeFile(outputPath, gif);
   console.log(
     path.relative(ROOT, outputPath) + ': ' + pngFrames.length + ' cuadros · ' +
-    width + 'x' + height + ' px · ' + (config.frameDelay ?? 80) +
+    frameWidth + 'x' + height + ' px · ' + (config.frameDelay ?? 80) +
     ' ms/cuadro · loop infinito · transparencia conservada · ' +
     (gif.length / 1024).toFixed(1) + ' KiB.',
   );

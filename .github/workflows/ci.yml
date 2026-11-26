@@ -49,7 +49,7 @@ jobs:
       - name: Validar recursos fuente sin modificarlos
         run: npm run validate:assets
 
-      - name: Exportar GIF manuales para verificación visual
+      - name: Inspeccionar GIF fuente sin modificarlos
         run: |
           for file in \
             art/source/effects/axem/big-white-explotion.gif \

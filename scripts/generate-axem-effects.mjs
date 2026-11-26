@@ -229,7 +229,8 @@ async function makeGif(config) {
     assert(
       segments.length === config.frameCount,
       config.source + ': se detectaron ' + segments.length +
-        ' segmentos visibles; se esperaban exactamente ' + config.frameCount + '.',
+        ' segmentos visibles (' + segments.map(({ left, right }) => left + '-' + right).join(', ') +
+        '); se esperaban exactamente ' + config.frameCount + '.',
     );
     const bounds = segments.map((segment) =>
       visibleBounds(data, width, height, segment.left, segment.right)

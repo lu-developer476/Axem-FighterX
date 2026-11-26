@@ -1,4 +1,4 @@
-import { access, readdir } from 'node:fs/promises';
+import { access, readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
@@ -29,7 +29,6 @@ describe('Sprites canónicos de Axem Naranja', () => {
       '../../../art/source/sprites/results/male/violet',
       '../../../art/source/sprites/results/female/orange',
       '../../../art/source/sprites/results/female/pink',
-      '../../../art/source/sprites/results/male/red',
     ]) {
       await expect(access(fileURLToPath(new URL(path, import.meta.url))))
         .rejects.toMatchObject({ code: 'ENOENT' });
@@ -38,6 +37,46 @@ describe('Sprites canónicos de Axem Naranja', () => {
       '../../../art/source/sprites/results/female/violet', import.meta.url,
     ));
     expect(await readdir(femaleVioletDirectory)).toEqual(['.gitkeep']);
+
+    // Red todavía no es una variante jugable: solo puede conservar su primer recurso versionado.
+    const redDirectory = fileURLToPath(new URL(
+      '../../../art/source/sprites/results/male/red', import.meta.url,
+    ));
+    expect((await readdir(redDirectory)).sort()).toEqual([
+      'bike-spritesheet.json',
+      'bike-spritesheet.png',
+    ]);
+
+    const redManifestPath = fileURLToPath(new URL(
+      '../../../art/source/sprites/results/male/red/bike-spritesheet.json',
+      import.meta.url,
+    ));
+    const redManifest = JSON.parse(await readFile(redManifestPath, 'utf8'));
+    expect(redManifest).toMatchObject({
+      image: 'bike-spritesheet.png',
+      source: 'art/source/sprites/references/axem-red/axem-ranger-bike.gif',
+      frameWidth: 101,
+      frameHeight: 49,
+      frames: 5,
+      columns: 5,
+      rows: 1,
+      frameDurationMs: 100,
+      loop: true,
+      cropFromSource: { x: 22, y: 22, width: 101, height: 49 },
+      sourceFrameSize: { width: 150, height: 100 },
+    });
+
+    const redSheetPath = fileURLToPath(new URL(
+      '../../../art/source/sprites/results/male/red/bike-spritesheet.png',
+      import.meta.url,
+    ));
+    const redSheet = await sharp(redSheetPath).metadata();
+    expect(redSheet.format).toBe('png');
+    expect([redSheet.width, redSheet.height]).toEqual([
+      redManifest.frameWidth * redManifest.columns,
+      redManifest.frameHeight * redManifest.rows,
+    ]);
+    expect(redSheet.hasAlpha).toBe(true);
   });
 
   it('conserva el GIF maestro de bicicleta en la referencia Red y las acciones Orange versionadas', async () => {

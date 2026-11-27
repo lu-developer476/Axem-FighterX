@@ -1,6 +1,9 @@
 name: Verificación de controles y selección de jugadores
 
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -29,6 +32,7 @@ jobs:
       - name: Ejecutar pruebas de controles y asignaciones
         run: >-
           npx vitest run
+          src/infrastructure/assets/assetStandards.test.js
           src/infrastructure/input/PhaserKeyboardInput.test.js
           src/domain/match/playerAssignments.test.js
           src/application/useCases/CreateMatch.test.js

@@ -23,10 +23,10 @@ describe('Estándares centrales de recursos gráficos', () => {
     const entries = await fs.readdir(directory, { withFileTypes: true });
     const filenames = entries.filter((entry) => entry.isFile()).map((entry) => entry.name).sort();
 
-    expect(filenames).toEqual([
-      'axem-red-nitro-bike.gif',
-      'axem-red-nitro-bike.png',
-    ].sort());
+    expect(filenames).toContain('axem-red-nitro-bike.png');
+    expect(filenames.filter((filename) => filename.endsWith('.gif')).sort()).toEqual(
+      [...ASSET_STANDARDS.categories.actionGif.referenceFiles].sort(),
+    );
 
     const masterPath = absolute('art/source/sprites/references/axem-red/axem-red-nitro-bike.gif');
     const master = await sharp(masterPath, { animated: true }).metadata();
@@ -40,7 +40,7 @@ describe('Estándares centrales de recursos gráficos', () => {
       'art/source/sprites/references/axem-red/axem-red-nitro-bike.png',
     )).metadata();
     expect(referencePng.format).toBe('png');
-    expect(ASSET_STANDARDS.categories.actionGif.referenceFiles).toEqual(['axem-red-nitro-bike.gif']);
+    expect(ASSET_STANDARDS.categories.actionGif.referenceFiles).toHaveLength(22);
 
     const pinkDirectory = absolute('art/source/sprites/references/axem-pink');
     const pinkEntries = await fs.readdir(pinkDirectory, { withFileTypes: true });

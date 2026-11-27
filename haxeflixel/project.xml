@@ -9,8 +9,8 @@
   <!-- Recursos de carrera versionados: no se crean hojas durante el build. -->
   <assets path="../public/minigames/assets/races/axem-orange-bike.png" rename="assets/races/axem-orange-bike.png" />
   <assets path="../public/minigames/assets/races/axem-red-bike.png" rename="assets/races/axem-red-bike.png" />
-  <assets path="../art/source/effects/bike/axem-red-bike-up.png" rename="assets/races/axem-red-bike-up.png" />
-  <assets path="../art/source/effects/bike/axem-red-bike-down.png" rename="assets/races/axem-red-bike-down.png" />
+  <assets path="../art/source/sprites/references/axem-red/axem-red-bike-up.png" rename="assets/races/axem-red-bike-up.png" />
+  <assets path="../art/source/sprites/references/axem-red/axem-red-bike-down.png" rename="assets/races/axem-red-bike-down.png" />
   <assets path="../art/source/effects/bike/unpiloted-bike.png" rename="assets/races/unpiloted-bike.png" />
   <assets path="../art/source/effects/bike/bike-shoot.png" rename="assets/races/bike-shoot.png" />
   <assets path="../art/source/effects/bike/bike-special-shoot.png" rename="assets/races/bike-special-shoot.png" />

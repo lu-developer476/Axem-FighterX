@@ -195,6 +195,58 @@ async function validateReferenceSheets() {
   return files.length;
 }
 
+async function readGifFrameDescriptors(filename) {
+  const bytes = await fs.readFile(filename);
+  const read16 = (offset) => bytes[offset] | (bytes[offset + 1] << 8);
+  let offset = 13;
+  if (bytes[10] & 0x80) {
+    offset += 3 * (1 << ((bytes[10] & 0x07) + 1));
+  }
+
+  const frames = [];
+  while (offset < bytes.length) {
+    const marker = bytes[offset++];
+    if (marker === 0x3b) break;
+    if (marker === 0x21) {
+      const label = bytes[offset++];
+      if (label === 0xf9) {
+        const blockSize = bytes[offset++];
+        offset += blockSize;
+        if (bytes[offset] === 0) offset += 1;
+      } else {
+        while (offset < bytes.length) {
+          const blockSize = bytes[offset++];
+          if (blockSize === 0) break;
+          offset += blockSize;
+        }
+      }
+      continue;
+    }
+    if (marker !== 0x2c) {
+      throw new Error(filename + ': marcador GIF inesperado 0x' + marker.toString(16) + '.');
+    }
+
+    const x = read16(offset);
+    const y = read16(offset + 2);
+    const width = read16(offset + 4);
+    const height = read16(offset + 6);
+    const flags = bytes[offset + 8];
+    offset += 9;
+    frames.push({ x, y, width, height });
+
+    if (flags & 0x80) {
+      offset += 3 * (1 << ((flags & 0x07) + 1));
+    }
+    offset += 1; // Código mínimo LZW.
+    while (offset < bytes.length) {
+      const blockSize = bytes[offset++];
+      if (blockSize === 0) break;
+      offset += blockSize;
+    }
+  }
+  return frames;
+}
+
 async function validateActionGifs() {
   const category = standards.categories.actionGif;
   const directory = absolute(category.directory);
@@ -239,6 +291,20 @@ async function validateActionGifs() {
     assertEqual(metadata.format, 'gif', relativePath + ' formato');
     assertEqual(metadata.width, category.width, relativePath + ' ancho');
     assertEqual(metadata.pageHeight ?? metadata.height, category.height, relativePath + ' alto por cuadro');
+
+    if (
+      category.referenceFramePolicy === 'full-canvas' &&
+      filename.startsWith(redActionDirectory + path.sep)
+    ) {
+      const descriptors = await readGifFrameDescriptors(filename);
+      assertEqual(descriptors.length, metadata.pages, relativePath + ' cantidad de descriptores');
+      for (const [index, frame] of descriptors.entries()) {
+        assertEqual(frame.x, 0, relativePath + ' cuadro ' + index + ' X');
+        assertEqual(frame.y, 0, relativePath + ' cuadro ' + index + ' Y');
+        assertEqual(frame.width, category.width, relativePath + ' cuadro ' + index + ' ancho real');
+        assertEqual(frame.height, category.height, relativePath + ' cuadro ' + index + ' alto real');
+      }
+    }
 
     if (!metadata.hasAlpha && category.alphaRequired) {
       throw new Error(relativePath + ': falta el canal alfa.');

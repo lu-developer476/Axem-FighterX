@@ -126,10 +126,14 @@ describe('Estándares centrales de recursos gráficos', () => {
         if (error.code !== 'ENOENT') throw error;
       }
     }
-    const canonicalGifs = await collectGifFiles(
-      absolute(category.directory),
-      category.recursive === true,
-    );
+    const canonicalGifs = [];
+    for (const relativeDirectory of [category.directory, ...(category.additionalDirectories ?? [])]) {
+      canonicalGifs.push(...await collectGifFiles(
+        absolute(relativeDirectory),
+        category.recursive === true,
+      ));
+    }
+    expect(canonicalGifs.some((filename) => filename.includes('/results/male/white/'))).toBe(true);
     for (const name of category.files ?? []) {
       await expect(fs.access(path.join(absolute(category.directory), name))).resolves.toBeUndefined();
     }

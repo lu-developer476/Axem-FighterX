@@ -212,7 +212,14 @@ async function validateActionGifs() {
   }
   // Descubre recursivamente todos los GIF de acción: ningún archivo nuevo puede
   // quedar fuera de la regla de resolución nativa 150×100.
-  const canonicalFiles = await collectGifFiles(directory, category.recursive === true);
+  const canonicalFiles = [];
+  for (const relativeDirectory of [category.directory, ...(category.additionalDirectories ?? [])]) {
+    const actionDirectory = absolute(relativeDirectory);
+    if (!await fileExists(actionDirectory)) {
+      throw new Error('No existe el directorio de GIF de acción: ' + relativeDirectory + '.');
+    }
+    canonicalFiles.push(...await collectGifFiles(actionDirectory, category.recursive === true));
+  }
   for (const name of category.files ?? []) {
     const filename = path.join(directory, name);
     if (!canonicalFiles.includes(filename)) {

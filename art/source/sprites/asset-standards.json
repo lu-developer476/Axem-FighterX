@@ -54,6 +54,9 @@
       "frameDelayMs": 100,
       "frameRateFps": 10,
       "directory": "art/source/sprites/results/male/orange",
+      "additionalDirectories": [
+        "art/source/sprites/results/male/white"
+      ],
       "recursive": true,
       "preserveFrameCount": true,
       "preserveFrameTiming": true,

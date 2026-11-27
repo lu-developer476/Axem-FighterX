@@ -2,14 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { AVAILABLE_RANGER_VARIANTS, genderForRanger, getCounterpartSelection, isAvailableRangerVariant } from './rangerVariants.js';
 
 describe('variantes disponibles de Axem', () => {
-  it('ofrece únicamente Axem Naranja masculino hasta que las demás hojas estén listas', () => {
-    expect(AVAILABLE_RANGER_VARIANTS).toEqual([{ id: 'orange', gender: 'male' }]);
+  it('incluye Axem Orange, White y Red masculinos', () => {
+    expect(AVAILABLE_RANGER_VARIANTS).toEqual([{ id: 'orange', gender: 'male' }, { id: 'white', gender: 'male' }, { id: 'red', gender: 'male' }]);
     expect(genderForRanger('orange')).toBe('male');
+    expect(genderForRanger('white')).toBe('male');
+    expect(genderForRanger('red')).toBe('male');
     expect(genderForRanger('violet')).toBeNull();
     expect(isAvailableRangerVariant('orange', 'male')).toBe(true);
     expect(isAvailableRangerVariant('violet', 'female')).toBe(false);
     expect(isAvailableRangerVariant('orange', 'female')).toBe(false);
-    expect(isAvailableRangerVariant('red', 'male')).toBe(false);
+    expect(isAvailableRangerVariant('red', 'male')).toBe(true);
   });
   it('mantiene una selección visual válida para el rival IA', () => {
     expect(getCounterpartSelection({ id: 'orange', gender: 'male' })).toEqual({ id: 'orange', gender: 'male' });

@@ -4,12 +4,11 @@ import { STAGES } from '../../infrastructure/assets/stageAssetManifest.js';
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
 import { COMBAT_MODES, VERSUS_MODES, getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
-import { getCharacterSelectionsByCorner } from '../../domain/match/playerAssignments.js';
 import { menuSpriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playMenuMusic } from '../../infrastructure/audio/GameMusic.js';
 import { contentWidth, getStackedButtonPositions, insetSize, mapPanelY, UI_SPACING } from '../views/uiLayout.js';
 
-const RANGER_ORDER = [RANGER_IDS.ORANGE];
+const RANGER_ORDER = [RANGER_IDS.ORANGE, RANGER_IDS.WHITE, RANGER_IDS.RED];
 const readableFontSize = (value = '10px') => {
   const size = Number.parseFloat(value);
   return Number.isFinite(size) ? Math.max(8, Math.round(size * 1.25)) + 'px' : value;
@@ -246,12 +245,12 @@ export class MenuScene extends Phaser.Scene {
     const veil = this.add.rectangle(GAME_WIDTH / 2, 135, GAME_WIDTH, 270, 0x000000, 0.84)
       .setInteractive();
     const panelY = 160;
-    const panelHeight = 112;
+    const panelHeight = 146;
     const panelTop = panelY - panelHeight / 2;
     const panelBottom = panelY + panelHeight / 2;
     this.panelLayout = {
       sourceTop: 130,
-      sourceBottom: 178,
+      sourceBottom: 220,
       targetTop: panelTop + UI_SPACING.modalTopInset,
       targetBottom: panelBottom - UI_SPACING.modalBottomInset - 9,
     };
@@ -444,28 +443,7 @@ export class MenuScene extends Phaser.Scene {
     if (selected) selected.action();
   }
 
-  #getMatchSetup() {
-    const matchSetup = {
-      ...this.matchSetup,
-      characters: [...(this.matchSetup.characters ?? [])],
-      playerSides: this.matchSetup.playerSides ? { ...this.matchSetup.playerSides } : undefined,
-      playerCharacters: this.matchSetup.playerCharacters
-        ? { ...this.matchSetup.playerCharacters }
-        : undefined,
-    };
-
-    if (matchSetup.versusMode === 'player-vs-player') {
-      // La identidad del personaje pertenece al jugador, no a la posición física.
-      // Solo al iniciar se ordenan las selecciones según las esquinas elegidas.
-      matchSetup.characters = getCharacterSelectionsByCorner(
-        matchSetup.playerCharacters,
-        matchSetup.playerSides,
-      );
-    } else if (matchSetup.versusMode === 'player-vs-ai' && matchSetup.playerSide === 'J2') {
-      matchSetup.characters.reverse();
-    }
-    return matchSetup;
-  }
+  #getMatchSetup() { return { ...this.matchSetup, characters: [...(this.matchSetup.characters ?? [])] }; }
 
   #startSelectedFight(stageId, cinematic = true) {
     this.scene.start(cinematic ? 'CinematicScene' : 'FightScene', {
@@ -482,10 +460,6 @@ export class MenuScene extends Phaser.Scene {
   #showPreviousConfiguration() {
     if (this.matchSetup.versusMode === 'player-vs-ai') {
       this.#moveSelectionBackToCharacters();
-      return;
-    }
-    if (this.matchSetup.versusMode === 'player-vs-player') {
-      this.#showPlayerCorners();
       return;
     }
     this.characterSlot = Math.max(0, getVersusMode(this.matchSetup.versusMode).characterSlots - 1);
@@ -516,15 +490,6 @@ export class MenuScene extends Phaser.Scene {
       } else {
         this.#showCombatModes();
       }
-      return;
-    }
-    if (this.page === 'player-side') {
-      this.#moveSelectionBackToCharacters();
-      return;
-    }
-    if (this.page === 'player-corners') {
-      this.characterSlot = 1;
-      this.#showCharacterModal();
       return;
     }
     if (this.page === 'training-color-picker') {
@@ -585,9 +550,7 @@ export class MenuScene extends Phaser.Scene {
     this.page = 'versus';
     this.matchSetup = {
       characters: [],
-      playerSide: null,
-      playerSides: null,
-      playerCharacters: { J1: null, J2: null },
+      playerSide: 'left',
     };
     this.#beginPage('COMBATE', 330, 168);
 
@@ -662,8 +625,8 @@ export class MenuScene extends Phaser.Scene {
     this.#beginCharacterModal();
 
     RANGER_ORDER.forEach((rangerId, index) => {
-      const rangerLabel = 'NARANJA';
-      this.#addButton('AXEM ' + rangerLabel, 181, () => {
+      const rangerLabel = ({ orange: 'NARANJA', white: 'BLANCO', red: 'ROJO' })[rangerId];
+      this.#addButton('AXEM ' + rangerLabel, 173 + index * 18, () => {
         this.#selectCharacter(rangerId);
       }, {
         width: 154,
@@ -675,136 +638,14 @@ export class MenuScene extends Phaser.Scene {
 
   #selectCharacter(rangerId) {
     const mode = getVersusMode(this.matchSetup.versusMode);
-    const selection = { id: rangerId };
-    if (mode.id === 'player-vs-player') {
-      const player = this.characterSlot === 0 ? 'J1' : 'J2';
-      this.matchSetup.playerCharacters = {
-        ...(this.matchSetup.playerCharacters ?? { J1: null, J2: null }),
-        [player]: selection,
-      };
-    } else {
-      this.matchSetup.characters[this.characterSlot] = {
-        ...selection,
-        gender: genderForRanger(rangerId),
-      };
-    }
-
+    this.matchSetup.characters[this.characterSlot] = { id: rangerId, gender: genderForRanger(rangerId) };
     if (this.characterSlot + 1 < mode.characterSlots) {
       this.characterSlot += 1;
       this.#showCharacterModal();
       return;
     }
-
-    if (mode.characterSlots === 1) {
-      const opponentId = RANGER_ORDER.find((id) => id !== rangerId) ?? rangerId;
-      this.matchSetup.characters[1] = { id: opponentId, gender: genderForRanger(opponentId) };
-      this.matchSetup.playerCharacter = rangerId;
-      this.matchSetup.playerSide = null;
-      this.#showPlayerSide();
-      return;
-    }
-
-    if (mode.id === 'player-vs-player') {
-      // Asignación aleatoria y siempre opuesta: no se solicita elegir esquinas.
-      const firstSide = Phaser.Math.Between(0, 1) === 0 ? 'left' : 'right';
-      this.matchSetup.playerSides = {
-        J1: firstSide,
-        J2: firstSide === 'left' ? 'right' : 'left',
-      };
-      this.matchSetup.playerSidesError = null;
-      this.#showNextConfiguration();
-      return;
-    }
-
-    // La esquina del jugador humano frente a la IA también se decide al azar.
-    this.matchSetup.playerSide = Phaser.Math.Between(0, 1) === 0 ? 'J1' : 'J2';
+    if (mode.characterSlots === 1) this.matchSetup.characters[1] = { id: rangerId, gender: genderForRanger(rangerId) };
     this.#showNextConfiguration();
-  }
-
-  #showPlayerSide() {
-    this.page = 'player-side';
-    this.#beginPage('ESQUINA DEL JUGADOR HUMANO', 400, 178);
-    this.#addText('ELEGÍ TANTO EL LADO COMO EL ESQUEMA DE TECLAS', 143, {
-      fontSize: '6px',
-      color: '#b7a9cb',
-    });
-    this.#addButton((this.matchSetup.playerSide === 'J1' ? '✓ ' : '') + 'J1 · IZQUIERDA · TECLAS A/D/W/S', 169, () => {
-      this.matchSetup.playerSide = 'J1';
-      this.matchSetup.playerSideError = null;
-      this.#showPlayerSide();
-    }, { width: 320, fontSize: '6px' });
-    this.#addButton((this.matchSetup.playerSide === 'J2' ? '✓ ' : '') + 'J2 · DERECHA · TECLAS DE FLECHAS', 192, () => {
-      this.matchSetup.playerSide = 'J2';
-      this.matchSetup.playerSideError = null;
-      this.#showPlayerSide();
-    }, { width: 320, fontSize: '6px' });
-    if (this.matchSetup.playerSideError) {
-      this.#addText(this.matchSetup.playerSideError, 211, { fontSize: '6px', color: '#ff9b9b' });
-    } else {
-      this.#addText('LA IA OCUPARÁ LA ESQUINA CONTRARIA', 211, { fontSize: '6px', color: '#aaa0bd' });
-    }
-    this.#addButton('VOLVER', 232, () => this.#moveSelectionBackToCharacters(), {
-      width: 120, x: 145, fontSize: '7px',
-    });
-    this.#addButton('CONTINUAR', 232, () => {
-      if (!this.matchSetup.playerSide) {
-        this.matchSetup.playerSideError = 'SELECCIONÁ J1 O J2 ANTES DE CONTINUAR';
-        this.#showPlayerSide();
-        return;
-      }
-      this.#showNextConfiguration();
-    }, { width: 132, x: 335, fontSize: '7px' });
-  }
-
-  #showPlayerCorners() {
-    this.page = 'player-corners';
-    const sides = this.matchSetup.playerSides ?? { J1: null, J2: null };
-    this.#beginPage('ESQUINAS DE INICIO', 430, 190);
-
-    this.#addText('JUGADOR 1', 142, { fontSize: '7px', color: '#d9a9ff' });
-    this.#addButton((sides.J1 === 'left' ? '✓ ' : '') + 'IZQUIERDA', 160, () => {
-      this.#setPlayerCorner('J1', 'left');
-    }, { width: 136, x: 160, fontSize: '7px' });
-    this.#addButton((sides.J1 === 'right' ? '✓ ' : '') + 'DERECHA', 160, () => {
-      this.#setPlayerCorner('J1', 'right');
-    }, { width: 136, x: 320, fontSize: '7px' });
-
-    this.#addText('JUGADOR 2', 188, { fontSize: '7px', color: '#ffc17e' });
-    this.#addButton((sides.J2 === 'left' ? '✓ ' : '') + 'IZQUIERDA', 206, () => {
-      this.#setPlayerCorner('J2', 'left');
-    }, { width: 136, x: 160, fontSize: '7px' });
-    this.#addButton((sides.J2 === 'right' ? '✓ ' : '') + 'DERECHA', 206, () => {
-      this.#setPlayerCorner('J2', 'right');
-    }, { width: 136, x: 320, fontSize: '7px' });
-
-    this.#addText(
-      this.matchSetup.playerSidesError ?? 'CADA JUGADOR ELIGE SU ESQUINA; DEBEN SER DISTINTAS',
-      222,
-      { fontSize: '5px', color: this.matchSetup.playerSidesError ? '#ff9b9b' : '#aaa0bd' },
-    );
-    this.#addButton('VOLVER A PERSONAJES', 239, () => {
-      this.characterSlot = 1;
-      this.#showCharacterModal();
-    }, { width: 180, x: 150, fontSize: '6px' });
-    this.#addButton('CONTINUAR', 239, () => {
-      const { J1, J2 } = this.matchSetup.playerSides ?? {};
-      if (!J1 || !J2 || J1 === J2) {
-        this.matchSetup.playerSidesError = 'AMBOS DEBEN ELEGIR LADOS OPUESTOS';
-        this.#showPlayerCorners();
-        return;
-      }
-      this.matchSetup.playerSidesError = null;
-      this.#showNextConfiguration();
-    }, { width: 132, x: 350, fontSize: '7px' });
-  }
-
-  #setPlayerCorner(player, side) {
-    this.matchSetup.playerSides = {
-      ...(this.matchSetup.playerSides ?? {}),
-      [player]: side,
-    };
-    this.matchSetup.playerSidesError = null;
-    this.#showPlayerCorners();
   }
 
   #showNextConfiguration() {

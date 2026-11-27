@@ -3,7 +3,6 @@ import { GAME_WIDTH } from '../../config/gameConfig.js';
 import { ARENA, getArenaForGroundDepthMode } from '../../domain/arena/arena.js';
 import { DEFAULT_STAGE_ID, getStage } from '../../infrastructure/assets/stageAssetManifest.js';
 import { getCombatMode, getVersusMode } from '../../domain/match/matchModes.js';
-import { getPlayersByStartCorner } from '../../domain/match/playerAssignments.js';
 import { RoundSeries } from '../../domain/match/RoundSeries.js';
 import { createDefaultMatch } from '../../application/useCases/CreateMatch.js';
 import { UpdateMatch } from '../../application/useCases/UpdateMatch.js';
@@ -40,16 +39,7 @@ export class FightScene extends Phaser.Scene {
       : getArenaForGroundDepthMode(this.stageDefinition.groundDepthMode);
     const versus = getVersusMode(this.matchSetup.versusMode);
 
-    if (versus.id === 'player-vs-player') {
-      const sides = this.matchSetup.playerSides;
-      if (!sides || !['left', 'right'].includes(sides.J1) ||
-        !['left', 'right'].includes(sides.J2) || sides.J1 === sides.J2) {
-        throw new Error('J1 y J2 deben elegir esquinas opuestas antes de iniciar el combate.');
-      }
-    }
-    if (versus.id === 'player-vs-ai' && !['J1', 'J2'].includes(this.matchSetup.playerSide)) {
-      throw new Error('El jugador debe elegir su esquema de controles y esquina antes de iniciar el combate.');
-    }
+    if (versus.id !== 'player-vs-ai' && versus.id !== 'ai-vs-ai') throw new Error('Modo de combate no disponible.');
 
     this.match = createDefaultMatch(
       Math.random,
@@ -63,7 +53,6 @@ export class FightScene extends Phaser.Scene {
     this.pendingNextRound = false;
 
     const playerOne = () => new PhaserKeyboardInput(this, KEYMAPS.PLAYER_1);
-    const playerTwo = () => new PhaserKeyboardInput(this, KEYMAPS.PLAYER_2);
     this.aiInputs = [];
     const createAI = (fighter, opponent, phase) => {
       const controller = new AIInput(fighter, opponent, {
@@ -78,30 +67,7 @@ export class FightScene extends Phaser.Scene {
     const aiOne = () => createAI(leftFighter, rightFighter, 0);
     const aiTwo = () => createAI(rightFighter, leftFighter, Math.PI);
 
-    let inputs;
-    switch (versus.id) {
-      case 'player-vs-ai':
-        inputs = this.matchSetup.playerSide === 'J2'
-          ? [aiOne(), playerTwo()]
-          : [playerOne(), aiTwo()];
-        break;
-      case 'ai-vs-ai':
-        inputs = [aiOne(), aiTwo()];
-        break;
-      case 'player-vs-player': {
-        // Cada esquema de teclado sigue a su jugador, sin importar la esquina.
-        const controllersByPlayer = {
-          J1: playerOne(),
-          J2: playerTwo(),
-        };
-        inputs = getPlayersByStartCorner(this.matchSetup.playerSides)
-          .map((player) => controllersByPlayer[player]);
-        break;
-      }
-      default:
-        inputs = [playerOne(), playerTwo()];
-        break;
-    }
+    const inputs = versus.id === 'ai-vs-ai' ? [aiOne(), aiTwo()] : [playerOne(), aiTwo()];
 
     this.updateMatch = new UpdateMatch({ match: this.match, inputs });
 
@@ -111,10 +77,12 @@ export class FightScene extends Phaser.Scene {
     );
     this.pickupView = new PickupView(this);
     this.views = this.match.fighters.map((fighter) => new FighterView(this, fighter));
+    this.views.forEach((view) => { view.data ??= { displayHeight: 83 }; });
     this.fx = new FxDirector(this);
     this.paused = false;
     this.pauseKey = this.input.keyboard.addKey('P');
     this.restartKey = this.input.keyboard.addKey('R');
+    this.transformKey = this.input.keyboard.addKey('T');
     this.menuKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
     this.resultKeys = this.input.keyboard.addKeys({
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
@@ -194,6 +162,7 @@ export class FightScene extends Phaser.Scene {
       return;
     }
     if (Phaser.Input.Keyboard.JustDown(this.restartKey)) this.#restart();
+    if (Phaser.Input.Keyboard.JustDown(this.transformKey)) this.match.fighters[0].activateTransformation();
     if (this.match.isOver) {
       if (
         Phaser.Input.Keyboard.JustDown(this.resultKeys.enter) ||
@@ -213,11 +182,21 @@ export class FightScene extends Phaser.Scene {
     const { hitStopMs } = this.fx.handle(events);
     this.hitStopMs = Math.max(this.hitStopMs, hitStopMs);
     for (const event of events) {
+      if (event.type === 'hit') {
+        const points = 1 + Math.floor(Math.random() * 2);
+        const attacker = this.match.fighters.find((fighter) => fighter.combatantId === event.attackerId);
+        const target = this.match.fighters.find((fighter) => fighter.combatantId === event.targetId);
+        attacker?.chargeTransformation(points);
+        target?.chargeTransformation(points);
+      }
       if (event.type === 'match-over') this.#handleRoundOver(event.winnerId);
     }
 
     this.fx.update(this.match.fighters, delta);
-    this.views.forEach((view) => view.sync());
+    this.views.forEach((view) => {
+      view.sync();
+      if (view.fighter.transformed) view.sprite.setTexture('ranger-male-' + view.fighter.id + '-super');
+    });
     this.pickupView.sync(this.match.pickup, time);
     this.#followFighters(delta);
     this.stage.update(time, this.cameras.main.scrollX);

@@ -69,10 +69,27 @@ export class Fighter {
       [PICKUP_TYPES.SHIELD]: 0,
     };
     this.lastDamageTaken = 0;
+    this.transformationCharge = 0;
+    this.transformed = false;
     this.events.length = 0;
   }
 
   // ── Consultas ────────────────────────────────────────────────────────────
+
+  get maxTransformationCharge() { return 250; }
+
+  chargeTransformation(points = 1) {
+    if (!this.isAlive || this.transformed) return this.transformationCharge;
+    this.transformationCharge = Math.min(250, this.transformationCharge + Math.max(1, Math.min(2, Math.floor(points))));
+    return this.transformationCharge;
+  }
+
+  activateTransformation() {
+    if (!this.isAlive || this.transformed || this.transformationCharge < 250) return false;
+    this.transformed = true;
+    this.#emit('transformation');
+    return true;
+  }
 
   get maxHealth() {
     return this.stats.maxHealth;

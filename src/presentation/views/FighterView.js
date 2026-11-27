@@ -20,7 +20,7 @@ export class FighterView {
   constructor(scene, fighter) {
     this.scene = scene;
     this.fighter = fighter;
-    this.data = characterAnimationData[fighter.id];
+    this.data = characterAnimationData[fighter.id] ?? characterAnimationData.orange;
     const fallbackTexture = spriteKeyFor(fighter.id, fighter.gender);
 
     this.shadow = scene.add.ellipse(0, ARENA.groundY, 44, 8, 0x000000, 0.4).setDepth(FIGHTER_DEPTH - 1);

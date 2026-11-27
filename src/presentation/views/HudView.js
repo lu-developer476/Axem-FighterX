@@ -3,6 +3,7 @@ import { PICKUP_TYPES } from '../../domain/entities/PowerUpPickup.js';
 import { contentWidth, insetSize } from './uiLayout.js';
 
 const BAR = { width: 176, height: 10, y: 16, margin: 12 };
+const TRANSFORM_BAR = { width: 176, height: 7, y: 250, margin: 12 };
 const COLORS = {
   ink: 0x0d0b16,
   back: 0x2a2260,
@@ -11,6 +12,8 @@ const COLORS = {
   warn: 0xf2c14e,
   danger: 0xe0405a,
   shine: 0xffffff,
+  gold: 0xffc83d,
+  goldGlow: 0xffedaa,
 };
 const FONT = { fontFamily: 'monospace', color: '#f4efd8' };
 const STATUS_LABELS = {
@@ -29,6 +32,7 @@ export class HudView {
     this.fighters = fighters;
     this.trail = fighters.map((fighter) => fighter.health);
     this.graphics = scene.add.graphics().setScrollFactor(0).setDepth(10_000);
+    this.transformHint = scene.add.text(GAME_WIDTH / 2, 239, 'TRANSFORMACIÓN · T', { ...FONT, fontSize: '7px', color: '#ffe08a' }).setOrigin(0.5).setScrollFactor(0).setDepth(10_001);
 
     const text = (x, y, value, style, originX = 0) =>
       scene.add.text(x, y, value, { ...FONT, ...style }).setOrigin(originX, 0).setScrollFactor(0).setDepth(10_001);
@@ -146,6 +150,7 @@ export class HudView {
       this.trail[i] =
         this.trail[i] > fighter.health ? Math.max(fighter.health, this.trail[i] - trailLoss) : fighter.health;
       this.#drawBar(i, fighter);
+      this.#drawTransformationBar(i, fighter);
       const active = Object.entries(fighter.powerUps)
         .filter(([, remainingMs]) => remainingMs > 0)
         .map(([type, remainingMs]) => STATUS_LABELS[type] + ' ' + Math.ceil(remainingMs / 1000) + 's');
@@ -213,6 +218,23 @@ export class HudView {
     this.resultSpeaker.setText(speaker?.name ?? '').setColor(speaker?.color ?? '#f1ecdf');
     this.resultDialogue.setText(line.text);
     this.resultPrompt.setText('ENTER / ESPACIO: SIGUIENTE LÍNEA');
+  }
+
+  #drawTransformationBar(index, fighter) {
+    const g = this.graphics;
+    const { width, height, y, margin } = TRANSFORM_BAR;
+    const x = index === 0 ? margin : GAME_WIDTH - margin - width;
+    const ratio = fighter.transformationCharge / fighter.maxTransformationCharge;
+    const ready = ratio >= 1 && !fighter.transformed;
+    const blink = ready && Math.floor(this.scene.time.now / 180) % 2 === 0;
+    g.fillStyle(COLORS.ink, 0.95).fillRect(x - 2, y - 2, width + 4, height + 4);
+    g.fillStyle(0x34270c, 1).fillRect(x, y, width, height);
+    if (ratio > 0) {
+      g.fillStyle(blink ? COLORS.goldGlow : COLORS.gold, 1).fillRect(x, y, Math.round(width * ratio), height);
+      g.fillStyle(0xffffff, blink ? 0.9 : 0.3).fillRect(x, y, Math.round(width * ratio), 1);
+    }
+    if (ready) g.lineStyle(1, COLORS.goldGlow, blink ? 1 : 0.35).strokeRect(x - 2, y - 2, width + 4, height + 4);
+    if (index === 0) this.transformHint.setText(ready ? '¡LISTO! PRESIONÁ T PARA TRANSFORMAR' : fighter.transformed ? 'FORMA SUPER ACTIVADA' : 'TRANSFORMACIÓN · T');
   }
 
   #drawBar(index, fighter) {

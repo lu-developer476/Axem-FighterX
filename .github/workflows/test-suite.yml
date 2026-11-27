@@ -37,3 +37,4 @@ jobs:
           src/domain/match/playerAssignments.test.js
           src/application/useCases/CreateMatch.test.js
           src/domain/match/matchModes.test.js
+          src/domain/entities/Fighter.test.js

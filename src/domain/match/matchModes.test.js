@@ -5,7 +5,6 @@ describe('Opciones de configuración del combate', () => {
   it('ofrece los tres tipos de enfrentamiento solicitados', () => {
     expect(VERSUS_MODES.map((mode) => mode.label)).toEqual([
       'JUGADOR VS IA',
-      'JUGADOR VS JUGADOR',
       'IA VS IA',
     ]);
   });
@@ -19,8 +18,8 @@ describe('Opciones de configuración del combate', () => {
     ]);
   });
 
-  it('solicita un personaje para jugador vs IA y dos para los demás enfrentamientos', () => {
-    expect(VERSUS_MODES.map((mode) => mode.characterSlots)).toEqual([1, 2, 2]);
+  it('solicita un personaje para jugador vs IA y dos para IA vs IA', () => {
+    expect(VERSUS_MODES.map((mode) => mode.characterSlots)).toEqual([1, 2]);
   });
 
   it('usa opciones seguras si recibe identificadores desconocidos', () => {

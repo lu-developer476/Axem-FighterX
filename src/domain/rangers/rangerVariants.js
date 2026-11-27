@@ -3,6 +3,8 @@ import { RANGER_IDS } from './rangerCatalog.js';
 /** Variante temporalmente disponible: Axem Naranja masculino. */
 export const AVAILABLE_RANGER_VARIANTS = Object.freeze([
   Object.freeze({ id: RANGER_IDS.ORANGE, gender: 'male' }),
+  Object.freeze({ id: RANGER_IDS.WHITE, gender: 'male' }),
+  Object.freeze({ id: RANGER_IDS.RED, gender: 'male' }),
 ]);
 
 export function isAvailableRangerVariant(rangerId, gender) {

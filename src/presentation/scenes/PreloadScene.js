@@ -52,14 +52,15 @@ export class PreloadScene extends Phaser.Scene {
       console.error('No se pudo cargar un recurso:', file?.key ?? file?.src ?? file);
     });
 
-    // Solo se cargan recursos de la variante completa: Axem Naranja masculino.
+    // Se cargan Axem Orange, White y Red, incluidas sus formas Super.
     for (const { id, gender } of AVAILABLE_RANGER_VARIANTS) {
       this.load.image(spriteKeyFor(id, gender), spriteUrlFor(id, gender));
+      this.load.image(spriteKeyFor(id, gender, true), spriteUrlFor(id, gender, true));
       this.load.image(menuSpriteKeyFor(id, gender), menuSpriteUrlFor(id, gender));
       const runKey = maleAnimationKey(id, 'run');
       const bikeKey = maleAnimationKey(id, 'bike');
       this.load.spritesheet(runKey, maleAnimationUrl(id, 'run'), {
-        frameWidth: 90,
+        frameWidth: id === 'orange' ? 90 : 150,
         frameHeight: 100,
       });
       this.load.spritesheet(bikeKey, maleAnimationUrl(id, 'bike'), {

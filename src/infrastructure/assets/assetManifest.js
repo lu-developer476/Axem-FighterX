@@ -1,27 +1,19 @@
-import { genderForRanger } from '../../domain/rangers/rangerVariants.js';
-import rangerArtworkUrl from '../../../art/source/sprites/results/male/orange/super-orange/super-orange.png?url';
-import runAnimationUrl from '../../../art/source/sprites/results/male/orange/axem-orange-run.png?url';
-import bikeAnimationUrl from '../../../art/source/sprites/results/male/orange/axem-orange-bike.png?url';
-
+import orangeArtworkUrl from '../../../art/source/sprites/results/male/orange/super-orange/super-orange.png?url';
+import whiteArtworkUrl from '../../../art/source/sprites/results/male/white/axem-white-battle-pose.png?url';
+import superWhiteArtworkUrl from '../../../art/source/sprites/results/male/white/super-white/super-white-battle-pose.png?url';
+import redArtworkUrl from '../../../art/source/sprites/references/axem-red/axem-red-battle-channelling-pose.png?url';
+import superRedArtworkUrl from '../../../art/source/sprites/references/axem-red/super-red/super-red-idle.png?url';
+import orangeRun from '../../../art/source/sprites/results/male/orange/axem-orange-run.png?url';
+import orangeBike from '../../../art/source/sprites/results/male/orange/axem-orange-bike.png?url';
+import whiteRun from '../../../art/source/sprites/results/male/white/axem-white-run.png?url';
+import whiteBike from '../../../art/source/sprites/results/male/white/axem-white-bike.png?url';
+import redRun from '../../../art/source/sprites/references/axem-red/axem-red-channelling-run.png?url';
+import redBike from '../../../art/source/sprites/references/axem-red/axem-red-bike.png?url';
 export const DEFAULT_RANGER_GENDER = 'male';
-
-export const spriteKeyFor = (rangerId, gender = genderForRanger(rangerId) ?? DEFAULT_RANGER_GENDER) =>
-  'ranger-' + gender + '-' + rangerId;
-
-// Phaser usa directamente el artwork fuente versionado.
-export const spriteUrlFor = () => rangerArtworkUrl;
-
-export const menuSpriteKeyFor = (rangerId, gender = 'male') =>
-  'menu-ranger-' + gender + '-' + rangerId;
-
-// El retrato usa el mismo master; su escala se ajusta en la escena.
-export const menuSpriteUrlFor = () => rangerArtworkUrl;
-
-export const maleAnimationKey = (rangerId, action) =>
-  'axem-' + rangerId + '-' + action;
-
-// Solo se conservan las tiras PNG versionadas de run y bike.
-export const maleAnimationUrl = (_rangerId, action) => ({
-  run: runAnimationUrl,
-  bike: bikeAnimationUrl,
-}[action] ?? null);
+export const spriteKeyFor = (id, gender = DEFAULT_RANGER_GENDER, transformed = false) => 'ranger-' + gender + '-' + id + (transformed ? '-super' : '');
+const ART = { orange: [orangeArtworkUrl, orangeArtworkUrl], white: [whiteArtworkUrl, superWhiteArtworkUrl], red: [redArtworkUrl, superRedArtworkUrl] };
+export const spriteUrlFor = (id, _gender = 'male', transformed = false) => ART[id]?.[transformed ? 1 : 0] ?? orangeArtworkUrl;
+export const menuSpriteKeyFor = (id, gender = 'male') => 'menu-ranger-' + gender + '-' + id;
+export const menuSpriteUrlFor = (id, gender = 'male') => spriteUrlFor(id, gender, true);
+export const maleAnimationKey = (id, action) => 'axem-' + id + '-' + action;
+export const maleAnimationUrl = (id, action) => ({ orange: { run: orangeRun, bike: orangeBike }, white: { run: whiteRun, bike: whiteBike }, red: { run: redRun, bike: redBike } }[id]?.[action] ?? null);

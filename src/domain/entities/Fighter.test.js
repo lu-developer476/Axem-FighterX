@@ -305,3 +305,22 @@ describe('Fighter: defensa, esquiva y ataque especial', () => {
     expect(fighter.state).toBe(FighterState.IDLE);
   });
 });
+
+
+describe('barra de transformación', () => {
+  it('acumula de uno a dos puntos por impacto, se limita a 250 y activa la forma Super', () => {
+    const fighter = createFighter('white', { x: 100, y: 200 }, 1, 'male');
+    expect(fighter.activateTransformation()).toBe(false);
+    fighter.chargeTransformation(1);
+    fighter.chargeTransformation(2);
+    expect(fighter.transformationCharge).toBe(3);
+    for (let i = 0; i < 124; i++) fighter.chargeTransformation(2);
+    expect(fighter.transformationCharge).toBe(250);
+    expect(fighter.activateTransformation()).toBe(true);
+    expect(fighter.transformed).toBe(true);
+    expect(fighter.chargeTransformation(2)).toBe(250);
+    fighter.reset();
+    expect(fighter.transformationCharge).toBe(0);
+    expect(fighter.transformed).toBe(false);
+  });
+});

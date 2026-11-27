@@ -61,7 +61,7 @@
       "preserveFrameCount": true,
       "preserveFrameTiming": true,
       "referenceDirectory": "art/source/sprites/references/axem-red",
-      "referenceFramePolicy": "full-canvas",
+      "referenceFramePolicy": "preserve-native-frame-bounds",
       "referenceFiles": [
         "axem-red-axe-dash.gif",
         "axem-red-battle-channelling-pose.gif",

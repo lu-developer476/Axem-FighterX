@@ -6,6 +6,8 @@
 export const RANGER_IDS = Object.freeze({
   VIOLET: 'violet',
   ORANGE: 'orange',
+  WHITE: 'white',
+  RED: 'red',
 });
 
 const SHARED_RANGER_STATS = Object.freeze({
@@ -24,9 +26,7 @@ export const rangerCatalog = Object.freeze({
     name: 'Axem Violet',
     stats: SHARED_RANGER_STATS,
   },
-  [RANGER_IDS.ORANGE]: {
-    id: RANGER_IDS.ORANGE,
-    name: 'Axem Orange',
-    stats: SHARED_RANGER_STATS,
-  },
+  [RANGER_IDS.ORANGE]: { id: RANGER_IDS.ORANGE, name: 'Axem Orange', stats: SHARED_RANGER_STATS },
+  [RANGER_IDS.WHITE]: { id: RANGER_IDS.WHITE, name: 'Axem White', stats: SHARED_RANGER_STATS },
+  [RANGER_IDS.RED]: { id: RANGER_IDS.RED, name: 'Axem Red', stats: SHARED_RANGER_STATS },
 });

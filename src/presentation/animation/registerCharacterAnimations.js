@@ -1,7 +1,7 @@
 import { RANGER_IDS } from '../../domain/rangers/rangerCatalog.js';
 import { maleAnimationKey } from '../../infrastructure/assets/assetManifest.js';
 
-const RANGER_ORDER = [RANGER_IDS.ORANGE];
+const RANGER_ORDER = [RANGER_IDS.ORANGE, RANGER_IDS.WHITE, RANGER_IDS.RED];
 const CHARACTER_FRAME_RATE = 10;
 
 /** Registra únicamente las tiras PNG que ya están versionadas en art/source. */

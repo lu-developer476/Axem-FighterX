@@ -10,11 +10,9 @@ const defeatedOutputPath = fileURLToPath(new URL('../../../art/source/sprites/re
 const resultGifDirectory = fileURLToPath(new URL('../../../art/source/sprites/results/male/orange', import.meta.url));
 
 describe('Sprites canónicos de Axem Naranja', () => {
-  it('mantiene disponible únicamente la variante masculina naranja', () => {
-    expect(genderForRanger('orange')).toBe('male');
-    expect(genderForRanger('violet')).toBeNull();
-    expect(isAvailableRangerVariant('orange', 'male')).toBe(true);
-    expect(isAvailableRangerVariant('violet', 'female')).toBe(false);
+  it('mantiene disponibles Orange, White y Red masculinos', () => {
+    for (const id of ['orange', 'white', 'red']) { expect(genderForRanger(id)).toBe('male'); expect(isAvailableRangerVariant(id, 'male')).toBe(true); }
+    expect(genderForRanger('violet')).toBeNull(); expect(isAvailableRangerVariant('red', 'female')).toBe(false);
   });
 
   it('mantiene declaradas las dimensiones lógicas de dibujo', () => {

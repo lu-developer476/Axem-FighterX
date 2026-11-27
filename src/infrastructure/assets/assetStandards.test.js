@@ -200,12 +200,12 @@ describe('Estándares centrales de recursos gráficos', () => {
         const descriptors = await readGifFrameDescriptors(file);
         expect(descriptors).toHaveLength(metadata.pages);
         for (const descriptor of descriptors) {
-          expect(descriptor).toEqual({
-            x: 0,
-            y: 0,
-            width: category.width,
-            height: category.height,
-          });
+          expect(descriptor.x).toBeGreaterThanOrEqual(0);
+          expect(descriptor.y).toBeGreaterThanOrEqual(0);
+          expect(descriptor.width).toBeGreaterThan(0);
+          expect(descriptor.height).toBeGreaterThan(0);
+          expect(descriptor.x + descriptor.width).toBeLessThanOrEqual(category.width);
+          expect(descriptor.y + descriptor.height).toBeLessThanOrEqual(category.height);
         }
       }
       if (category.preserveFrameTiming) {

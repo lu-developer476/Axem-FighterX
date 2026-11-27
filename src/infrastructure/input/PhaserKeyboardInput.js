@@ -24,12 +24,14 @@ export class PhaserKeyboardInput {
       block: keyNames.block,
       dodge: keyNames.dodge,
       specialAttack: keyNames.specialAttack,
+      levitate: keyNames.levitate,
+      chargeKi: keyNames.chargeKi,
     });
   }
 
   /** @returns {import('../../application/ports/InputPort.js').PlayerIntent} */
   readIntent() {
-    const { left, right, up, down, attack, teleport, dash, block, dodge, specialAttack, ascend, descend } = this.keys;
+    const { left, right, up, down, attack, teleport, dash, block, dodge, specialAttack, ascend, descend, levitate, chargeKi } = this.keys;
     return {
       x: Number(right.isDown) - Number(left.isDown),
       y: Number(down.isDown) - Number(up.isDown),
@@ -40,6 +42,8 @@ export class PhaserKeyboardInput {
       dodge: Phaser.Input.Keyboard.JustDown(dodge),
       teleport: Phaser.Input.Keyboard.JustDown(teleport),
       dash: Phaser.Input.Keyboard.JustDown(dash),
+      levitate: Phaser.Input.Keyboard.JustDown(levitate),
+      chargeKi: chargeKi.isDown,
     };
   }
 }

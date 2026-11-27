@@ -14,7 +14,7 @@ const BLOCK_KNOCKBACK_MULTIPLIER = 0.18;
 
 /**
  * @typedef {{ x: number, y?: number, z?: number, attack?: boolean, specialAttack?: boolean,
- *   block?: boolean, dodge?: boolean, teleport?: boolean, dash?: boolean }} Intent
+ *   block?: boolean, dodge?: boolean, teleport?: boolean, dash?: boolean, levitate?: boolean, chargeKi?: boolean }} Intent
  */
 
 /**
@@ -53,6 +53,11 @@ export class Fighter {
     this.elapsedMs = 0;
     this.velocityX = 0;
     this.hasHitThisAttack = false;
+    this.attackComboIndex = 0;
+    this.attackComboQueued = false;
+    this.hitComboCount = 0;
+    this.lastHitAtMs = Number.NEGATIVE_INFINITY;
+    this.isLevitating = false;
     this.invulnerableMs = 0;
     this.teleportCooldownMs = 0;
     this.dashCooldownMs = 0;
@@ -89,6 +94,10 @@ export class Fighter {
     this.transformed = true;
     this.#emit('transformation');
     return true;
+  }
+
+  get isInHitCombo() {
+    return this.hitComboCount > 1 && this.elapsedMs - this.lastHitAtMs <= 900;
   }
 
   get maxHealth() {
@@ -184,8 +193,10 @@ export class Fighter {
   startAttack() {
     if (!this.canAct) return false;
     this.hasHitThisAttack = false;
+    this.attackComboIndex = 1;
+    this.attackComboQueued = false;
     this.#setState(FighterState.ATTACK);
-    this.#emit('attack');
+    this.#emit('attack', { comboIndex: this.attackComboIndex });
     return true;
   }
 
@@ -212,6 +223,24 @@ export class Fighter {
     return true;
   }
 
+  /** Alterna la levitación; Q/E siguen controlando la altura manualmente. */
+  toggleLevitation() {
+    if (!this.canAct) return false;
+    if (this.isLevitating) {
+      this.isLevitating = false;
+      this.#emit('levitation', { active: false });
+      return false;
+    }
+    if (this.position.z === 0) {
+      const lift = Math.min(42, this.maxAltitude);
+      if (lift <= 0) return false;
+      this.position.z = lift;
+    }
+    this.isLevitating = true;
+    this.#emit('levitation', { active: true });
+    return true;
+  }
+
   /** Activa o renueva un potenciador y devuelve su duración. */
   applyPowerUp(type) {
     const definition = POWER_UPS[type];
@@ -234,6 +263,8 @@ export class Fighter {
       ? Math.max(1, Math.round(damage * POWER_UPS[PICKUP_TYPES.SHIELD].damageMultiplier))
       : damage;
 
+    this.hitComboCount = this.elapsedMs - this.lastHitAtMs <= 1500 ? this.hitComboCount + 1 : 1;
+    this.lastHitAtMs = this.elapsedMs;
     this.lastHitBlocked = guarding;
     this.lastDamageTaken = guarding
       ? Math.max(1, Math.round(shieldDamage * BLOCK_DAMAGE_MULTIPLIER))
@@ -247,8 +278,11 @@ export class Fighter {
     this.health = Math.max(0, this.health - this.lastDamageTaken);
     this.velocityX = fromDirection * this.stats.knockback * (guarding ? BLOCK_KNOCKBACK_MULTIPLIER : 1);
     this.invulnerableMs = TIMINGS.hitInvulnerabilityMs;
+    this.stateTimeMs = 0;
     if (this.health === 0) {
       this.velocityX *= 1.5;
+      this.isLevitating = false;
+      this.transformed = false;
       this.#setState(FighterState.KO);
       this.#emit('ko');
     } else if (guarding) {
@@ -278,6 +312,8 @@ export class Fighter {
     this.dodgeCooldownMs = Math.max(0, this.dodgeCooldownMs - deltaMs);
     this.specialAttackCooldownMs = Math.max(0, this.specialAttackCooldownMs - deltaMs);
     this.#updatePowerUps(deltaMs);
+    if (this.hitComboCount > 0 && this.elapsedMs - this.lastHitAtMs > 1200) this.hitComboCount = 0;
+    if (intent.levitate && this.canAct) this.toggleLevitation();
 
     if ((this.state === FighterState.IDLE || this.state === FighterState.WALK)
       && intent.dodge && this.canDodge && !intent.attack && !intent.specialAttack && !intent.block) {
@@ -311,10 +347,16 @@ export class Fighter {
         }
         break;
       case FighterState.ATTACK:
-        this.#updateAttack(seconds);
+        this.#updateAttack(intent, seconds);
         break;
       case FighterState.SPECIAL_ATTACK:
         this.#updateSpecialAttack(seconds);
+        break;
+      case FighterState.CHARGE_KI:
+        if (!intent.chargeKi) {
+          this.#setState(FighterState.IDLE);
+          this.#updateFree(intent, seconds);
+        }
         break;
       case FighterState.LAND:
         if (this.stateTimeMs >= TIMINGS.landMs) this.#setState(FighterState.IDLE);
@@ -374,6 +416,11 @@ export class Fighter {
     }
     if (intent.specialAttack && this.startSpecialAttack()) return;
     if (intent.attack && this.startAttack()) return;
+    if (intent.chargeKi) {
+      this.#setState(FighterState.CHARGE_KI);
+      this.#emit('charge-ki-start');
+      return;
+    }
 
     const moveX = Number.isFinite(intent.x) ? intent.x : 0;
     const moveY = Number.isFinite(intent.y) ? intent.y : 0;
@@ -392,6 +439,7 @@ export class Fighter {
       this.#clampAltitude();
     }
     if (previousAltitude > 0 && this.position.z === 0) {
+      this.isLevitating = false;
       this.#emit('land', { groundY: this.position.y, impact: previousAltitude });
       this.#setState(FighterState.LAND);
       return;
@@ -439,10 +487,19 @@ export class Fighter {
     if (this.stateTimeMs >= DASH.durationMs) this.#setState(FighterState.IDLE);
   }
 
-  #updateAttack(seconds) {
+  #updateAttack(intent, seconds) {
     const { windupMs, activeMs } = TIMINGS.attack;
+    if (intent.attack && this.attackComboIndex < 3) this.attackComboQueued = true;
     if (this.stateTimeMs >= attackTotalMs()) {
-      this.#setState(FighterState.IDLE);
+      if (this.attackComboQueued && this.attackComboIndex < 3) {
+        this.attackComboIndex += 1;
+        this.attackComboQueued = false;
+        this.hasHitThisAttack = false;
+        this.stateTimeMs = 0;
+        this.#emit('attack', { comboIndex: this.attackComboIndex });
+      } else {
+        this.#setState(FighterState.IDLE);
+      }
       return;
     }
     const inActive = this.stateTimeMs >= windupMs && this.stateTimeMs < windupMs + activeMs;
@@ -480,6 +537,10 @@ export class Fighter {
   #setState(next) {
     if (this.state === next) return;
     this.state = next;
+    if (next !== FighterState.ATTACK) {
+      this.attackComboIndex = 0;
+      this.attackComboQueued = false;
+    }
     this.stateTimeMs = 0;
     if (next !== FighterState.DASH) this.dashVector = { x: 0, y: 0 };
     if (next !== FighterState.DODGE) this.dodgeVector = { x: 0, y: 0 };

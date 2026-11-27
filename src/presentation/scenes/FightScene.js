@@ -81,7 +81,6 @@ export class FightScene extends Phaser.Scene {
     this.fx = new FxDirector(this);
     this.paused = false;
     this.pauseKey = this.input.keyboard.addKey('P');
-    this.restartKey = this.input.keyboard.addKey('R');
     this.transformKey = this.input.keyboard.addKey('T');
     this.menuKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
     this.resultKeys = this.input.keyboard.addKeys({
@@ -98,6 +97,17 @@ export class FightScene extends Phaser.Scene {
     this.pauseMenu = new PauseMenuView(this, {
       onResume: () => this.#resume(),
       onReturnToMenu: () => this.scene.start('MenuScene'),
+      controlsTitle: 'CONTROLES DEL JUGADOR',
+      controls: [
+        'MOVIMIENTO · FLECHAS ↑ ← ↓ →',
+        'VUELO · Q SUBIR · E BAJAR · C LEVITAR',
+        'ATAQUE BÁSICO · A (COMBO 01 → 02 → 03)',
+        'ATAQUE ESPECIAL · S',
+        'BLOQUEO · B · ESQUIVA · X',
+        'DASH · D · CARGAR KI · V',
+        'TELETRANSPORTE · R · TRANSFORMACIÓN · T (250)',
+        'PAUSA · P · VOLVER AL MENÚ · ESC',
+      ],
     });
 
     const stageTitle = this.matchSetup.trainingBackgroundColor
@@ -161,7 +171,6 @@ export class FightScene extends Phaser.Scene {
       this.#openPause();
       return;
     }
-    if (Phaser.Input.Keyboard.JustDown(this.restartKey)) this.#restart();
     if (Phaser.Input.Keyboard.JustDown(this.transformKey)) this.match.fighters[0].activateTransformation();
     if (this.match.isOver) {
       if (
@@ -193,10 +202,7 @@ export class FightScene extends Phaser.Scene {
     }
 
     this.fx.update(this.match.fighters, delta);
-    this.views.forEach((view) => {
-      view.sync();
-      if (view.fighter.transformed) view.sprite.setTexture('ranger-male-' + view.fighter.id + '-super');
-    });
+    this.views.forEach((view) => view.sync());
     this.pickupView.sync(this.match.pickup, time);
     this.#followFighters(delta);
     this.stage.update(time, this.cameras.main.scrollX);
@@ -242,6 +248,9 @@ export class FightScene extends Phaser.Scene {
     }
 
     const winnerIndex = this.match.fighters.findIndex((fighter) => fighter.combatantId === winnerId);
+    const loserIndex = winnerIndex < 0 ? -1 : 1 - winnerIndex;
+    if (loserIndex >= 0) this.views[loserIndex]?.showDefeated();
+    else this.views.forEach((view) => view.showDefeated());
     const result = this.roundSeries.completeRound(winnerIndex < 0 ? null : winnerIndex);
     this.hud.setRoundScore(result.completedRounds, result.totalRounds, result.wins);
 
@@ -263,6 +272,7 @@ export class FightScene extends Phaser.Scene {
     this.pendingNextRound = false;
     this.views.forEach((view) => view.clearVictory());
     this.match.restart();
+    this.views.forEach((view) => view.showRecovery());
     const nextAiLevel = this.roundSeries.completedRounds + 1;
     this.aiInputs.forEach((controller) => controller.setDifficulty(nextAiLevel));
     this.aiLevelLabel?.setText('IA · NIVEL ' + nextAiLevel).setAlpha(1);

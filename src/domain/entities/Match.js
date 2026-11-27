@@ -61,9 +61,10 @@ export class Match {
    * @param {number} deltaMs
    */
   step(intents, deltaMs) {
-    const dt = Math.min(deltaMs, MAX_STEP_MS);
     const events = [];
-    const active = this.isOver ? [NEUTRAL, NEUTRAL] : intents;
+    if (this.isOver) return events;
+    const dt = Math.min(deltaMs, MAX_STEP_MS);
+    const active = intents;
     const previousX = this.fighters.map((fighter) => fighter.position.x);
 
     this.fighters.forEach((fighter, i) => {
@@ -171,6 +172,9 @@ export class Match {
         type: 'hit',
         attackerId: attacker.combatantId,
         targetId: target.combatantId,
+        attackerCharacterId: attacker.id,
+        targetCharacterId: target.id,
+        comboIndex: attacker.attackComboIndex || 1,
         damage: target.lastDamageTaken,
         blocked: target.lastHitBlocked,
         x: point.x,
@@ -315,6 +319,13 @@ export class Match {
     if (a.isAlive && b.isAlive) return;
     this.status = 'over';
     this.winnerId = a.isAlive ? a.combatantId : b.isAlive ? b.combatantId : null;
-    events.push({ type: 'match-over', winnerId: this.winnerId });
+    const winner = this.fighters.find((fighter) => fighter.combatantId === this.winnerId);
+    events.push({
+      type: 'match-over',
+      winnerId: this.winnerId,
+      winnerCharacterId: winner?.id ?? null,
+      x: winner?.position.x,
+      y: winner ? winner.position.y - winner.position.z - 42 : undefined,
+    });
   }
 }

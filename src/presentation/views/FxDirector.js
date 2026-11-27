@@ -4,6 +4,8 @@ import { FighterState, TIMINGS } from '../../domain/entities/FighterState.js';
 import { POWER_UPS, PICKUP_TYPES } from '../../domain/entities/PowerUpPickup.js';
 import { FX_PARTICLES, fxAnimKey, fxFrameKey } from '../../infrastructure/graphics/FxTextureFactory.js';
 import { pickupTextureKeyFor } from '../../infrastructure/assets/pickupAssetManifest.js';
+import { BIG_WHITE_EXPLOSION_GIF, FINAL_WHITE_EXPLOSION_GIF, WHITE_EXPLOSION_GIF } from '../../infrastructure/assets/combatGifManifest.js';
+import { GifOverlay } from './GifOverlay.js';
 
 const FX_DEPTH = 500;
 const DUST_INTERVAL_MS = 190;
@@ -37,6 +39,12 @@ export class FxDirector {
       switch (event.type) {
         case 'attack':
           this.#slash(event);
+          break;
+        case 'special-attack':
+          if (event.characterId === 'white') this.#playGif(WHITE_EXPLOSION_GIF, event.x + event.facing * 14, event.y - 12, { durationMs: 760, scale: 0.88 });
+          break;
+        case 'match-over':
+          if (event.winnerCharacterId === 'white') this.#playGif(FINAL_WHITE_EXPLOSION_GIF, event.x ?? this.scene.cameras.main.midPoint.x, event.y ?? ARENA.groundY - 42, { durationMs: 1100, scale: 1.18 });
           break;
         case 'dash-start':
           this.#dashStart(event);
@@ -126,6 +134,9 @@ export class FxDirector {
   }
 
   #hit(event) {
+    if (event.attackerCharacterId === 'white' && event.comboIndex > 1) {
+      this.#playGif(BIG_WHITE_EXPLOSION_GIF, event.x, event.y, { durationMs: 720, scale: 0.86 });
+    }
     this.#play('explosion', event.x, event.y, { scale: 0.75 });
     this.#play('burst', event.x, event.y, { scale: 0.72, depth: FX_DEPTH + 1 });
     this.#play('spark', event.x, event.y, { scale: 1.3, depth: FX_DEPTH + 2 });
@@ -271,6 +282,21 @@ export class FxDirector {
   }
 
   // ── Utilidades ───────────────────────────────────────────────────────────
+
+  /** Reproduce un GIF original como overlay DOM y lo retira al completar su ventana visual. */
+  #playGif(source, x, y, { scale = 1, durationMs = 850, depth = FX_DEPTH + 8 } = {}) {
+    const overlay = new GifOverlay(this.scene, {
+      width: 140,
+      height: 140,
+      depth,
+      originX: 0.5,
+      originY: 0.5,
+    });
+    overlay.setSource(source);
+    overlay.sync({ x: Math.round(x), y: Math.round(y), scale, alpha: 1, depth, visible: true });
+    this.scene.time.delayedCall(durationMs, () => overlay.destroy());
+    return overlay;
+  }
 
   /** Reproduce una animación de efecto y se destruye al terminar. */
   #play(name, x, y, { scale = 1, flipX = false, originX = 0.5, depth = FX_DEPTH } = {}) {

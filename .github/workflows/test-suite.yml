@@ -1,4 +1,4 @@
-name: Verificación de controles y selección de jugadores
+name: Verificación del sistema de combate
 
 on:
   push:
@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   test:
-    name: Teclado, personajes y esquinas
+    name: Teclado, combos, animaciones y combate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -38,3 +38,5 @@ jobs:
           src/application/useCases/CreateMatch.test.js
           src/domain/match/matchModes.test.js
           src/domain/entities/Fighter.test.js
+          src/domain/entities/Match.test.js
+          src/presentation/animation/FighterAnimator.test.js

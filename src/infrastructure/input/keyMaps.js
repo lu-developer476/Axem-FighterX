@@ -1,2 +1,19 @@
-/** Esquema único de teclado del jugador humano. */
-export const KEYMAPS = Object.freeze({ PLAYER_1: Object.freeze({ left: 'A', right: 'D', up: 'W', down: 'S', ascend: 'Q', descend: 'E', attack: 'F', teleport: 'G', dash: 'C', block: 'V', dodge: 'X', specialAttack: 'Z' }) });
+/** Teclado del jugador humano: flechas para el terreno y Q/E para la altura. */
+export const KEYMAPS = Object.freeze({
+  PLAYER_1: Object.freeze({
+    left: 'LEFT',
+    right: 'RIGHT',
+    up: 'UP',
+    down: 'DOWN',
+    ascend: 'Q',
+    descend: 'E',
+    attack: 'A',
+    specialAttack: 'S',
+    block: 'B',
+    dodge: 'X',
+    dash: 'D',
+    levitate: 'C',
+    chargeKi: 'V',
+    teleport: 'R',
+  }),
+});

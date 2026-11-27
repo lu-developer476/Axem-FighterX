@@ -29,6 +29,9 @@ describe('Match: golpes', () => {
     expect(all).toHaveLength(1);
     expect(all[0].damage).toBeGreaterThanOrEqual(1);
     expect(all[0].damage).toBeLessThanOrEqual(5);
+    expect(all[0].attackerCharacterId).toBe('orange');
+    expect(all[0].targetCharacterId).toBe('orange');
+    expect(all[0].comboIndex).toBe(1);
     expect(b.health).toBe(b.maxHealth - all[0].damage);
     expect(b.state === FighterState.HURT || b.state === FighterState.IDLE).toBe(true);
   });

@@ -324,3 +324,71 @@ describe('barra de transformación', () => {
     expect(fighter.transformed).toBe(false);
   });
 });
+
+
+describe('Fighter: combos, carga de Ki y levitación', () => {
+  it('encadena hasta tres ataques cuando se vuelve a pulsar A durante la secuencia', () => {
+    const fighter = make();
+    expect(fighter.startAttack()).toBe(true);
+    expect(fighter.attackComboIndex).toBe(1);
+
+    fighter.update({ ...idle, attack: true }, 16);
+    run(fighter, idle, 500);
+    expect(fighter.state).toBe(FighterState.ATTACK);
+    expect(fighter.attackComboIndex).toBe(2);
+
+    fighter.update({ ...idle, attack: true }, 16);
+    run(fighter, idle, 500);
+    expect(fighter.state).toBe(FighterState.ATTACK);
+    expect(fighter.attackComboIndex).toBe(3);
+
+    run(fighter, idle, 500);
+    expect(fighter.state).toBe(FighterState.IDLE);
+  });
+
+  it('mantiene la carga de Ki mientras V está presionada y la cancela al soltarla', () => {
+    const fighter = make();
+    fighter.update({ ...idle, chargeKi: true }, 16);
+    expect(fighter.state).toBe(FighterState.CHARGE_KI);
+    fighter.update(idle, 16);
+    expect(fighter.state).toBe(FighterState.IDLE);
+  });
+
+  it('activa y desactiva la levitación tanto desde el suelo como desde el aire', () => {
+    const grounded = make();
+    expect(grounded.toggleLevitation()).toBe(true);
+    expect(grounded.isLevitating).toBe(true);
+    expect(grounded.position.z).toBeGreaterThan(0);
+    expect(grounded.toggleLevitation()).toBe(false);
+    expect(grounded.isLevitating).toBe(false);
+    expect(grounded.position.z).toBeGreaterThan(0);
+
+    const airborne = make();
+    airborne.position.z = 28;
+    expect(airborne.toggleLevitation()).toBe(true);
+    expect(airborne.isLevitating).toBe(true);
+    expect(airborne.position.z).toBe(28);
+    expect(airborne.toggleLevitation()).toBe(false);
+    expect(airborne.position.z).toBe(28);
+  });
+
+
+  it('vuelve a la forma base cuando recibe el KO', () => {
+    const fighter = make('white');
+    for (let i = 0; i < 125; i++) fighter.chargeTransformation(2);
+    expect(fighter.activateTransformation()).toBe(true);
+    expect(fighter.transformed).toBe(true);
+    expect(fighter.takeHit({ damage: fighter.health, fromDirection: 1 })).toBe(true);
+    expect(fighter.state).toBe(FighterState.KO);
+    expect(fighter.transformed).toBe(false);
+  });
+
+  it('activa el estado de combo al recibir una cadena de impactos', () => {
+    const fighter = make();
+    expect(fighter.takeHit({ damage: 5, fromDirection: 1 })).toBe(true);
+    expect(fighter.isInHitCombo).toBe(false);
+    fighter.update(idle, TIMINGS.hitInvulnerabilityMs + 1);
+    expect(fighter.takeHit({ damage: 5, fromDirection: 1 })).toBe(true);
+    expect(fighter.isInHitCombo).toBe(true);
+  });
+});

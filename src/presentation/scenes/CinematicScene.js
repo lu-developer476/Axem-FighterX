@@ -5,6 +5,8 @@ import { contentWidth, insetSize } from '../views/uiLayout.js';
 import { DEFAULT_STAGE_ID, getStage } from '../../infrastructure/assets/stageAssetManifest.js';
 import { StageView } from '../views/StageView.js';
 import { spriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
+import { cinematicPoseGifFor } from '../../infrastructure/assets/combatGifManifest.js';
+import { GifOverlay } from '../views/GifOverlay.js';
 import { isAvailableRangerVariant } from '../../domain/rangers/rangerVariants.js';
 import { spriteFacingFor } from '../../infrastructure/assets/characterAnimationData.js';
 import { shouldFlip } from '../views/orientation.js';
@@ -34,15 +36,22 @@ export class CinematicScene extends Phaser.Scene {
     this.transitioning = false;
   }
 
-  /** Muestra el mismo arte Super Axem que se usará durante todo el combate. */
+  /** Cada personaje usa una sola pose animada durante la presentación. */
   #createCharacterSprite(x, character, facing) {
     const key = spriteKeyFor(character.id, character.gender);
     const artwork = this.textures.get(key).getSourceImage();
-    return this.add.image(x, ARENA.groundY, key)
+    const scale = 100 / artwork.height;
+    const flipX = shouldFlip(facing, spriteFacingFor(character.id, character.gender));
+    const sprite = this.add.image(x, ARENA.groundY, key)
       .setOrigin(0.5, 1)
-      .setScale(100 / artwork.height)
-      .setFlipX(shouldFlip(facing, spriteFacingFor(character.id, character.gender)))
+      .setScale(scale)
+      .setFlipX(flipX)
       .setDepth(100);
+    const pose = new GifOverlay(this, { width: 150, height: 100, depth: 101 });
+    pose.setSource(cinematicPoseGifFor(character.id));
+    if (cinematicPoseGifFor(character.id)) sprite.setVisible(false);
+    pose.sync({ x, y: ARENA.groundY, scale: 1, alpha: 1, flipX, depth: 101, visible: true });
+    return { sprite, pose };
   }
 
   create() {
@@ -68,10 +77,14 @@ export class CinematicScene extends Phaser.Scene {
 
     this.leftCharacter = left;
     this.rightCharacter = right;
-    this.leftSprite = this.#createCharacterSprite(106, left, 1);
-    this.rightSprite = this.#createCharacterSprite(374, right, -1);
+    const leftVisual = this.#createCharacterSprite(106, left, 1);
+    const rightVisual = this.#createCharacterSprite(374, right, -1);
+    this.leftSprite = leftVisual.sprite;
+    this.rightSprite = rightVisual.sprite;
+    this.leftPose = leftVisual.pose;
+    this.rightPose = rightVisual.pose;
 
-    const bobbingTargets = [this.leftSprite, this.rightSprite];
+    const bobbingTargets = [this.leftSprite, this.rightSprite, this.leftPose.dom, this.rightPose.dom];
     this.tweens.add({
       targets: bobbingTargets,
       y: ARENA.groundY - 4,
@@ -181,8 +194,12 @@ export class CinematicScene extends Phaser.Scene {
     this.speaker.setText(speaker.name).setColor(speaker.color);
     this.dialogue.setText(line.text).setAlpha(0);
     this.progress.setText(String(this.lineIndex + 1).padStart(2, '0') + ' / ' + this.stage.dialogue.length);
-    this.leftSprite.setAlpha(this.leftCharacter.id === line.speaker ? 1 : 0.62);
-    this.rightSprite.setAlpha(this.rightCharacter.id === line.speaker ? 1 : 0.62);
+    const leftAlpha = this.leftCharacter.id === line.speaker ? 1 : 0.62;
+    const rightAlpha = this.rightCharacter.id === line.speaker ? 1 : 0.62;
+    this.leftSprite.setAlpha(leftAlpha);
+    this.rightSprite.setAlpha(rightAlpha);
+    this.leftPose.dom.setAlpha(leftAlpha);
+    this.rightPose.dom.setAlpha(rightAlpha);
 
     this.tweens.add({
       targets: this.dialogue,

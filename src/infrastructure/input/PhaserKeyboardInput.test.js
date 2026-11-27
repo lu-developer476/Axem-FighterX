@@ -6,25 +6,28 @@ const createScene = () => ({ input: { keyboard: { addKeys: (definitions) => Obje
 
 describe('Controles de teclado', () => {
   it('define un único esquema de teclado humano y no registra controles de J2', () => {
-    expect(KEYMAPS.PLAYER_1).toMatchObject({ left: 'A', right: 'D', up: 'W', down: 'S', ascend: 'Q', descend: 'E', attack: 'F', teleport: 'G', dash: 'C', block: 'V', dodge: 'X', specialAttack: 'Z' });
+    expect(KEYMAPS.PLAYER_1).toMatchObject({ left: 'LEFT', right: 'RIGHT', up: 'UP', down: 'DOWN', ascend: 'Q', descend: 'E', attack: 'A', teleport: 'R', dash: 'D', block: 'B', dodge: 'X', specialAttack: 'S', levitate: 'C', chargeKi: 'V' });
     expect(KEYMAPS.PLAYER_2).toBeUndefined();
   });
   it('mantiene independientes el movimiento terrestre y el vuelo', () => {
     expect(KEYMAPS.PLAYER_1.up).not.toBe(KEYMAPS.PLAYER_1.ascend);
     expect(KEYMAPS.PLAYER_1.down).not.toBe(KEYMAPS.PLAYER_1.descend);
   });
-  it('W/S controlan la profundidad y Q/E la altura', () => {
+  it('las flechas controlan el terreno y Q/E la altura', () => {
     const input = new PhaserKeyboardInput(createScene(), KEYMAPS.PLAYER_1);
     input.keys.up.isDown = true; expect(input.readIntent().y).toBe(-1);
     input.keys.up.isDown = false; input.keys.down.isDown = true; expect(input.readIntent().y).toBe(1);
-    input.keys.down.isDown = false; input.keys.ascend.isDown = true; expect(input.readIntent()).toMatchObject({ y: 0, z: 1 });
+    input.keys.down.isDown = false; input.keys.left.isDown = true; expect(input.readIntent().x).toBe(-1);
+    input.keys.left.isDown = false; input.keys.right.isDown = true; expect(input.readIntent().x).toBe(1);
+    input.keys.right.isDown = false; input.keys.ascend.isDown = true; expect(input.readIntent()).toMatchObject({ x: 0, y: 0, z: 1 });
     input.keys.ascend.isDown = false; input.keys.descend.isDown = true; expect(input.readIntent()).toMatchObject({ y: 0, z: -1 });
   });
-  it('conecta hachazo, teletransporte, dash, bloqueo, esquiva y especial', () => {
+  it('conecta ataques, teletransporte, dash, bloqueo, esquiva, levitación y carga de Ki', () => {
     const input = new PhaserKeyboardInput(createScene(), KEYMAPS.PLAYER_1);
     input.keys.attack._justDown = true; input.keys.teleport._justDown = true; input.keys.dash._justDown = true;
     input.keys.block.isDown = true; input.keys.dodge._justDown = true; input.keys.specialAttack._justDown = true;
-    expect(input.readIntent()).toMatchObject({ attack: true, teleport: true, dash: true, block: true, dodge: true, specialAttack: true });
+    input.keys.levitate._justDown = true; input.keys.chargeKi.isDown = true;
+    expect(input.readIntent()).toMatchObject({ attack: true, teleport: true, dash: true, block: true, dodge: true, specialAttack: true, levitate: true, chargeKi: true });
   });
   it('no repite teclas', () => { const keys = Object.values(KEYMAPS.PLAYER_1); expect(new Set(keys).size).toBe(keys.length); });
 });

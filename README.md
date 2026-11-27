@@ -116,7 +116,7 @@ Se necesita Haxe, Haxelib, Lime, OpenFL y HaxeFlixel. El proyecto está en `haxe
 
 ## Sprites y animaciones
 
-Los GIF de acciones de personaje usan un estándar único: **150 × 100 px por cuadro, fondo transparente y 100 ms por cuadro (10 FPS)**. Los GIF de efectos y el favicon mantienen sus estándares específicos; no se redimensionan ni se les fuerza la misma cadencia.
+Los GIF de acciones de personaje usan un estándar único: **cada cuadro mide exactamente 150 × 100 px en la resolución nativa del archivo**. El dibujo se crea a escala de píxel 1:1: un píxel de arte equivale a un píxel del cuadro, sin interpolación, remuestreo ni recorte. Se conserva el fondo transparente y cada cuadro dura 100 ms (10 FPS). Los GIF de efectos y el favicon mantienen sus estándares específicos; no se redimensionan ni se les fuerza la misma cadencia.
 
 La variante seleccionable actual es **Axem Naranja masculino**. El juego carga directamente el artwork y las tiras PNG versionadas de `art/source/sprites/results/male/orange/`. Las fuentes no pasan por recoloreadores, recortadores ni normalizadores durante los tests o el build.
 

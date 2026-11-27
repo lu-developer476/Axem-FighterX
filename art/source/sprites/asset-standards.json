@@ -46,6 +46,10 @@
     "actionGif": {
       "width": 150,
       "height": 100,
+      "canvasPolicy": "fixed-native-frame",
+      "pixelScale": "1:1",
+      "allowResampling": false,
+      "allowCropping": false,
       "alphaRequired": true,
       "frameDelayMs": 100,
       "frameRateFps": 10,

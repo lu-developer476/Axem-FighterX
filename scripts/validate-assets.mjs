@@ -210,10 +210,14 @@ async function validateActionGifs() {
     const filename = path.join(redActionDirectory, name);
     if (await fileExists(filename)) optionalReferenceFiles.push(filename);
   }
-  const canonicalFiles = [];
+  // Descubre recursivamente todos los GIF de acción: ningún archivo nuevo puede
+  // quedar fuera de la regla de resolución nativa 150×100.
+  const canonicalFiles = await collectGifFiles(directory, category.recursive === true);
   for (const name of category.files ?? []) {
     const filename = path.join(directory, name);
-    if (await fileExists(filename)) canonicalFiles.push(filename);
+    if (!canonicalFiles.includes(filename)) {
+      throw new Error('Falta el GIF de acción declarado: ' + path.relative(ROOT, filename).split(path.sep).join('/') + '.');
+    }
   }
   const files = [...canonicalFiles, ...optionalReferenceFiles].sort();
 

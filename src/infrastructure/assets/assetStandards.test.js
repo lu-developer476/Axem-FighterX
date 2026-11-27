@@ -105,8 +105,16 @@ describe('Estándares centrales de recursos gráficos', () => {
     expect(ASSET_STANDARDS.categories.referenceSheet.families).toEqual([]);
   });
 
-  it('mantiene los GIF de acción en su lienzo estándar y con sus cuadros', async () => {
+  it('mantiene los GIF de acción en resolución nativa 150×100 y escala de píxel 1:1', async () => {
     const category = ASSET_STANDARDS.categories.actionGif;
+    expect(category).toMatchObject({
+      width: 150,
+      height: 100,
+      canvasPolicy: 'fixed-native-frame',
+      pixelScale: '1:1',
+      allowResampling: false,
+      allowCropping: false,
+    });
     const redReferenceDirectory = absolute(category.referenceDirectory);
     const redReferenceGifs = [];
     for (const name of category.referenceFiles ?? []) {
@@ -118,15 +126,12 @@ describe('Estándares centrales de recursos gráficos', () => {
         if (error.code !== 'ENOENT') throw error;
       }
     }
-    const canonicalGifs = [];
+    const canonicalGifs = await collectGifFiles(
+      absolute(category.directory),
+      category.recursive === true,
+    );
     for (const name of category.files ?? []) {
-      const filename = path.join(absolute(category.directory), name);
-      try {
-        await fs.access(filename);
-        canonicalGifs.push(filename);
-      } catch (error) {
-        if (error.code !== 'ENOENT') throw error;
-      }
+      await expect(fs.access(path.join(absolute(category.directory), name))).resolves.toBeUndefined();
     }
     const files = [...canonicalGifs, ...redReferenceGifs];
     expect(files.length).toBeGreaterThan(0);

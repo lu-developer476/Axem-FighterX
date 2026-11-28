@@ -300,7 +300,10 @@ const startRaceFromMenu = async (land) => {
       + ' mapas; se esperaban ' + expectedMaps + '.');
   }
   console.log('Minijuego ' + mode + ' listo; mapas detectados: ' + ready.mapCount);
+  return frame;
+};
 
+const startRace = async (frame, mode) => {
   await gameTap(frame, 'Enter');
   await page.waitForFunction(
     (expectedMode) => window.__axemMinigameStarted?.mode === expectedMode,
@@ -308,12 +311,12 @@ const startRaceFromMenu = async (land) => {
     { timeout: 5_000 },
   );
   console.log('HaxeFlixel recibió ENTER e inició la carrera ' + mode + '.');
-  return frame;
+  await wait(3400); // Cuenta regresiva
 };
 
 const landFrame = await startRaceFromMenu(true);
 await shot('29-carrera-terrestre-selector');
-await wait(3400); // Cuenta regresiva
+await startRace(landFrame, 'land');
 await gameHold(landFrame, 'ArrowRight', 600); // Correr hacia la derecha
 await gameTap(landFrame, 'ArrowUp'); // Saltar
 await wait(250);
@@ -326,7 +329,8 @@ await page.waitForSelector('iframe[title]', { state: 'detached', timeout: 5_000 
 // Carrera Axem: aceleración, freno, disparo/carga, salto y dirección lateral.
 const axemFrame = await startRaceFromMenu(false);
 await shot('31-carrera-axem-selector');
-await gameTap(axemFrame, 'ArrowRight'); // Cambiar distancia
+await gameTap(axemFrame, 'ArrowRight'); // Cambiar distancia antes de iniciar
+await startRace(axemFrame, 'axem');
 await gameHold(axemFrame, 'a', 650); // Acelerar
 await gameTap(axemFrame, 'ArrowDown'); // Cambiar carril
 await gameTap(axemFrame, 'Space'); // Saltar

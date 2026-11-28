@@ -1,6 +1,6 @@
 export const RACE_COURSE_ASSETS = Object.freeze({
   axem: Object.freeze({ mapIds: Object.freeze(['castle']), tilesetIds: Object.freeze([]) }),
-  terrestrial: Object.freeze({ mapIds: Object.freeze(['desert']), tilesetIds: Object.freeze([]) }),
+  terrestrial: Object.freeze({ mapIds: Object.freeze(['lost-town']), tilesetIds: Object.freeze([]) }),
 });
 export const RACE_COURSE_OBJECTS = Object.freeze({ axem: Object.freeze([]), terrestrial: Object.freeze([]) });
 export function resolveRaceCourseAssets(courseId, mapAssets, _tilesetAssets = []) {

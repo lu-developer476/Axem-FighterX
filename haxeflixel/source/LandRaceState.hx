@@ -30,7 +30,7 @@ class LandRaceState extends RaceBaseState
     override public function create():Void
     {
         super.create();
-        addBackground("assets/maps/desert.png");
+        addBackground("assets/maps/lost-town.png");
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/land-race.wav"));
         addHeader("CARRERA TERRESTRE", "D/→ CORRER · A/← FRENAR · W/↑ SALTO · S/↓ RODAR · P PAUSA · ESC MENÚ");
         status.text = "ELEGÍ LA DISTANCIA";

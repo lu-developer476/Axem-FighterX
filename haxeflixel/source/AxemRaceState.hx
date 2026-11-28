@@ -70,7 +70,7 @@ class AxemRaceState extends RaceBaseState
         notifyMinigameReady("axem", mapAssets.length);
         if (mapAssets.length > 0) addBackground(mapAssets[mapIndex]);
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/axem-race.wav"));
-        addHeader("CARRERA AXEM", "A ACELERAR · B FRENAR · S DISPARAR / MANTENER: CARGA · ESPACIO SALTAR · ↑/↓ CARRIL · ←/→ MOVER · P PAUSA · ESC MENÚ");
+        addHeader("CARRERA AXEM", "A ACELERAR · B FRENAR · S DISPARAR / MANTENER S: CARGA · ESPACIO SALTAR · ↑ SUBIR / ↓ BAJAR · ←/→ DESPLAZAMIENTO LATERAL · P PAUSA · ESC MENÚ");
         updateSelectionLabels();
         progressLabel = addLabel(8, 38, 200, "0 / 750 KM", 7, FlxColor.WHITE);
         resultLabel = addLabel(50, 118, 380, "", 12, FlxColor.YELLOW);

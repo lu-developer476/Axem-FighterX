@@ -224,13 +224,18 @@ await shot('23-reinicio');
 // Smoke tests reales de las carreras. El teclado se enfoca en el canvas del iframe
 // y Haxe confirma el cambio de estado al recibir ENTER.
 const focusGameFrame = async (mode) => {
+  const title = mode === 'land' ? 'Carrera terrestre' : 'Carrera Axem';
+  const canvasLocator = page.frameLocator('iframe[title="' + title + '"]')
+    .locator('#openfl-content canvas').first();
+  // Esperar al canvas dentro del iframe evita agarrar su contexto about:blank.
+  await canvasLocator.waitFor({ state: 'visible', timeout: 20_000 });
+
   const frame = page.frames().find((candidate) =>
     candidate.url().includes('/minigames/index.html?mode=' + mode)
   );
-  if (!frame) throw new Error('No se encontró el documento HaxeFlixel de la carrera ' + mode + '.');
+  if (!frame) throw new Error('El iframe se mostró, pero no abrió el documento HaxeFlixel de ' + mode + '.');
 
   const canvas = frame.locator('#openfl-content canvas').first();
-  await canvas.waitFor({ state: 'visible', timeout: 20_000 });
   await canvas.evaluate((element) => {
     element.setAttribute('tabindex', '0');
     element.focus();

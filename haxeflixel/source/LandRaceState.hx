@@ -38,7 +38,7 @@ class LandRaceState extends RaceBaseState
         notifyMinigameReady("land", mapAssets.length);
         if (mapAssets.length > 0) addBackground(mapAssets[mapIndex]);
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/land-race.wav"));
-        addHeader("CARRERA TERRESTRE", "→ CORRER · ← CAMINAR/FRENAR · ↑ SALTAR · ↓ RODAR · D DASH · P PAUSA · ESC MENÚ");
+        addHeader("CARRERA TERRESTRE", "→ CORRER · ← CAMINAR / FRENAR · ↑ SALTAR · ↓ RODAR · D DASH (ANIMACIÓN SIN ARMAS) · P PAUSA · ESC MENÚ");
         updateSelectionLabels();
         playerModes = createRunnerModes(true, 110);
         rivalModes = createRunnerModes(false, 320);

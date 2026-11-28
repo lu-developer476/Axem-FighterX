@@ -221,45 +221,60 @@ await tap('r');
 await wait(600);
 await shot('23-reinicio');
 
-// Comprueba que la carrera terrestre está disponible desde el menú y que las animaciones responden.
-await tap('Escape'); // Combate → menú
-await wait(180);
-await tap('Enter'); // Inicio → JUGAR
-await tap('ArrowDown'); // JUGAR → CARRERA
-await tap('Enter'); // Abrir modalidades de carrera
-await tap('ArrowDown'); // CARRERA TERRESTRE
-await tap('Enter'); // Abrir distancia total
-await tap('Enter'); // Confirmar el recorrido seleccionado (1 KM)
-await wait(3200); // Cuenta regresiva
-await hold('d', 620); // Sprint
-await tap('w'); // Salto de la primera valla
-await wait(500);
-await hold('d', 300);
-await hold('d', 200); // Ajusta la distancia antes de la barra baja
-await tap('s'); // Rodada ante el siguiente obstáculo
-await hold('d', 650);
-await shot('29-carrera-terrestre');
-await tap('Escape');
-await wait(150);
+// Smoke tests reales de ambos minijuegos dentro del iframe HaxeFlixel.
+const startRaceFromMenu = async (land) => {
+  await tap('Escape'); // Combate → menú principal
+  await wait(180);
+  await tap('Enter'); // Inicio → JUGAR
+  await tap('ArrowDown'); // JUGAR → CARRERA
+  await tap('Enter'); // Modal de modalidades
+  if (land) await tap('ArrowDown'); // CARRERA TERRESTRE
+  await tap('Enter'); // Abrir el minijuego
+  await page.waitForSelector('iframe[title]', { timeout: 10_000 });
+  const frame = page.frameLocator('iframe[title]');
+  await frame.locator('canvas').waitFor({ state: 'visible', timeout: 20_000 });
+  await wait(500);
+  return frame;
+};
 
-// Comprueba la carrera de motos: cuatro carriles, tres IA, obstáculos y nitro.
-await tap('Enter'); // Inicio → JUGAR
-await tap('ArrowDown'); // JUGAR → CARRERA
-await tap('Enter'); // Abrir modalidades de carrera
-await tap('Enter'); // CARRERA AXEM
-await tap('ArrowRight'); // J1 elige Axem Naranja masculino
-await shot('30-seleccion-axem-carrera-motos');
-await tap('Enter'); // Confirmar personaje elegido
-await wait(3200); // Cuenta regresiva
-await hold('ArrowRight', 900); // Acelerar
-await tap('ArrowDown'); // Cambiar al carril inferior
-await hold('Space', 700); // Nitro
-await tap('ArrowUp'); // Volver al carril superior
-await hold('ArrowRight', 700);
-await shot('31-carrera-motos-cuatro-carriles');
-await tap('Escape');
-await wait(150);
+const landFrame = await startRaceFromMenu(true);
+await shot('29-carrera-terrestre-selector');
+await page.keyboard.press('Enter'); // Iniciar recorrido
+await wait(3400); // Cuenta regresiva
+await hold('ArrowRight', 600); // Correr hacia la derecha
+await tap('ArrowUp'); // Saltar
+await wait(250);
+await tap('ArrowDown'); // Rodar
+await hold('d', 450); // Dash
+await shot('30-carrera-terrestre-en-juego');
+await page.keyboard.press('Escape');
+await page.waitForSelector('iframe[title]', { state: 'detached', timeout: 5000 });
 
+// Carrera Axem: aceleración, freno, disparo/carga, salto y dirección lateral.
+const axemFrame = await startRaceFromMenu(false);
+await shot('31-carrera-axem-selector');
+await page.keyboard.press('ArrowRight'); // Cambiar distancia
+await page.keyboard.press('Enter'); // Iniciar recorrido
+await wait(3400); // Cuenta regresiva
+await hold('a', 650); // Acelerar
+await tap('ArrowDown'); // Cambiar carril
+await tap('Space'); // Saltar
+await hold('s', 260); // Cargar disparo especial
+await tap('ArrowLeft'); // Desplazamiento lateral
+await hold('b', 250); // Frenar
+await shot('32-carrera-axem-en-juego');
+await page.keyboard.press('Escape');
+await page.waitForSelector('iframe[title]', { state: 'detached', timeout: 5000 });
+
+// Verifica que el favicon principal realmente apunta al GIF animado.
+const favicon = await page.locator('link[rel="icon"][type="image/gif"]').first().getAttribute('href');
+if (!favicon) record('No se registró favicon GIF en la aplicación principal.');
+else {
+  const response = await page.request.get(new URL(favicon, url).href);
+  if (!response.ok() || !response.headers()['content-type']?.includes('image/gif')) {
+    record('El favicon GIF no responde con HTTP correcto y MIME image/gif.');
+  }
+}
 await context.close();
 await browser.close();
 

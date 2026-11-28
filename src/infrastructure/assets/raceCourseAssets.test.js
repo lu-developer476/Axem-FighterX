@@ -1,26 +1,43 @@
 import { describe, expect, it } from 'vitest';
+import { MINIGAME_MAP_ASSETS } from './stageAssetManifest.js';
 import { RACE_COURSE_ASSETS, resolveRaceCourseAssets, resolveRaceCourseObjects } from './raceCourseAssets.js';
 
-const maps = [{ id: 'castle' }, { id: 'lost-town' }];
+const maps = [
+  ...MINIGAME_MAP_ASSETS.racing,
+  ...MINIGAME_MAP_ASSETS.terrestrial,
+];
 
-describe('Asignación de escenarios de carrera', () => {
-  it('usa castle.png como escenario de Carrera Axem', () => {
-    expect(resolveRaceCourseAssets('axem', maps).maps.map(({ id }) => id)).toEqual(['castle']);
+describe('Asignación automática de mapas de carrera', () => {
+  it('asigna todos los mapas de minigames/racing a Carrera Axem', () => {
+    expect(RACE_COURSE_ASSETS.racing.mapIds).toEqual(
+      MINIGAME_MAP_ASSETS.racing.map(({ id }) => id),
+    );
+    expect(RACE_COURSE_ASSETS.racing.mapIds).toContain('castle');
   });
 
-  it('usa lost-town.png como escenario de Carrera Terrestre', () => {
-    expect(resolveRaceCourseAssets('terrestrial', maps).maps.map(({ id }) => id)).toEqual(['lost-town']);
+  it('asigna todos los mapas de minigames/terrestrial a Carrera Terrestre', () => {
+    expect(RACE_COURSE_ASSETS.terrestrial.mapIds).toEqual(
+      MINIGAME_MAP_ASSETS.terrestrial.map(({ id }) => id),
+    );
+    expect(RACE_COURSE_ASSETS.terrestrial.mapIds).toContain('lost-town');
   });
 
   it('no depende de tilesets ni recortes externos', () => {
-    expect(RACE_COURSE_ASSETS.axem.tilesetIds).toEqual([]);
+    expect(RACE_COURSE_ASSETS.racing.tilesetIds).toEqual([]);
     expect(RACE_COURSE_ASSETS.terrestrial.tilesetIds).toEqual([]);
-    expect(resolveRaceCourseObjects('axem')).toEqual([]);
+    expect(resolveRaceCourseObjects('racing')).toEqual([]);
     expect(resolveRaceCourseObjects('terrestrial')).toEqual([]);
   });
 
+  it('resuelve cada mapa de los catálogos sin registros manuales adicionales', () => {
+    expect(resolveRaceCourseAssets('racing', maps).maps.map(({ id }) => id))
+      .toEqual(RACE_COURSE_ASSETS.racing.mapIds);
+    expect(resolveRaceCourseAssets('terrestrial', maps).maps.map(({ id }) => id))
+      .toEqual(RACE_COURSE_ASSETS.terrestrial.mapIds);
+  });
+
   it('falla claramente cuando falta un mapa o el circuito', () => {
-    expect(() => resolveRaceCourseAssets('axem', [])).toThrow('Falta el recurso de mapa: castle');
+    expect(() => resolveRaceCourseAssets('racing', [])).toThrow('Falta el recurso de mapa: castle');
     expect(() => resolveRaceCourseAssets('unknown', maps)).toThrow('No existe el circuito "unknown".');
   });
 });

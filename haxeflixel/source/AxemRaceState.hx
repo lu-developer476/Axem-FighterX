@@ -34,6 +34,8 @@ class AxemRaceState extends RaceBaseState
     var shootHoldMs:Float = 0;
     var shootWasPressed:Bool = false;
     var pickups:Array<RacePickup> = [];
+    var mapAssets:Array<String> = [];
+    var mapIndex:Int = 0;
     var playerDistance:Float = 0;
     var opponentDistance:Float = 0;
     var raceTimeMs:Float = 0;
@@ -61,11 +63,11 @@ class AxemRaceState extends RaceBaseState
     override public function create():Void
     {
         super.create();
-        addBackground("assets/maps/castle.png");
+        mapAssets = discoverMapAssets("racing");
+        if (mapAssets.length > 0) addBackground(mapAssets[mapIndex]);
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/axem-race.wav"));
         addHeader("CARRERA AXEM", "D ACELERAR · A FRENAR · F DISPARAR / MANTENER CARGADO · ↑/↓ CARRIL · ←/→ MOVER · P PAUSA · ESC MENÚ");
-        status.text = "ELEGÍ LA DISTANCIA";
-        detail.text = "↑/↓ CAMBIAR · ENTER COMENZAR · 750 KM / 2500 KM";
+        updateSelectionLabels();
         progressLabel = addLabel(8, 38, 200, "0 / 750 KM", 7, FlxColor.WHITE);
         resultLabel = addLabel(50, 118, 380, "", 12, FlxColor.YELLOW);
 
@@ -104,6 +106,21 @@ class AxemRaceState extends RaceBaseState
         }
     }
 
+    function updateSelectionLabels():Void
+    {
+        if (mapAssets.length == 0)
+        {
+            status.text = "SIN MAPAS EN MINIGAMES/RACING";
+            detail.text = "AGREGÁ UNA IMAGEN A LA CARPETA PARA HABILITAR ESCENARIOS";
+            return;
+        }
+
+        var mapName = displayMapName(mapAssets[mapIndex], "racing");
+        status.text = "MAPA: " + mapName + " (" + (mapIndex + 1) + "/" + mapAssets.length + ")";
+        detail.text = "↑/↓ MAPA · ←/→ DISTANCIA: " + Math.round(finishDistance / 1000)
+            + " KM · ENTER COMENZAR";
+    }
+
     function loadStaticSprite(assetPath:String, x:Float, y:Float):FlxSprite
     {
         var sprite = new FlxSprite(x, y);
@@ -137,12 +154,27 @@ class AxemRaceState extends RaceBaseState
 
         if (!started)
         {
-            if (FlxG.keys.justPressed.UP || FlxG.keys.justPressed.DOWN)
+            var mapChanged = false;
+            if (mapAssets.length > 0 && FlxG.keys.justPressed.UP)
+            {
+                mapIndex = (mapIndex + mapAssets.length - 1) % mapAssets.length;
+                mapChanged = true;
+            }
+            else if (mapAssets.length > 0 && FlxG.keys.justPressed.DOWN)
+            {
+                mapIndex = (mapIndex + 1) % mapAssets.length;
+                mapChanged = true;
+            }
+
+            if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT)
                 distanceIndex = 1 - distanceIndex;
+
             finishDistance = DISTANCES[distanceIndex];
-            status.text = "DISTANCIA: " + Math.round(finishDistance / 1000) + " KM";
+            if (mapChanged) addBackground(mapAssets[mapIndex]);
             for (pickup in pickups) pickup.active = pickup.distance < finishDistance - 80;
-            if (FlxG.keys.justPressed.ENTER)
+            updateSelectionLabels();
+
+            if (FlxG.keys.justPressed.ENTER && mapAssets.length > 0)
             {
                 started = true;
                 countdown = 3;

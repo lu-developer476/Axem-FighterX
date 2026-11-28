@@ -13,6 +13,8 @@ class LandRaceState extends RaceBaseState
 
     var playerModes:Map<String, FlxSprite>;
     var rivalModes:Map<String, FlxSprite>;
+    var mapAssets:Array<String> = [];
+    var mapIndex:Int = 0;
     var finishDistance:Float = 750000;
     var distanceIndex:Int = 0;
     var playerDistance:Float = 0;
@@ -30,11 +32,11 @@ class LandRaceState extends RaceBaseState
     override public function create():Void
     {
         super.create();
-        addBackground("assets/maps/lost-town.png");
+        mapAssets = discoverMapAssets("terrestrial");
+        if (mapAssets.length > 0) addBackground(mapAssets[mapIndex]);
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/land-race.wav"));
         addHeader("CARRERA TERRESTRE", "D/→ CORRER · A/← FRENAR · W/↑ SALTO · S/↓ RODAR · P PAUSA · ESC MENÚ");
-        status.text = "ELEGÍ LA DISTANCIA";
-        detail.text = "↑/↓ CAMBIAR · ENTER COMENZAR · 750 KM / 2500 KM";
+        updateSelectionLabels();
         playerModes = createRunnerModes(true, 110);
         rivalModes = createRunnerModes(false, 320);
         progressLabel = addLabel(8, 38, 200, "0 / 750 KM", 7, FlxColor.WHITE);
@@ -46,6 +48,21 @@ class LandRaceState extends RaceBaseState
         staminaFill.makeGraphic(92, 3, FlxColor.CYAN);
         add(staminaFill);
         resultLabel = addLabel(48, 118, 384, "", 12, FlxColor.YELLOW);
+    }
+
+    function updateSelectionLabels():Void
+    {
+        if (mapAssets.length == 0)
+        {
+            status.text = "SIN MAPAS EN MINIGAMES/TERRESTRIAL";
+            detail.text = "AGREGÁ UNA IMAGEN A LA CARPETA PARA HABILITAR ESCENARIOS";
+            return;
+        }
+
+        var mapName = displayMapName(mapAssets[mapIndex], "terrestrial");
+        status.text = "MAPA: " + mapName + " (" + (mapIndex + 1) + "/" + mapAssets.length + ")";
+        detail.text = "↑/↓ MAPA · ←/→ DISTANCIA: " + Math.round(finishDistance / 1000)
+            + " KM · ENTER COMENZAR";
     }
 
     function createRunnerModes(isPlayer:Bool, x:Float):Map<String, FlxSprite>
@@ -119,11 +136,26 @@ class LandRaceState extends RaceBaseState
         if (commonInput()) return;
         if (!started)
         {
-            if (FlxG.keys.justPressed.UP || FlxG.keys.justPressed.DOWN)
+            var mapChanged = false;
+            if (mapAssets.length > 0 && FlxG.keys.justPressed.UP)
+            {
+                mapIndex = (mapIndex + mapAssets.length - 1) % mapAssets.length;
+                mapChanged = true;
+            }
+            else if (mapAssets.length > 0 && FlxG.keys.justPressed.DOWN)
+            {
+                mapIndex = (mapIndex + 1) % mapAssets.length;
+                mapChanged = true;
+            }
+
+            if (FlxG.keys.justPressed.LEFT || FlxG.keys.justPressed.RIGHT)
                 distanceIndex = 1 - distanceIndex;
+
             finishDistance = DISTANCES[distanceIndex];
-            status.text = "DISTANCIA: " + Math.round(finishDistance / 1000) + " KM";
-            if (FlxG.keys.justPressed.ENTER)
+            if (mapChanged) addBackground(mapAssets[mapIndex]);
+            updateSelectionLabels();
+
+            if (FlxG.keys.justPressed.ENTER && mapAssets.length > 0)
             {
                 started = true;
                 countdown = 3;

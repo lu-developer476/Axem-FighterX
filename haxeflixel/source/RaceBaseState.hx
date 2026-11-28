@@ -24,21 +24,62 @@ class RaceBaseState extends FlxState
         FlxG.mouse.visible = false;
     }
 
+    /** Devuelve todos los mapas embebidos de una modalidad, ordenados por ruta. */
+    public function discoverMapAssets(category:String):Array<String>
+    {
+        var prefix = "assets/maps/minigames/" + category + "/";
+        var images = Assets.list().filter(function(assetPath:String):Bool
+        {
+            var normalized = assetPath.toLowerCase();
+            return StringTools.startsWith(normalized, prefix)
+                && (StringTools.endsWith(normalized, ".png")
+                    || StringTools.endsWith(normalized, ".webp")
+                    || StringTools.endsWith(normalized, ".jpg")
+                    || StringTools.endsWith(normalized, ".jpeg"));
+        });
+        images.sort(function(left:String, right:String):Int
+        {
+            return Reflect.compare(left.toLowerCase(), right.toLowerCase());
+        });
+        return images;
+    }
+
+    /** Convierte la ruta relativa del mapa en un rótulo para la pantalla de selección. */
+    public function displayMapName(assetPath:String, category:String):String
+    {
+        var prefix = "assets/maps/minigames/" + category + "/";
+        var label = StringTools.startsWith(assetPath, prefix)
+            ? assetPath.substr(prefix.length)
+            : assetPath;
+        var extensionIndex = label.lastIndexOf(".");
+        if (extensionIndex >= 0) label = label.substr(0, extensionIndex);
+        label = StringTools.replace(label, "/", " · ");
+        label = StringTools.replace(label, "-", " ");
+        label = StringTools.replace(label, "_", " ");
+        return label.toUpperCase();
+    }
+
+    /** Crea el fondo la primera vez y reutiliza ambos sprites al cambiar de mapa. */
     public function addBackground(assetPath:String):Void
     {
-        backgroundA = new FlxSprite(0, 0);
+        if (backgroundA == null)
+        {
+            backgroundA = new FlxSprite(0, 0);
+            backgroundB = new FlxSprite(FlxG.width, 0);
+            add(backgroundA);
+            add(backgroundB);
+        }
+
         backgroundA.loadGraphic(Assets.getBitmapData(assetPath));
         backgroundA.setGraphicSize(FlxG.width, FlxG.height);
         backgroundA.updateHitbox();
         backgroundA.antialiasing = false;
-        add(backgroundA);
 
-        backgroundB = new FlxSprite(FlxG.width, 0);
         backgroundB.loadGraphic(Assets.getBitmapData(assetPath));
         backgroundB.setGraphicSize(FlxG.width, FlxG.height);
         backgroundB.updateHitbox();
         backgroundB.antialiasing = false;
-        add(backgroundB);
+        backgroundB.x = FlxG.width;
     }
 
     public function scrollBackground(distance:Float, factor:Float = 0.14):Void

@@ -1,36 +1,41 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CAMPAIGN_MAP_ASSETS,
   collectImageFiles,
   DEFAULT_STAGE_ID,
   getStage,
+  MINIGAME_MAP_ASSETS,
   proceduralTextureKeyForTileset,
   slugifyAssetName,
   STAGES,
   STAGE_MAP_ASSETS,
   STAGE_TILESET_ASSETS,
+  TRAINING_MAP_ASSETS,
 } from './stageAssetManifest.js';
 
-describe('Descubrimiento automático de escenarios', () => {
-  it('detecta los mapas restantes y admite que no queden tilesets', () => {
-    expect(STAGE_MAP_ASSETS.length).toBeGreaterThanOrEqual(1);
-    expect(STAGE_TILESET_ASSETS).toEqual([]);
-    expect(STAGE_MAP_ASSETS.every(({ url, key }) => typeof url === 'string' && key.startsWith('stage-map-'))).toBe(true);
-    expect(STAGE_TILESET_ASSETS.every(({ url, key }) => typeof url === 'string' && key.startsWith('stage-tileset-'))).toBe(true);
-    const mapFilenames = STAGE_MAP_ASSETS.map(({ filename }) => filename);
-    const tilesetFilenames = STAGE_TILESET_ASSETS.map(({ filename }) => filename);
-    expect(mapFilenames).toContain('castle.png');
-    expect(mapFilenames).toContain('desert.png');
-    expect(mapFilenames).not.toContain('cave-1.png');
-    expect(mapFilenames).not.toContain('cave-2.png');
-    expect(tilesetFilenames).toEqual([]);
+describe('Descubrimiento automático de escenarios por modalidad', () => {
+  it('clasifica cada mapa en su colección correspondiente', () => {
+    expect(TRAINING_MAP_ASSETS.map(({ filename }) => filename)).toContain('practice-zone.png');
+    expect(MINIGAME_MAP_ASSETS.terrestrial.map(({ filename }) => filename)).toContain('lost-town.png');
+    expect(MINIGAME_MAP_ASSETS.racing.map(({ filename }) => filename)).toContain('castle.png');
+    expect(Array.isArray(CAMPAIGN_MAP_ASSETS)).toBe(true);
   });
 
-  it('mantiene separados archivos con el mismo nombre en carpetas distintas y prioriza PNG por variante', () => {
+  it('solo ofrece los mapas de training como escenarios del modo combate', () => {
+    expect(STAGE_MAP_ASSETS).toEqual(TRAINING_MAP_ASSETS);
+    expect(STAGE_MAP_ASSETS.map(({ filename }) => filename)).toContain('practice-zone.png');
+    expect(STAGE_MAP_ASSETS.map(({ filename }) => filename)).not.toContain('castle.png');
+    expect(STAGE_MAP_ASSETS.map(({ filename }) => filename)).not.toContain('lost-town.png');
+    expect(STAGE_TILESET_ASSETS.every(({ url, key }) =>
+      typeof url === 'string' && key.startsWith('stage-tileset-'))).toBe(true);
+  });
+
+  it('mantiene separados archivos homónimos de la misma modalidad y prioriza PNG por variante', () => {
     const assets = collectImageFiles({
-      '../../../art/source/environments/maps/forest/arena.webp': '/forest/arena.webp',
-      '../../../art/source/environments/maps/forest/arena.png': '/forest/arena.png',
-      '../../../art/source/environments/maps/space/arena.png': '/space/arena.png',
-    }, 'stage-map-');
+      '../../../art/source/environments/maps/training/forest/arena.webp': '/forest/arena.webp',
+      '../../../art/source/environments/maps/training/forest/arena.png': '/forest/arena.png',
+      '../../../art/source/environments/maps/training/space/arena.png': '/space/arena.png',
+    }, 'stage-map-', '/maps/training/');
 
     expect(assets).toHaveLength(2);
     expect(new Set(assets.map(({ stem }) => stem)).size).toBe(2);
@@ -38,7 +43,7 @@ describe('Descubrimiento automático de escenarios', () => {
     expect(assets.some(({ path }) => path.includes('/space/arena.png'))).toBe(true);
   });
 
-  it('crea un escenario seleccionable para cada mapa y cada tileset descubierto', () => {
+  it('crea automáticamente un escenario de combate por cada mapa y tileset de training', () => {
     const mapStages = STAGES.filter((stage) => stage.kind === 'map');
     const tilesetStages = STAGES.filter((stage) => stage.kind === 'tileset');
 
@@ -46,6 +51,14 @@ describe('Descubrimiento automático de escenarios', () => {
     expect(tilesetStages.map(({ id }) => id)).toEqual(STAGE_TILESET_ASSETS.map(({ id }) => 'tileset-' + id));
     expect(STAGES).toHaveLength(STAGE_MAP_ASSETS.length + STAGE_TILESET_ASSETS.length);
     expect(new Set(STAGES.map(({ id }) => id)).size).toBe(STAGES.length);
+  });
+
+  it('mantiene una colección independiente para cada submodalidad de minijuego', () => {
+    for (const [category, assets] of Object.entries(MINIGAME_MAP_ASSETS)) {
+      expect(assets.every(({ url, key }) =>
+        typeof url === 'string' && key.startsWith('minigame-' + category + '-map-'))).toBe(true);
+      expect(new Set(assets.map(({ id }) => id)).size).toBe(assets.length);
+    }
   });
 
   it('asocia cada mapa con su imagen y cada tileset con su fondo procedural', () => {
@@ -64,7 +77,7 @@ describe('Descubrimiento automático de escenarios', () => {
     }
   });
 
-  it('usa el primer recurso descubierto como escenario inicial y como respaldo de IDs desconocidos', () => {
+  it('usa el primer recurso de training como escenario inicial y respaldo de IDs desconocidos', () => {
     expect(DEFAULT_STAGE_ID).toBe(STAGES[0].id);
     expect(getStage('escenario-inexistente')).toBe(STAGES[0]);
   });

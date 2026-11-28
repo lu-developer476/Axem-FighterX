@@ -1,13 +1,25 @@
-const MAP_MODULES = import.meta.glob(
-  '../../../art/source/environments/maps/**/*.{png,webp,jpg,jpeg}',
+const CAMPAIGN_MAP_MODULES = import.meta.glob(
+  '../../../art/source/environments/maps/campaign/**/*.{png,webp,jpg,jpeg}',
+  { eager: true, query: '?url', import: 'default' },
+);
+const TRAINING_MAP_MODULES = import.meta.glob(
+  '../../../art/source/environments/maps/training/**/*.{png,webp,jpg,jpeg}',
+  { eager: true, query: '?url', import: 'default' },
+);
+const TERRESTRIAL_MAP_MODULES = import.meta.glob(
+  '../../../art/source/environments/maps/minigames/terrestrial/**/*.{png,webp,jpg,jpeg}',
+  { eager: true, query: '?url', import: 'default' },
+);
+const RACING_MAP_MODULES = import.meta.glob(
+  '../../../art/source/environments/maps/minigames/racing/**/*.{png,webp,jpg,jpeg}',
   { eager: true, query: '?url', import: 'default' },
 );
 const TILESET_MODULES = import.meta.glob(
-  '../../../art/source/environments/maps/tilesets/**/*.{png,webp,jpg,jpeg}',
+  '../../../art/source/environments/maps/training/tilesets/**/*.{png,webp,jpg,jpeg}',
   { eager: true, query: '?url', import: 'default' },
 );
 const TILESET_METADATA_MODULES = import.meta.glob(
-  '../../../art/source/environments/maps/tilesets/**/*.json',
+  '../../../art/source/environments/maps/training/tilesets/**/*.json',
   { eager: true, import: 'default' },
 );
 
@@ -39,12 +51,11 @@ function displayName(value) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-export function collectImageFiles(modules, keyPrefix) {
+export function collectImageFiles(modules, keyPrefix, rootMarker = '/maps/') {
   const grouped = new Map();
   for (const [path, url] of Object.entries(modules)) {
     const parts = fileParts(path);
     const normalizedPath = path.replaceAll('\\', '/');
-    const rootMarker = keyPrefix === 'stage-tileset-' ? '/tilesets/' : '/maps/';
     const rootIndex = normalizedPath.lastIndexOf(rootMarker);
     const relativePath = rootIndex >= 0
       ? normalizedPath.slice(rootIndex + rootMarker.length).replace(/\.[^.]+$/, '')
@@ -74,17 +85,49 @@ export function collectImageFiles(modules, keyPrefix) {
     .sort((a, b) => a.stem.localeCompare(b.stem));
 }
 
-const mapFiles = collectImageFiles(
-  Object.fromEntries(Object.entries(MAP_MODULES).filter(([path]) => !path.includes('/maps/tilesets/'))),
-  'stage-map-',
-);
-export const STAGE_MAP_ASSETS = Object.freeze(mapFiles.map((asset) => Object.freeze({
-  ...asset,
-  id: asset.stem,
-  label: displayName(asset.stem),
-})));
+function createMapAssets(modules, keyPrefix, rootMarker) {
+  return Object.freeze(collectImageFiles(modules, keyPrefix, rootMarker).map((asset) => Object.freeze({
+    ...asset,
+    id: asset.stem,
+    label: displayName(asset.stem),
+  })));
+}
 
-const tilesetFiles = collectImageFiles(TILESET_MODULES, 'stage-tileset-');
+const trainingMapModules = Object.fromEntries(
+  Object.entries(TRAINING_MAP_MODULES).filter(([path]) => !path.includes('/training/tilesets/')),
+);
+
+export const CAMPAIGN_MAP_ASSETS = createMapAssets(
+  CAMPAIGN_MAP_MODULES,
+  'campaign-map-',
+  '/maps/campaign/',
+);
+export const TRAINING_MAP_ASSETS = createMapAssets(
+  trainingMapModules,
+  'stage-map-',
+  '/maps/training/',
+);
+export const MINIGAME_MAP_ASSETS = Object.freeze({
+  terrestrial: createMapAssets(
+    TERRESTRIAL_MAP_MODULES,
+    'minigame-terrestrial-map-',
+    '/maps/minigames/terrestrial/',
+  ),
+  racing: createMapAssets(
+    RACING_MAP_MODULES,
+    'minigame-racing-map-',
+    '/maps/minigames/racing/',
+  ),
+});
+
+// Solo los mapas de training aparecen en la selección de escenarios de combate.
+export const STAGE_MAP_ASSETS = TRAINING_MAP_ASSETS;
+
+const tilesetFiles = collectImageFiles(
+  TILESET_MODULES,
+  'stage-tileset-',
+  '/maps/training/tilesets/',
+);
 export const STAGE_TILESET_ASSETS = Object.freeze(tilesetFiles.map((asset) => {
   const selectedPath = asset.path;
   const metadataPath = selectedPath.replace(/\.[^.]+$/, '.json');

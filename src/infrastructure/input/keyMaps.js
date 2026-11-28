@@ -10,10 +10,10 @@ export const KEYMAPS = Object.freeze({
     attack: 'A',
     specialAttack: 'S',
     block: 'B',
-    dodge: 'X',
+    dodge: 'R',
     dash: 'D',
     levitate: 'C',
     chargeKi: 'V',
-    teleport: 'R',
+    teleport: 'F',
   }),
 });

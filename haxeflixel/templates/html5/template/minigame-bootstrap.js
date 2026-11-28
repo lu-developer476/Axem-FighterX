@@ -13,5 +13,25 @@
     }
   }
 
+  var container = document.getElementById("content");
+  var focusGameCanvas = function () {
+    var canvas = container && container.querySelector("canvas");
+    if (!canvas) return false;
+    canvas.setAttribute("tabindex", "0");
+    canvas.style.outline = "none";
+    if (!canvas.__axemFocusBound) {
+      canvas.__axemFocusBound = true;
+      canvas.addEventListener("pointerdown", function () { canvas.focus(); });
+      canvas.addEventListener("touchstart", function () { canvas.focus(); }, { passive: true });
+    }
+    canvas.focus();
+    return true;
+  };
+  var observer = new MutationObserver(function () {
+    if (focusGameCanvas()) observer.disconnect();
+  });
+  if (container) observer.observe(container, { childList: true, subtree: true });
+
   lime.embed("index", "content", 480, 270);
+  focusGameCanvas();
 }());

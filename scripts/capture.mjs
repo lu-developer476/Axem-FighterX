@@ -221,17 +221,55 @@ await tap('r');
 await wait(600);
 await shot('23-reinicio');
 
-// Smoke tests de las carreras desde el menú real, reiniciando la app para cada modo.
-// Haxe confirma al contenedor el modo y la cantidad de mapas que pudo descubrir.
+// Smoke tests reales de las carreras. El teclado se enfoca en el canvas del iframe
+// y Haxe confirma el cambio de estado al recibir ENTER.
+const focusGameFrame = async (mode) => {
+  const frame = page.frames().find((candidate) =>
+    candidate.url().includes('/minigames/index.html?mode=' + mode)
+  );
+  if (!frame) throw new Error('No se encontró el documento HaxeFlixel de la carrera ' + mode + '.');
+
+  const canvas = frame.locator('#openfl-content canvas').first();
+  await canvas.waitFor({ state: 'visible', timeout: 20_000 });
+  await canvas.evaluate((element) => {
+    element.setAttribute('tabindex', '0');
+    element.focus();
+  });
+
+  const focus = await frame.evaluate(() => document.activeElement?.tagName ?? null);
+  if (focus !== 'CANVAS') {
+    throw new Error('El canvas HaxeFlixel no recibió el foco de teclado (' + focus + ').');
+  }
+  return frame;
+};
+
+const gameTap = async (frame, key) => {
+  await frame.locator('#openfl-content canvas').first().focus();
+  await page.keyboard.down(key);
+  await wait(45);
+  await page.keyboard.up(key);
+};
+const gameHold = async (frame, key, ms) => {
+  await frame.locator('#openfl-content canvas').first().focus();
+  await page.keyboard.down(key);
+  await wait(ms);
+  await page.keyboard.up(key);
+};
+
 const startRaceFromMenu = async (land) => {
+  const mode = land ? 'land' : 'axem';
   await page.goto(url);
   await page.waitForSelector('canvas', { timeout: 15_000 });
   await wait(900);
   await page.evaluate(() => {
     window.__axemMinigameReady = null;
+    window.__axemMinigameStarted = null;
     window.addEventListener('message', (event) => {
       if (event.data?.type === 'axem-minigame-ready') {
         window.__axemMinigameReady = event.data;
+      }
+      if (event.data?.type === 'axem-minigame-started') {
+        window.__axemMinigameStarted = event.data;
       }
     });
   });
@@ -243,52 +281,56 @@ const startRaceFromMenu = async (land) => {
   await tap('Enter'); // Abrir minijuego
 
   await page.waitForSelector('iframe[title]', { timeout: 10_000 });
-  const frame = page.frameLocator('iframe[title]');
-  const canvas = frame.locator('canvas');
-  await canvas.waitFor({ state: 'visible', timeout: 20_000 });
-  await canvas.click(); // Foco de teclado dentro del iframe HaxeFlixel.
+  const frame = await focusGameFrame(mode);
   await page.waitForFunction(
     (expectedMode) => window.__axemMinigameReady?.mode === expectedMode,
-    land ? 'land' : 'axem',
+    mode,
     { timeout: 20_000 },
   );
 
   const ready = await page.evaluate(() => window.__axemMinigameReady);
-  if (!Number.isInteger(ready.mapCount) || ready.mapCount < 1) {
-    throw new Error('HaxeFlixel inició ' + ready.mode + ' pero encontró ' + ready.mapCount + ' mapas.');
+  const expectedMaps = land ? 2 : 3;
+  if (ready.mapCount !== expectedMaps) {
+    throw new Error('HaxeFlixel inició ' + mode + ' con ' + ready.mapCount
+      + ' mapas; se esperaban ' + expectedMaps + '.');
   }
-  console.log('Minijuego ' + ready.mode + ' listo; mapas detectados: ' + ready.mapCount);
+  console.log('Minijuego ' + mode + ' listo; mapas detectados: ' + ready.mapCount);
+
+  await gameTap(frame, 'Enter');
+  await page.waitForFunction(
+    (expectedMode) => window.__axemMinigameStarted?.mode === expectedMode,
+    mode,
+    { timeout: 5_000 },
+  );
+  console.log('HaxeFlixel recibió ENTER e inició la carrera ' + mode + '.');
   return frame;
 };
 
 const landFrame = await startRaceFromMenu(true);
 await shot('29-carrera-terrestre-selector');
-await page.keyboard.press('Enter'); // Iniciar recorrido
 await wait(3400); // Cuenta regresiva
-await hold('ArrowRight', 600); // Correr hacia la derecha
-await tap('ArrowUp'); // Saltar
+await gameHold(landFrame, 'ArrowRight', 600); // Correr hacia la derecha
+await gameTap(landFrame, 'ArrowUp'); // Saltar
 await wait(250);
-await tap('ArrowDown'); // Rodar
-await hold('d', 450); // Dash
+await gameTap(landFrame, 'ArrowDown'); // Rodar
+await gameHold(landFrame, 'd', 450); // Dash
 await shot('30-carrera-terrestre-en-juego');
-await page.keyboard.press('Escape');
-await page.waitForSelector('iframe[title]', { state: 'detached', timeout: 5000 });
+await gameTap(landFrame, 'Escape');
+await page.waitForSelector('iframe[title]', { state: 'detached', timeout: 5_000 });
 
 // Carrera Axem: aceleración, freno, disparo/carga, salto y dirección lateral.
 const axemFrame = await startRaceFromMenu(false);
 await shot('31-carrera-axem-selector');
-await page.keyboard.press('ArrowRight'); // Cambiar distancia
-await page.keyboard.press('Enter'); // Iniciar recorrido
-await wait(3400); // Cuenta regresiva
-await hold('a', 650); // Acelerar
-await tap('ArrowDown'); // Cambiar carril
-await tap('Space'); // Saltar
-await hold('s', 260); // Cargar disparo especial
-await tap('ArrowLeft'); // Desplazamiento lateral
-await hold('b', 250); // Frenar
+await gameTap(axemFrame, 'ArrowRight'); // Cambiar distancia
+await gameHold(axemFrame, 'a', 650); // Acelerar
+await gameTap(axemFrame, 'ArrowDown'); // Cambiar carril
+await gameTap(axemFrame, 'Space'); // Saltar
+await gameHold(axemFrame, 's', 260); // Cargar disparo especial
+await gameTap(axemFrame, 'ArrowLeft'); // Desplazamiento lateral
+await gameHold(axemFrame, 'b', 250); // Frenar
 await shot('32-carrera-axem-en-juego');
-await page.keyboard.press('Escape');
-await page.waitForSelector('iframe[title]', { state: 'detached', timeout: 5000 });
+await gameTap(axemFrame, 'Escape');
+await page.waitForSelector('iframe[title]', { state: 'detached', timeout: 5_000 });
 
 // Verifica que el favicon principal realmente apunta al GIF animado.
 await page.goto(url);

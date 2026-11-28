@@ -161,6 +161,17 @@ class RaceBaseState extends FlxState
         #end
     }
 
+    /** Confirma que el usuario inició la carrera tras recibir ENTER en el canvas. */
+    public function notifyMinigameStarted(mode:String):Void
+    {
+        #if html5
+        Browser.window.parent.postMessage({
+            type: "axem-minigame-started",
+            mode: mode
+        }, "*");
+        #end
+    }
+
     public function clamp(value:Float, minimum:Float, maximum:Float):Float
     {
         return Math.max(minimum, Math.min(maximum, value));

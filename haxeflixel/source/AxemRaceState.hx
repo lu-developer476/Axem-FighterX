@@ -181,6 +181,7 @@ class AxemRaceState extends RaceBaseState
             if (FlxG.keys.justPressed.ENTER && mapAssets.length > 0)
             {
                 started = true;
+                notifyMinigameStarted("axem");
                 countdown = 3;
                 status.text = "3";
                 detail.text = "PREPARADOS...";

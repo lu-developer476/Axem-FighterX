@@ -66,7 +66,7 @@ async function prepareCspCompatibleHtml() {
   ));
   // Una sola fuente de favicon: GIF animado versionado en art/source.
   html = html.replace(/<link\b[^>]*\brel=["'](?:shortcut )?icon["'][^>]*>/gi, '');
-  html = html.replace('</head>', '  <link rel="icon" type="image/gif" href="./favicon.gif">\\n</head>');
+  html = html.replace('</head>', '  <link rel="icon" type="image/gif" href="./favicon.gif">\n</head>');
 
   if (/<script\b(?![^>]*\bsrc\s*=)[^>]*>/i.test(html)) {
     throw new Error('La página HTML5 conserva scripts inline no permitidos por la CSP.');
@@ -101,6 +101,21 @@ async function main() {
     await fs.access(path.join(OUTPUT, 'index.html'));
   } catch {
     throw new Error('Lime terminó sin generar export/html5/bin/index.html.');
+  }
+
+  // No publicar carreras con un selector vacío: cada mapa debe estar en el manifiesto de Lime.
+  const manifestPath = path.join(OUTPUT, 'manifest', 'default.json');
+  const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+  const requiredMaps = [
+    'assets/maps/minigames/terrestrial/ship-access.png',
+    'assets/maps/minigames/terrestrial/subway.png',
+    'assets/maps/minigames/racing/castle.png',
+    'assets/maps/minigames/racing/subway.png',
+    'assets/maps/minigames/racing/train.png',
+  ];
+  const missingMaps = requiredMaps.filter((assetPath) => !manifest.assets.includes(encodeURIComponent(assetPath)));
+  if (missingMaps.length) {
+    throw new Error('HaxeFlixel no incorporó estos mapas al manifiesto: ' + missingMaps.join(', '));
   }
 
   await normalizeGeneratedBundle();

@@ -43,7 +43,7 @@ describe('Descubrimiento automático de escenarios por modalidad', () => {
       id: 'combat-' + asset.id,
     }));
 
-    expect(training[0].id).toBe('lost-town');
+    expect(training[0].stem).toBe('lost-town');
     expect(combat[0].id).toBe('combat-lost-town');
     expect(new Set([...training, ...combat].map(({ id }) => id)).size).toBe(2);
   });

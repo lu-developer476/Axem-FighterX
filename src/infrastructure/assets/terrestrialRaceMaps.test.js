@@ -3,9 +3,11 @@ import { MINIGAME_MAP_ASSETS } from './stageAssetManifest.js';
 import { RACE_COURSE_ASSETS, resolveRaceCourseAssets } from './raceCourseAssets.js';
 
 describe('Mapas de carreras', () => {
-  it('descubre lost-town.png dentro de minigames/terrestrial', () => {
+  it('mantiene los mapas de Carrera Terrestre dentro de minigames/terrestrial', () => {
     expect(MINIGAME_MAP_ASSETS.terrestrial.map(({ filename }) => filename))
-      .toContain('lost-town.png');
+      .toContain('subway.png');
+    expect(MINIGAME_MAP_ASSETS.terrestrial.map(({ filename }) => filename))
+      .not.toContain('lost-town.png');
     expect(resolveRaceCourseAssets('terrestrial', MINIGAME_MAP_ASSETS.terrestrial).maps.map(({ id }) => id))
       .toEqual(RACE_COURSE_ASSETS.terrestrial.mapIds);
   });

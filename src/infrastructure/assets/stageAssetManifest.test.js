@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CAMPAIGN_MAP_ASSETS,
+  COMBAT_MAP_ASSETS,
   collectImageFiles,
   DEFAULT_STAGE_ID,
   getStage,
@@ -15,22 +15,40 @@ import {
 
 describe('Descubrimiento automático de escenarios por modalidad', () => {
   it('clasifica cada mapa en su colección correspondiente', () => {
+    expect(COMBAT_MAP_ASSETS.map(({ filename }) => filename)).toContain('lost-town.png');
+    expect(COMBAT_MAP_ASSETS.map(({ filename }) => filename)).toContain('destroyed-city.png');
     expect(TRAINING_MAP_ASSETS.map(({ filename }) => filename)).toContain('practice-zone.png');
-    expect(MINIGAME_MAP_ASSETS.terrestrial.map(({ filename }) => filename)).toContain('lost-town.png');
+    expect(MINIGAME_MAP_ASSETS.terrestrial.map(({ filename }) => filename)).not.toContain('lost-town.png');
+    expect(MINIGAME_MAP_ASSETS.terrestrial.map(({ filename }) => filename)).toContain('subway.png');
     expect(MINIGAME_MAP_ASSETS.racing.map(({ filename }) => filename)).toContain('castle.png');
-    expect(Array.isArray(CAMPAIGN_MAP_ASSETS)).toBe(true);
   });
 
-  it('solo ofrece los mapas de training como escenarios del modo combate', () => {
-    expect(STAGE_MAP_ASSETS).toEqual(TRAINING_MAP_ASSETS);
+  it('ofrece mapas de combat y training como escenarios del modo combate', () => {
+    expect(STAGE_MAP_ASSETS).toEqual([...TRAINING_MAP_ASSETS, ...COMBAT_MAP_ASSETS]);
     expect(STAGE_MAP_ASSETS.map(({ filename }) => filename)).toContain('practice-zone.png');
+    expect(STAGE_MAP_ASSETS.map(({ filename }) => filename)).toContain('lost-town.png');
     expect(STAGE_MAP_ASSETS.map(({ filename }) => filename)).not.toContain('castle.png');
-    expect(STAGE_MAP_ASSETS.map(({ filename }) => filename)).not.toContain('lost-town.png');
     expect(STAGE_TILESET_ASSETS.every(({ url, key }) =>
       typeof url === 'string' && key.startsWith('stage-tileset-'))).toBe(true);
   });
 
-  it('mantiene separados archivos homónimos de la misma modalidad y prioriza PNG por variante', () => {
+  it('mantiene IDs únicos entre combat y training aunque haya mapas homónimos', () => {
+    const training = collectImageFiles({
+      '../../../art/source/environments/maps/training/lost-town.png': '/training/lost-town.png',
+    }, 'stage-map-', '/maps/training/');
+    const combat = collectImageFiles({
+      '../../../art/source/environments/maps/combat/lost-town.png': '/combat/lost-town.png',
+    }, 'combat-map-', '/maps/combat/').map((asset) => ({
+      ...asset,
+      id: 'combat-' + asset.id,
+    }));
+
+    expect(training[0].id).toBe('lost-town');
+    expect(combat[0].id).toBe('combat-lost-town');
+    expect(new Set([...training, ...combat].map(({ id }) => id)).size).toBe(2);
+  });
+
+  it('mantiene separados archivos homónimos en subcarpetas y prioriza PNG por variante', () => {
     const assets = collectImageFiles({
       '../../../art/source/environments/maps/training/forest/arena.webp': '/forest/arena.webp',
       '../../../art/source/environments/maps/training/forest/arena.png': '/forest/arena.png',
@@ -43,7 +61,7 @@ describe('Descubrimiento automático de escenarios por modalidad', () => {
     expect(assets.some(({ path }) => path.includes('/space/arena.png'))).toBe(true);
   });
 
-  it('crea automáticamente un escenario de combate por cada mapa y tileset de training', () => {
+  it('crea automáticamente un escenario por cada mapa y tileset de combate', () => {
     const mapStages = STAGES.filter((stage) => stage.kind === 'map');
     const tilesetStages = STAGES.filter((stage) => stage.kind === 'tileset');
 
@@ -77,7 +95,7 @@ describe('Descubrimiento automático de escenarios por modalidad', () => {
     }
   });
 
-  it('usa el primer recurso de training como escenario inicial y respaldo de IDs desconocidos', () => {
+  it('usa el primer recurso descubierto como escenario inicial y respaldo de IDs desconocidos', () => {
     expect(DEFAULT_STAGE_ID).toBe(STAGES[0].id);
     expect(getStage('escenario-inexistente')).toBe(STAGES[0]);
   });

@@ -19,7 +19,8 @@ describe('Asignación automática de mapas de carrera', () => {
     expect(RACE_COURSE_ASSETS.terrestrial.mapIds).toEqual(
       MINIGAME_MAP_ASSETS.terrestrial.map(({ id }) => id),
     );
-    expect(RACE_COURSE_ASSETS.terrestrial.mapIds).toContain('lost-town');
+    expect(RACE_COURSE_ASSETS.terrestrial.mapIds).toContain('subway');
+    expect(RACE_COURSE_ASSETS.terrestrial.mapIds).not.toContain('lost-town');
   });
 
   it('no depende de tilesets ni recortes externos', () => {

@@ -1,5 +1,5 @@
-const CAMPAIGN_MAP_MODULES = import.meta.glob(
-  '../../../art/source/environments/maps/campaign/**/*.{png,webp,jpg,jpeg}',
+const COMBAT_MAP_MODULES = import.meta.glob(
+  '../../../art/source/environments/maps/combat/**/*.{png,webp,jpg,jpeg}',
   { eager: true, query: '?url', import: 'default' },
 );
 const TRAINING_MAP_MODULES = import.meta.glob(
@@ -97,10 +97,15 @@ const trainingMapModules = Object.fromEntries(
   Object.entries(TRAINING_MAP_MODULES).filter(([path]) => !path.includes('/training/tilesets/')),
 );
 
-export const CAMPAIGN_MAP_ASSETS = createMapAssets(
-  CAMPAIGN_MAP_MODULES,
-  'campaign-map-',
-  '/maps/campaign/',
+export const COMBAT_MAP_ASSETS = Object.freeze(
+  createMapAssets(
+    COMBAT_MAP_MODULES,
+    'combat-map-',
+    '/maps/combat/',
+  ).map((asset) => Object.freeze({
+    ...asset,
+    id: 'combat-' + asset.id,
+  })),
 );
 export const TRAINING_MAP_ASSETS = createMapAssets(
   trainingMapModules,
@@ -120,8 +125,11 @@ export const MINIGAME_MAP_ASSETS = Object.freeze({
   ),
 });
 
-// Solo los mapas de training aparecen en la selección de escenarios de combate.
-export const STAGE_MAP_ASSETS = TRAINING_MAP_ASSETS;
+// Los mapas de combat y training aparecen en la selección de escenarios del modo combate.
+export const STAGE_MAP_ASSETS = Object.freeze([
+  ...TRAINING_MAP_ASSETS,
+  ...COMBAT_MAP_ASSETS,
+]);
 
 const tilesetFiles = collectImageFiles(
   TILESET_MODULES,

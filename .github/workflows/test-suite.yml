@@ -40,3 +40,6 @@ jobs:
           src/domain/entities/Fighter.test.js
           src/domain/entities/Match.test.js
           src/presentation/animation/FighterAnimator.test.js
+          src/infrastructure/assets/stageAssetManifest.test.js
+          src/infrastructure/assets/raceCourseAssets.test.js
+          src/infrastructure/assets/terrestrialRaceMaps.test.js

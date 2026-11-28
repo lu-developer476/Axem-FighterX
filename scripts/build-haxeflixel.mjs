@@ -64,6 +64,9 @@ async function prepareCspCompatibleHtml() {
   html = html.replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi, (script, attributes) => (
     /\bsrc\s*=/.test(attributes) ? script : ''
   ));
+  // Una sola fuente de favicon: GIF animado versionado en art/source.
+  html = html.replace(/<link\b[^>]*\brel=["'](?:shortcut )?icon["'][^>]*>/gi, '');
+  html = html.replace('</head>', '  <link rel="icon" type="image/gif" href="./favicon.gif">\\n</head>');
 
   if (/<script\b(?![^>]*\bsrc\s*=)[^>]*>/i.test(html)) {
     throw new Error('La página HTML5 conserva scripts inline no permitidos por la CSP.');
@@ -105,7 +108,8 @@ async function main() {
   await fs.rm(PUBLIC_OUTPUT, { recursive: true, force: true });
   await fs.mkdir(PUBLIC_OUTPUT, { recursive: true });
   await fs.cp(OUTPUT, PUBLIC_OUTPUT, { recursive: true });
-  console.log('HaxeFlixel compilado y externalizado para CSP en public/minigames/.');
+  await fs.copyFile(path.join(ROOT, 'art', 'source', 'favicon.gif'), path.join(PUBLIC_OUTPUT, 'favicon.gif'));
+  console.log('HaxeFlixel compilado, mapas verificados por manifiesto y favicon GIF copiado a public/minigames/.');
 }
 
 main().catch((error) => {

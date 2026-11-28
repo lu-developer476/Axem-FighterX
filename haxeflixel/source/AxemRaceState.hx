@@ -221,6 +221,9 @@ class AxemRaceState extends RaceBaseState
             + pickupEffect, 85, 310);
         speed += (targetSpeed - speed) * Math.min(1, frame * 3.2);
         playerOffset = clamp(playerOffset + steering * LATERAL_SPEED * elapsed, -78, 78);
+        // La moto apunta en la dirección real del vector de movimiento:
+        // avance de carrera + desplazamiento lateral indicado por el jugador.
+        player.angle = Math.atan2(steering * LATERAL_SPEED, Math.max(1, speed)) * 180 / Math.PI;
         playerDistance += speed * frame;
         opponentDistance += (196 + Math.sin(raceTimeMs / 390) * 15) * frame;
         scrollBackground(playerDistance, TRACK_SCALE);

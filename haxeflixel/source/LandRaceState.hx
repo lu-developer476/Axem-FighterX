@@ -29,6 +29,7 @@ class LandRaceState extends RaceBaseState
     var playerActionMode:String = "";
     var playerActionMs:Float = 0;
     var playerActionDurationMs:Float = 0;
+    var playerFacing:Int = 1;
 
     override public function create():Void
     {
@@ -129,7 +130,8 @@ class LandRaceState extends RaceBaseState
         activeMode:String,
         x:Float,
         y:Float,
-        visualAction:String = ""
+        visualAction:String = "",
+        facing:Int = 1
     ):Void
     {
         for (mode in modes.keys())
@@ -141,6 +143,7 @@ class LandRaceState extends RaceBaseState
             sprite.x = x;
             sprite.y = y;
             sprite.angle = 0;
+            sprite.flipX = facing < 0;
 
             if (isActive && visualAction == "jump" && playerActionDurationMs > 0)
             {
@@ -206,6 +209,8 @@ class LandRaceState extends RaceBaseState
         var run = FlxG.keys.pressed.RIGHT;
         var brake = FlxG.keys.pressed.LEFT;
         var dash = FlxG.keys.pressed.D && stamina > 0;
+        if (run) playerFacing = 1;
+        else if (brake) playerFacing = -1;
         var playerSpeed:Float;
 
         if (brake)
@@ -266,8 +271,8 @@ class LandRaceState extends RaceBaseState
 
         var playerX = 112 + Math.sin(playerDistance / 20) * 2;
         var rivalX = 310 + Math.sin(rivalDistance / 20 + 1) * 2;
-        syncRunnerModes(playerModes, playerMode, playerX, 166, playerActionMode);
-        syncRunnerModes(rivalModes, "run", rivalX, 166);
+        syncRunnerModes(playerModes, playerMode, playerX, 166, playerActionMode, playerFacing);
+        syncRunnerModes(rivalModes, "run", rivalX, 166, "", 1);
         staminaFill.scale.x = Math.max(0.01, stamina / MAX_STAMINA);
         staminaFill.updateHitbox();
         progressLabel.text = Math.round(playerDistance / 100) / 10 + " / " + Math.round(finishDistance / 1000) + " KM";

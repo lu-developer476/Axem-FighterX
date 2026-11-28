@@ -1,0 +1,30 @@
+<project>
+  <app title="Axem FighterX Minigames" file="index" main="Main" package="com.axem.fighterx.races" path="export" />
+  <source path="source" />
+  <haxelib name="flixel" />
+  <!-- Mapas explícitos: Lime no estaba incorporando los directorios con include/rename. -->
+  <assets path="../art/source/environments/maps/minigames/terrestrial/ship-access.png" rename="assets/maps/minigames/terrestrial/ship-access.png" type="image" />
+  <assets path="../art/source/environments/maps/minigames/terrestrial/subway.png" rename="assets/maps/minigames/terrestrial/subway.png" type="image" />
+  <assets path="../art/source/environments/maps/minigames/racing/castle.png" rename="assets/maps/minigames/racing/castle.png" type="image" />
+  <assets path="../art/source/environments/maps/minigames/racing/subway.png" rename="assets/maps/minigames/racing/subway.png" type="image" />
+  <assets path="../art/source/environments/maps/minigames/racing/train.png" rename="assets/maps/minigames/racing/train.png" type="image" />
+  <assets path="../art/source/effects/music/race--mecha-collection.wav" rename="assets/audio/axem-race.wav" />
+  <assets path="../art/source/effects/music/race--slow-dark-music.wav" rename="assets/audio/land-race.wav" />
+  <!-- Recursos de carrera versionados: no se crean hojas durante el build. -->
+  <assets path="../public/minigames/assets/races/axem-orange-bike.png" rename="assets/races/axem-orange-bike.png" />
+  <assets path="../public/minigames/assets/races/axem-red-bike.png" rename="assets/races/axem-red-bike.png" />
+  <assets path="../art/source/sprites/references/axem-red/axem-red-bike-up.png" rename="assets/races/axem-red-bike-up.png" />
+  <assets path="../art/source/sprites/references/axem-red/axem-red-bike-down.png" rename="assets/races/axem-red-bike-down.png" />
+  <assets path="../art/source/effects/bike/unpiloted-bike.png" rename="assets/races/unpiloted-bike.png" />
+  <assets path="../art/source/effects/bike/bike-shoot.png" rename="assets/races/bike-shoot.png" />
+  <assets path="../art/source/effects/bike/bike-special-shoot.png" rename="assets/races/bike-special-shoot.png" />
+  <assets path="../public/minigames/assets/races/axem-orange-idle.png" rename="assets/races/axem-orange-idle.png" />
+  <assets path="../public/minigames/assets/races/axem-orange-run.png" rename="assets/races/axem-orange-run.png" />
+  <assets path="../public/minigames/assets/races/axem-orange-dash.png" rename="assets/races/axem-orange-dash.png" />
+  <assets path="../public/minigames/assets/races/axem-red-run.png" rename="assets/races/axem-red-run.png" />
+  <assets path="../public/minigames/assets/races/axem-red-idle.png" rename="assets/races/axem-red-idle.png" />
+  <assets path="../public/minigames/assets/races/axem-red-walk.png" rename="assets/races/axem-red-walk.png" />
+  <assets path="../public/minigames/assets/races/axem-red-dash.png" rename="assets/races/axem-red-dash.png" />
+  <window width="480" height="270" fps="60" background="#080b18" />
+  <define name="FLX_NO_DEBUG" />
+</project>

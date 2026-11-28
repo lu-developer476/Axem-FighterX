@@ -40,7 +40,7 @@ describe('Descubrimiento automático de escenarios por modalidad', () => {
       '../../../art/source/environments/maps/combat/lost-town.png': '/combat/lost-town.png',
     }, 'combat-map-', '/maps/combat/').map((asset) => ({
       ...asset,
-      id: 'combat-' + asset.id,
+      id: 'combat-' + asset.stem,
     }));
 
     expect(training[0].stem).toBe('lost-town');

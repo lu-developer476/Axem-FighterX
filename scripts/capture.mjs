@@ -232,7 +232,9 @@ const startRaceFromMenu = async (land) => {
   await tap('Enter'); // Abrir el minijuego
   await page.waitForSelector('iframe[title]', { timeout: 10_000 });
   const frame = page.frameLocator('iframe[title]');
-  await frame.locator('canvas').waitFor({ state: 'visible', timeout: 20_000 });
+  const canvas = frame.locator('canvas');
+  await canvas.waitFor({ state: 'visible', timeout: 20_000 });
+  await canvas.click({ position: { x: 240, y: 135 } }); // Dar foco al teclado del iframe.
   await wait(500);
   return frame;
 };

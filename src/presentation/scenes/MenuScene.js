@@ -8,7 +8,7 @@ import { menuSpriteKeyFor } from '../../infrastructure/assets/assetManifest.js';
 import { playMenuMusic } from '../../infrastructure/audio/GameMusic.js';
 import { contentWidth, getStackedButtonPositions, insetSize, mapPanelY, UI_SPACING } from '../views/uiLayout.js';
 
-const RANGER_ORDER = [RANGER_IDS.ORANGE, RANGER_IDS.WHITE, RANGER_IDS.RED];
+const RANGER_ORDER = [RANGER_IDS.WHITE, RANGER_IDS.RED];
 const readableFontSize = (value = '10px') => {
   const size = Number.parseFloat(value);
   return Number.isFinite(size) ? Math.max(8, Math.round(size * 1.25)) + 'px' : value;

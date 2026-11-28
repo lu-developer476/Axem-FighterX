@@ -16,7 +16,8 @@ typedef RacePickup = {
 
 class AxemRaceState extends RaceBaseState
 {
-    static inline var PLAYER_X:Float = 126;
+    // La salida del jugador queda en el tercio izquierdo de la pista.
+    static inline var PLAYER_X:Float = 72;
     static inline var TRACK_SCALE:Float = 0.14;
     static inline var PLAYER_BASE_SPEED:Float = 172;
     static inline var LATERAL_SPEED:Float = 280;

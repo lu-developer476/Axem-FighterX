@@ -86,7 +86,23 @@ async function prepareCspCompatibleHtml() {
   ));
   // Una sola fuente de favicon: GIF animado versionado en art/source.
   html = html.replace(/<link\b[^>]*\brel=["'](?:shortcut )?icon["'][^>]*>/gi, '');
-  html = html.replace('</head>', '  <link rel="icon" type="image/gif" href="./favicon.gif">\n</head>');
+  html = html.replace('</head>', [
+    '  <link rel="icon" type="image/gif" href="./favicon.gif">',
+    '</head>',
+  ].join(String.fromCharCode(10)));
+  const responsiveCanvasStyles = [
+    '    #openfl-content canvas {',
+    '      display: block;',
+    '      width: 100% !important;',
+    '      height: 100% !important;',
+    '      image-rendering: pixelated;',
+    '    }',
+  ].join(String.fromCharCode(10));
+  const closingStyleTag = '</style>';
+  if (!html.includes(closingStyleTag)) {
+    throw new Error('La plantilla HTML5 de Lime no contiene un bloque <style> para adaptar el canvas.');
+  }
+  html = html.replace(closingStyleTag, responsiveCanvasStyles + String.fromCharCode(10) + '  </style>');
 
   if (/<script\b(?![^>]*\bsrc\s*=)[^>]*>/i.test(html)) {
     throw new Error('La página HTML5 conserva scripts inline no permitidos por la CSP.');

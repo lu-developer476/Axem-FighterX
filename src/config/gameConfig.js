@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 
-/** Resolución lógica del pixel art: 480×270, ampliada en múltiplos enteros. */
+/** Resolución lógica 480×270; Phaser expande el canvas al área visible completa. */
 export const GAME_WIDTH = 480;
 export const GAME_HEIGHT = 270;
 
@@ -18,10 +18,8 @@ export const createGameConfig = (scenes) => ({
   roundPixels: true,
   dom: { createContainer: true },
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.EXPAND,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    // Evita factores fraccionarios (2.7x, 3.4x, etc.) que deforman los píxeles.
-    zoom: Phaser.Scale.MAX_ZOOM,
   },
   scene: scenes,
 });

@@ -18,8 +18,9 @@
   <script type="text/javascript" src="./minigame-bootstrap.js"></script>
 
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-    #content { ::if (WIN_BACKGROUND)::background: #000000; ::end::width: ::if (WIN_RESIZABLE)::100%::elseif (WIN_WIDTH > 0)::::WIN_WIDTH::px::else::100%::end::; height: ::if (WIN_RESIZABLE)::100%::elseif (WIN_WIDTH > 0)::::WIN_HEIGHT::px::else::100%::end::; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+    #content { ::if (WIN_BACKGROUND)::background: #000000; ::end::width: 100%; height: 100%; overflow: hidden; }
+    #content canvas { display: block; width: 100% !important; height: 100% !important; image-rendering: pixelated; }
     ::foreach assets::::if (type == "font")::::if (cssFontFace)::::cssFontFace::::end::::end::::end::
   </style>
 </head>

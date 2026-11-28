@@ -10,6 +10,7 @@ class LandRaceState extends RaceBaseState
 {
     static final DISTANCES:Array<Int> = [750000, 2500000];
     static inline var MAX_STAMINA:Float = 100;
+    static inline var PLAYER_START_X:Float = 72;
 
     var playerModes:Map<String, FlxSprite>;
     var rivalModes:Map<String, FlxSprite>;
@@ -40,7 +41,7 @@ class LandRaceState extends RaceBaseState
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/land-race.wav"));
         addHeader("CARRERA TERRESTRE", "→ CORRER · ← CAMINAR / FRENAR · ↑ SALTAR · ↓ RODAR · D DASH (ANIMACIÓN SIN ARMAS) · P PAUSA · ESC MENÚ");
         updateSelectionLabels();
-        playerModes = createRunnerModes(true, 110);
+        playerModes = createRunnerModes(true, PLAYER_START_X);
         rivalModes = createRunnerModes(false, 320);
         progressLabel = addLabel(8, 38, 200, "0 / 750 KM", 7, FlxColor.WHITE);
         addLabel(12, 244, 88, "RESISTENCIA", 6, FlxColor.CYAN);
@@ -271,7 +272,7 @@ class LandRaceState extends RaceBaseState
         }
         playerMode = resolvePlayerMode(playerMode);
 
-        var playerX = 112 + Math.sin(playerDistance / 20) * 2;
+        var playerX = PLAYER_START_X + Math.sin(playerDistance / 20) * 2;
         var rivalX = 310 + Math.sin(rivalDistance / 20 + 1) * 2;
         syncRunnerModes(playerModes, playerMode, playerX, 166, playerActionMode, playerFacing);
         syncRunnerModes(rivalModes, "run", rivalX, 166, "", 1);

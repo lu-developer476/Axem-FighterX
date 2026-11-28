@@ -6,7 +6,7 @@ const createScene = () => ({ input: { keyboard: { addKeys: (definitions) => Obje
 
 describe('Controles de teclado', () => {
   it('define un único esquema de teclado humano y no registra controles de J2', () => {
-    expect(KEYMAPS.PLAYER_1).toMatchObject({ left: 'LEFT', right: 'RIGHT', up: 'UP', down: 'DOWN', ascend: 'Q', descend: 'E', attack: 'A', teleport: 'R', dash: 'D', block: 'B', dodge: 'X', specialAttack: 'S', levitate: 'C', chargeKi: 'V' });
+    expect(KEYMAPS.PLAYER_1).toMatchObject({ left: 'LEFT', right: 'RIGHT', up: 'UP', down: 'DOWN', ascend: 'Q', descend: 'E', attack: 'A', teleport: 'F', dash: 'D', block: 'B', dodge: 'R', specialAttack: 'S', levitate: 'C', chargeKi: 'V' });
     expect(KEYMAPS.PLAYER_2).toBeUndefined();
   });
   it('mantiene independientes el movimiento terrestre y el vuelo', () => {

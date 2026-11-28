@@ -105,7 +105,7 @@ export class FightScene extends Phaser.Scene {
         'ATAQUE ESPECIAL · S',
         'BLOQUEO · B · RODAR · R',
         'DASH · D · CARGAR KI · V',
-        'RODAR · R · TELETRANSPORTE · F · TRANSFORMACIÓN · T (250)',
+        'TELETRANSPORTE · F · TRANSFORMACIÓN · T (250)',
         'PAUSA · P · VOLVER AL MENÚ · ESC',
       ],
     });

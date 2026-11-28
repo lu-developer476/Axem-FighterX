@@ -221,21 +221,43 @@ await tap('r');
 await wait(600);
 await shot('23-reinicio');
 
-// Smoke tests reales de ambos minijuegos dentro del iframe HaxeFlixel.
+// Smoke tests de las carreras desde el menú real, reiniciando la app para cada modo.
+// Haxe confirma al contenedor el modo y la cantidad de mapas que pudo descubrir.
 const startRaceFromMenu = async (land) => {
-  await tap('Escape'); // Combate → menú principal
-  await wait(180);
+  await page.goto(url);
+  await page.waitForSelector('canvas', { timeout: 15_000 });
+  await wait(900);
+  await page.evaluate(() => {
+    window.__axemMinigameReady = null;
+    window.addEventListener('message', (event) => {
+      if (event.data?.type === 'axem-minigame-ready') {
+        window.__axemMinigameReady = event.data;
+      }
+    });
+  });
+
   await tap('Enter'); // Inicio → JUGAR
   await tap('ArrowDown'); // JUGAR → CARRERA
   await tap('Enter'); // Modal de modalidades
   if (land) await tap('ArrowDown'); // CARRERA TERRESTRE
-  await tap('Enter'); // Abrir el minijuego
+  await tap('Enter'); // Abrir minijuego
+
   await page.waitForSelector('iframe[title]', { timeout: 10_000 });
   const frame = page.frameLocator('iframe[title]');
   const canvas = frame.locator('canvas');
   await canvas.waitFor({ state: 'visible', timeout: 20_000 });
-  await canvas.click({ position: { x: 240, y: 135 } }); // Dar foco al teclado del iframe.
-  await wait(500);
+  await canvas.click(); // Foco de teclado dentro del iframe HaxeFlixel.
+  await page.waitForFunction(
+    (expectedMode) => window.__axemMinigameReady?.mode === expectedMode,
+    land ? 'land' : 'axem',
+    { timeout: 20_000 },
+  );
+
+  const ready = await page.evaluate(() => window.__axemMinigameReady);
+  if (!Number.isInteger(ready.mapCount) || ready.mapCount < 1) {
+    throw new Error('HaxeFlixel inició ' + ready.mode + ' pero encontró ' + ready.mapCount + ' mapas.');
+  }
+  console.log('Minijuego ' + ready.mode + ' listo; mapas detectados: ' + ready.mapCount);
   return frame;
 };
 
@@ -269,6 +291,8 @@ await page.keyboard.press('Escape');
 await page.waitForSelector('iframe[title]', { state: 'detached', timeout: 5000 });
 
 // Verifica que el favicon principal realmente apunta al GIF animado.
+await page.goto(url);
+await page.waitForSelector('canvas', { timeout: 15_000 });
 const favicon = await page.locator('link[rel="icon"][type="image/gif"]').first().getAttribute('href');
 if (!favicon) record('No se registró favicon GIF en la aplicación principal.');
 else {

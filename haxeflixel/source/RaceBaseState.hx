@@ -149,6 +149,18 @@ class RaceBaseState extends FlxState
         #end
     }
 
+    /** Notifica al contenedor que HaxeFlixel arrancó y cuántos mapas encontró. */
+    public function notifyMinigameReady(mode:String, mapCount:Int):Void
+    {
+        #if html5
+        Browser.window.parent.postMessage({
+            type: "axem-minigame-ready",
+            mode: mode,
+            mapCount: mapCount
+        }, "*");
+        #end
+    }
+
     public function clamp(value:Float, minimum:Float, maximum:Float):Float
     {
         return Math.max(minimum, Math.min(maximum, value));

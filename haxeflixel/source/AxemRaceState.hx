@@ -67,6 +67,7 @@ class AxemRaceState extends RaceBaseState
     {
         super.create();
         mapAssets = discoverMapAssets("racing");
+        notifyMinigameReady("axem", mapAssets.length);
         if (mapAssets.length > 0) addBackground(mapAssets[mapIndex]);
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/axem-race.wav"));
         addHeader("CARRERA AXEM", "A ACELERAR · B FRENAR · S DISPARAR / MANTENER: CARGA · ESPACIO SALTAR · ↑/↓ CARRIL · ←/→ MOVER · P PAUSA · ESC MENÚ");

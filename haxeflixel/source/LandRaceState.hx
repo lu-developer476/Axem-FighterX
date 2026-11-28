@@ -35,6 +35,7 @@ class LandRaceState extends RaceBaseState
     {
         super.create();
         mapAssets = discoverMapAssets("terrestrial");
+        notifyMinigameReady("land", mapAssets.length);
         if (mapAssets.length > 0) addBackground(mapAssets[mapIndex]);
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/land-race.wav"));
         addHeader("CARRERA TERRESTRE", "→ CORRER · ← CAMINAR/FRENAR · ↑ SALTAR · ↓ RODAR · D DASH · P PAUSA · ESC MENÚ");

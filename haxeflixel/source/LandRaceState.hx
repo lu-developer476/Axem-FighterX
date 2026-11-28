@@ -28,6 +28,7 @@ class LandRaceState extends RaceBaseState
     var resultLabel:FlxText;
     var playerActionMode:String = "";
     var playerActionMs:Float = 0;
+    var playerActionDurationMs:Float = 0;
 
     override public function create():Void
     {
@@ -35,7 +36,7 @@ class LandRaceState extends RaceBaseState
         mapAssets = discoverMapAssets("terrestrial");
         if (mapAssets.length > 0) addBackground(mapAssets[mapIndex]);
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/land-race.wav"));
-        addHeader("CARRERA TERRESTRE", "D/→ CORRER · A/← FRENAR · W/↑ SALTO · S/↓ RODAR · P PAUSA · ESC MENÚ");
+        addHeader("CARRERA TERRESTRE", "→ CORRER · ← CAMINAR/FRENAR · ↑ SALTAR · ↓ RODAR · D DASH · P PAUSA · ESC MENÚ");
         updateSelectionLabels();
         playerModes = createRunnerModes(true, 110);
         rivalModes = createRunnerModes(false, 320);
@@ -98,35 +99,60 @@ class LandRaceState extends RaceBaseState
     function resolvePlayerMode(requestedMode:String):String
     {
         if (playerModes.exists(requestedMode)) return requestedMode;
-        // Orange todavía no tiene un walk.gif dedicado: se usa run como
-        // sustituto hasta que se incorpore esa animación.
-        if (requestedMode == "walk" && playerModes.exists("run")) return "run";
+        // Orange todavía no tiene tiras PNG dedicadas para caminar, saltar o rodar.
+        // Se reutilizan las animaciones de carrera y dash como respaldo visual.
+        if ((requestedMode == "walk" || requestedMode == "jump") && playerModes.exists("run"))
+            return "run";
+        if (requestedMode == "roll" && playerModes.exists("dash"))
+            return "dash";
         return "idle";
     }
 
     function beginPlayerAction(mode:String):Void
     {
-        var sprite = playerModes.get(mode);
+        var assetMode = mode;
+        if (!playerModes.exists(assetMode))
+            assetMode = mode == "roll" ? "dash" : "run";
+
+        var sprite = playerModes.get(assetMode);
         if (sprite == null) return;
-        sprite.animation.play(mode, true);
+        sprite.animation.play(assetMode, true);
         playerActionMode = mode;
-        playerActionMs = Math.max(350, sprite.numFrames * 100);
+        // El salto y la rodada usan una ventana visual breve; no requieren
+        // hojas de sprites adicionales ni agregan dependencias al build.
+        playerActionDurationMs = mode == "jump" ? 620 : 520;
+        playerActionMs = playerActionDurationMs;
     }
 
     function syncRunnerModes(
         modes:Map<String, FlxSprite>,
         activeMode:String,
         x:Float,
-        y:Float
+        y:Float,
+        visualAction:String = ""
     ):Void
     {
         for (mode in modes.keys())
         {
             var sprite = modes.get(mode);
             if (sprite == null) continue;
-            sprite.visible = mode == activeMode;
+            var isActive = mode == activeMode;
+            sprite.visible = isActive;
             sprite.x = x;
             sprite.y = y;
+            sprite.angle = 0;
+
+            if (isActive && visualAction == "jump" && playerActionDurationMs > 0)
+            {
+                var progress = Math.max(0, Math.min(1, 1 - playerActionMs / playerActionDurationMs));
+                sprite.y = y - Math.sin(progress * Math.PI) * 30;
+            }
+            else if (isActive && visualAction == "roll")
+            {
+                // La tira de dash se reutiliza girada mientras no haya una
+                // animación PNG dedicada de rodada.
+                sprite.angle = 90;
+            }
         }
     }
 
@@ -177,17 +203,29 @@ class LandRaceState extends RaceBaseState
             return;
         }
 
-        var accelerate = FlxG.keys.pressed.D || FlxG.keys.pressed.RIGHT;
-        var brake = FlxG.keys.pressed.A || FlxG.keys.pressed.LEFT;
+        var run = FlxG.keys.pressed.RIGHT;
+        var brake = FlxG.keys.pressed.LEFT;
+        var dash = FlxG.keys.pressed.D && stamina > 0;
         var playerSpeed:Float;
-        if (accelerate && !brake && stamina > 0)
+
+        if (brake)
         {
-            playerSpeed = 208;
-            stamina = Math.max(0, stamina - 29 * elapsed);
+            playerSpeed = 88;
+            stamina = Math.min(MAX_STAMINA, stamina + 21 * elapsed);
+        }
+        else if (dash)
+        {
+            playerSpeed = 248;
+            stamina = Math.max(0, stamina - 42 * elapsed);
+        }
+        else if (run)
+        {
+            playerSpeed = 190;
+            stamina = Math.max(0, stamina - 18 * elapsed);
         }
         else
         {
-            playerSpeed = brake ? 88 : 143;
+            playerSpeed = 143;
             stamina = Math.min(MAX_STAMINA, stamina + 21 * elapsed);
         }
 
@@ -195,38 +233,40 @@ class LandRaceState extends RaceBaseState
         playerDistance = Math.min(finishDistance, playerDistance + playerSpeed * elapsed);
         rivalDistance = Math.min(finishDistance, rivalDistance + rivalSpeed * elapsed);
         scrollBackground(playerDistance, 0.14);
-        var playerMode = brake
-            ? "idle"
-            : (accelerate ? (stamina > 0 ? "dash" : "run") : "walk");
+        var playerMode = brake ? "walk" : (dash ? "dash" : (run ? "run" : "walk"));
 
         if (brake)
         {
-            // Frenar siempre fuerza idle, incluso si estaba reproduciéndose
-            // una animación temporal de salto o rodada.
+            // Caminar/frenar cancela una acción temporal en curso.
             playerActionMode = "";
             playerActionMs = 0;
+            playerActionDurationMs = 0;
         }
         else
         {
             if (playerActionMs <= 0)
             {
-                if (FlxG.keys.justPressed.W || FlxG.keys.justPressed.UP)
+                if (FlxG.keys.justPressed.UP)
                     beginPlayerAction("jump");
-                else if (FlxG.keys.justPressed.S || FlxG.keys.justPressed.DOWN)
+                else if (FlxG.keys.justPressed.DOWN)
                     beginPlayerAction("roll");
             }
             if (playerActionMs > 0)
             {
                 playerActionMs = Math.max(0, playerActionMs - elapsed * 1000);
                 if (playerActionMs > 0) playerMode = playerActionMode;
-                else playerActionMode = "";
+                else
+                {
+                    playerActionMode = "";
+                    playerActionDurationMs = 0;
+                }
             }
         }
         playerMode = resolvePlayerMode(playerMode);
 
         var playerX = 112 + Math.sin(playerDistance / 20) * 2;
         var rivalX = 310 + Math.sin(rivalDistance / 20 + 1) * 2;
-        syncRunnerModes(playerModes, playerMode, playerX, 166);
+        syncRunnerModes(playerModes, playerMode, playerX, 166, playerActionMode);
         syncRunnerModes(rivalModes, "run", rivalX, 166);
         staminaFill.scale.x = Math.max(0.01, stamina / MAX_STAMINA);
         staminaFill.updateHitbox();

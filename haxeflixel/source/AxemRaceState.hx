@@ -23,6 +23,8 @@ class AxemRaceState extends RaceBaseState
     static inline var LANE_SWITCH_MS:Float = 145;
     static final DISTANCES:Array<Int> = [750000, 2500000];
     static final LANE_Y:Array<Float> = [173, 233];
+    static inline var JUMP_DURATION_MS:Float = 620;
+    static inline var JUMP_HEIGHT:Float = 36;
 
     var player:FlxSprite;
     var opponent:FlxSprite;
@@ -39,6 +41,7 @@ class AxemRaceState extends RaceBaseState
     var playerDistance:Float = 0;
     var opponentDistance:Float = 0;
     var raceTimeMs:Float = 0;
+    var jumpMs:Float = 0;
     var playerLane:Int = 0;
     var playerTargetLane:Int = 0;
     var playerLaneSwitchMs:Float = 0;
@@ -66,7 +69,7 @@ class AxemRaceState extends RaceBaseState
         mapAssets = discoverMapAssets("racing");
         if (mapAssets.length > 0) addBackground(mapAssets[mapIndex]);
         FlxG.sound.playMusic(Assets.getMusic("assets/audio/axem-race.wav"));
-        addHeader("CARRERA AXEM", "D ACELERAR · A FRENAR · F DISPARAR / MANTENER CARGADO · ↑/↓ CARRIL · ←/→ MOVER · P PAUSA · ESC MENÚ");
+        addHeader("CARRERA AXEM", "A ACELERAR · B FRENAR · S DISPARAR / MANTENER: CARGA · ESPACIO SALTAR · ↑/↓ CARRIL · ←/→ MOVER · P PAUSA · ESC MENÚ");
         updateSelectionLabels();
         progressLabel = addLabel(8, 38, 200, "0 / 750 KM", 7, FlxColor.WHITE);
         resultLabel = addLabel(50, 118, 380, "", 12, FlxColor.YELLOW);
@@ -200,8 +203,8 @@ class AxemRaceState extends RaceBaseState
 
         raceTimeMs += elapsed * 1000;
         var frame = Math.min(elapsed, 0.05);
-        var accelerate = FlxG.keys.pressed.D;
-        var brake = FlxG.keys.pressed.A;
+        var accelerate = FlxG.keys.pressed.A;
+        var brake = FlxG.keys.pressed.B;
         var steering = (FlxG.keys.pressed.RIGHT ? 1 : 0) - (FlxG.keys.pressed.LEFT ? 1 : 0);
 
         if (FlxG.keys.justPressed.UP) changeLane(-1);
@@ -226,7 +229,18 @@ class AxemRaceState extends RaceBaseState
         player.x = playerX;
         var laneProgress = playerLaneSwitchMs > 0 ? 1 - playerLaneSwitchMs / LANE_SWITCH_MS : 1;
         var fromLane = playerLaneSwitchMs > 0 ? 1 - playerTargetLane : playerLane;
-        player.y = LANE_Y[fromLane] + (LANE_Y[playerTargetLane] - LANE_Y[fromLane]) * laneProgress;
+        var laneY = LANE_Y[fromLane] + (LANE_Y[playerTargetLane] - LANE_Y[fromLane]) * laneProgress;
+
+        if (FlxG.keys.justPressed.SPACE && jumpMs <= 0) jumpMs = JUMP_DURATION_MS;
+        var isJumping = jumpMs > 0;
+        var jumpOffset:Float = 0;
+        if (isJumping)
+        {
+            var jumpProgress = 1 - jumpMs / JUMP_DURATION_MS;
+            jumpOffset = -Math.sin(jumpProgress * Math.PI) * JUMP_HEIGHT;
+            jumpMs = Math.max(0, jumpMs - elapsed * 1000);
+        }
+        player.y = laneY + jumpOffset;
 
         updateShooting(elapsed, playerX);
 
@@ -234,7 +248,7 @@ class AxemRaceState extends RaceBaseState
             + Math.sin(raceTimeMs / 520) * 28, 48, 432);
         updateOpponentLane(frame, opponentX);
 
-        updatePickups(playerX);
+        updatePickups(playerX, isJumping);
         progressLabel.text = Math.round(playerDistance / 100) / 10 + " / " + Math.round(finishDistance / 1000) + " KM";
 
         if (playerDistance >= finishDistance || opponentDistance >= finishDistance)
@@ -247,7 +261,7 @@ class AxemRaceState extends RaceBaseState
 
     function updateShooting(elapsed:Float, playerX:Float):Void
     {
-        var pressed = FlxG.keys.pressed.F;
+        var pressed = FlxG.keys.pressed.S;
         if (pressed)
         {
             shootHoldMs += elapsed * 1000;
@@ -317,7 +331,7 @@ class AxemRaceState extends RaceBaseState
         if (playerTargetLane != playerLane) playerLaneSwitchMs = LANE_SWITCH_MS;
     }
 
-    function updatePickups(playerX:Float):Void
+    function updatePickups(playerX:Float, isJumping:Bool):Void
     {
         for (pickup in pickups)
         {
@@ -327,7 +341,7 @@ class AxemRaceState extends RaceBaseState
                 ? LANE_Y[pickup.lane] - 12
                 : LANE_Y[pickup.lane] - 9;
             pickup.sprite.visible = pickup.active && x > -34 && x < 514;
-            if (pickup.active && pickup.lane == playerLane && Math.abs(x - playerX) < 18)
+            if (pickup.active && !isJumping && pickup.lane == playerLane && Math.abs(x - playerX) < 18)
             {
                 pickup.active = false;
                 pickup.sprite.visible = false;
